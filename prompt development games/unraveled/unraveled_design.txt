@@ -1,0 +1,94 @@
+1. Title & Hook
+Title: Script-Walker
+
+Hook: You aren’t playing a game; you are platforming across the live source code that is executing the game in real-time.
+
+2. Core Insight
+The Central Question: Can we ever truly escape the rules that define us?
+
+Human Connection: This game explores the "Transparency of Systems." We often interact with software (and social systems) without seeing the "code" behind them. By making the code physical, the player experiences the fragility and the rigidity of the rules they live by.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: "Logic-Leaping." The platforms are literal lines of code (e.g., player.gravity = 9.8). When the player stands on a line, that specific line of code becomes "Active," and its logic is applied to the game state. Integration:
+
+The Theme of Control: To change how the game feels, you must physically move your character to a different line of code. If you want to jump higher, you must find and stand on the jump_force variable.
+
+Self-Destruction: Some lines of code are "dangerous" (e.g., sys.exit() or player.die()). The player must jump over these logic-traps. The environment doesn't just look like code; it is the code.
+
+5. Technical Specification
+Display: A 2D window styled like a high-end code editor (Dark Mode, Monospace font). The "platforms" are lines of text.
+
+Input: WASD or Arrow Keys for movement.
+
+Game State:
+
+ActiveLine: The index of the line the player is currently touching.
+
+GlobalVariables: A dictionary of game parameters (gravity, speed, friction) that update dynamically based on the ActiveLine.
+
+Assets Needed:
+
+Sprite: A small, 1-bit "Pixel Glitch" character.
+
+UI: A "Console" at the bottom of the screen that prints what the player is doing (e.g., "Warning: Player modifying gravity...").
+
+Ending: The player reaches the bottom of the script, where a return "Freedom" statement triggers a "System Shutdown" animation.
+
+6. Implementation Pseudo-code
+Python
+# SYSTEM CONFIGURATION
+class GameState:
+    def __init__(self):
+        self.gravity = 0.5
+        self.player_speed = 4
+        self.friction = 0.9
+        self.is_alive = True
+
+state = GameState()
+
+# THE LIVE SCRIPT (The Platforms)
+# Each entry: (text_string, function_to_execute)
+source_code_platforms = [
+    ("import soul", None),
+    ("state.gravity = 0.2", lambda: setattr(state, 'gravity', 0.2)),
+    ("if player.pos > 100:", None),
+    ("    state.player_speed = 8", lambda: setattr(state, 'player_speed', 8)),
+    ("def check_vitals():", None),
+    ("    state.is_alive = False  # DO NOT TOUCH", lambda: setattr(state, 'is_alive', False)),
+    ("return True", lambda: end_game())
+]
+
+# PHYSICS CALCULATION (LaTeX representation)
+# $V_y(t+1) = V_y(t) + state.gravity$
+# $P(t+1) = P(t) + V(t+1)$
+
+def game_loop():
+    while state.is_alive:
+        # 1. CHARACTER MOVEMENT
+        player.apply_physics(state.gravity, state.friction)
+        player.handle_input(state.player_speed)
+
+        # 2. CODE EXECUTION (The Core Twist)
+        # Find which line index the player is standing on
+        current_line_idx = get_line_under_player(player.y)
+        
+        # If the player is on a new line, execute its logic
+        if current_line_idx != last_line_idx:
+            logic_fn = source_code_platforms[current_line_idx].logic
+            if logic_fn:
+                logic_fn() # This updates the 'state' object live
+            last_line_idx = current_line_idx
+
+        # 3. RENDERING
+        draw_editor_background()
+        for i, line in enumerate(source_code_platforms):
+            color = HIGHLIGHT if i == current_line_idx else NORMAL
+            draw_text(line.text, x=50, y=i * 30, color=color)
+        
+        draw_player(player.pos)
+        
+        if not state.is_alive:
+            show_error_popup("RuntimeError: Subject escaped boundaries.")
+
+# RUN
+game_loop()

@@ -1,0 +1,933 @@
+================================================================================
+                              ERASER
+                    A Game Design Document
+================================================================================
+
+## 1. TITLE & HOOK
+
+Title: Eraser
+
+Hook: The drawing you're erasing is someone's memory, and you're deciding what they forget.
+
+Tagline: "What we forget shapes who we become."
+
+--------------------------------------------------------------------------------
+
+## 2. CORE INSIGHT
+
+Central Question: 
+What does it mean to choose what we remember? Memory isn't a recording—it's an 
+act of continuous editing. Every time we recall something, we change it. This 
+game makes that invisible process visible and interactive.
+
+Why This Matters:
+Every player has experienced selective memory—their own or someone else's. 
+We've all been in situations where two people remember the same event 
+differently, where we've softened painful memories or sharpened grievances. 
+This game externalizes that internal process, making players complicit in 
+the construction of a narrative from imperfect, partial recollection.
+
+By establishing the player as a grandchild at a deathbed, the game grounds 
+this abstract concept in intimate, universal stakes. Most players have lost 
+or will lose grandparents. Many have sat in hospital rooms, asking for 
+stories, trying to capture something before it's gone. The player isn't 
+a detached observer—they're someone who will carry this version of the 
+story forward after Elena dies.
+
+The Truth That Emerges:
+There is no "true" memory. The person we become is shaped as much by what we 
+choose to forget as by what we remember. The player discovers that they cannot 
+preserve everything—erasing is mandatory to progress—and must live with the 
+story that remains. The final line—"This is how you remember the story she 
+told you"—reveals that even the act of receiving a story involves loss. The 
+player's memory of Elena's memory is yet another layer of erosion.
+
+--------------------------------------------------------------------------------
+
+## 3. MECHANIC-NARRATIVE INTEGRATION
+
+PRIMARY MECHANIC:
+The player uses their cursor as an eraser. They click and drag to erase portions 
+of hand-drawn illustrations. Each scene is a memory. The player MUST erase a 
+certain percentage of each scene to proceed to the next. They cannot erase 
+everything—some minimum must remain.
+
+HOW THE MECHANIC EMBODIES THE THEME:
+- The eraser IS forgetting. Not a symbol of it. The player performs the act.
+- The player must choose what to remove. They have agency but also constraint.
+- What remains determines the narration. The game reads back a different story 
+  based on which elements survive.
+- You cannot undo. Once erased, gone forever (no ctrl-z, no going back).
+- You cannot preserve everything. The game forces loss.
+
+WHAT THE PLAYER UNDERSTANDS BY THE END:
+At the start, players may try to "save" the important parts. By the end, they 
+realize: (1) they've been constructing a version of events, not preserving 
+truth, (2) different players will have created different stories from the 
+same raw material, and (3) the narrator—an elderly person recounting their 
+life—believes their constructed version completely.
+
+--------------------------------------------------------------------------------
+
+## 4. COMPLETE NARRATIVE DESIGN
+
+FRAME STORY:
+The player is a grandchild sitting at the bedside of their grandmother, Elena, 
+who is 83 and nearing the end of her life. The player has asked Elena to tell 
+the story of how she met their late grandfather, David. 
+
+The introduction establishes this scene directly—the player knows from the 
+start that they are prompting a dying woman to remember. The game is Elena's 
+attempt to recall her life, seen through the fragmented lens of aged memory.
+
+Each scene is a memory Elena is trying to access. The erasing represents the 
+natural decay and selection of memory over 50+ years. The player is, in a 
+sense, playing as time itself—or as Elena's own mind deciding what has 
+survived and what has faded. The player cannot control this; they can only 
+witness what remains.
+
+The emotional weight is established before gameplay begins: this is not an 
+abstract exercise but a specific, intimate moment between grandchild and 
+grandmother. What the player preserves will become the story they carry 
+forward after Elena is gone.
+
+THE FIVE SCENES (MEMORIES):
+
+Each scene is a simple illustration containing multiple "elements" (described 
+below). Based on which elements survive the erasing, different narration plays.
+
+------------------------------------------------------------------------
+SCENE 1: "The Meeting" (A college classroom, 1962)
+------------------------------------------------------------------------
+Setting: A lecture hall. Rows of desks. A professor at the front.
+
+Key Elements (each is a distinct drawable region):
+  A) Elena sitting alone, looking nervous
+  B) David in a nearby seat, glancing at her
+  C) A window showing rain outside  
+  D) Notes/textbook on Elena's desk
+  E) Other students in background
+  F) A clock on the wall showing 2:15
+
+Narration Logic:
+  - If A and B both remain: "I remember him looking at me. I was so nervous 
+    I pretended not to notice."
+  - If only A remains: "I was alone that day. So alone. I didn't know anyone."
+  - If only B remains: "There was a young man. I can picture his face but 
+    not where I was sitting."
+  - If C remains: "It was raining. I remember the rain."
+  - If D remains: "I was studying. Always studying."
+  - If neither A nor B: "It must have been an ordinary day. I can't picture it."
+
+Minimum to keep: 30% of scene
+Must erase: 50% of scene
+
+------------------------------------------------------------------------
+SCENE 2: "The First Date" (A small café, evening)
+------------------------------------------------------------------------
+Setting: A café table. Two cups of coffee. A window showing streetlights.
+
+Key Elements:
+  A) Elena and David sitting together
+  B) Two coffee cups (one nearly empty, one full)
+  C) David's hand reaching toward Elena's
+  D) A small flower in a vase on the table
+  E) A waiter in background
+  F) Rain on the window (connecting to Scene 1)
+
+Narration Logic:
+  - If A and C remain: "He reached for my hand. I let him take it."
+  - If A but not C: "We talked for hours. Just talked."
+  - If B remains: "I remember coffee. Bad coffee, actually. But we didn't care."
+  - If D remains: "There was a flower. A small one. He said it reminded him of me."
+  - If F remains: "Still raining. It rained so much that spring."
+  - If A is erased: "We must have gone somewhere. I wish I could see it."
+
+Minimum to keep: 25% of scene
+Must erase: 55% of scene
+
+------------------------------------------------------------------------
+SCENE 3: "The Proposal" (A park bench, autumn)
+------------------------------------------------------------------------
+Setting: A park bench under a tree. Fallen leaves. A ring box.
+
+Key Elements:
+  A) David on one knee
+  B) Elena sitting on bench, hands to her face
+  C) The ring box (open, ring visible)
+  D) Fallen leaves scattered around
+  E) Other people walking in background
+  F) A dog running past
+
+Narration Logic:
+  - If A and C remain: "He knelt down. The ring was his grandmother's."
+  - If A but not C: "He asked me something. The words... I can't hear them anymore."
+  - If B remains: "I was crying. Happy tears. I think they were happy."
+  - If only D remains: "It was autumn. The leaves were beautiful that year."
+  - If F remains: "There was a dog. Isn't that funny? I remember a dog."
+  - If A and B both erased: "He asked me somewhere outside. I said yes."
+
+Minimum to keep: 25%
+Must erase: 55%
+
+------------------------------------------------------------------------
+SCENE 4: "The Difficulty" (A kitchen, tense atmosphere)
+------------------------------------------------------------------------
+Setting: A kitchen. Two people on opposite sides. Broken dish on floor.
+
+Key Elements:
+  A) Elena by the sink, turned away
+  B) David by the door, hand raised (ambiguous—pleading or angry?)
+  C) Broken dish on floor
+  D) Child's drawing on refrigerator
+  E) Window showing night outside
+  F) Table with uneaten dinner
+
+Narration Logic:
+  - If A and B and C remain: "We fought. I don't remember why. Something broke."
+  - If A and B but not C: "We had hard times. Everyone does."
+  - If only A remains: "I was alone so often. Waiting."
+  - If only B remains: "He was always leaving. Or coming back. I confuse them now."
+  - If C remains: "Something broke. I can still hear it."
+  - If D remains: "The children. We stayed together for the children."
+  - If A and B both erased: "That year is hazy. We got through it somehow."
+
+Minimum to keep: 20%
+Must erase: 60%
+
+------------------------------------------------------------------------
+SCENE 5: "The End" (A hospital room, soft light)
+------------------------------------------------------------------------
+Setting: Hospital room. Bed with figure. Chair beside it. Window with sunlight.
+
+Key Elements:
+  A) David in the hospital bed
+  B) Elena sitting beside him, holding his hand
+  C) Heart monitor (flatlined)
+  D) Flowers on bedside table
+  E) A photograph on the table (of them young)
+  F) Sunlight through window
+
+Narration Logic:
+  - If A and B remain: "I was with him. At the end, I was there."
+  - If A but not B: "He was so tired. So small in that bed."
+  - If only B remains: "I held onto something. I don't remember letting go."
+  - If C remains: "The sound stopped. It's the silence I remember."
+  - If E remains: "We were so young once. I looked at that photo every day."
+  - If F remains: "There was sunlight. He always loved the sun."
+  - If A erased: "The room is empty now. In my mind, it's always empty."
+
+Minimum to keep: 20%
+Must erase: 60%
+
+------------------------------------------------------------------------
+ENDING SCENE (non-interactive)
+------------------------------------------------------------------------
+After Scene 5, the screen fades to black. Text appears based on what was 
+preserved across ALL scenes:
+
+ENDING CALCULATION:
+Count how many "connection moments" were preserved (both A and B elements in 
+Scenes 1, 2, 3, or 5; or A/B and D in Scene 4):
+
+4-5 connections preserved: 
+  "I had a good life. A happy life."
+  "Thank you for asking me to remember."
+  [Long pause]
+  "I think I'll rest now."
+
+2-3 connections preserved:
+  "We did our best. Both of us."
+  "Memory is strange. You hold onto such odd things."
+  [Long pause]  
+  "I hope I told it right."
+
+0-1 connections preserved:
+  "Fifty years. Where did they go?"
+  "I wish I could see his face. Just once more."
+  [Long pause]
+  "Was it like that? I'm not sure anymore."
+
+FINAL SCREEN:
+Black screen with white text:
+"What we forget shapes who we become."
+
+Then, after 3 seconds:
+"Elena passed away three days after this conversation."
+
+Then, after 3 more seconds:
+"This is how her grandchild remembers the story she told."
+
+[END]
+
+--------------------------------------------------------------------------------
+
+## 5. TECHNICAL SPECIFICATION
+
+DISPLAY:
+- Window size: 900 x 700 pixels
+- Aspect ratio: Fixed (no resize, or maintain ratio)
+- Background: Cream/off-white (#F5F5DC) to simulate paper
+- Art style: Black line drawings on cream background, simple and evocative
+
+VISUAL DESIGN:
+- All scenes are black line drawings (2-4px stroke width)
+- Elements are defined as regions (polygon hitboxes)
+- "Erased" areas show through to darker cream/aged paper (#E8E0CC)
+- Eraser cursor: circular, shows preview of area to erase
+- Eraser size: 40-50 pixel diameter
+
+INPUT:
+- Mouse only (laptop trackpad compatible)
+- Click and hold to erase (continuous while held)
+- Release to stop erasing
+- No keyboard input needed during gameplay
+- Spacebar OR click button to advance to next scene when ready
+
+GAME STATE (data to track):
+- current_scene: integer (0-5, where 5 is ending)
+- For each scene:
+  - original_pixels: total pixels in drawable area
+  - erased_pixels: number of pixels erased
+  - element_states: dictionary mapping element_id to percent_remaining
+- For ending calculation:
+  - connection_score: integer (0-5)
+
+ELEMENT DETECTION:
+Each element is defined by a polygon region. When player erases:
+1. Calculate what percentage of each element's region has been erased
+2. Element is considered "forgotten" if >70% erased
+3. Element is considered "remembered" if >40% remains
+
+UI ELEMENTS:
+- Progress indicator: "Memory clarity: XX%" showing how much remains
+- Minimum threshold line: Visual indicator when minimum-to-keep is reached
+- Erase requirement: "You must let go of more..." shown until minimum erased
+- Advance button: Appears only when erase requirement met
+- Scene title: Fades in at start of each scene ("The Meeting", etc.)
+
+AUDIO (optional but recommended):
+- Ambient: Soft static/white noise, like old recordings
+- Erasing sound: Soft scratching/pencil eraser sound
+- Narration: Text-to-speech or recorded voice (elderly female)
+- If no audio: All narration appears as text
+
+ASSETS NEEDED:
+
+1. Five scene illustrations (can be procedurally drawn or image files):
+   - scene1_meeting.png (900x500 pixels)
+   - scene2_date.png
+   - scene3_proposal.png
+   - scene4_difficulty.png
+   - scene5_end.png
+
+2. Element region definitions (polygons for each element A-F per scene):
+   - Defined in code or JSON file
+   - Each polygon: list of [x,y] coordinates
+
+3. Narration text (all provided above)
+
+4. Fonts:
+   - Narration: Serif font (Georgia, Times, or similar)
+   - UI: Simple sans-serif (Arial, Helvetica)
+
+5. Cursor image:
+   - eraser_cursor.png (50x50, circular eraser graphic)
+
+FRAME RATE:
+- 30 FPS sufficient
+- Erasing should feel smooth and responsive
+
+TIMING BREAKDOWN (approximate):
+- Introduction sequence: 45-60 seconds
+- Each scene (erasing + narration): 45-60 seconds × 5 scenes = 4-5 minutes
+- Ending sequence: 45-60 seconds
+- Total playtime: 5-7 minutes
+
+--------------------------------------------------------------------------------
+
+## 6. IMPLEMENTATION PSEUDOCODE
+
+```
+================================================================================
+MAIN GAME STRUCTURE
+================================================================================
+
+CONSTANTS:
+    WINDOW_WIDTH = 900
+    WINDOW_HEIGHT = 700
+    SCENE_AREA_HEIGHT = 500  # Top portion for scene
+    UI_AREA_HEIGHT = 200     # Bottom portion for narration/UI
+    ERASER_RADIUS = 25
+    
+    # Intro timing (in seconds)
+    INTRO_FADE_DURATION = 1.0
+    INTRO_TEXT_DISPLAY = 3.0
+    INTRO_LONG_DISPLAY = 4.0
+    
+    INTRO_SCREENS = [
+        {
+            lines: ["A hospital room.", "Late afternoon light."],
+            duration: 3.0,
+            font_size: 16,
+            color: "#555555"
+        },
+        {
+            lines: ["You sit beside your grandmother's bed.", "", 
+                    "She is 83 years old.", "She doesn't have much time left."],
+            duration: 4.0,
+            font_size: 16,
+            color: "#555555"
+        },
+        {
+            lines: ["\"Grandma... tell me about Grandpa.", "How did you two meet?\""],
+            duration: 3.0,
+            font_size: 18,
+            color: "#333333",
+            italic: True
+        },
+        {
+            lines: ["She closes her eyes.", "", "She tries to remember."],
+            duration: 3.0,
+            font_size: 16,
+            color: "#555555"
+        },
+        {
+            lines: ["But fifty years is a long time.", "", 
+                    "Memory fades. Details blur.", "She cannot hold onto everything."],
+            duration: 4.0,
+            font_size: 15,
+            color: "#666666"
+        },
+        {
+            lines: ["What she tells you will depend", "on what she can still see."],
+            duration: 3.0,
+            font_size: 16,
+            color: "#555555"
+        }
+    ]
+    
+    TITLE_SCREEN = {
+        title: "ERASER",
+        instructions: [
+            "Click and drag to let memories fade.",
+            "Some things must be forgotten to move on.",
+            "What remains will become her story."
+        ],
+        prompt: "[Click to begin]"
+    }
+    
+    SCENES = [
+        {
+            name: "The Meeting",
+            image: "scene1_meeting.png",
+            min_keep: 0.30,
+            min_erase: 0.50,
+            elements: {
+                "A": {polygon: [...], description: "Elena"},
+                "B": {polygon: [...], description: "David"},
+                "C": {polygon: [...], description: "Rain"},
+                "D": {polygon: [...], description: "Notes"},
+                "E": {polygon: [...], description: "Students"},
+                "F": {polygon: [...], description: "Clock"}
+            },
+            narration_rules: [
+                {condition: "A.remaining > 0.4 AND B.remaining > 0.4", 
+                 text: "I remember him looking at me..."},
+                {condition: "A.remaining > 0.4 AND B.remaining <= 0.4",
+                 text: "I was alone that day..."},
+                // ... more rules
+            ]
+        },
+        // ... scenes 2-5 defined similarly
+    ]
+
+GAME STATE:
+    current_scene_index = 0
+    eraser_mask = 2D boolean array [WINDOW_WIDTH][SCENE_AREA_HEIGHT]
+    total_scene_pixels = 0
+    erased_pixel_count = 0
+    element_remaining = {} # tracks % remaining for each element
+    game_phase = "INTRO"  # INTRO, PLAYING, NARRATING, ENDING
+    connection_score = 0
+    narration_text = ""
+    can_advance = False
+
+================================================================================
+INITIALIZATION
+================================================================================
+
+function initialize_game():
+    create_window(WINDOW_WIDTH, WINDOW_HEIGHT)
+    set_background_color("#F5F5DC")  # Cream paper color
+    load_all_scene_images()
+    load_eraser_cursor()
+    game_phase = "INTRO"
+    show_intro_screen()
+
+function show_intro_screen():
+    # INTRO SEQUENCE - Multiple screens establishing narrative
+    # Uses INTRO_SCREENS data structure defined in constants
+    
+    for each screen in INTRO_SCREENS:
+        fade_from_black(duration=INTRO_FADE_DURATION)
+        
+        y_offset = WINDOW_HEIGHT/2 - (screen.lines.length * 20)
+        for each line in screen.lines:
+            if line != "":
+                draw_text(line, WINDOW_WIDTH/2, y_offset, 
+                         centered=True, 
+                         font_size=screen.font_size, 
+                         color=screen.color,
+                         italic=screen.italic or False)
+            y_offset += 35
+        
+        wait(screen.duration)
+        fade_to_black(duration=INTRO_FADE_DURATION)
+        wait(0.5 seconds)
+    
+    # --- TITLE SCREEN (waits for input) ---
+    fade_from_black(duration=INTRO_FADE_DURATION)
+    
+    # Title
+    draw_text(TITLE_SCREEN.title, WINDOW_WIDTH/2, WINDOW_HEIGHT/2 - 80,
+              centered=True, font_size=32, color="#333333")
+    
+    # Instructions
+    y_pos = WINDOW_HEIGHT/2
+    for each line in TITLE_SCREEN.instructions:
+        draw_text(line, WINDOW_WIDTH/2, y_pos,
+                  centered=True, font_size=14, color="#666666")
+        y_pos += 28
+    
+    # Prompt
+    draw_text(TITLE_SCREEN.prompt, WINDOW_WIDTH/2, WINDOW_HEIGHT/2 + 120,
+              centered=True, font_size=12, color="#999999")
+    
+    wait_for_click()
+    fade_to_black(duration=INTRO_FADE_DURATION)
+    game_phase = "PLAYING"
+    load_scene(0)
+
+================================================================================
+SCENE MANAGEMENT
+================================================================================
+
+function load_scene(scene_index):
+    current_scene = SCENES[scene_index]
+    
+    # Reset eraser mask (all false = nothing erased)
+    eraser_mask = new 2D array [WINDOW_WIDTH][SCENE_AREA_HEIGHT], all False
+    
+    # Calculate total erasable pixels (non-transparent pixels in scene image)
+    total_scene_pixels = count_drawable_pixels(current_scene.image)
+    erased_pixel_count = 0
+    
+    # Initialize element tracking
+    for each element in current_scene.elements:
+        element_remaining[element.id] = 1.0  # 100% remaining
+    
+    can_advance = False
+    
+    # Display scene title briefly
+    fade_in_text(current_scene.name, duration=2 seconds)
+
+function calculate_element_remaining(element):
+    element_pixels = pixels_in_polygon(element.polygon)
+    erased_in_element = 0
+    
+    for each pixel in element_pixels:
+        if eraser_mask[pixel.x][pixel.y] == True:
+            erased_in_element += 1
+    
+    return 1.0 - (erased_in_element / element_pixels.count)
+
+function check_advance_conditions():
+    percent_erased = erased_pixel_count / total_scene_pixels
+    percent_remaining = 1.0 - percent_erased
+    
+    min_erase = current_scene.min_erase
+    min_keep = current_scene.min_keep
+    
+    # Can advance if: erased enough AND kept enough
+    can_advance = (percent_erased >= min_erase) AND (percent_remaining >= min_keep)
+    
+    return can_advance
+
+================================================================================
+ERASING MECHANIC
+================================================================================
+
+function handle_mouse_drag(mouse_x, mouse_y):
+    if game_phase != "PLAYING":
+        return
+    
+    if mouse_y > SCENE_AREA_HEIGHT:
+        return  # Don't erase in UI area
+    
+    # Check if erasing would go below minimum
+    potential_erase = calculate_potential_erase(mouse_x, mouse_y, ERASER_RADIUS)
+    new_remaining = (total_scene_pixels - erased_pixel_count - potential_erase) / total_scene_pixels
+    
+    if new_remaining < current_scene.min_keep:
+        # Show feedback: "You must keep some of this memory"
+        show_temporary_message("Some things cannot be forgotten.")
+        return
+    
+    # Perform the erase
+    for each pixel in circle(mouse_x, mouse_y, ERASER_RADIUS):
+        if pixel is within scene bounds AND pixel is drawable:
+            if eraser_mask[pixel.x][pixel.y] == False:
+                eraser_mask[pixel.x][pixel.y] = True
+                erased_pixel_count += 1
+    
+    # Update element tracking
+    for each element in current_scene.elements:
+        element_remaining[element.id] = calculate_element_remaining(element)
+    
+    # Update display
+    redraw_scene()
+    check_advance_conditions()
+
+function redraw_scene():
+    # Draw original scene image
+    draw_image(current_scene.image, 0, 0)
+    
+    # Apply erase mask (draw "erased" color over erased pixels)
+    for x from 0 to WINDOW_WIDTH:
+        for y from 0 to SCENE_AREA_HEIGHT:
+            if eraser_mask[x][y] == True:
+                draw_pixel(x, y, "#E8E0CC")  # Aged paper color
+
+================================================================================
+UI RENDERING
+================================================================================
+
+function draw_ui():
+    # UI area starts at y = SCENE_AREA_HEIGHT
+    ui_top = SCENE_AREA_HEIGHT
+    
+    # Draw separator line
+    draw_line(0, ui_top, WINDOW_WIDTH, ui_top, color="#999999")
+    
+    # Memory clarity meter
+    percent_remaining = 1.0 - (erased_pixel_count / total_scene_pixels)
+    meter_width = 200
+    meter_height = 20
+    meter_x = 50
+    meter_y = ui_top + 30
+    
+    draw_rect_outline(meter_x, meter_y, meter_width, meter_height, "#666666")
+    draw_rect_filled(meter_x, meter_y, meter_width * percent_remaining, meter_height, "#8B7355")
+    draw_text("Memory clarity: " + int(percent_remaining * 100) + "%", 
+              meter_x, meter_y - 20, font_size=14)
+    
+    # Minimum markers
+    min_keep_x = meter_x + (meter_width * current_scene.min_keep)
+    draw_line(min_keep_x, meter_y, min_keep_x, meter_y + meter_height, "#FF6B6B", width=2)
+    
+    # Instructions/status
+    percent_erased = erased_pixel_count / total_scene_pixels
+    
+    if percent_erased < current_scene.min_erase:
+        draw_text("Let go of more to continue...", 
+                  WINDOW_WIDTH/2, ui_top + 80, centered=True, color="#666666")
+    else if can_advance:
+        draw_button("Continue →", WINDOW_WIDTH/2, ui_top + 80)
+        draw_text("Click 'Continue' or press SPACE", 
+                  WINDOW_WIDTH/2, ui_top + 120, centered=True, color="#666666")
+
+================================================================================
+NARRATION SYSTEM
+================================================================================
+
+function generate_narration():
+    narration_text = ""
+    
+    for each rule in current_scene.narration_rules:
+        if evaluate_condition(rule.condition):
+            narration_text = rule.text
+            break  # Use first matching rule
+    
+    # If no rules matched, use default
+    if narration_text == "":
+        narration_text = "That time is hazy now. I can barely see it."
+    
+    return narration_text
+
+function evaluate_condition(condition_string):
+    # Parse conditions like "A.remaining > 0.4 AND B.remaining > 0.4"
+    # Replace element references with actual values
+    # Return boolean result
+    
+    # Example implementation:
+    condition = condition_string
+    for each element_id in element_remaining:
+        condition = replace(condition, 
+                           element_id + ".remaining", 
+                           str(element_remaining[element_id]))
+    
+    return eval(condition)  # Evaluate boolean expression
+
+function show_narration():
+    game_phase = "NARRATING"
+    text = generate_narration()
+    
+    # Check for connection moment (both people remembered together)
+    if current_scene_index != 3:  # Scene 4 has different logic
+        if element_remaining["A"] > 0.4 AND element_remaining["B"] > 0.4:
+            connection_score += 1
+    else:  # Scene 4: connection if A, B, and D all remain
+        if element_remaining["A"] > 0.4 AND element_remaining["B"] > 0.4 AND element_remaining["D"] > 0.4:
+            connection_score += 1
+    
+    # Display narration with typewriter effect
+    display_area_y = SCENE_AREA_HEIGHT + 100
+    typewriter_text(text, WINDOW_WIDTH/2, display_area_y, 
+                   chars_per_second=30, centered=True)
+    
+    # Wait for completion + pause
+    wait(2 seconds after text complete)
+    
+    # Show continue prompt
+    draw_text("[Click to continue]", WINDOW_WIDTH/2, WINDOW_HEIGHT - 30, 
+              centered=True, color="#999999")
+    wait_for_click()
+    
+    advance_scene()
+
+function advance_scene():
+    current_scene_index += 1
+    
+    if current_scene_index >= SCENES.length:
+        show_ending()
+    else:
+        # Transition effect
+        fade_to_black(duration=1 second)
+        load_scene(current_scene_index)
+        fade_from_black(duration=1 second)
+        game_phase = "PLAYING"
+
+================================================================================
+ENDING SEQUENCE
+================================================================================
+
+function show_ending():
+    game_phase = "ENDING"
+    
+    fade_to_black(duration=2 seconds)
+    
+    # Select ending text based on connection score
+    if connection_score >= 4:
+        ending_lines = [
+            "I had a good life. A happy life.",
+            "Thank you for asking me to remember.",
+            "",
+            "I think I'll rest now."
+        ]
+    else if connection_score >= 2:
+        ending_lines = [
+            "We did our best. Both of us.",
+            "Memory is strange. You hold onto such odd things.",
+            "",
+            "I hope I told it right."
+        ]
+    else:
+        ending_lines = [
+            "Fifty years. Where did they go?",
+            "I wish I could see his face. Just once more.",
+            "",
+            "Was it like that? I'm not sure anymore."
+        ]
+    
+    # Display each line with pauses
+    y_position = WINDOW_HEIGHT / 2 - 60
+    for each line in ending_lines:
+        if line == "":
+            wait(2 seconds)
+        else:
+            fade_in_text(line, WINDOW_WIDTH/2, y_position, 
+                        duration=1 second, centered=True, color="#FFFFFF")
+            y_position += 40
+            wait(2.5 seconds)
+    
+    wait(3 seconds)
+    fade_out_all_text(duration=1 second)
+    
+    # Final cards
+    wait(1 second)
+    fade_in_text("What we forget shapes who we become.", 
+                WINDOW_WIDTH/2, WINDOW_HEIGHT/2, 
+                duration=1.5 seconds, centered=True, color="#CCCCCC")
+    
+    wait(4 seconds)
+    fade_out_text(duration=1 second)
+    
+    wait(1 second)
+    fade_in_text("Elena passed away three days later.",
+                WINDOW_WIDTH/2, WINDOW_HEIGHT/2 - 20,
+                duration=1.5 seconds, centered=True, color="#AAAAAA")
+    
+    wait(3 seconds)
+    
+    fade_in_text("This is how you remember the story she told you.",
+                WINDOW_WIDTH/2, WINDOW_HEIGHT/2 + 20,
+                duration=1.5 seconds, centered=True, color="#AAAAAA")
+    
+    wait(5 seconds)
+    
+    # End screen
+    fade_to_black(duration=2 seconds)
+    draw_text("ERASER", WINDOW_WIDTH/2, WINDOW_HEIGHT/2 - 20, 
+              centered=True, color="#666666", font_size=24)
+    draw_text("[Click to close]", WINDOW_WIDTH/2, WINDOW_HEIGHT/2 + 20,
+              centered=True, color="#444444", font_size=14)
+    
+    wait_for_click()
+    close_game()
+
+================================================================================
+MAIN GAME LOOP
+================================================================================
+
+function main():
+    initialize_game()
+    
+    while game_running:
+        # Handle input
+        if mouse_button_held AND game_phase == "PLAYING":
+            handle_mouse_drag(mouse_x, mouse_y)
+        
+        if click_detected:
+            if game_phase == "INTRO":
+                # Handled by show_intro_screen
+                pass
+            else if game_phase == "PLAYING" AND can_advance:
+                if click_on_continue_button() OR key_pressed(SPACE):
+                    show_narration()
+            else if game_phase == "NARRATING":
+                # Handled by show_narration
+                pass
+        
+        # Render
+        if game_phase == "PLAYING":
+            clear_screen("#F5F5DC")
+            redraw_scene()
+            draw_ui()
+        
+        # Update display
+        refresh_display()
+        wait_for_frame(target_fps=30)
+    
+    cleanup_and_exit()
+
+================================================================================
+HELPER FUNCTIONS
+================================================================================
+
+function pixels_in_polygon(polygon):
+    # Returns list of all pixel coordinates inside the polygon
+    # Use standard point-in-polygon algorithm
+    result = []
+    bounding_box = get_bounding_box(polygon)
+    
+    for x from bounding_box.min_x to bounding_box.max_x:
+        for y from bounding_box.min_y to bounding_box.max_y:
+            if point_in_polygon(x, y, polygon):
+                result.append({x, y})
+    
+    return result
+
+function point_in_polygon(x, y, polygon):
+    # Ray casting algorithm
+    inside = False
+    n = polygon.length
+    j = n - 1
+    
+    for i from 0 to n-1:
+        if ((polygon[i].y > y) != (polygon[j].y > y)) AND
+           (x < (polygon[j].x - polygon[i].x) * (y - polygon[i].y) / 
+                (polygon[j].y - polygon[i].y) + polygon[i].x):
+            inside = NOT inside
+        j = i
+    
+    return inside
+
+function typewriter_text(text, x, y, chars_per_second, centered):
+    displayed = ""
+    for each char in text:
+        displayed += char
+        clear_text_area()
+        draw_text(displayed, x, y, centered=centered, color="#333333")
+        refresh_display()
+        wait(1.0 / chars_per_second seconds)
+
+function fade_in_text(text, x, y, duration, centered, color):
+    steps = 30
+    for i from 0 to steps:
+        alpha = i / steps
+        draw_text(text, x, y, centered=centered, color=color, alpha=alpha)
+        refresh_display()
+        wait(duration / steps)
+
+function fade_to_black(duration):
+    steps = 30
+    for i from 0 to steps:
+        alpha = i / steps
+        draw_rect_filled(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, "#000000", alpha=alpha)
+        refresh_display()
+        wait(duration / steps)
+
+================================================================================
+COMPLETE NARRATION RULES REFERENCE
+================================================================================
+
+SCENE 1 - "The Meeting" rules (in priority order):
+1. A > 0.4 AND B > 0.4: "I remember him looking at me. I was so nervous I pretended not to notice."
+2. A > 0.4 AND B <= 0.4: "I was alone that day. So alone. I didn't know anyone."
+3. A <= 0.4 AND B > 0.4: "There was a young man. I can picture his face but not where I was sitting."
+4. C > 0.4: "It was raining. I remember the rain."
+5. D > 0.4: "I was studying. Always studying."
+6. DEFAULT: "It must have been an ordinary day. I can't picture it."
+
+SCENE 2 - "The First Date" rules:
+1. A > 0.4 AND C > 0.4: "He reached for my hand. I let him take it."
+2. A > 0.4 AND C <= 0.4: "We talked for hours. Just talked."
+3. D > 0.4: "There was a flower. A small one. He said it reminded me of spring."
+4. B > 0.4: "I remember coffee. Bad coffee, actually. But we didn't care."
+5. F > 0.4: "Still raining. It rained so much that spring."
+6. A <= 0.4: "We must have gone somewhere. I wish I could see it."
+7. DEFAULT: "The evening is a blur. But I know I was happy."
+
+SCENE 3 - "The Proposal" rules:
+1. A > 0.4 AND C > 0.4: "He knelt down. The ring was his grandmother's."
+2. A > 0.4 AND C <= 0.4: "He asked me something. The words... I can't hear them anymore."
+3. B > 0.4: "I was crying. Happy tears. I think they were happy."
+4. D > 0.4: "It was autumn. The leaves were beautiful that year."
+5. F > 0.4: "There was a dog. Isn't that funny? A dog running past."
+6. A <= 0.4 AND B <= 0.4: "He asked me somewhere outside. I said yes."
+7. DEFAULT: "I know he asked. I know I answered. The rest is gone."
+
+SCENE 4 - "The Difficulty" rules:
+1. A > 0.4 AND B > 0.4 AND C > 0.4: "We fought. I don't remember why. Something broke."
+2. A > 0.4 AND B > 0.4 AND C <= 0.4: "We had hard times. Everyone does."
+3. A > 0.4 AND B <= 0.4: "I was alone so often. Waiting."
+4. A <= 0.4 AND B > 0.4: "He was always leaving. Or coming back. I confuse them now."
+5. C > 0.4: "Something broke. I can still hear it."
+6. D > 0.4: "The children. We stayed together for the children."
+7. A <= 0.4 AND B <= 0.4: "That year is hazy. We got through it somehow."
+8. DEFAULT: "There were hard years. I don't like to think about them."
+
+SCENE 5 - "The End" rules:
+1. A > 0.4 AND B > 0.4: "I was with him. At the end, I was there."
+2. A > 0.4 AND B <= 0.4: "He was so tired. So small in that bed."
+3. A <= 0.4 AND B > 0.4: "I held onto something. I don't remember letting go."
+4. C > 0.4: "The sound stopped. It's the silence I remember."
+5. E > 0.4: "We were so young once. I looked at that photo every day."
+6. F > 0.4: "There was sunlight. He always loved the sun."
+7. A <= 0.4: "The room is empty now. In my mind, it's always empty."
+8. DEFAULT: "It ended. Everything ends."
+
+================================================================================
+END OF DESIGN DOCUMENT
+================================================================================

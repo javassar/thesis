@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERASER - A Game About Memory</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #2c2c2c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Georgia, serif;
+        }
+
+        #gameContainer {
+            position: relative;
+        }
+
+        canvas {
+            border: 2px solid #1a1a1a;
+            cursor: none;
+            display: block;
+        }
+
+        #cursor {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 2px solid #666;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            background: rgba(232, 224, 204, 0.3);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="900" height="700"></canvas>
+        <div id="cursor"></div>
+    </div>
+
+    <script>
+        // ===== CONSTANTS =====
+        const WINDOW_WIDTH = 900;
+        const WINDOW_HEIGHT = 700;
+        const SCENE_AREA_HEIGHT = 500;
+        const UI_AREA_HEIGHT = 200;
+        const ERASER_RADIUS = 25;
+
+        const COLORS = {
+            paper: '#F5F5DC',
+            erased: '#E8E0CC',
+            black: '#000000',
+            darkGray: '#333333',
+            gray: '#666666',
+            lightGray: '#999999',
+            brown: '#8B7355',
+            red: '#FF6B6B',
+            white: '#FFFFFF'
+        };
+
+        // ===== GAME STATE =====
+        let canvas, ctx;
+        let cursorDiv;
+        let gamePhase = 'INTRO'; // INTRO, PLAYING, NARRATING, ENDING
+        let currentSceneIndex = 0;
+        let eraserMask = [];
+        let totalScenePixels = 0;
+        let erasedPixelCount = 0;
+        let elementRemaining = {};
+        let connectionScore = 0;
+        let canAdvance = false;
+        let mouseDown = false;
+        let sceneImage = null;
+        let scenePixels = null;
+        let messageText = '';
+        let messageTimer = 0;
+
+        // ===== SCENE DEFINITIONS =====
+        const SCENES = [
+            {
+                name: "The Meeting",
+                minKeep: 0.30,
+                minErase: 0.50,
+                elements: {
+                    'A': { description: "Elena", polygon: [[200, 200], [280, 200], [280, 350], [200, 350]] },
+                    'B': { description: "David", polygon: [[350, 180], [430, 180], [430, 330], [350, 330]] },
+                    'C': { description: "Rain", polygon: [[600, 50], [800, 50], [800, 200], [600, 200]] },
+                    'D': { description: "Notes", polygon: [[180, 320], [290, 320], [290, 360], [180, 360]] },
+                    'E': { description: "Students", polygon: [[80, 250], [150, 250], [150, 350], [80, 350]] },
+                    'F': { description: "Clock", polygon: [[700, 80], [780, 80], [780, 160], [700, 160]] }
+                },
+                narrationRules: [
+                    { condition: (e) => e.A > 0.4 && e.B > 0.4, text: "I remember him looking at me. I was so nervous I pretended not to notice." },
+                    { condition: (e) => e.A > 0.4 && e.B <= 0.4, text: "I was alone that day. So alone. I didn't know anyone." },
+                    { condition: (e) => e.A <= 0.4 && e.B > 0.4, text: "There was a young man. I can picture his face but not where I was sitting." },
+                    { condition: (e) => e.C > 0.4, text: "It was raining. I remember the rain." },
+                    { condition: (e) => e.D > 0.4, text: "I was studying. Always studying." },
+                    { condition: () => true, text: "It must have been an ordinary day. I can't picture it." }
+                ]
+            },
+            {
+                name: "The First Date",
+                minKeep: 0.25,
+                minErase: 0.55,
+                elements: {
+                    'A': { description: "Elena and David", polygon: [[250, 200], [450, 200], [450, 400], [250, 400]] },
+                    'B': { description: "Coffee cups", polygon: [[300, 280], [400, 280], [400, 320], [300, 320]] },
+                    'C': { description: "Hand reach", polygon: [[350, 320], [420, 320], [420, 370], [350, 370]] },
+                    'D': { description: "Flower", polygon: [[340, 260], [365, 260], [365, 300], [340, 300]] },
+                    'E': { description: "Waiter", polygon: [[600, 250], [680, 250], [680, 400], [600, 400]] },
+                    'F': { description: "Rain on window", polygon: [[550, 80], [750, 80], [750, 180], [550, 180]] }
+                },
+                narrationRules: [
+                    { condition: (e) => e.A > 0.4 && e.C > 0.4, text: "He reached for my hand. I let him take it." },
+                    { condition: (e) => e.A > 0.4 && e.C <= 0.4, text: "We talked for hours. Just talked." },
+                    { condition: (e) => e.D > 0.4, text: "There was a flower. A small one. He said it reminded him of spring." },
+                    { condition: (e) => e.B > 0.4, text: "I remember coffee. Bad coffee, actually. But we didn't care." },
+                    { condition: (e) => e.F > 0.4, text: "Still raining. It rained so much that spring." },
+                    { condition: (e) => e.A <= 0.4, text: "We must have gone somewhere. I wish I could see it." },
+                    { condition: () => true, text: "The evening is a blur. But I know I was happy." }
+                ]
+            },
+            {
+                name: "The Proposal",
+                minKeep: 0.25,
+                minErase: 0.55,
+                elements: {
+                    'A': { description: "David kneeling", polygon: [[350, 280], [450, 280], [450, 400], [350, 400]] },
+                    'B': { description: "Elena on bench", polygon: [[200, 220], [320, 220], [320, 350], [200, 350]] },
+                    'C': { description: "Ring box", polygon: [[380, 350], [430, 350], [430, 380], [380, 380]] },
+                    'D': { description: "Fallen leaves", polygon: [[150, 380], [700, 380], [700, 450], [150, 450]] },
+                    'E': { description: "People walking", polygon: [[600, 200], [750, 200], [750, 350], [600, 350]] },
+                    'F': { description: "Dog", polygon: [[100, 350], [180, 350], [180, 420], [100, 420]] }
+                },
+                narrationRules: [
+                    { condition: (e) => e.A > 0.4 && e.C > 0.4, text: "He knelt down. The ring was his grandmother's." },
+                    { condition: (e) => e.A > 0.4 && e.C <= 0.4, text: "He asked me something. The words... I can't hear them anymore." },
+                    { condition: (e) => e.B > 0.4, text: "I was crying. Happy tears. I think they were happy." },
+                    { condition: (e) => e.D > 0.4, text: "It was autumn. The leaves were beautiful that year." },
+                    { condition: (e) => e.F > 0.4, text: "There was a dog. Isn't that funny? A dog running past." },
+                    { condition: (e) => e.A <= 0.4 && e.B <= 0.4, text: "He asked me somewhere outside. I said yes." },
+                    { condition: () => true, text: "I know he asked. I know I answered. The rest is gone." }
+                ]
+            },
+            {
+                name: "The Difficulty",
+                minKeep: 0.20,
+                minErase: 0.60,
+                elements: {
+                    'A': { description: "Elena at sink", polygon: [[150, 220], [250, 220], [250, 400], [150, 400]] },
+                    'B': { description: "David at door", polygon: [[600, 200], [700, 200], [700, 400], [600, 400]] },
+                    'C': { description: "Broken dish", polygon: [[350, 380], [450, 380], [450, 430], [350, 430]] },
+                    'D': { description: "Child's drawing", polygon: [[500, 120], [580, 120], [580, 200], [500, 200]] },
+                    'E': { description: "Night window", polygon: [[280, 80], [420, 80], [420, 180], [280, 180]] },
+                    'F': { description: "Uneaten dinner", polygon: [[350, 250], [500, 250], [500, 300], [350, 300]] }
+                },
+                narrationRules: [
+                    { condition: (e) => e.A > 0.4 && e.B > 0.4 && e.C > 0.4, text: "We fought. I don't remember why. Something broke." },
+                    { condition: (e) => e.A > 0.4 && e.B > 0.4 && e.C <= 0.4, text: "We had hard times. Everyone does." },
+                    { condition: (e) => e.A > 0.4 && e.B <= 0.4, text: "I was alone so often. Waiting." },
+                    { condition: (e) => e.A <= 0.4 && e.B > 0.4, text: "He was always leaving. Or coming back. I confuse them now." },
+                    { condition: (e) => e.C > 0.4, text: "Something broke. I can still hear it." },
+                    { condition: (e) => e.D > 0.4, text: "The children. We stayed together for the children." },
+                    { condition: (e) => e.A <= 0.4 && e.B <= 0.4, text: "That year is hazy. We got through it somehow." },
+                    { condition: () => true, text: "There were hard years. I don't like to think about them." }
+                ]
+            },
+            {
+                name: "The End",
+                minKeep: 0.20,
+                minErase: 0.60,
+                elements: {
+                    'A': { description: "David in bed", polygon: [[300, 220], [500, 220], [500, 380], [300, 380]] },
+                    'B': { description: "Elena holding hand", polygon: [[500, 280], [620, 280], [620, 380], [500, 380]] },
+                    'C': { description: "Flatline monitor", polygon: [[200, 150], [350, 150], [350, 200], [200, 200]] },
+                    'D': { description: "Flowers", polygon: [[620, 240], [720, 240], [720, 320], [620, 320]] },
+                    'E': { description: "Photo", polygon: [[650, 350], [750, 350], [750, 420], [650, 420]] },
+                    'F': { description: "Sunlight", polygon: [[100, 80], [250, 80], [250, 300], [100, 300]] }
+                },
+                narrationRules: [
+                    { condition: (e) => e.A > 0.4 && e.B > 0.4, text: "I was with him. At the end, I was there." },
+                    { condition: (e) => e.A > 0.4 && e.B <= 0.4, text: "He was so tired. So small in that bed." },
+                    { condition: (e) => e.A <= 0.4 && e.B > 0.4, text: "I held onto something. I don't remember letting go." },
+                    { condition: (e) => e.C > 0.4, text: "The sound stopped. It's the silence I remember." },
+                    { condition: (e) => e.E > 0.4, text: "We were so young once. I looked at that photo every day." },
+                    { condition: (e) => e.F > 0.4, text: "There was sunlight. He always loved the sun." },
+                    { condition: (e) => e.A <= 0.4, text: "The room is empty now. In my mind, it's always empty." },
+                    { condition: () => true, text: "It ended. Everything ends." }
+                ]
+            }
+        ];
+
+        // ===== INITIALIZATION =====
+        function init() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            cursorDiv = document.getElementById('cursor');
+
+            // Mouse events
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseleave', handleMouseLeave);
+            canvas.addEventListener('click', handleClick);
+
+            // Keyboard events
+            document.addEventListener('keydown', handleKeyDown);
+
+            showIntroScreen();
+        }
+
+        // ===== INTRO SCREEN =====
+        function showIntroScreen() {
+            gamePhase = 'INTRO';
+            ctx.fillStyle = COLORS.paper;
+            ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            ctx.fillStyle = COLORS.darkGray;
+            ctx.font = '48px Georgia';
+            ctx.textAlign = 'center';
+            ctx.fillText('ERASER', WINDOW_WIDTH / 2, 150);
+
+            ctx.font = '18px Georgia';
+            ctx.fillText('An elderly woman is trying to remember.', WINDOW_WIDTH / 2, 250);
+            ctx.fillText('Help her hold onto what matters.', WINDOW_WIDTH / 2, 285);
+
+            ctx.font = '16px Georgia';
+            ctx.fillText('Click and drag to erase.', WINDOW_WIDTH / 2, 350);
+            ctx.fillText('Some things must be let go.', WINDOW_WIDTH / 2, 380);
+            ctx.fillText('Choose carefully—there is no undo.', WINDOW_WIDTH / 2, 410);
+
+            ctx.fillStyle = COLORS.gray;
+            ctx.font = '14px Georgia';
+            ctx.fillText('[Click anywhere to begin]', WINDOW_WIDTH / 2, 550);
+        }
+
+        // ===== SCENE MANAGEMENT =====
+        function loadScene(sceneIndex) {
+            currentSceneIndex = sceneIndex;
+            const scene = SCENES[sceneIndex];
+
+            // Initialize eraser mask
+            eraserMask = new Array(WINDOW_WIDTH);
+            for (let x = 0; x < WINDOW_WIDTH; x++) {
+                eraserMask[x] = new Array(SCENE_AREA_HEIGHT).fill(false);
+            }
+
+            erasedPixelCount = 0;
+            canAdvance = false;
+            messageText = '';
+
+            // Initialize element tracking
+            elementRemaining = {};
+            for (let elemId in scene.elements) {
+                elementRemaining[elemId] = 1.0;
+            }
+
+            // Draw the scene
+            drawScene();
+
+            // Show scene title
+            setTimeout(() => {
+                drawScene();
+                drawUI();
+            }, 2000);
+        }
+
+        function drawScene() {
+            const scene = SCENES[currentSceneIndex];
+
+            // Clear and draw base
+            ctx.fillStyle = COLORS.paper;
+            ctx.fillRect(0, 0, WINDOW_WIDTH, SCENE_AREA_HEIGHT);
+
+            // Draw scene title at top
+            ctx.fillStyle = COLORS.lightGray;
+            ctx.font = '24px Georgia';
+            ctx.textAlign = 'center';
+            ctx.fillText(scene.name, WINDOW_WIDTH / 2, 40);
+
+            // Draw scene elements (simplified representations)
+            ctx.strokeStyle = COLORS.black;
+            ctx.lineWidth = 3;
+            ctx.fillStyle = 'rgba(0,0,0,0)';
+
+            for (let elemId in scene.elements) {
+                const elem = scene.elements[elemId];
+                const poly = elem.polygon;
+
+                ctx.beginPath();
+                ctx.moveTo(poly[0][0], poly[0][1]);
+                for (let i = 1; i < poly.length; i++) {
+                    ctx.lineTo(poly[i][0], poly[i][1]);
+                }
+                ctx.closePath();
+                ctx.stroke();
+
+                // Add simple labels
+                const centerX = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
+                const centerY = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
+                ctx.fillStyle = COLORS.lightGray;
+                ctx.font = '12px Arial';
+                ctx.fillText(elem.description, centerX, centerY);
+            }
+
+            // Apply eraser mask
+            ctx.fillStyle = COLORS.erased;
+            for (let x = 0; x < WINDOW_WIDTH; x++) {
+                for (let y = 0; y < SCENE_AREA_HEIGHT; y++) {
+                    if (eraserMask[x][y]) {
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+
+            // Calculate total scene pixels (count drawable pixels)
+            if (totalScenePixels === 0) {
+                totalScenePixels = countDrawablePixels();
+            }
+        }
+
+        function countDrawablePixels() {
+            // Count all pixels within element polygons
+            const scene = SCENES[currentSceneIndex];
+            let count = 0;
+
+            for (let elemId in scene.elements) {
+                const elem = scene.elements[elemId];
+                const pixels = getPixelsInPolygon(elem.polygon);
+                count += pixels.length;
+            }
+
+            return count || 1; // Avoid division by zero
+        }
+
+        // ===== ERASING MECHANIC =====
+        function handleMouseDown(e) {
+            if (gamePhase !== 'PLAYING') return;
+            mouseDown = true;
+            eraseAtPosition(e.offsetX, e.offsetY);
+        }
+
+        function handleMouseUp(e) {
+            mouseDown = false;
+        }
+
+        function handleMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (gamePhase === 'PLAYING' && y < SCENE_AREA_HEIGHT) {
+                cursorDiv.style.display = 'block';
+                cursorDiv.style.left = (rect.left + x) + 'px';
+                cursorDiv.style.top = (rect.top + y) + 'px';
+            } else {
+                cursorDiv.style.display = 'none';
+            }
+
+            if (mouseDown && gamePhase === 'PLAYING') {
+                eraseAtPosition(x, y);
+            }
+        }
+
+        function handleMouseLeave(e) {
+            cursorDiv.style.display = 'none';
+            mouseDown = false;
+        }
+
+        function eraseAtPosition(mouseX, mouseY) {
+            if (mouseY >= SCENE_AREA_HEIGHT) return;
+
+            const scene = SCENES[currentSceneIndex];
+            let pixelsToErase = [];
+
+            // Collect pixels in eraser circle
+            for (let dx = -ERASER_RADIUS; dx <= ERASER_RADIUS; dx++) {
+                for (let dy = -ERASER_RADIUS; dy <= ERASER_RADIUS; dy++) {
+                    if (dx * dx + dy * dy <= ERASER_RADIUS * ERASER_RADIUS) {
+                        const x = Math.floor(mouseX + dx);
+                        const y = Math.floor(mouseY + dy);
+
+                        if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < SCENE_AREA_HEIGHT) {
+                            if (!eraserMask[x][y] && isInAnyElement(x, y)) {
+                                pixelsToErase.push([x, y]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check if erasing would go below minimum
+            const potentialErasedCount = erasedPixelCount + pixelsToErase.length;
+            const potentialRemaining = 1 - (potentialErasedCount / totalScenePixels);
+
+            if (potentialRemaining < scene.minKeep) {
+                showMessage("Some things cannot be forgotten.");
+                return;
+            }
+
+            // Perform the erase
+            for (let [x, y] of pixelsToErase) {
+                eraserMask[x][y] = true;
+                erasedPixelCount++;
+            }
+
+            // Update element tracking
+            updateElementTracking();
+
+            // Redraw
+            drawScene();
+            drawUI();
+            checkAdvanceConditions();
+        }
+
+        function isInAnyElement(x, y) {
+            const scene = SCENES[currentSceneIndex];
+            for (let elemId in scene.elements) {
+                if (pointInPolygon(x, y, scene.elements[elemId].polygon)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function updateElementTracking() {
+            const scene = SCENES[currentSceneIndex];
+
+            for (let elemId in scene.elements) {
+                const elem = scene.elements[elemId];
+                const pixels = getPixelsInPolygon(elem.polygon);
+                let erasedInElement = 0;
+
+                for (let [x, y] of pixels) {
+                    if (eraserMask[x][y]) {
+                        erasedInElement++;
+                    }
+                }
+
+                elementRemaining[elemId] = 1.0 - (erasedInElement / pixels.length);
+            }
+        }
+
+        function checkAdvanceConditions() {
+            const scene = SCENES[currentSceneIndex];
+            const percentErased = erasedPixelCount / totalScenePixels;
+            const percentRemaining = 1.0 - percentErased;
+
+            canAdvance = (percentErased >= scene.minErase) && (percentRemaining >= scene.minKeep);
+        }
+
+        // ===== UI RENDERING =====
+        function drawUI() {
+            const uiTop = SCENE_AREA_HEIGHT;
+            const scene = SCENES[currentSceneIndex];
+
+            // Clear UI area
+            ctx.fillStyle = COLORS.paper;
+            ctx.fillRect(0, uiTop, WINDOW_WIDTH, UI_AREA_HEIGHT);
+
+            // Draw separator line
+            ctx.strokeStyle = COLORS.lightGray;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, uiTop);
+            ctx.lineTo(WINDOW_WIDTH, uiTop);
+            ctx.stroke();
+
+            // Memory clarity meter
+            const percentRemaining = 1.0 - (erasedPixelCount / totalScenePixels);
+            const meterWidth = 200;
+            const meterHeight = 20;
+            const meterX = 50;
+            const meterY = uiTop + 30;
+
+            // Meter outline
+            ctx.strokeStyle = COLORS.gray;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(meterX, meterY, meterWidth, meterHeight);
+
+            // Meter fill
+            ctx.fillStyle = COLORS.brown;
+            ctx.fillRect(meterX, meterY, meterWidth * percentRemaining, meterHeight);
+
+            // Minimum marker
+            const minKeepX = meterX + (meterWidth * scene.minKeep);
+            ctx.strokeStyle = COLORS.red;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(minKeepX, meterY);
+            ctx.lineTo(minKeepX, meterY + meterHeight);
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = COLORS.darkGray;
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Memory clarity: ${Math.floor(percentRemaining * 100)}%`, meterX, meterY - 10);
+
+            // Instructions/status
+            ctx.textAlign = 'center';
+            const percentErased = erasedPixelCount / totalScenePixels;
+
+            if (messageText && messageTimer > 0) {
+                ctx.fillStyle = COLORS.red;
+                ctx.font = '16px Georgia';
+                ctx.fillText(messageText, WINDOW_WIDTH / 2, uiTop + 90);
+            } else if (percentErased < scene.minErase) {
+                ctx.fillStyle = COLORS.gray;
+                ctx.font = '16px Georgia';
+                ctx.fillText("Let go of more to continue...", WINDOW_WIDTH / 2, uiTop + 90);
+            } else if (canAdvance) {
+                // Draw continue button
+                const btnX = WINDOW_WIDTH / 2 - 60;
+                const btnY = uiTop + 70;
+                const btnW = 120;
+                const btnH = 35;
+
+                ctx.fillStyle = COLORS.gray;
+                ctx.fillRect(btnX, btnY, btnW, btnH);
+                ctx.strokeStyle = COLORS.darkGray;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(btnX, btnY, btnW, btnH);
+
+                ctx.fillStyle = COLORS.white;
+                ctx.font = '16px Georgia';
+                ctx.fillText("Continue →", WINDOW_WIDTH / 2, btnY + 23);
+
+                ctx.fillStyle = COLORS.lightGray;
+                ctx.font = '12px Arial';
+                ctx.fillText("Click button or press SPACE", WINDOW_WIDTH / 2, uiTop + 130);
+            }
+        }
+
+        function showMessage(msg) {
+            messageText = msg;
+            messageTimer = 60; // frames
+
+            // Countdown timer
+            const countdown = setInterval(() => {
+                messageTimer--;
+                if (messageTimer <= 0) {
+                    messageText = '';
+                    clearInterval(countdown);
+                    drawUI();
+                }
+            }, 50);
+        }
+
+        // ===== NARRATION SYSTEM =====
+        function showNarration() {
+            gamePhase = 'NARRATING';
+            cursorDiv.style.display = 'none';
+
+            const scene = SCENES[currentSceneIndex];
+            let narrationText = generateNarration();
+
+            // Update connection score
+            if (currentSceneIndex !== 3) { // Not Scene 4
+                if (elementRemaining['A'] > 0.4 && elementRemaining['B'] > 0.4) {
+                    connectionScore++;
+                }
+            } else { // Scene 4 (index 3)
+                if (elementRemaining['A'] > 0.4 && elementRemaining['B'] > 0.4 && elementRemaining['D'] > 0.4) {
+                    connectionScore++;
+                }
+            }
+
+            // Clear screen
+            ctx.fillStyle = COLORS.paper;
+            ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            // Display narration with typewriter effect
+            typewriterEffect(narrationText, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, () => {
+                // Show continue prompt after narration
+                setTimeout(() => {
+                    ctx.fillStyle = COLORS.lightGray;
+                    ctx.font = '14px Georgia';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('[Click to continue]', WINDOW_WIDTH / 2, WINDOW_HEIGHT - 50);
+                }, 2000);
+            });
+        }
+
+        function generateNarration() {
+            const scene = SCENES[currentSceneIndex];
+
+            for (let rule of scene.narrationRules) {
+                if (rule.condition(elementRemaining)) {
+                    return rule.text;
+                }
+            }
+
+            return "That time is hazy now. I can barely see it.";
+        }
+
+        function typewriterEffect(text, x, y, callback) {
+            let displayed = '';
+            let index = 0;
+            const charsPerSecond = 30;
+
+            ctx.fillStyle = COLORS.paper;
+            ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            const interval = setInterval(() => {
+                if (index < text.length) {
+                    displayed += text[index];
+                    index++;
+
+                    // Clear and redraw
+                    ctx.fillStyle = COLORS.paper;
+                    ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+                    ctx.fillStyle = COLORS.darkGray;
+                    ctx.font = '20px Georgia';
+                    ctx.textAlign = 'center';
+
+                    // Word wrap
+                    wrapText(displayed, x, y, 700, 30);
+                } else {
+                    clearInterval(interval);
+                    if (callback) callback();
+                }
+            }, 1000 / charsPerSecond);
+        }
+
+        function wrapText(text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let testY = y;
+
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                const testWidth = metrics.width;
+
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, x, testY);
+                    line = words[n] + ' ';
+                    testY += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, testY);
+        }
+
+        function advanceScene() {
+            currentSceneIndex++;
+            totalScenePixels = 0; // Reset for next scene
+
+            if (currentSceneIndex >= SCENES.length) {
+                showEnding();
+            } else {
+                // Fade transition
+                ctx.fillStyle = COLORS.black;
+                let alpha = 0;
+                const fadeInterval = setInterval(() => {
+                    alpha += 0.05;
+                    ctx.globalAlpha = alpha;
+                    ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+                    if (alpha >= 1) {
+                        clearInterval(fadeInterval);
+                        ctx.globalAlpha = 1;
+
+                        setTimeout(() => {
+                            gamePhase = 'PLAYING';
+                            loadScene(currentSceneIndex);
+                        }, 500);
+                    }
+                }, 30);
+            }
+        }
+
+        // ===== ENDING SEQUENCE =====
+        function showEnding() {
+            gamePhase = 'ENDING';
+
+            // Fade to black
+            ctx.fillStyle = COLORS.black;
+            ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            let endingLines;
+            if (connectionScore >= 4) {
+                endingLines = [
+                    "I had a good life. A happy life.",
+                    "Thank you for asking me to remember.",
+                    "",
+                    "I think I'll rest now."
+                ];
+            } else if (connectionScore >= 2) {
+                endingLines = [
+                    "We did our best. Both of us.",
+                    "Memory is strange. You hold onto such odd things.",
+                    "",
+                    "I hope I told it right."
+                ];
+            } else {
+                endingLines = [
+                    "Fifty years. Where did they go?",
+                    "I wish I could see his face. Just once more.",
+                    "",
+                    "Was it like that? I'm not sure anymore."
+                ];
+            }
+
+            // Display ending sequence
+            displayEndingSequence(endingLines);
+        }
+
+        function displayEndingSequence(lines) {
+            let lineIndex = 0;
+            let yPos = WINDOW_HEIGHT / 2 - 60;
+
+            function showNextLine() {
+                if (lineIndex >= lines.length) {
+                    setTimeout(showFinalCards, 3000);
+                    return;
+                }
+
+                const line = lines[lineIndex];
+                if (line === "") {
+                    yPos += 40;
+                    lineIndex++;
+                    setTimeout(showNextLine, 2000);
+                } else {
+                    fadeInText(line, WINDOW_WIDTH / 2, yPos, COLORS.white, () => {
+                        yPos += 40;
+                        lineIndex++;
+                        setTimeout(showNextLine, 2500);
+                    });
+                }
+            }
+
+            showNextLine();
+        }
+
+        function fadeInText(text, x, y, color, callback) {
+            let alpha = 0;
+            const interval = setInterval(() => {
+                alpha += 0.05;
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.font = '20px Georgia';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, x, y);
+
+                if (alpha >= 1) {
+                    clearInterval(interval);
+                    if (callback) callback();
+                }
+            }, 50);
+        }
+
+        function showFinalCards() {
+            // Clear for final cards
+            ctx.fillStyle = COLORS.black;
+            ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            setTimeout(() => {
+                ctx.fillStyle = '#CCCCCC';
+                ctx.font = '22px Georgia';
+                ctx.textAlign = 'center';
+                ctx.fillText("What we forget shapes who we become.", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
+
+                setTimeout(() => {
+                    ctx.fillStyle = COLORS.black;
+                    ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+                    setTimeout(() => {
+                        ctx.fillStyle = '#AAAAAA';
+                        ctx.font = '18px Georgia';
+                        ctx.fillText("Elena passed away three days after this conversation.",
+                                    WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 20);
+
+                        setTimeout(() => {
+                            ctx.fillText("This is how her grandchild remembers the story she told.",
+                                        WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 20);
+
+                            setTimeout(() => {
+                                ctx.fillStyle = COLORS.black;
+                                ctx.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+                                ctx.fillStyle = COLORS.gray;
+                                ctx.font = '24px Georgia';
+                                ctx.fillText("ERASER", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 20);
+                                ctx.fillStyle = '#444444';
+                                ctx.font = '14px Georgia';
+                                ctx.fillText("[Click to close]", WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 20);
+                            }, 5000);
+                        }, 3000);
+                    }, 1000);
+                }, 4000);
+            }, 1000);
+        }
+
+        // ===== EVENT HANDLERS =====
+        function handleClick(e) {
+            if (gamePhase === 'INTRO') {
+                gamePhase = 'PLAYING';
+                loadScene(0);
+            } else if (gamePhase === 'PLAYING' && canAdvance) {
+                const uiTop = SCENE_AREA_HEIGHT;
+                const btnX = WINDOW_WIDTH / 2 - 60;
+                const btnY = uiTop + 70;
+                const btnW = 120;
+                const btnH = 35;
+
+                if (e.offsetX >= btnX && e.offsetX <= btnX + btnW &&
+                    e.offsetY >= btnY && e.offsetY <= btnY + btnH) {
+                    showNarration();
+                }
+            } else if (gamePhase === 'NARRATING') {
+                advanceScene();
+            } else if (gamePhase === 'ENDING') {
+                // Allow closing or restarting
+            }
+        }
+
+        function handleKeyDown(e) {
+            if (e.code === 'Space' && gamePhase === 'PLAYING' && canAdvance) {
+                e.preventDefault();
+                showNarration();
+            }
+        }
+
+        // ===== HELPER FUNCTIONS =====
+        function getPixelsInPolygon(polygon) {
+            const pixels = [];
+            const bounds = getBoundingBox(polygon);
+
+            for (let x = bounds.minX; x <= bounds.maxX; x++) {
+                for (let y = bounds.minY; y <= bounds.maxY; y++) {
+                    if (pointInPolygon(x, y, polygon)) {
+                        pixels.push([x, y]);
+                    }
+                }
+            }
+
+            return pixels;
+        }
+
+        function getBoundingBox(polygon) {
+            const xs = polygon.map(p => p[0]);
+            const ys = polygon.map(p => p[1]);
+            return {
+                minX: Math.min(...xs),
+                maxX: Math.max(...xs),
+                minY: Math.min(...ys),
+                maxY: Math.max(...ys)
+            };
+        }
+
+        function pointInPolygon(x, y, polygon) {
+            let inside = false;
+            const n = polygon.length;
+            let j = n - 1;
+
+            for (let i = 0; i < n; i++) {
+                const xi = polygon[i][0], yi = polygon[i][1];
+                const xj = polygon[j][0], yj = polygon[j][1];
+
+                const intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+
+                if (intersect) inside = !inside;
+                j = i;
+            }
+
+            return inside;
+        }
+
+        // ===== START GAME =====
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

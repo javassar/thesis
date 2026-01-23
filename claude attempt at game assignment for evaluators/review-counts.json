@@ -1,0 +1,42 @@
+{
+  "ai_aware": {
+    "game1.html": 2,
+    "game2.html": 1,
+    "game3.html": 2,
+    "game4.html": 2,
+    "game5.html": 1,
+    "game6.html": 2,
+    "game7.html": 2,
+    "game8.html": 2,
+    "game9.html": 1,
+    "game10.html": 1,
+    "game11.html": 1,
+    "game12.html": 1,
+    "game13.html": 1,
+    "game14.html": 2,
+    "game15.html": 1,
+    "game16.html": 1,
+    "game17.html": 2,
+    "game18.html": 2
+  },
+  "ai_blind": {
+    "game1.html": 2,
+    "game2.html": 1,
+    "game3.html": 2,
+    "game4.html": 2,
+    "game5.html": 1,
+    "game6.html": 2,
+    "game7.html": 2,
+    "game8.html": 2,
+    "game9.html": 1,
+    "game10.html": 2,
+    "game11.html": 1,
+    "game12.html": 2,
+    "game13.html": 1,
+    "game14.html": 2,
+    "game15.html": 2,
+    "game16.html": 1,
+    "game17.html": 2,
+    "game18.html": 2
+  }
+}

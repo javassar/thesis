@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Video Game Narrative Experiment</title>
+
+    <!-- jsPsych CSS -->
+    <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+
+    <!-- jsPsych Core -->
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+
+    <!-- jsPsych Plugins -->
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-likert@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+
+    <style>
+        /* Full-screen game container */
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+            background: #000;
+        }
+
+        #game-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Loading indicator */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+        }
+
+        /* Survey styling */
+        .jspsych-content {
+            max-width: 800px;
+        }
+
+        .question-prompt {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body></body>
+<script>
+
+    // ============================================
+    // CONFIGURATION: Game Assignment
+    // ============================================
+
+    // Define your different games here
+    const GAMES = {
+        'game1': {
+            name: 'The Last Light (Revised)',
+            path: 'games/the-last-light-revised/index.html',
+            description: 'A narrative mystery about letting go'
+        },
+        'game2': {
+            name: 'The Last Light (Original)',
+            path: 'games/the-last-light-original/index.html',
+            description: 'A contemplative narrative adventure'
+        },
+        'game3': {
+            name: 'Another Game',
+            path: 'games/another-game/index.html',
+            description: 'Description of another game'
+        }
+        // Add more games as needed
+    };
+
+    // ============================================
+    // Participant Assignment Logic
+    // ============================================
+
+    function assignGameCondition() {
+        // METHOD 1: Random assignment
+        const gameIds = Object.keys(GAMES);
+        const randomIndex = Math.floor(Math.random() * gameIds.length);
+        return gameIds[randomIndex];
+
+        // METHOD 2: Round-robin based on participant ID (uncomment to use)
+        // const urlParams = new URLSearchParams(window.location.search);
+        // const participantId = urlParams.get('participant_id') || Math.floor(Math.random() * 1000);
+        // const gameIds = Object.keys(GAMES);
+        // return gameIds[participantId % gameIds.length];
+
+        // METHOD 3: URL parameter (uncomment to use)
+        // const urlParams = new URLSearchParams(window.location.search);
+        // return urlParams.get('game') || 'game1';
+    }
+
+    // Assign game condition
+    const assignedGame = assignGameCondition();
+    const gameInfo = GAMES[assignedGame];
+
+    console.log('Assigned game:', assignedGame, gameInfo);
+
+    // ============================================
+    // Custom jsPsych Plugin for Game Trial
+    // ============================================
+
+    var gamePlugin = {
+        info: {
+            name: 'game-trial',
+            parameters: {
+                game_url: {
+                    type: jsPsych.ParameterType.STRING,
+                    default: undefined
+                },
+                timeout: {
+                    type: jsPsych.ParameterType.INT,
+                    default: 600000 // 10 minutes max
+                }
+            }
+        },
+        trial: function(display_element, trial) {
+            // Create game container with iframe
+            var html = `
+                <div id="game-container">
+                    <div class="loading">Loading game...</div>
+                    <iframe id="game-iframe" src="${trial.game_url}"></iframe>
+                </div>
+            `;
+            display_element.innerHTML = html;
+
+            var startTime = performance.now();
+            var gameData = null;
+            var gameCompleted = false;
+
+            // Listen for game completion message
+            var messageHandler = function(event) {
+                if (event.data && event.data.type === 'game_complete') {
+                    gameCompleted = true;
+                    gameData = event.data.data;
+                    endTrial();
+                }
+            };
+            window.addEventListener('message', messageHandler);
+
+            // Timeout failsafe
+            var timeout = setTimeout(function() {
+                if (!gameCompleted) {
+                    console.warn('Game timed out');
+                    endTrial();
+                }
+            }, trial.timeout);
+
+            function endTrial() {
+                window.removeEventListener('message', messageHandler);
+                clearTimeout(timeout);
+
+                var endTime = performance.now();
+                var trialData = {
+                    game_completed: gameCompleted,
+                    game_data: gameData,
+                    rt: endTime - startTime,
+                    game_url: trial.game_url
+                };
+
+                display_element.innerHTML = '';
+                jsPsych.finishTrial(trialData);
+            }
+        }
+    };
+
+    // ============================================
+    // Initialize jsPsych
+    // ============================================
+
+    var jsPsych = initJsPsych({
+        on_finish: function(data) {
+            // Display data at the end (for testing)
+            // jsPsych.data.displayData('json');
+
+            // In production, you'd send this to a server
+            console.log('Experiment complete. Data:', data);
+
+            // Example: Send to server
+            // fetch('https://your-server.com/save-data', {
+            //     method: 'POST',
+            //     headers: {'Content-Type': 'application/json'},
+            //     body: JSON.stringify(data.values())
+            // });
+        }
+    });
+
+    // ============================================
+    // Build Experiment Timeline
+    // ============================================
+
+    var timeline = [];
+
+    // Add participant ID to all data
+    jsPsych.data.addProperties({
+        assigned_game: assignedGame,
+        game_name: gameInfo.name,
+        experiment_start: new Date().toISOString()
+    });
+
+    // ============================================
+    // Consent Form
+    // ============================================
+
+    var consent = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `
+            <div style="max-width: 800px; text-align: left; margin: 0 auto;">
+                <h1>Informed Consent</h1>
+                <p><strong>Study Title:</strong> Narrative Video Game Experience Study</p>
+
+                <h3>Purpose</h3>
+                <p>You are being asked to participate in a research study about narrative experiences in video games.
+                This study will take approximately 15-20 minutes to complete.</p>
+
+                <h3>Procedures</h3>
+                <p>If you agree to participate, you will:</p>
+                <ul>
+                    <li>Play a short narrative video game (3-5 minutes)</li>
+                    <li>Answer survey questions about your experience (5-10 minutes)</li>
+                </ul>
+
+                <h3>Risks and Benefits</h3>
+                <p>There are no anticipated risks beyond those encountered in everyday life.
+                You may not directly benefit from this research, but your participation will contribute
+                to our understanding of narrative experiences.</p>
+
+                <h3>Confidentiality</h3>
+                <p>Your responses will be kept confidential. No personally identifying information will be collected.</p>
+
+                <h3>Voluntary Participation</h3>
+                <p>Your participation is completely voluntary. You may withdraw at any time without penalty.</p>
+
+                <p style="margin-top: 30px;"><strong>By pressing the SPACE BAR, you indicate that you have read this consent form,
+                are at least 18 years old, and agree to participate in this research.</strong></p>
+
+                <p style="text-align: center; color: #666;">Press SPACE to continue or close this window to decline.</p>
+            </div>
+        `,
+        choices: [' ']
+    };
+    timeline.push(consent);
+
+    // ============================================
+    // Game Instructions
+    // ============================================
+
+    var instructions = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `
+            <div style="max-width: 700px; margin: 0 auto;">
+                <h1>Instructions</h1>
+
+                <p>You will now play a short narrative video game called <strong>"${gameInfo.name}"</strong>.</p>
+
+                <p>${gameInfo.description}</p>
+
+                <div style="background: #f0f0f0; padding: 20px; margin: 20px 0; border-radius: 5px;">
+                    <h3 style="margin-top: 0;">Controls:</h3>
+                    <ul style="text-align: left;">
+                        <li><strong>↑↓ Arrow Keys</strong> or <strong>W/S</strong> - Navigate menu options</li>
+                        <li><strong>Enter</strong> - Confirm selection / Continue dialogue</li>
+                        <li><strong>Space Bar</strong> - Advance text / Special actions</li>
+                    </ul>
+                </div>
+
+                <p><strong>Important:</strong></p>
+                <ul style="text-align: left;">
+                    <li>Please play through the <em>entire</em> game before continuing</li>
+                    <li>The game will take approximately 3-5 minutes</li>
+                    <li>Make choices as you naturally would - there are no "right" answers</li>
+                    <li>Pay attention to the story and your experience</li>
+                </ul>
+
+                <p style="margin-top: 30px;">Press <strong>SPACE</strong> when you're ready to begin the game.</p>
+            </div>
+        `,
+        choices: [' ']
+    };
+    timeline.push(instructions);
+
+    // ============================================
+    // Game Trial
+    // ============================================
+
+    var game_trial = {
+        type: gamePlugin,
+        game_url: gameInfo.path,
+        timeout: 600000 // 10 minutes
+    };
+    timeline.push(game_trial);
+
+    // ============================================
+    // Post-Game Survey
+    // ============================================
+
+    var experience_questions = {
+        type: jsPsychSurveyLikert,
+        preamble: '<h2>Part 1: Your Experience</h2><p>Please rate your experience with the game:</p>',
+        questions: [
+            {
+                prompt: "How emotionally engaging was the game?",
+                name: 'emotional_engagement',
+                labels: ["Not at all", "Slightly", "Moderately", "Very", "Extremely"],
+                required: true
+            },
+            {
+                prompt: "How immersed did you feel in the story?",
+                name: 'immersion',
+                labels: ["Not at all", "Slightly", "Moderately", "Very", "Extremely"],
+                required: true
+            },
+            {
+                prompt: "How much did you care about the choices you made?",
+                name: 'choice_importance',
+                labels: ["Not at all", "Slightly", "Moderately", "Very", "Extremely"],
+                required: true
+            },
+            {
+                prompt: "How well did you understand the story?",
+                name: 'comprehension',
+                labels: ["Not at all", "Slightly", "Moderately", "Very", "Extremely"],
+                required: true
+            },
+            {
+                prompt: "Did you notice anything unusual or mysterious about the game world?",
+                name: 'mystery_noticed',
+                labels: ["Not at all", "A little", "Somewhat", "Quite a bit", "Very much"],
+                required: true
+            }
+        ]
+    };
+    timeline.push(experience_questions);
+
+    var narrative_questions = {
+        type: jsPsychSurveyText,
+        preamble: '<h2>Part 2: Story Interpretation</h2>',
+        questions: [
+            {
+                prompt: 'In your own words, what do you think the game was about? What was the main theme or message?',
+                name: 'interpretation',
+                rows: 5,
+                columns: 60,
+                required: true
+            },
+            {
+                prompt: 'Which ending did you receive? How did it make you feel?',
+                name: 'ending_response',
+                rows: 4,
+                columns: 60,
+                required: true
+            },
+            {
+                prompt: 'Did anything in the game surprise you or stand out as unusual? If so, what?',
+                name: 'surprises',
+                rows: 4,
+                columns: 60,
+                required: false
+            },
+            {
+                prompt: 'What choices did you make during the game? Why did you make those choices?',
+                name: 'choice_rationale',
+                rows: 5,
+                columns: 60,
+                required: true
+            }
+        ]
+    };
+    timeline.push(narrative_questions);
+
+    var demographics = {
+        type: jsPsychSurveyText,
+        preamble: '<h2>Part 3: Background Information</h2>',
+        questions: [
+            {
+                prompt: 'What is your age?',
+                name: 'age',
+                required: true
+            },
+            {
+                prompt: 'How often do you play video games?',
+                name: 'gaming_frequency',
+                required: true
+            },
+            {
+                prompt: 'Any other comments or feedback about the game or experiment?',
+                name: 'comments',
+                rows: 4,
+                columns: 60,
+                required: false
+            }
+        ]
+    };
+    timeline.push(demographics);
+
+    // ============================================
+    // Completion
+    // ============================================
+
+    var completion = {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: `
+            <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+                <h1>Thank You!</h1>
+                <p>You have completed the study.</p>
+                <p>Your responses have been recorded.</p>
+                <p style="margin-top: 40px; color: #666;">You may now close this window.</p>
+            </div>
+        `,
+        choices: "NO_KEYS"
+    };
+    timeline.push(completion);
+
+    // ============================================
+    // Run Experiment
+    // ============================================
+
+    jsPsych.run(timeline);
+
+</script>
+</html>

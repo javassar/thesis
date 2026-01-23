@@ -1,0 +1,17 @@
+{
+  "name": "game-assignment-server",
+  "version": "1.0.0",
+  "description": "Backend server for balanced game assignment in creativity evaluation study",
+  "main": "game-assignment-server.js",
+  "scripts": {
+    "start": "node game-assignment-server.js",
+    "dev": "nodemon game-assignment-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

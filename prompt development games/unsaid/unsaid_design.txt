@@ -1,0 +1,1165 @@
+================================================================================
+UNSAID
+Complete Game Design & Implementation Document
+================================================================================
+
+## 1. TITLE & HOOK
+
+Title: UNSAID
+
+Tagline: "You can't take it back. But you can take it apart."
+
+Hook: A word-transformation puzzle game set in the aftermath of an argument. 
+Harsh words hang frozen in the air between two silhouettes. You can't delete 
+what was said—but you can steal letters from cruel words to build kinder ones.
+Every word you dismantle weakens the hurt; every word you create reshapes 
+the memory.
+
+The Twist: You don't spawn letters. You can only BUILD words by DISMANTLING 
+other words already in the scene. Language is a closed system—you work with 
+what was said.
+
+================================================================================
+## 2. CORE INSIGHT
+
+Central Question: What would it mean to truly "take back" what you said?
+
+The Truth This Game Explores:
+We can't unsay things. But memory is malleable. We return to painful 
+conversations in our minds, replaying them, wishing we'd said something 
+different. This game literalizes that process—you're inside a memory, 
+rearranging the words, not to change what happened, but to find a way 
+to live with it.
+
+The deeper truth: Sometimes the same letters that spell HATRED can spell 
+THREAD—the connection was always there, tangled in the anger.
+
+Why This Matters to Players:
+- Universal experience: Everyone has said something they regret
+- Meaningful puzzles: Solutions aren't arbitrary; they carry emotional weight
+- Discovery: Finding "LISTEN" hidden in "SILENT" is an "aha" moment that 
+  resonates both mechanically AND emotionally
+- Catharsis: The act of dismantling hurtful words is satisfying
+- Ambiguity: Some transformations aren't clearly "better"—the game respects 
+  the complexity of language and relationships
+
+Emotional Arc (5 minutes):
+- Level 1: Tutorial + discovery ("Oh, I can rebuild words from other words!")
+- Level 2-3: Engagement ("What can I make from NEVER? What should I make?")
+- Level 4: Complication ("Some transformations aren't improvements...")
+- Level 5: Resolution ("The final word is my choice")
+
+================================================================================
+## 3. MECHANIC-THEME INTEGRATION
+
+PRIMARY MECHANIC: Letter Extraction and Reconstruction
+- The scene contains WORD-OBJECTS: floating words rendered as letter blocks
+- Click and drag individual LETTERS out of existing words
+- Extracted letters become FREE LETTERS you can position
+- Arrange free letters horizontally to form NEW WORDS
+- When a valid word is formed, it activates with physical/emotional properties
+- The SOURCE word changes or breaks when you extract letters
+
+CRITICAL RULE: No external letters. Everything you build comes from 
+dismantling something already there. The system is closed.
+
+TRANSFORMATION MECHANICS:
+When you remove letters from a word:
+- If remaining letters form a valid word → it becomes that word
+- If remaining letters form no valid word → letters scatter and fall
+- Example: HATRED → remove H,A,E → "TRD" is invalid → T,R,D scatter
+- Example: HATRED → remove H,A,T,D → "RE" is valid → becomes RE (again)
+
+EMOTIONAL PHYSICS:
+Words have emotional weight that affects their physical behavior:
+
+HEAVY (negative) words: Sink, darken the scene, block paths
+- HATE, NEVER, WRONG, LEAVE, ALONE, BLAME, SORRY (contextual)
+
+LIGHT (positive) words: Rise, brighten the scene, create bridges
+- LOVE, HEART, HEAR, STAY, HERE, NEAR, HOPE, SAVE
+
+NEUTRAL words: Normal physics, solid platforms
+- Most other valid words behave as standard blocks
+
+The SCENE ATMOSPHERE changes based on the balance:
+- More heavy words = darker, colder color palette, downward drift
+- More light words = warmer, brighter palette, gentle upward float
+- This is a visual meter of emotional state, not a win condition
+
+THE TWO SILHOUETTES:
+Two human silhouettes stand on opposite sides of each level—never moving, 
+never speaking, but their posture shifts subtly based on the emotional 
+atmosphere. They're the "you" who said these words and the "them" who 
+heard them. The goal is to create a BRIDGE word that connects them.
+
+================================================================================
+## 4. COMPLETE GAME CONTENT
+
+### WORD BEHAVIOR DICTIONARY
+
+```
+POSITIVE_WORDS (rise slowly, glow warm, can be walked on):
+LOVE, LOVED, HEAR, HEARD, HEART, STAY, HERE, NEAR, HOPE, SAVE, SAVED,
+CARE, CARED, DEAR, DREAM, WARM, HEAL, HELP, SAFE, SHARE, LISTEN, TENDER,
+TRUE, TRUST, GENTLE, HONEST, HOLD, HELD
+
+NEGATIVE_WORDS (sink slowly, cast shadow, block paths):
+HATE, HATED, NEVER, WRONG, LEAVE, ALONE, BLAME, BLAMED, HURT, ANGER,
+RAGE, CRUEL, HARSH, COLD, GONE, LOST, FAULT, SILENT, SPITE, SEVER,
+RESENT, REGRET, BITTER
+
+BRIDGE_WORDS (special - create connection between silhouettes):
+BRIDGE, CONNECT, REACH, THREAD, TOGETHER, FORGIVE, BETWEEN
+
+NEUTRAL_WORDS: All other valid English words - standard solid physics
+```
+
+### VALID WORD LIST (Comprehensive for puzzle solutions)
+
+The game needs a focused dictionary for the specific puzzles. Full list:
+
+```
+// All valid words the game recognizes (subset of English for implementation)
+VALID_WORDS = [
+    // Core emotional words
+    "LOVE", "LOVED", "HATE", "HATED", "HEART", "HEAR", "HEARD", "HEAT",
+    "NEVER", "EVER", "EVEN", "NEAR", "EARN", "LEAN", "LANE", "VEER",
+    "WRONG", "GROW", "GROWN", "WORN", "GOWN", "ROW", "OWN", "NOW", "WON",
+    "LEAVE", "HAVE", "SAVE", "GAVE", "VALE", "VEAL", "LAVE", "EAVE", "AVE",
+    "ALONE", "ATONE", "LOAN", "LANE", "LEAN", "LONE", "ONE", "ON", "NO",
+    "BLAME", "LAME", "MALE", "MEAL", "BALM", "LAMB", "LAM", "LAB", "ALE",
+    "SILENT", "LISTEN", "TINSEL", "INLETS", "ENLIST", "ISLET", "TILES",
+    "ANGER", "RANGE", "NEAR", "EARN", "GEAR", "RAGE", "ARE", "EAR", "ERA",
+    "THREAD", "DEARTH", "HATRED", "HEART", "EARTH", "HATED", "DEATH",
+    "TRADE", "RATED", "TREAD", "TREAT", "DATER", "HATER", "DEAR", "DARE",
+    "READ", "RATE", "DATE", "HATE", "HEAT", "HEAD", "HARE", "HEAR", "TEAR",
+    "RESENT", "TENDER", "RESTED", "NESTED", "DESERT", "ENTERS", "Ernest",
+    "TREES", "STEER", "RESET", "TERSE", "STERN", "TEENS", "DENSE",
+    "SEVER", "SERVE", "VERSE", "VEERS", "SEERS", "SEER", "EVER", "REVS",
+    "WORDS", "SWORD", "DROWS", "ROWS", "WORD", "ORDS", "RODS", "SORD",
+    "REACH", "CHARE", "RACER", "CARER", "ACRE", "CARE", "RACE", "EACH",
+    "ARCH", "CHAR", "ACHE", "HARE", "HEAR", "ACE", "ARC", "ARE", "EAR",
+    "TOGETHER", "TETHER", "HOTTER", "GETTER", "GREET", "OTHER", "THREE",
+    "FORGIVE", "GIVE", "FIVE", "FORGE", "RIFE", "OGRE", "GIVER", "GRIEF",
+    "BRIDGE", "RIDGE", "BRIDE", "DIRGE", "GIRD", "BIRD", "RID", "BIG",
+    "CRUEL", "ULCER", "CRUEL", "LURE", "RULE", "CURL", "CURE", "CUR", "CUE",
+    "TRUST", "STRUT", "RUST", "RUTS", "TUTS", "NUTS", "STUN", "RUNS",
+    "HARSH", "RASH", "HASH", "SASH", "ASH", "HAS", "AH",
+    "SORRY", "ROSY", "ROSY", "ORE", "SOR",
+    "STAY", "TAYS", "SWAY", "WAYS", "SAY", "YAW", "AT", "AS",
+    "GONE", "ONE", "EGO", "EON", "GO", "ON", "NO",
+    "HELP", "YELP", "PEL", "HEP",
+    "HOPE", "HOPS", "POSH", "SHOP", "OPE", "HOP", "HO", "OH",
+    "HERE", "HEED", "DEER", "REED", "HER", "HE", "RE",
+    "HOLD", "HELD", "DOLE", "DOLT", "OLD", "HOD",
+    "TRUE", "RUTE", "TRUES", "RUE", "RUT",
+    "WARM", "WARMS", "SWARM", "ARMS", "MARS", "RAMS", "WAR", "ARM", "MAR",
+    "SAFE", "SAFES", "FESS", "SEAS", "SEAF",
+    "COLD", "CLOD", "COD", "OLD", "COL",
+    "LOST", "LOTS", "SLOT", "LOST", "SOT", "LOT",
+    "HURT", "RUTH", "RUTS", "HUT", "RUT",
+    "NEAR", "EARN", "SEAR", "EARS", "ERAS", "ARE", "EAR", "ERA",
+    "GENTLE", "LENT", "GLEN", "GLEE", "TEEN", "GENE",
+    "HONEST", "HONES", "SHONE", "STONE", "TONES", "NOTES", "ONSET",
+    "SHARE", "SHEAR", "HARES", "HEARS", "SHARE", "RASH", "SEAR",
+    "DREAM", "ARMED", "DARER", "RARED", "READ", "MADE", "DARE", "DAME",
+    "CARE", "CARED", "RACED", "CEDAR", "ARCED", "ACRED", "ACRE", "RACE",
+    "DEAR", "DARE", "READ", "EARED", "DARER",
+    "TIME", "MITE", "ITEM", "EMIT", "TIE", "IT", "ME",
+    "WORDS", "SWORD", "DROWS", "ROWS", "WORD",
+    "LISTEN", "SILENT", "ENLIST", "TINSEL", "INLETS",
+    "HEAL", "HALE", "ALE", "LEA",
+    "SPEAK", "PEAKS", "PEASE", "SEPAL", "LEAPS", "PEALS", "PLEAS",
+    "MEANT", "NAMES", "MANES", "AMENS",
+    "MORE", "ROME", "OMER", "ORE", "ROE",
+    "LIVE", "VILE", "EVIL", "VEIL",
+    "GIVE", "VIBE",
+    // Two letter words
+    "AT", "TO", "IT", "IS", "AS", "BE", "BY", "DO", "GO", "HE", "IF", 
+    "IN", "ME", "MY", "NO", "OF", "ON", "OR", "SO", "UP", "US", "WE",
+    "AN", "AM", "AH", "AW", "AX", "BI", "EN", "EX", "HI", "HO", "ID",
+    "LO", "MA", "OW", "OX", "PA", "PI", "RE", "SH", "UM", "UN"
+]
+```
+
+--------------------------------------------------------------------------------
+
+### LEVEL DESIGNS (5 Levels)
+
+#### LEVEL 1: "FIRST WORDS" (Tutorial)
+**Scene Setup:**
+- Left silhouette (YOU) at x=50
+- Right silhouette (THEM) at x=750  
+- Large gap between them (no floor in middle)
+- Starting word floating center-screen: "HATRED"
+
+**Visual:** Dark blue atmosphere. Silhouettes facing away from each other.
+
+**The Puzzle:**
+HATRED contains letters H, A, T, R, E, D
+Player must extract letters to form a BRIDGE word.
+
+**Solution Path:**
+- Extract T, H, R, E, A, D from HATRED → HATRED disappears entirely
+- Arrange to spell THREAD → THREAD is a BRIDGE word
+- THREAD glows and stretches between the silhouettes
+
+**Alternative solutions:**
+- Spell HEART (positive word, floats up, partial solution)
+- Spell EARTH (neutral, becomes platform)
+- Spell DEARTH (negative, sinks—wrong approach)
+
+**Teaching moment:** Hint text appears after 15 seconds:
+"Drag letters out of words. Arrange them to build something new."
+
+**Win condition:** Any BRIDGE word connects the silhouettes.
+
+**Atmosphere shift:** Scene warms when THREAD/HEART formed.
+
+---
+
+#### LEVEL 2: "THE SILENCE"
+**Scene Setup:**
+- Silhouettes on opposite platforms with gap between
+- Starting word: "SILENT" (floating, heavy, sinking slowly toward pit)
+- The word SILENT is literally silencing the scene—muted colors, no ambient sound
+
+**Visual:** Grey, muted. Silhouettes with heads bowed.
+
+**The Puzzle:**
+SILENT contains S, I, L, E, N, T
+Famous anagram: SILENT ↔ LISTEN
+
+**Primary Solution:**
+- Rearrange all letters: SILENT → LISTEN
+- LISTEN is a POSITIVE word—it rises, glows, brightens the scene
+- Creates platform to cross
+
+**Alternative solutions:**
+- INLETS (neutral, works as platform)
+- ENLIST (neutral)
+- TINSEL (positive-ish, decorative, works)
+
+**Thematic resonance:** The same letters that spell SILENT spell LISTEN. 
+The inability to listen was always silence. This should feel like a revelation.
+
+**Win condition:** Reach the other silhouette.
+
+**Atmosphere shift:** Sound fades IN as LISTEN is formed. Color returns.
+
+---
+
+#### LEVEL 3: "MISDIRECTION"
+**Scene Setup:**
+- Silhouettes separated by a WALL made of stacked words:
+  - "BLAME" (top)
+  - "ANGER" (middle)  
+  - "WRONG" (bottom)
+- Player must dismantle the wall to create a path
+
+**Visual:** Red-tinged. Silhouettes with arms crossed.
+
+**The Puzzle:**
+Multiple words to work with. Must strategically extract letters.
+
+BLAME = B, L, A, M, E
+ANGER = A, N, G, E, R  
+WRONG = W, R, O, N, G
+
+**Solution approach:**
+From BLAME: Extract to form BALM (positive, healing), or LAMB (neutral)
+  - If you take B,L,M → "AE" left (invalid, scatters)
+  - If you take B,A,M → "LE" left (invalid, scatters)
+  
+From ANGER: Extract to form RANGE or NEAR or EARN
+  - NEAR is positive
+  - ANGER → NEAR uses A,N,E,R, leaves G (scatters)
+
+From WRONG: Extract to form GROW or GROWN (if you have N)
+  - GROW is positive (growth!)
+  - WRONG → extract W,R,O,G → "N" left (scatters)
+
+**Ideal solution:** 
+1. Take A,N,E,R from ANGER → spell NEAR (positive, rises)
+2. Take G from remaining ANGER (just G left, scatters)
+3. Take W,R,O,G from WRONG → spell GROW (positive, rises)
+4. N from WRONG scatters
+5. BLAME loses structural support, falls into pit
+6. Path is clear
+
+**Win condition:** Cross to other side. Multiple valid approaches.
+
+**Atmosphere shift:** Red fades to neutral as negative words are dismantled.
+
+---
+
+#### LEVEL 4: "THE COST"
+**Scene Setup:**
+- The word "LOVE" floats between silhouettes, glowing warmly
+- But it's positioned ABOVE, out of reach
+- Below, blocking the path: "SEVER"
+- To reach LOVE, you must use SEVER... but using SEVER destroys it
+
+**Visual:** Bittersweet. Warm glow above, cold shadow below.
+
+**The Puzzle:**
+SEVER = S, E, V, E, R
+LOVE = L, O, V, E
+
+This level introduces a MORAL COST: you must sacrifice one word to transform another.
+
+**The cruel efficiency:**
+- Take E from SEVER → SEVER becomes "SVRS" (invalid, collapses)
+- Now you have E
+- Take V, E from remaining letters... but wait, LOVE needs L, O, V, E
+- SEVER doesn't have L or O!
+
+**The realization:**
+You cannot reach LOVE directly. You must BUILD toward it.
+
+**Actual solution:**
+1. From SEVER: spell SERVE or VERSE (both neutral, become platforms)
+2. Use as stepping stone to reach LOVE directly
+3. OR: Realize SEVER + nearby letters can make something else
+
+**Alternative hidden solution:**
+There are ambient letters scattered in the scene: L, I, F, E
+These spell LIFE—but also contribute to other words.
+
+1. Take L, I from ambient letters + VE from SEVER = LIVE (positive)
+2. LIVE rises up toward LOVE
+3. Collect LOVE by touching it
+
+**Thematic point:** To get to LOVE, you had to choose to LIVE. Some paths 
+require building something new, not just destroying the obstacle.
+
+**Win condition:** Touch the LOVE word. Multiple paths, all require sacrifice.
+
+---
+
+#### LEVEL 5: "LAST WORD"
+**Scene Setup:**
+- Silhouettes close together, almost touching, but one final gap
+- Floating in the space between them: all the letters from previous levels 
+  (scrambled, chaotic cloud of letters)
+- No pre-formed words—just raw letters
+- Available letters: T, H, R, E, A, D, S, I, L, E, N, G, O, W, R, V, F, C, B
+
+**Visual:** Soft, dawn-like. The hostility has faded. Just... aftermath.
+
+**The Puzzle:**
+From the chaos of everything that was said, choose what remains.
+Build ONE final word that will bridge the last gap.
+
+**Many valid solutions:**
+- FORGIVE (if letters allow—check: F, O, R, G, I, V, E ✓)
+- TOGETHER (check: T, O, G, E, T, H, E, R—need two T's and two E's... T, E, H, E, R, G—close but verify)
+- THREAD (callback to level 1)
+- HEART
+- LISTEN
+- BRIDGE (B, R, I, D, G, E—check availability)
+
+**The game doesn't tell you which word is "right."** Any BRIDGE or POSITIVE 
+word that spans the gap completes the game. Your choice matters to you.
+
+**Twist mechanic:** 
+The letters slowly drift apart. You have limited time before they scatter 
+beyond reach. This creates gentle urgency—not stress, but awareness that 
+the moment to speak is now.
+
+**Win condition:** Form any valid word that bridges the gap.
+
+**Ending varies slightly based on word choice:**
+- FORGIVE → "Some words take time."
+- THREAD → "Some things remain connected."
+- HEART → "Some things survive."
+- LISTEN → "Some things were always there."
+- TOGETHER → "Some things are possible."
+- Other positive word → "Some words are enough."
+
+--------------------------------------------------------------------------------
+
+### ENDING SEQUENCE (15 seconds)
+
+1. The final word glows and solidifies into a bridge
+2. The two silhouettes, for the first time, turn toward each other
+3. They don't run together—they simply stand, facing each other, across your word
+4. Slow fade to white
+
+5. Text appears:
+   "[Your final word]."
+   
+6. Then:
+   "[Ending phrase based on word choice]"
+
+7. Then:
+   "What we said can't be unsaid.
+    But what we remember is ours to shape."
+
+8. Fade to soft color. Simple "Thank you for playing."
+
+9. After 5 seconds: "Click to play again"
+   (New game could offer different starting words for replayability)
+
+================================================================================
+## 5. TECHNICAL SPECIFICATION
+
+DISPLAY:
+- Window size: 900 x 600 pixels
+- Background: Gradient that shifts based on emotional atmosphere
+  - Negative: #1a1a2e (cold blue-black) → #2d1a1a (cold red-black)
+  - Neutral: #2d2d3a (grey)
+  - Positive: #2a2d1a (warm) → #3d3020 (golden)
+- Atmosphere value: Float from -1.0 (negative) to +1.0 (positive), starts at 0
+
+COLOR PALETTE:
+- Silhouettes: #1a1a1a (always dark, simple human shapes)
+- Letter blocks: #e8e8e0 (warm white) with #333 text
+- Positive words: #90EE90 border glow, rise animation
+- Negative words: #8B0000 border glow, sink animation  
+- Neutral words: #888888 border
+- Platforms: #4a4a5a
+- Selected letter: #FFD700 (gold) highlight
+- Bridge words: Pulsing #FFD700 → #FFFFFF glow
+
+INPUT:
+- Mouse only
+- Left click: Select a letter from a word OR select a free letter
+- Drag: Move selected letter
+- Release: Drop letter at position
+- Letters snap together when horizontally adjacent (within 10px and same y within 5px)
+
+LETTER BLOCK:
+- Size: 40x40 pixels
+- States: IN_WORD, FREE, FORMING, ACTIVATED
+- Properties: x, y, char, state, parent_word (if IN_WORD), velocity_y
+
+WORD OBJECT:
+- Created when 2+ adjacent free letters form valid word
+- Properties: x, y, letters[], word_string, word_type (positive/negative/neutral/bridge)
+- Physics based on word_type
+
+PHYSICS:
+- Gravity: 100 pixels/second²
+- Positive word rise: -40 pixels/second (upward)
+- Negative word sink: +60 pixels/second (downward, faster than gravity)
+- Neutral: Standard gravity, stops on platforms
+- Bridge words: Float to center, stop, pulse
+
+SILHOUETTES:
+- Left silhouette: x=50, y=varies per level
+- Right silhouette: x=800, y=varies per level
+- Simple filled shape (can be rectangles for prototype)
+- Posture property: AWAY, NEUTRAL, TOWARD (affects rendering)
+- Posture changes based on atmosphere value
+
+ATMOSPHERE CALCULATION:
+```
+atmosphere = 0
+for each word_object in scene:
+    if word in POSITIVE_WORDS: atmosphere += 0.2
+    if word in NEGATIVE_WORDS: atmosphere -= 0.2
+atmosphere = clamp(atmosphere, -1.0, 1.0)
+```
+
+LEVEL DATA STRUCTURE:
+```
+LEVEL_DATA = {
+    1: {
+        name: "First Words",
+        left_silhouette: {x: 50, y: 450},
+        right_silhouette: {x: 800, y: 450},
+        platforms: [
+            {x: 0, y: 500, width: 200, height: 30},
+            {x: 700, y: 500, width: 200, height: 30}
+        ],
+        starting_words: [
+            {word: "HATRED", x: 400, y: 200, type: "negative"}
+        ],
+        ambient_letters: [],
+        hint_text: "Drag letters out of words. Arrange them to build something new.",
+        hint_delay: 15,
+        win_condition: "bridge" // or "reach_silhouette"
+    },
+    2: {
+        name: "The Silence",
+        left_silhouette: {x: 50, y: 450},
+        right_silhouette: {x: 800, y: 450},
+        platforms: [
+            {x: 0, y: 500, width: 200, height: 30},
+            {x: 700, y: 500, width: 200, height: 30}
+        ],
+        starting_words: [
+            {word: "SILENT", x: 400, y: 150, type: "negative"}
+        ],
+        ambient_letters: [],
+        hint_text: "The same letters can spell different truths.",
+        hint_delay: 12,
+        win_condition: "reach_silhouette"
+    },
+    3: {
+        name: "Misdirection",
+        left_silhouette: {x: 50, y: 350},
+        right_silhouette: {x: 800, y: 350},
+        platforms: [
+            {x: 0, y: 400, width: 200, height: 30},
+            {x: 700, y: 400, width: 200, height: 30}
+        ],
+        starting_words: [
+            {word: "BLAME", x: 400, y: 100, type: "negative"},
+            {word: "ANGER", x: 400, y: 200, type: "negative"},
+            {word: "WRONG", x: 400, y: 300, type: "negative"}
+        ],
+        ambient_letters: [],
+        hint_text: null,
+        win_condition: "reach_silhouette"
+    },
+    4: {
+        name: "The Cost",
+        left_silhouette: {x: 50, y: 450},
+        right_silhouette: {x: 800, y: 450},
+        platforms: [
+            {x: 0, y: 500, width: 200, height: 30},
+            {x: 350, y: 400, width: 200, height: 30},
+            {x: 700, y: 500, width: 200, height: 30}
+        ],
+        starting_words: [
+            {word: "SEVER", x: 380, y: 350, type: "negative"},
+            {word: "LOVE", x: 420, y: 100, type: "positive"}
+        ],
+        ambient_letters: [
+            {char: "L", x: 250, y: 250},
+            {char: "I", x: 290, y: 270},
+            {char: "F", x: 320, y: 240},
+            {char: "E", x: 360, y: 260}
+        ],
+        hint_text: "Some things require building, not just destroying.",
+        hint_delay: 20,
+        win_condition: "touch_love" // special condition
+    },
+    5: {
+        name: "Last Word",
+        left_silhouette: {x: 300, y: 400},
+        right_silhouette: {x: 550, y: 400},
+        platforms: [
+            {x: 200, y: 450, width: 150, height: 30},
+            {x: 500, y: 450, width: 150, height: 30}
+        ],
+        starting_words: [],
+        ambient_letters: [
+            // Scattered letters from all previous words
+            {char: "F", x: 350, y: 100},
+            {char: "O", x: 420, y: 120},
+            {char: "R", x: 380, y: 90},
+            {char: "G", x: 450, y: 150},
+            {char: "I", x: 400, y: 180},
+            {char: "V", x: 360, y: 140},
+            {char: "E", x: 430, y: 110},
+            {char: "T", x: 340, y: 200},
+            {char: "H", x: 480, y: 130},
+            {char: "R", x: 320, y: 170},
+            {char: "E", x: 460, y: 190},
+            {char: "A", x: 390, y: 160},
+            {char: "D", x: 410, y: 140},
+            {char: "S", x: 370, y: 220},
+            {char: "L", x: 440, y: 200},
+            {char: "N", x: 350, y: 130}
+        ],
+        drift_speed: 5, // letters slowly drift apart
+        hint_text: null,
+        win_condition: "any_bridge"
+    }
+}
+```
+
+ENDING TEXT BY WORD:
+```
+ENDING_TEXT = {
+    "FORGIVE": "Some words take time.",
+    "THREAD": "Some things remain connected.",
+    "HEART": "Some things survive.",
+    "LISTEN": "Some things were always there.",
+    "TOGETHER": "Some things are possible.",
+    "BRIDGE": "Some things can be built.",
+    "LOVE": "Some things endure.",
+    "HEAL": "Some things mend.",
+    "REACH": "Some things span the distance.",
+    "DEFAULT": "Some words are enough."
+}
+```
+
+================================================================================
+## 6. IMPLEMENTATION PSEUDOCODE
+
+### CORE DATA STRUCTURES
+
+```
+// Game state
+current_level = 1
+letters = []           // All letter objects
+words = []             // Formed word objects
+platforms = []
+silhouettes = {left: {}, right: {}}
+atmosphere = 0.0
+selected_letter = null
+game_phase = "PLAYING"  // PLAYING, TRANSITIONING, ENDING
+ending_word = ""
+
+// Letter object
+Letter = {
+    x, y: float
+    char: string (single character)
+    state: "IN_WORD" | "FREE" | "FORMING" | "ACTIVATED"
+    parent_word: Word or null
+    velocity_y: float
+    home_x, home_y: float (for drift in level 5)
+}
+
+// Word object  
+Word = {
+    x, y: float
+    letters: Letter[]
+    text: string
+    type: "positive" | "negative" | "neutral" | "bridge"
+    velocity_y: float
+    state: "ACTIVE" | "DISSOLVING"
+    glow_phase: float (for animation)
+}
+```
+
+### MAIN GAME LOOP
+
+```
+FUNCTION main():
+    initialize_display(900, 600)
+    load_level(1)
+    
+    WHILE game_running:
+        delta = get_delta_time()
+        
+        handle_input()
+        update_physics(delta)
+        check_word_formation()
+        update_atmosphere()
+        check_win_condition()
+        render()
+        
+        cap_framerate(60)
+```
+
+### INPUT HANDLING
+
+```
+FUNCTION handle_input():
+    mouse_x, mouse_y = get_mouse_position()
+    
+    IF mouse_just_pressed:
+        // Check if clicking on a free letter
+        FOR letter IN letters:
+            IF letter.state == "FREE" AND point_in_rect(mouse, letter):
+                selected_letter = letter
+                RETURN
+        
+        // Check if clicking on a letter in a word
+        FOR word IN words:
+            FOR letter IN word.letters:
+                IF point_in_rect(mouse, letter):
+                    extract_letter_from_word(letter, word)
+                    selected_letter = letter
+                    RETURN
+    
+    IF mouse_held AND selected_letter != null:
+        selected_letter.x = mouse_x - 20  // Center on cursor
+        selected_letter.y = mouse_y - 20
+    
+    IF mouse_just_released AND selected_letter != null:
+        selected_letter.state = "FREE"
+        selected_letter = null
+        check_word_formation()  // Check immediately on release
+```
+
+### LETTER EXTRACTION
+
+```
+FUNCTION extract_letter_from_word(letter, word):
+    // Remove letter from word
+    word.letters.remove(letter)
+    letter.state = "FREE"
+    letter.parent_word = null
+    
+    // Check if remaining letters form valid word
+    remaining_text = ""
+    FOR l IN word.letters:
+        remaining_text += l.char
+    
+    IF is_valid_word(remaining_text):
+        // Word transforms
+        word.text = remaining_text
+        word.type = get_word_type(remaining_text)
+        recalculate_word_positions(word)
+    ELSE:
+        // Word dissolves - remaining letters become free
+        FOR l IN word.letters:
+            l.state = "FREE"
+            l.parent_word = null
+            l.velocity_y = random(-50, 50)  // Scatter effect
+            letters.append(l)
+        words.remove(word)
+```
+
+### WORD FORMATION CHECK
+
+```
+FUNCTION check_word_formation():
+    IF selected_letter != null:
+        RETURN  // Don't check while dragging
+    
+    free_letters = [l for l in letters if l.state == "FREE"]
+    
+    // Sort by x position
+    sort(free_letters, by: x)
+    
+    // Find horizontal chains
+    chains = []
+    current_chain = []
+    
+    FOR letter IN free_letters:
+        IF current_chain is empty:
+            current_chain = [letter]
+        ELSE:
+            last = current_chain[-1]
+            // Adjacent if within 10px horizontally and 5px vertically
+            IF abs(letter.x - (last.x + 40)) < 10 AND abs(letter.y - last.y) < 5:
+                current_chain.append(letter)
+            ELSE:
+                IF len(current_chain) >= 2:
+                    chains.append(current_chain)
+                current_chain = [letter]
+    
+    IF len(current_chain) >= 2:
+        chains.append(current_chain)
+    
+    // Check each chain
+    FOR chain IN chains:
+        text = "".join([l.char for l in chain])
+        IF is_valid_word(text):
+            create_word_from_chain(chain, text)
+
+FUNCTION create_word_from_chain(chain, text):
+    word_type = get_word_type(text)
+    
+    word = Word {
+        x: chain[0].x,
+        y: chain[0].y,
+        letters: chain,
+        text: text,
+        type: word_type,
+        velocity_y: 0,
+        state: "ACTIVE",
+        glow_phase: 0
+    }
+    
+    FOR letter IN chain:
+        letter.state = "ACTIVATED"
+        letter.parent_word = word
+        letters.remove(letter)
+    
+    words.append(word)
+
+FUNCTION get_word_type(text):
+    IF text IN POSITIVE_WORDS: RETURN "positive"
+    IF text IN NEGATIVE_WORDS: RETURN "negative"  
+    IF text IN BRIDGE_WORDS: RETURN "bridge"
+    RETURN "neutral"
+```
+
+### PHYSICS UPDATE
+
+```
+GRAVITY = 100
+POSITIVE_RISE = -40
+NEGATIVE_SINK = 60
+
+FUNCTION update_physics(delta):
+    // Update free letters
+    FOR letter IN letters:
+        IF letter.state == "FREE":
+            letter.velocity_y += GRAVITY * delta
+            letter.y += letter.velocity_y * delta
+            
+            // Check platform collision
+            FOR platform IN platforms:
+                IF letter_on_platform(letter, platform):
+                    letter.y = platform.y - 40
+                    letter.velocity_y = 0
+            
+            // Level 5 drift
+            IF current_level == 5 AND level_data.drift_speed:
+                dx = letter.x - letter.home_x
+                dy = letter.y - letter.home_y
+                letter.x += sign(dx) * level_data.drift_speed * delta * 0.1
+                letter.y += sign(dy) * level_data.drift_speed * delta * 0.1
+    
+    // Update words
+    FOR word IN words:
+        word.glow_phase += delta * 3  // For animation
+        
+        SWITCH word.type:
+            CASE "positive":
+                word.velocity_y = POSITIVE_RISE
+                word.y += word.velocity_y * delta
+                word.y = max(word.y, 50)  // Don't go off screen
+                
+            CASE "negative":
+                word.velocity_y += NEGATIVE_SINK * delta
+                word.y += word.velocity_y * delta
+                check_word_platform_collision(word)
+                
+            CASE "bridge":
+                // Float toward center between silhouettes
+                target_x = (silhouettes.left.x + silhouettes.right.x) / 2 - word_width(word) / 2
+                target_y = silhouettes.left.y - 30
+                word.x += (target_x - word.x) * 2 * delta
+                word.y += (target_y - word.y) * 2 * delta
+                
+            CASE "neutral":
+                word.velocity_y += GRAVITY * delta
+                word.y += word.velocity_y * delta
+                check_word_platform_collision(word)
+        
+        // Update letter positions within word
+        FOR i, letter IN enumerate(word.letters):
+            letter.x = word.x + i * 40
+            letter.y = word.y
+```
+
+### ATMOSPHERE UPDATE
+
+```
+FUNCTION update_atmosphere():
+    target_atmosphere = 0
+    
+    FOR word IN words:
+        IF word.type == "positive" OR word.type == "bridge":
+            target_atmosphere += 0.3
+        ELIF word.type == "negative":
+            target_atmosphere -= 0.3
+    
+    target_atmosphere = clamp(target_atmosphere, -1.0, 1.0)
+    
+    // Smooth transition
+    atmosphere += (target_atmosphere - atmosphere) * 0.02
+    
+    // Update silhouette postures
+    IF atmosphere > 0.3:
+        silhouettes.left.posture = "TOWARD"
+        silhouettes.right.posture = "TOWARD"
+    ELIF atmosphere < -0.3:
+        silhouettes.left.posture = "AWAY"
+        silhouettes.right.posture = "AWAY"
+    ELSE:
+        silhouettes.left.posture = "NEUTRAL"
+        silhouettes.right.posture = "NEUTRAL"
+```
+
+### WIN CONDITION
+
+```
+FUNCTION check_win_condition():
+    level = LEVEL_DATA[current_level]
+    
+    SWITCH level.win_condition:
+        CASE "bridge":
+            FOR word IN words:
+                IF word.type == "bridge":
+                    // Bridge formed!
+                    trigger_level_complete(word.text)
+                    RETURN
+        
+        CASE "reach_silhouette":
+            // Check if any positive/neutral word creates path
+            right_sil = silhouettes.right
+            FOR word IN words:
+                IF word.type IN ["positive", "neutral", "bridge"]:
+                    IF word_reaches_silhouette(word, right_sil):
+                        trigger_level_complete(word.text)
+                        RETURN
+        
+        CASE "touch_love":
+            // Special case for level 4
+            FOR word IN words:
+                IF word.text == "LOVE":
+                    // Check if player created a path to LOVE
+                    IF love_is_reachable(word):
+                        trigger_level_complete("LOVE")
+                        RETURN
+        
+        CASE "any_bridge":
+            // Level 5 - any valid bridge word wins
+            FOR word IN words:
+                IF word.type == "bridge" OR word.type == "positive":
+                    IF word_spans_gap(word):
+                        trigger_ending(word.text)
+                        RETURN
+
+FUNCTION trigger_level_complete(word_text):
+    game_phase = "TRANSITIONING"
+    
+    // Brief pause, then next level
+    schedule(1.5, FUNCTION():
+        IF current_level < 5:
+            current_level += 1
+            load_level(current_level)
+            game_phase = "PLAYING"
+        ELSE:
+            trigger_ending(word_text)
+    )
+
+FUNCTION trigger_ending(final_word):
+    game_phase = "ENDING"
+    ending_word = final_word
+    ending_timer = 0
+```
+
+### RENDERING
+
+```
+FUNCTION render():
+    // Background gradient based on atmosphere
+    IF atmosphere < 0:
+        bg_color = lerp_color(#2d2d3a, #2d1a1a, abs(atmosphere))
+    ELSE:
+        bg_color = lerp_color(#2d2d3a, #3d3020, atmosphere)
+    
+    fill_background(bg_color)
+    
+    // Draw platforms
+    FOR platform IN platforms:
+        draw_rect(platform, color=#4a4a5a)
+    
+    // Draw silhouettes
+    draw_silhouette(silhouettes.left)
+    draw_silhouette(silhouettes.right)
+    
+    // Draw words
+    FOR word IN words:
+        draw_word(word)
+    
+    // Draw free letters
+    FOR letter IN letters:
+        IF letter.state == "FREE":
+            draw_letter(letter, selected=(letter == selected_letter))
+    
+    // Draw hint if applicable
+    IF show_hint AND hint_text:
+        draw_text(hint_text, 450, 570, color=#666666, align="center")
+    
+    // Draw level name
+    draw_text(level_data.name, 450, 20, color=#888888, align="center", size=18)
+    
+    // Ending overlay
+    IF game_phase == "ENDING":
+        render_ending()
+
+FUNCTION draw_silhouette(sil):
+    // Simple human shape
+    x, y = sil.x, sil.y
+    
+    // Body rectangle
+    IF sil.posture == "AWAY":
+        // Slightly turned away (narrower)
+        draw_rect(x+5, y-60, 20, 60, color=#1a1a1a)
+    ELIF sil.posture == "TOWARD":
+        // Turned toward (full width, slight lean)
+        draw_rect(x, y-60, 30, 60, color=#1a1a1a)
+    ELSE:
+        draw_rect(x, y-60, 30, 60, color=#1a1a1a)
+    
+    // Head circle
+    draw_circle(x+15, y-80, 15, color=#1a1a1a)
+
+FUNCTION draw_word(word):
+    // Glow effect based on type
+    glow_alpha = (sin(word.glow_phase) + 1) / 4  // 0 to 0.5
+    
+    IF word.type == "positive":
+        glow_color = #90EE90
+    ELIF word.type == "negative":
+        glow_color = #8B0000
+    ELIF word.type == "bridge":
+        glow_color = #FFD700
+    ELSE:
+        glow_color = null
+    
+    IF glow_color:
+        // Draw glow behind
+        draw_rect(word.x-3, word.y-3, len(word.text)*40+6, 46, 
+                  color=glow_color, alpha=glow_alpha)
+    
+    // Draw each letter
+    FOR i, letter IN enumerate(word.letters):
+        draw_letter_at(word.x + i*40, word.y, letter.char, in_word=true)
+
+FUNCTION draw_letter(letter, selected=false):
+    bg = #FFD700 IF selected ELSE #e8e8e0
+    draw_rect(letter.x, letter.y, 40, 40, color=bg)
+    draw_rect_outline(letter.x, letter.y, 40, 40, color=#333333, width=2)
+    draw_text(letter.char, letter.x+12, letter.y+8, color=#333333, size=24)
+
+FUNCTION render_ending():
+    // Fade overlay
+    overlay_alpha = min(ending_timer / 2.0, 0.7)
+    draw_rect(0, 0, 900, 600, color=#FFFFFF, alpha=overlay_alpha)
+    
+    // Text sequence
+    IF ending_timer > 1.0:
+        draw_text(ending_word + ".", 450, 200, color=#1a1a1a, size=48, align="center")
+    
+    IF ending_timer > 3.0:
+        ending_phrase = ENDING_TEXT.get(ending_word, ENDING_TEXT["DEFAULT"])
+        draw_text(ending_phrase, 450, 280, color=#333333, size=24, align="center")
+    
+    IF ending_timer > 5.0:
+        draw_text("What we said can't be unsaid.", 450, 380, 
+                  color=#666666, size=18, align="center")
+    
+    IF ending_timer > 6.5:
+        draw_text("But what we remember is ours to shape.", 450, 410,
+                  color=#666666, size=18, align="center")
+    
+    IF ending_timer > 9.0:
+        draw_text("Thank you for playing.", 450, 500,
+                  color=#888888, size=14, align="center")
+    
+    IF ending_timer > 11.0:
+        draw_text("Click to play again", 450, 540,
+                  color=#666666, size=12, align="center")
+        IF mouse_clicked:
+            restart_game()
+    
+    ending_timer += delta_time
+```
+
+### UTILITY FUNCTIONS
+
+```
+FUNCTION is_valid_word(text):
+    RETURN text.upper() IN VALID_WORDS
+
+FUNCTION lerp_color(c1, c2, t):
+    // Linear interpolation between two colors
+    r = c1.r + (c2.r - c1.r) * t
+    g = c1.g + (c2.g - c1.g) * t  
+    b = c1.b + (c2.b - c1.b) * t
+    RETURN rgb(r, g, b)
+
+FUNCTION word_width(word):
+    RETURN len(word.text) * 40
+
+FUNCTION point_in_rect(point, obj):
+    RETURN (point.x >= obj.x AND point.x <= obj.x + 40 AND
+            point.y >= obj.y AND point.y <= obj.y + 40)
+
+FUNCTION clamp(value, min_val, max_val):
+    RETURN max(min_val, min(max_val, value))
+
+FUNCTION sign(x):
+    IF x > 0: RETURN 1
+    IF x < 0: RETURN -1
+    RETURN 0
+
+FUNCTION load_level(level_num):
+    data = LEVEL_DATA[level_num]
+    
+    // Clear state
+    letters = []
+    words = []
+    
+    // Load platforms
+    platforms = data.platforms
+    
+    // Load silhouettes
+    silhouettes.left = data.left_silhouette
+    silhouettes.right = data.right_silhouette
+    silhouettes.left.posture = "NEUTRAL"
+    silhouettes.right.posture = "NEUTRAL"
+    
+    // Create starting words
+    FOR word_data IN data.starting_words:
+        create_starting_word(word_data)
+    
+    // Create ambient letters
+    FOR letter_data IN data.ambient_letters:
+        letter = Letter {
+            x: letter_data.x,
+            y: letter_data.y,
+            char: letter_data.char,
+            state: "FREE",
+            velocity_y: 0,
+            home_x: letter_data.x,
+            home_y: letter_data.y
+        }
+        letters.append(letter)
+    
+    // Setup hints
+    hint_text = data.hint_text
+    hint_timer = data.hint_delay or 999
+    show_hint = false
+    
+    atmosphere = 0
+
+FUNCTION create_starting_word(data):
+    word = Word {
+        x: data.x,
+        y: data.y,
+        letters: [],
+        text: data.word,
+        type: data.type,
+        velocity_y: 0,
+        state: "ACTIVE",
+        glow_phase: 0
+    }
+    
+    FOR i, char IN enumerate(data.word):
+        letter = Letter {
+            x: data.x + i * 40,
+            y: data.y,
+            char: char,
+            state: "IN_WORD",
+            parent_word: word,
+            velocity_y: 0
+        }
+        word.letters.append(letter)
+    
+    words.append(word)
+```
+
+================================================================================
+## 7. WHY THIS DESIGN IS MORE CREATIVE
+
+1. CLOSED SYSTEM: You can't add letters, only transform what exists. This 
+   constraint creates meaningful choices and reflects the reality that we 
+   can't add words to past conversations—only reshape our relationship to them.
+
+2. TRANSFORMATION > DESTRUCTION: The mechanic rewards finding new words 
+   inside old ones (SILENT→LISTEN, HATRED→THREAD). This creates genuine 
+   "aha!" moments with emotional resonance.
+
+3. ATMOSPHERE AS FEEDBACK: The visual/emotional tone shifts based on your 
+   choices, making the impact of words visceral rather than just mechanical.
+
+4. SILHOUETTES AS STAKES: The two figures give the wordplay human meaning. 
+   You're not solving puzzles in a void—you're trying to bridge a gap between 
+   people.
+
+5. VARIABLE ENDING: Your final word choice matters and changes the message. 
+   This gives players ownership over the resolution.
+
+6. THEMATIC COHERENCE: Every mechanic serves the theme. Extraction = the 
+   impossibility of unsaying. Transformation = the possibility of reframing. 
+   Bridge words = connection. The game IS its meaning.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

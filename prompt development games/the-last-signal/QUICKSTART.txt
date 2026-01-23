@@ -1,0 +1,49 @@
+================================================================================
+                              THE LAST SIGNAL
+                         A 5-Minute Narrative Puzzle
+================================================================================
+
+QUICK START
+-----------
+
+1. Open "index.html" in any modern web browser
+2. Press SPACE to start
+3. Use Arrow Keys (or A/D) to tune to frequency 107.7
+4. Follow the story and make your choices
+
+CONTROLS
+--------
+
+Space       - Start game
+← →  or A D - Tune frequency dial
+Letters     - Type Morse code answers
+1, 2, 3     - Select dialogue choices
+H           - Show Morse code hint
+R           - Replay (after ending)
+
+THE STORY
+---------
+
+You are Sam Reeves, a radio operator at an Arctic research station.
+December 14, 1962. 11:47 PM. You're alone.
+
+A garbled signal breaks through the static.
+The voice claims to be you, from three days in the future.
+There's a warning. A disaster. A choice.
+
+Can you trust yourself?
+
+TIPS
+----
+
+• Listen to the signal strength meter when tuning
+• The target frequency is 107.7 MHz
+• Try tuning to 107.3 MHz early for a secret...
+• There are 3 different endings to discover
+• Takes about 5 minutes to complete
+
+================================================================================
+
+                           Press SPACE to begin...
+
+================================================================================

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STILL WATERS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            border: 1px solid #222;
+            image-rendering: crisp-edges;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #555;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="instructions">Arrow keys or WASD to move • R to restart • ESC to quit</div>
+
+    <script>
+        // ======================================
+        // CONSTANTS
+        // ======================================
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+        const FPS = 60;
+        const FRAME_TIME = 1000 / FPS;
+
+        // Timing constants
+        const INTRO_DURATION = 3.0;
+        const STILLNESS_THRESHOLD = 0.5;
+        const STILLNESS_TO_REVEAL = 8.0;
+        const MAX_GAME_DURATION = 300.0;
+        const LETTER_SCATTER_THRESHOLD = 2.5;
+
+        // Physics constants
+        const PLAYER_SPEED = 0.3;
+        const PLAYER_FRICTION = 0.85;
+        const DISTURBANCE_RADIUS = 0.25;
+        const DISTURBANCE_STRENGTH = 0.15;
+        const LETTER_DRIFT_SPEED = 0.01;
+        const LETTER_HOME_PULL = 0.02;
+        const LETTER_FRICTION = 0.98;
+
+        // Game phases
+        const PHASE = {
+            INTRO: 'intro',
+            GAMEPLAY: 'gameplay',
+            RESOLUTION: 'resolution',
+            SCATTERED: 'scattered',
+            QUIT: 'quit'
+        };
+
+        // The complete message
+        const MESSAGE_LINES = [
+            "I know you wanted to save me.",
+            "But you couldn't.",
+            "",
+            "That's okay.",
+            "",
+            "What I needed was never saving.",
+            "What I needed was",
+            "",
+            "someone to sit with me",
+            "in the dark",
+            "without trying",
+            "to turn on the lights.",
+            "",
+            "Thank you for being here.",
+            "",
+            "You can let go now."
+        ];
+
+        // ======================================
+        // GAME STATE
+        // ======================================
+        let canvas, ctx;
+        let gameState;
+        let keys = {};
+        let lastFrameTime = 0;
+        let introStartTime = 0;
+        let resolutionTimer = 0;
+        let scatteredMessageShown = false;
+
+        // ======================================
+        // LETTER CLASS
+        // ======================================
+        class Letter {
+            constructor(char, homeX, homeY, targetLine, targetPos) {
+                this.character = char;
+                this.homeX = homeX;
+                this.homeY = homeY;
+                this.targetLine = targetLine;
+                this.targetPosition = targetPos;
+
+                // Start slightly scattered
+                this.x = homeX + (Math.random() - 0.5) * 0.3;
+                this.y = homeY + (Math.random() - 0.5) * 0.2;
+                this.velocityX = (Math.random() - 0.5) * 0.01;
+                this.velocityY = (Math.random() - 0.5) * 0.01;
+            }
+        }
+
+        // ======================================
+        // INITIALIZATION
+        // ======================================
+        function init() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+
+            // Set up keyboard input
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+
+            // Create initial game state
+            resetGame();
+
+            // Start the intro
+            introStartTime = Date.now();
+
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resetGame() {
+            gameState = {
+                playerX: 0.5,
+                playerY: 0.5,
+                playerVelocityX: 0,
+                playerVelocityY: 0,
+                letters: [],
+                stillnessTimer: 0,
+                disturbanceLevel: 0,
+                phase: PHASE.INTRO,
+                messageRevealedAmount: 0,
+                gameStartTime: 0
+            };
+
+            resolutionTimer = 0;
+            scatteredMessageShown = false;
+
+            // Create letters from message
+            createLetters();
+        }
+
+        function createLetters() {
+            const centerY = 0.5;
+            const lineHeight = 0.045;
+            const startY = centerY - (MESSAGE_LINES.length * lineHeight / 2);
+
+            for (let lineIndex = 0; lineIndex < MESSAGE_LINES.length; lineIndex++) {
+                const line = MESSAGE_LINES[lineIndex];
+                const lineY = startY + (lineIndex * lineHeight);
+                const lineWidth = line.length * 0.012;
+                const startX = 0.5 - (lineWidth / 2);
+
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char === ' ') continue;
+
+                    const homeX = startX + (charIndex * 0.012);
+                    const letter = new Letter(char, homeX, lineY, lineIndex, charIndex);
+                    gameState.letters.push(letter);
+                }
+            }
+        }
+
+        // ======================================
+        // INPUT HANDLING
+        // ======================================
+        function handleKeyDown(e) {
+            keys[e.key.toLowerCase()] = true;
+
+            // Restart
+            if (e.key.toLowerCase() === 'r') {
+                resetGame();
+                introStartTime = Date.now();
+            }
+
+            // Quit
+            if (e.key === 'Escape' || e.key.toLowerCase() === 'q') {
+                gameState.phase = PHASE.QUIT;
+            }
+
+            e.preventDefault();
+        }
+
+        function handleKeyUp(e) {
+            keys[e.key.toLowerCase()] = false;
+        }
+
+        // ======================================
+        // GAME LOOP
+        // ======================================
+        function gameLoop(currentTime) {
+            if (gameState.phase === PHASE.QUIT) {
+                ctx.fillStyle = '#0a0a14';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                return;
+            }
+
+            const deltaTime = Math.min((currentTime - lastFrameTime) / 1000, 0.1);
+            lastFrameTime = currentTime;
+
+            // Handle intro phase
+            if (gameState.phase === PHASE.INTRO) {
+                const elapsed = (currentTime - introStartTime) / 1000;
+                if (elapsed >= INTRO_DURATION) {
+                    gameState.phase = PHASE.GAMEPLAY;
+                    gameState.gameStartTime = currentTime;
+                }
+            }
+
+            // Update game state
+            if (gameState.phase === PHASE.GAMEPLAY) {
+                updateGameplay(deltaTime);
+            } else if (gameState.phase === PHASE.RESOLUTION) {
+                updateResolution(deltaTime);
+            } else if (gameState.phase === PHASE.SCATTERED) {
+                updateScattered(deltaTime);
+            }
+
+            // Render
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ======================================
+        // UPDATE FUNCTIONS
+        // ======================================
+        function updateGameplay(dt) {
+            // Process input
+            let dx = 0;
+            let dy = 0;
+
+            if (keys['arrowleft'] || keys['a']) dx -= 1;
+            if (keys['arrowright'] || keys['d']) dx += 1;
+            if (keys['arrowup'] || keys['w']) dy -= 1;
+            if (keys['arrowdown'] || keys['s']) dy += 1;
+
+            // Apply input to velocity
+            if (dx !== 0 || dy !== 0) {
+                const magnitude = Math.sqrt(dx * dx + dy * dy);
+                dx /= magnitude;
+                dy /= magnitude;
+
+                gameState.playerVelocityX += dx * PLAYER_SPEED * dt;
+                gameState.playerVelocityY += dy * PLAYER_SPEED * dt;
+            }
+
+            // Apply friction
+            gameState.playerVelocityX *= PLAYER_FRICTION;
+            gameState.playerVelocityY *= PLAYER_FRICTION;
+
+            // Zero out tiny velocities
+            if (Math.abs(gameState.playerVelocityX) < 0.001) gameState.playerVelocityX = 0;
+            if (Math.abs(gameState.playerVelocityY) < 0.001) gameState.playerVelocityY = 0;
+
+            // Update player position
+            gameState.playerX += gameState.playerVelocityX * dt;
+            gameState.playerY += gameState.playerVelocityY * dt;
+
+            // Clamp player to bounds
+            gameState.playerX = clamp(gameState.playerX, 0.05, 0.95);
+            gameState.playerY = clamp(gameState.playerY, 0.05, 0.95);
+
+            // Calculate disturbance
+            const playerSpeed = Math.sqrt(
+                gameState.playerVelocityX ** 2 + gameState.playerVelocityY ** 2
+            );
+            const currentDisturbance = playerSpeed * 3.0;
+            gameState.disturbanceLevel = lerp(gameState.disturbanceLevel, currentDisturbance, 0.1);
+
+            // Update stillness timer
+            const playerIsStill = playerSpeed < 0.01;
+            if (playerIsStill) {
+                gameState.stillnessTimer += dt;
+            } else {
+                gameState.stillnessTimer = Math.max(0, gameState.stillnessTimer - dt * 2);
+            }
+
+            // Update letters
+            let totalDistanceFromHome = 0;
+
+            for (const letter of gameState.letters) {
+                // Calculate distance from player
+                const dxToPlayer = letter.x - gameState.playerX;
+                const dyToPlayer = letter.y - gameState.playerY;
+                const distToPlayer = Math.sqrt(dxToPlayer ** 2 + dyToPlayer ** 2);
+
+                // Player disturbs nearby letters
+                if (distToPlayer < DISTURBANCE_RADIUS && gameState.disturbanceLevel > 0.01) {
+                    const pushStrength = (1 - distToPlayer / DISTURBANCE_RADIUS) *
+                                        DISTURBANCE_STRENGTH * gameState.disturbanceLevel;
+                    if (distToPlayer > 0.001) {
+                        letter.velocityX += (dxToPlayer / distToPlayer) * pushStrength;
+                        letter.velocityY += (dyToPlayer / distToPlayer) * pushStrength;
+                    }
+                }
+
+                // Natural drift outward
+                const dxFromCenter = letter.x - 0.5;
+                const dyFromCenter = letter.y - 0.5;
+                const distFromCenter = Math.sqrt(dxFromCenter ** 2 + dyFromCenter ** 2);
+                if (distFromCenter > 0.01) {
+                    const driftX = (dxFromCenter / distFromCenter) * LETTER_DRIFT_SPEED;
+                    const driftY = (dyFromCenter / distFromCenter) * LETTER_DRIFT_SPEED;
+                    letter.velocityX += driftX * dt;
+                    letter.velocityY += driftY * dt;
+                }
+
+                // Pull toward home when still
+                if (gameState.stillnessTimer > STILLNESS_THRESHOLD) {
+                    const stillnessStrength = Math.min(1.0,
+                        (gameState.stillnessTimer - STILLNESS_THRESHOLD) / 2.0);
+                    const dxToHome = letter.homeX - letter.x;
+                    const dyToHome = letter.homeY - letter.y;
+                    letter.velocityX += dxToHome * LETTER_HOME_PULL * stillnessStrength;
+                    letter.velocityY += dyToHome * LETTER_HOME_PULL * stillnessStrength;
+                }
+
+                // Apply friction
+                letter.velocityX *= LETTER_FRICTION;
+                letter.velocityY *= LETTER_FRICTION;
+
+                // Update position
+                letter.x += letter.velocityX;
+                letter.y += letter.velocityY;
+
+                // Track distance from home
+                const dxFromHome = letter.x - letter.homeX;
+                const dyFromHome = letter.y - letter.homeY;
+                totalDistanceFromHome += Math.sqrt(dxFromHome ** 2 + dyFromHome ** 2);
+            }
+
+            // Check for scattered state
+            const avgDistance = totalDistanceFromHome / gameState.letters.length;
+            if (avgDistance > LETTER_SCATTER_THRESHOLD) {
+                gameState.phase = PHASE.SCATTERED;
+                return;
+            }
+
+            // Update message revealed amount
+            if (gameState.stillnessTimer > STILLNESS_THRESHOLD) {
+                gameState.messageRevealedAmount = Math.min(1.0,
+                    (gameState.stillnessTimer - STILLNESS_THRESHOLD) / STILLNESS_TO_REVEAL);
+            } else {
+                gameState.messageRevealedAmount = Math.max(0,
+                    gameState.messageRevealedAmount - dt * 0.5);
+            }
+
+            // Check for resolution
+            if (gameState.messageRevealedAmount >= 0.99 && avgDistance < 0.1) {
+                gameState.phase = PHASE.RESOLUTION;
+            }
+        }
+
+        function updateResolution(dt) {
+            resolutionTimer += dt;
+
+            // Gentle upward drift
+            for (const letter of gameState.letters) {
+                letter.velocityY -= 0.001 * dt;
+                letter.x += letter.velocityX;
+                letter.y += letter.velocityY;
+            }
+        }
+
+        function updateScattered(dt) {
+            // Letters continue drifting
+            for (const letter of gameState.letters) {
+                letter.x += letter.velocityX;
+                letter.y += letter.velocityY;
+            }
+
+            // Count visible letters
+            const visibleLetters = gameState.letters.filter(l =>
+                l.x > 0 && l.x < 1 && l.y > 0 && l.y < 1
+            ).length;
+
+            if (visibleLetters < gameState.letters.length * 0.3) {
+                scatteredMessageShown = true;
+            }
+        }
+
+        // ======================================
+        // RENDERING
+        // ======================================
+        function render() {
+            // Clear screen with deep navy background
+            ctx.fillStyle = '#0a0a14';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            if (gameState.phase === PHASE.INTRO) {
+                renderIntro();
+            } else if (gameState.phase === PHASE.GAMEPLAY || gameState.phase === PHASE.RESOLUTION) {
+                renderGameplay();
+            } else if (gameState.phase === PHASE.SCATTERED) {
+                renderScattered();
+            }
+        }
+
+        function renderIntro() {
+            ctx.font = '20px "Courier New"';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const lines = [
+                "Someone left you a message.",
+                "The words are drifting apart."
+            ];
+
+            const elapsed = (Date.now() - introStartTime) / 1000;
+            const alpha = Math.min(1.0, elapsed / 0.5);
+            ctx.globalAlpha = alpha;
+
+            lines.forEach((line, i) => {
+                ctx.fillText(line, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + (i - 0.5) * 30);
+            });
+
+            ctx.globalAlpha = 1.0;
+        }
+
+        function renderGameplay() {
+            // Draw letters
+            ctx.font = '24px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            for (const letter of gameState.letters) {
+                const screenX = letter.x * CANVAS_WIDTH;
+                const screenY = letter.y * CANVAS_HEIGHT;
+
+                // Calculate brightness based on distance from home
+                const dx = letter.x - letter.homeX;
+                const dy = letter.y - letter.homeY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                let brightness = 1.0 - Math.min(1.0, dist * 2);
+                brightness = Math.max(0.3, brightness);
+
+                const color = Math.floor(brightness * 255);
+                ctx.fillStyle = `rgb(${color}, ${color}, ${color})`;
+                ctx.fillText(letter.character, screenX, screenY);
+            }
+
+            // Draw player cursor
+            const playerScreenX = gameState.playerX * CANVAS_WIDTH;
+            const playerScreenY = gameState.playerY * CANVAS_HEIGHT;
+
+            ctx.beginPath();
+            ctx.arc(playerScreenX, playerScreenY, 8, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(100, 150, 255, 0.6)';
+            ctx.fill();
+
+            // Draw ripples if moving
+            if (gameState.disturbanceLevel > 0.05) {
+                const rippleCount = 3;
+                for (let i = 0; i < rippleCount; i++) {
+                    const radius = 15 + i * 12 * gameState.disturbanceLevel;
+                    const alpha = (1 - i / rippleCount) * gameState.disturbanceLevel * 0.3;
+
+                    ctx.beginPath();
+                    ctx.arc(playerScreenX, playerScreenY, radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(100, 150, 255, ${alpha})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+
+            // Resolution fade overlay
+            if (gameState.phase === PHASE.RESOLUTION) {
+                const fadeAmount = Math.min(1.0, resolutionTimer / 5.0);
+                ctx.fillStyle = `rgba(10, 10, 20, ${fadeAmount * 0.7})`;
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                if (resolutionTimer > 3.0) {
+                    ctx.font = '18px "Courier New"';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.textAlign = 'center';
+                    const textAlpha = Math.min(1.0, (resolutionTimer - 3.0) / 2.0);
+                    ctx.globalAlpha = textAlpha;
+                    ctx.fillText("The words found their peace. So did you.",
+                                CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+        }
+
+        function renderScattered() {
+            // Draw remaining letters
+            ctx.font = '24px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+
+            for (const letter of gameState.letters) {
+                if (letter.x > 0 && letter.x < 1 && letter.y > 0 && letter.y < 1) {
+                    const screenX = letter.x * CANVAS_WIDTH;
+                    const screenY = letter.y * CANVAS_HEIGHT;
+                    ctx.fillText(letter.character, screenX, screenY);
+                }
+            }
+
+            // Show scattered message
+            if (scatteredMessageShown) {
+                ctx.fillStyle = 'rgba(10, 10, 20, 0.85)';
+                ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+                ctx.font = '20px "Courier New"';
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+
+                const lines = [
+                    "The words scattered before you could read them.",
+                    "But they were never really gone.",
+                    "",
+                    "Be still.",
+                    "",
+                    "[Press R to try again]"
+                ];
+
+                lines.forEach((line, i) => {
+                    ctx.fillText(line, CANVAS_WIDTH / 2,
+                                CANVAS_HEIGHT / 2 + (i - 2.5) * 30);
+                });
+            }
+        }
+
+        // ======================================
+        // HELPER FUNCTIONS
+        // ======================================
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        // ======================================
+        // START THE GAME
+        // ======================================
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

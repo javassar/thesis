@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Evaluations</title>
+  <!-- loading jsPsych -->
+  <script src="https://unpkg.com/jspsych@7.3.4"></script>
+  <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+
+  <!-- loading jsPsych plug-ins -->
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.1"></script> <!-- for data pipe -->
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script> <!-- condition assignment using data pipe -->
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+  <!-- for clicking through messages -->
+  <script src="https://unpkg.com/@jspsych/plugin-iframe-button-response@1.1.3"></script>
+  <!-- for displaying HTML games in iframe -->
+  <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css" />
+  <script src="https://unpkg.com/@jspsych/plugin-survey@1.0.1"></script> <!-- for survey plug-in -->
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@2.0.0"></script> <!--- for survey question type -->
+  <script src="https://unpkg.com/@jspsych/plugin-survey-rating@2.0.0"></script> <!--- for survey question type-->
+
+  <!-- loading react-->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+
+  <!-- UPLOAD ANY EXTERNAL JSONS HERE -->
+  <script src="evaluation.js"></script> <!-- evaluation survey -->
+
+</head>
+
+<body>
+  <script>
+
+    //Initialize jsPsych
+    var jsPsych = initJsPsych({
+      on_finish: function () {
+        // jsPsych.data.displayData();
+        const displayElement = document.getElementById('jspsych-content') || document.body;
+        displayElement.innerHTML = `
+        <p style="font-size: 1.25rem; color: #555;">
+        </p>
+Thank you for your contribution to our research! Feel free to exit the page.  
+    </p>
+      </div>
+    `;
+      },
+    }
+    );
+
+    // create timelines for conditions. the contents of each timeline are at the bottom of this doc
+    var ai_aware_timeline = [];
+    var ai_blind_timeline = [];
+
+    // Store assigned games globally
+    var assignedGames = [];
+    var currentCondition = '';
+
+    // Backend server URL (change this when deploying)
+    const BACKEND_URL = 'http://localhost:3000';
+
+    // sequential condition assignment using data pipe. pushing a condition timeline into the timeline variable
+    var timeline = [];
+    async function createExperiment() {
+      // Check if we already have a condition assigned in sessionStorage
+      let condition;
+      const storedCondition = sessionStorage.getItem('assignedCondition');
+
+      if (storedCondition !== null) {
+        // Use the previously assigned condition from this session
+        condition = parseInt(storedCondition);
+        console.log('Using previously assigned condition from session:', condition);
+      } else {
+        // Get new condition from DataPipe (this increments the counter)
+        condition = await jsPsychPipe.getCondition("pVI31akTlfRu");
+        // Store it so we don't get a new one on reload
+        sessionStorage.setItem('assignedCondition', condition.toString());
+        console.log('Fetched new condition from DataPipe:', condition);
+      }
+
+      // Determine condition name
+      currentCondition = (condition == 0) ? 'ai_aware' : 'ai_blind';
+
+      // Check if we already have games assigned in sessionStorage (for this browser session)
+      const sessionGames = sessionStorage.getItem('assignedGames');
+      const sessionCondition = sessionStorage.getItem('currentCondition');
+
+      if (sessionGames && sessionCondition === currentCondition) {
+        // Use previously assigned games from this session
+        assignedGames = JSON.parse(sessionGames);
+        console.log('Using previously assigned games from session:', assignedGames);
+      } else {
+        // Fetch new games from backend
+        try {
+          const response = await fetch(`${BACKEND_URL}/assign-games?condition=${currentCondition}`);
+          const data = await response.json();
+          assignedGames = data.games;
+
+          // Store in sessionStorage so we don't fetch again if page reloads
+          sessionStorage.setItem('assignedGames', JSON.stringify(assignedGames));
+          sessionStorage.setItem('currentCondition', currentCondition);
+
+          console.log('Fetched new games from backend:', assignedGames);
+        } catch (error) {
+          console.error('Error fetching games from backend:', error);
+          alert('Error connecting to server. Please contact the researcher.');
+          return;
+        }
+      }
+
+      // Set the timeline based on condition
+      if (condition == 0) {
+        timeline = ai_aware_timeline;
+      } else {
+        timeline = ai_blind_timeline;
+      }
+
+      jsPsych.run([...timeline, save_data]);
+    }
+
+    // setting subject_id and filename for confidential data analysis 
+    const subject_id = jsPsych.randomization.randomID(10);
+    const filename = `${subject_id}.csv`;
+
+    /*  welcome message  */
+    var welcome_ai_blind = {
+      data: {
+        phase: "welcome-message",
+      },
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "Welcome! In this study, you will play three short video games, completing a short survey after each game.<br><br>Please make sure you are in a quiet environment where you can focus for the duration of the study.<br><br>Press any key to begin.",
+      choices: "ALL_KEYS",
+    };
+
+    const all_games = [
+      'game1.html',
+      'game2.html',
+      'game3.html',
+      'game4.html',
+      'game5.html',
+      'game6.html',
+      'game7.html',
+      'game8.html',
+      'game9.html',
+      'game10.html',
+      'game11.html',
+      'game12.html',
+      'game13.html',
+      'game14.html',
+      'game15.html',
+      'game16.html',
+      'game17.html',
+      'game18.html'
+    ];
+
+    var welcome_ai_aware = {
+      data: {
+        phase: "welcome-message",
+      },
+      type: jsPsychHtmlKeyboardResponse,
+      choices: "ALL_KEYS",
+      stimulus: "Welcome! In this study, you will play three short video games that were generated by Artification Intelligence (AI) with minimal human intervention.<br><br>You will complete a short survey after each game. Please make sure you are in a quiet environment where you can focus for the duration of the study.<br><br>Press any key to begin.",
+    };
+
+    /* commitment check */
+    const commitment_check = {
+      type: jsPsychSurvey,
+      survey_json: {
+        elements: [
+          {
+            type: "checkbox",
+            name: "commitment-check",
+            title: "The quality of our survey data plays an integral role in the accuracy of our experiment results. To draw accurate conclusions, it is important to us that you provide thoughtful answers to each question. Do you commit to providing thoughtful answers in the questions in this survey?",
+            "isRequired": true,
+            "choices": [
+              {
+                "value": "maybe",
+                "text": "I can't promise either way"
+              },
+              {
+                "value": "yes",
+                "text": "Yes, I do"
+              },
+              {
+                "value": "no",
+                "text": "No, I do not"
+              }
+            ]
+          },
+        ],
+      },
+      data: {
+        phase: "commitment-check",
+      },
+    };
+
+    /* Video game trials - dynamically populated with assigned games */
+    var video_game_one = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: function() {
+        return `<iframe src="${assignedGames[0]}" width="800" height="600" style="border: 1px solid #ccc;"></iframe>
+                <p style="margin-top: 20px;">When you have finished playing the game, press any key to continue to the survey.</p>`;
+      },
+      choices: "ALL_KEYS",
+      data: function() {
+        return {
+          phase: "video-game-one",
+          game_file: assignedGames[0],
+          condition: currentCondition
+        };
+      }
+    };
+
+    /* evaluation of first video game */
+    const evaluation_one = {
+      type: jsPsychSurvey,
+      survey_json: evaluation_json,
+      data: function() {
+        return {
+          phase: "evaluation-one",
+          game_file: assignedGames[0],
+          condition: currentCondition
+        };
+      }
+    }
+
+    var video_game_two = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: function() {
+        return `<iframe src="${assignedGames[1]}" width="800" height="600" style="border: 1px solid #ccc;"></iframe>
+                <p style="margin-top: 20px;">When you have finished playing the game, press any key to continue to the survey.</p>`;
+      },
+      choices: "ALL_KEYS",
+      data: function() {
+        return {
+          phase: "video-game-two",
+          game_file: assignedGames[1],
+          condition: currentCondition
+        };
+      }
+    };
+
+    /* evaluation of second video game */
+
+    const evaluation_two = {
+      type: jsPsychSurvey,
+      survey_json: evaluation_json,
+      data: function() {
+        return {
+          phase: "evaluation-two",
+          game_file: assignedGames[1],
+          condition: currentCondition
+        };
+      }
+    }
+
+    var video_game_three = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: function() {
+        return `<iframe src="${assignedGames[2]}" width="800" height="600" style="border: 1px solid #ccc;"></iframe>
+                <p style="margin-top: 20px;">When you have finished playing the game, press any key to continue to the survey.</p>`;
+      },
+      choices: "ALL_KEYS",
+      data: function() {
+        return {
+          phase: "video-game-three",
+          game_file: assignedGames[2],
+          condition: currentCondition
+        };
+      }
+    };
+
+    /* evaluation of third video game */
+
+    const evaluation_three = {
+      type: jsPsychSurvey,
+      survey_json: evaluation_json,
+      data: function() {
+        return {
+          phase: "evaluation-three",
+          game_file: assignedGames[2],
+          condition: currentCondition
+        };
+      }
+    }
+
+    const ai_aware_question = {
+      type: jsPsychSurvey,
+      survey_json: {
+        elements: [
+          {
+            type: "comment",
+            name: "ai_aware_question",
+            title: "Were your assessments of these games impacted by the knowledge that they were generated by AI? Please explain.",
+            isRequired: true,
+          },
+        ],
+      },
+      data: {
+        phase: "ai-aware-question",
+      },
+    };
+
+    const ai_blind_question = {
+      type: jsPsychSurvey,
+      survey_json: {
+        elements: [
+          {
+            type: "comment",
+            name: "ai_blind_question",
+            title: "The three games that you played were actually generated by AI with minimal human intervention. Knowing this now, would you have answered any of the previous questions differently? Please explain.",
+            isRequired: true,
+          },
+        ],
+      },
+      data: {
+        phase: "ai-blind-question",
+      },
+    };
+
+
+
+    //goodbye message and brief explanation to user about our experiment motive
+    var goodbye = {
+      data: {
+        phase: "goodbye",
+      },
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `
+        <p> You have completed the survey! Please save your data before closing the page. <p>
+      `,
+      post_trial_gap: 1000,
+    };
+
+    /* ------------- PUSHING TIMELINE FOR EACH CONDITION ----------------- */
+
+    ai_aware_timeline.push(
+      welcome_ai_aware,
+      commitment_check,
+      video_game_one,
+      evaluation_one,
+      video_game_two,
+      evaluation_two,
+      video_game_three,
+      evaluation_three,
+      ai_aware_question,
+      goodbye
+    )
+
+    ai_blind_timeline.push(
+      welcome_ai_blind,
+      commitment_check,
+      video_game_one,
+      evaluation_one,
+      video_game_two,
+      evaluation_two,
+      video_game_three,
+      evaluation_three,
+      ai_blind_question,
+      goodbye
+    )
+
+    //SAVE EXPERIMENT DATA TO OSF via datapipe
+    const save_data = {
+      type: jsPsychPipe,
+      action: "save",
+      experiment_id: "pVI31akTlfRu",
+      filename: filename,
+      data_string: () => jsPsych.data.get().csv()
+    };
+
+    // Wait for DOM to be fully loaded before starting
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', createExperiment);
+    } else {
+      createExperiment();
+    }
+
+
+    //run experiment
+    // jsPsych.run(timeline);
+
+  </script>
+</body>
+
+</html>

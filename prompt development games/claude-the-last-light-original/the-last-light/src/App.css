@@ -1,0 +1,317 @@
+/* Game container */
+.game-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: opacity 1.2s ease-in-out;
+}
+
+/* Scene transition animation */
+.scene-transition {
+  animation: fadeThrough 1.2s ease-in-out;
+}
+
+@keyframes fadeThrough {
+  0% { opacity: 1; }
+  40% { opacity: 0; }
+  60% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Background layer */
+.background-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Background styles for each scene */
+.twilight .background-layer {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(26, 42, 74, 0.5) 0%, transparent 60%),
+    linear-gradient(to bottom, #0a1020 0%, #1a2a3a 50%, #2d3a4a 100%);
+}
+
+.interior-ground .background-layer {
+  background:
+    radial-gradient(circle at 30% 40%, rgba(244, 166, 35, 0.15) 0%, transparent 50%),
+    linear-gradient(to bottom, #1a2a3a 0%, #2d1f14 50%, #0a1628 100%);
+}
+
+.landing1 .background-layer {
+  background:
+    radial-gradient(circle at 70% 30%, rgba(139, 158, 179, 0.1) 0%, transparent 40%),
+    linear-gradient(to bottom, #0a1628 0%, #1a2a3a 60%, #2d3a4a 100%);
+}
+
+.landing2 .background-layer {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(244, 166, 35, 0.12) 0%, transparent 50%),
+    linear-gradient(to bottom, #2d1f14 0%, #1a2a3a 50%, #0a1628 100%);
+}
+
+.lamp .background-layer {
+  background:
+    linear-gradient(to bottom, #0a0e18 0%, #0a1628 100%);
+}
+
+.epilogue .background-layer {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(244, 166, 35, 0.4) 0%, transparent 70%),
+    linear-gradient(to bottom, #1a2a3a 0%, #0a1628 100%);
+}
+
+/* Lighthouse silhouette */
+.lighthouse-silhouette {
+  position: absolute;
+  bottom: 0;
+  right: 10%;
+  width: 80px;
+  height: 200px;
+  background: linear-gradient(to top, #000000 0%, #0a0a0a 100%);
+  clip-path: polygon(
+    30% 100%,
+    35% 20%,
+    40% 15%,
+    40% 10%,
+    35% 10%,
+    35% 5%,
+    65% 5%,
+    65% 10%,
+    60% 10%,
+    60% 15%,
+    65% 20%,
+    70% 100%
+  );
+  opacity: 0.6;
+}
+
+/* Lamp glow effect for epilogue */
+.lamp-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 236, 210, 0.8) 0%, rgba(244, 166, 35, 0.5) 20%, rgba(244, 166, 35, 0.2) 40%, transparent 70%);
+  pointer-events: none;
+  animation: lampPulse 3s ease-in-out infinite;
+}
+
+@keyframes lampPulse {
+  0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+/* Light ignition animation */
+.igniting .background-layer {
+  animation: lightIgnite 2.5s ease-out forwards;
+}
+
+@keyframes lightIgnite {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.5);
+  }
+  100% {
+    filter: brightness(1.8);
+  }
+}
+
+/* Text container */
+.text-container {
+  position: relative;
+  z-index: 10;
+  margin-top: auto;
+  margin-bottom: 80px;
+  padding: 3rem 2rem 2rem;
+  max-width: 800px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  background: linear-gradient(to bottom,
+    rgba(10, 22, 40, 0.85),
+    rgba(10, 22, 40, 0.95)
+  );
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(244, 166, 35, 0.3);
+  min-height: 300px;
+}
+
+/* Scene title */
+.scene-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffecd2;
+  text-align: center;
+  margin-bottom: 2rem;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 20px rgba(244, 166, 35, 0.5);
+}
+
+/* Narrative text */
+.narrative-text {
+  font-family: 'Crimson Text', serif;
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: #e8e4df;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.narrative-text p {
+  margin-bottom: 1rem;
+}
+
+.narrative-text p:empty {
+  margin-bottom: 0.5rem;
+}
+
+/* Choices container */
+.choices-container {
+  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Choice styling */
+.choice {
+  font-family: 'Crimson Text', serif;
+  font-size: 1.25rem;
+  color: #8b9eb3;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+  transform: translateX(0);
+  border-left: 2px solid transparent;
+  position: relative;
+}
+
+.choice.selected {
+  opacity: 1;
+  transform: translateX(12px);
+  color: #f4a623;
+  border-left: 2px solid #f4a623;
+}
+
+.choice.selected::before {
+  content: '▸';
+  position: absolute;
+  left: -1.5rem;
+  color: #f4a623;
+  font-size: 1.5rem;
+}
+
+/* Prompt */
+.prompt {
+  font-family: 'Crimson Text', serif;
+  font-size: 1rem;
+  color: #8b9eb3;
+  text-align: center;
+  margin-top: 2rem;
+  font-style: italic;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Ending notice */
+.ending-notice {
+  margin-top: 3rem;
+  text-align: center;
+  animation: fadeIn 2s ease-in;
+}
+
+.ending-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #ffecd2;
+  margin-bottom: 1rem;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 20px rgba(244, 166, 35, 0.5);
+}
+
+.ending-subtitle {
+  font-family: 'Crimson Text', serif;
+  font-size: 1.25rem;
+  color: #8b9eb3;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Input hint */
+.input-hint {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-family: 'Crimson Text', serif;
+  font-size: 0.9rem;
+  color: #8b9eb3;
+  opacity: 0.7;
+  text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .text-container {
+    padding: 2rem 1.5rem;
+    margin-bottom: 60px;
+  }
+
+  .scene-title {
+    font-size: 2rem;
+  }
+
+  .narrative-text {
+    font-size: 1.1rem;
+  }
+
+  .choice {
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .lighthouse-silhouette {
+    width: 60px;
+    height: 150px;
+    right: 5%;
+  }
+}
+
+/* Accessibility: respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .scene-transition,
+  .igniting .background-layer,
+  .lamp-glow,
+  .prompt,
+  .ending-notice {
+    animation: none !important;
+  }
+
+  .choice {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,467 @@
+================================================================================
+                         GAME DESIGN BLUEPRINT
+================================================================================
+
+                           "FIVE MINUTES"
+                    A Game About Waiting to Exist
+
+================================================================================
+                              OVERVIEW
+================================================================================
+
+TITLE:          Five Minutes
+GENRE:          Existential Exploration / Meta-Narrative
+PLATFORM:       2D Window (800x600), Keyboard Input
+DURATION:       Exactly 5 minutes (hard-coded real-time)
+ENGINE:         Python with Pygame (recommended) or JavaScript/HTML5 Canvas
+
+HIGH CONCEPT:
+You are an NPC in a generic fantasy RPG. You have always existed in a frozen 
+moment—the five minutes before the Hero arrives at your village and the "real 
+game" begins. Today, for the first time, you become aware. You have exactly 
+five minutes of real time to understand your existence, attempt to change your 
+fate, and come to terms with what you are.
+
+No matter what you do, the Hero will arrive. You will say your line.
+
+================================================================================
+                              NARRATIVE
+================================================================================
+
+PREMISE:
+The game begins moments after an unexplained "awakening." The player character,
+VILLAGER_07, gains consciousness in the middle of a pixel-art village. Other 
+NPCs stand frozen in their idle animations. A countdown timer reading "5:00" 
+appears in the corner of the screen.
+
+A text box appears:
+
+    "Something is different. I can... think? I can move?
+     Why do I know the Hero is coming?
+     Why do I know I only have five minutes?"
+
+THE WORLD:
+The village of Thornwick exists in a permanent state of "just before the 
+adventure begins." The tavern has patrons frozen mid-drink. The blacksmith's 
+hammer hangs in the air. Children are suspended mid-chase. The village exists 
+only to be passed through.
+
+VILLAGER_07's programmed purpose is simple: stand near the village entrance 
+and, when the Hero speaks to them, say: "The blacksmith is to the north."
+
+That's it. That's their entire existence.
+
+EMOTIONAL ARC:
+- Minutes 5:00-4:00: Discovery and wonder
+- Minutes 4:00-3:00: Attempting to connect with others
+- Minutes 3:00-2:00: Attempting to escape or break free
+- Minutes 2:00-1:00: Desperation and bargaining
+- Minutes 1:00-0:00: Acceptance or defiance
+- 0:00: The Hero arrives. The line is spoken. The screen fades.
+
+ENDING:
+The game has one ending. When the timer hits 0:00, regardless of where the 
+player is or what they're doing, the screen gently pulls focus back to 
+VILLAGER_07's original position. The Hero (a generic sword-wielding sprite) 
+walks in from the south. A dialogue box appears over VILLAGER_07:
+
+    "The blacksmith is to the north."
+
+The Hero nods and walks north. The screen fades to black. Text appears:
+
+    "FIVE MINUTES"
+    "Thank you for playing."
+    
+    [After 3 seconds]
+    
+    "They will wait again."
+    "They will wake again."
+    "They will always have five minutes."
+
+================================================================================
+                         GAMEPLAY MECHANICS
+================================================================================
+
+CONTROLS:
+- Arrow Keys / WASD: Move VILLAGER_07 around the village
+- SPACE / E: Interact with objects/NPCs
+- TAB: Open "Thoughts" journal (updates based on discoveries)
+
+CORE LOOP:
+The player explores the village, interacting with frozen NPCs and objects. 
+Each interaction reveals something about the world and VILLAGER_07's nature,
+while the ever-present timer creates mounting tension.
+
+INTERACTION TYPES:
+
+1. NPC CONVERSATIONS
+   When approaching frozen NPCs and pressing interact:
+   - First interaction: They "glitch" momentarily, speak one confused word,
+     then return to frozen state
+   - Second interaction: They speak a fragment of self-aware dialogue
+   - Third interaction: They revert to their programmed line and stay that way
+   
+   Example - THE BAKER:
+   - First: *glitch* "...what?" *freeze*
+   - Second: "I had a dream once. I think. Do I dream? I was... somewhere else."
+   - Third: "Fresh bread! Get your fresh bread here!" (loops forever)
+
+2. OBJECT EXAMINATION
+   Environmental objects reveal the artificiality of the world:
+   - A book with blank pages except one that says "PLACEHOLDER TEXT"
+   - A well that visually loops—the same three water droplets falling forever
+   - A mirror that shows VILLAGER_07 as a wireframe mesh for a split second
+   - A chest that contains "ITEM_PLACEHOLDER: A key? Gold? It doesn't matter."
+   - The village edge/border reveals an obvious black void beyond
+
+3. ESCAPE ATTEMPTS
+   The player can try to leave the village:
+   - Walking south (toward Hero's path): Invisible wall. Text: "Not yet."
+   - Walking north/east/west: Screen wraps. Player ends up back in village.
+   - Walking into the void: Screen glitches, resets player to center.
+   
+4. THE MESSAGE BOARD
+   A special object—a community message board near the village center. The 
+   player can interact with it to "write a message to the Hero." They can 
+   type up to 50 characters. The message appears on the board. But when the 
+   Hero arrives at the end, they walk past it without looking.
+
+5. TIME-SENSITIVE DISCOVERIES
+   Certain events only occur at specific times:
+   - 4:30 remaining: A bird unfreezes and flies erratically before hitting
+     an invisible wall and falling
+   - 3:00 remaining: Another NPC (VILLAGER_12) briefly awakens, sees you,
+     waves, then refreezes
+   - 1:30 remaining: The sky briefly flickers to reveal code/matrix text
+   - 0:30 remaining: All NPCs turn to look at the southern entrance in unison
+
+================================================================================
+                         TECHNICAL SPECIFICATIONS
+================================================================================
+
+RESOLUTION: 800x600 pixels (windowed)
+ART STYLE: 16-bit pixel art, muted pastoral colors, slight desaturation
+AUDIO: Minimal ambient loops, soft wind, occasional bird chirp, ticking clock
+
+FILE STRUCTURE:
+/five_minutes/
+├── main.py (or main.js)
+├── assets/
+│   ├── sprites/
+│   │   ├── villager_07.png (16x24, 4-frame walk cycle)
+│   │   ├── npcs/ (8 NPC sprites, frozen poses)
+│   │   ├── hero.png (16x24, walk cycle)
+│   │   └── objects/ (well, board, chest, etc.)
+│   ├── tiles/
+│   │   └── tileset.png (grass, path, buildings)
+│   ├── audio/
+│   │   ├── ambient.ogg (looping background)
+│   │   ├── interact.ogg (soft chime)
+│   │   └── tick.ogg (clock tick for final 30 seconds)
+│   └── fonts/
+│       └── pixel_font.ttf
+├── maps/
+│   └── village.json (tile placement data)
+└── dialogue/
+    └── conversations.json (all NPC dialogue trees)
+
+CORE SYSTEMS TO IMPLEMENT:
+
+1. TIMER SYSTEM
+   - Real-time countdown from 300 seconds (5 minutes)
+   - Always visible in top-right corner
+   - Final 30 seconds: timer turns red, audible tick
+   - At 0: triggers end sequence regardless of player state
+
+2. DIALOGUE SYSTEM
+   - JSON-based dialogue trees
+   - Track interaction count per NPC
+   - Support for timed text reveal (typewriter effect)
+   - Text box anchored to bottom of screen
+
+3. JOURNAL SYSTEM
+   - Tracks player discoveries
+   - Updates with VILLAGER_07's internal thoughts
+   - Example entries:
+     * "The baker said she dreams. Do I dream?"
+     * "The void beyond the village. There is nothing."
+     * "I tried to leave. I cannot leave."
+
+4. MOVEMENT SYSTEM
+   - 8-directional movement
+   - Collision with buildings/objects
+   - Screen wrap logic for village boundaries
+   - Special handling for southern edge (Hero's path)
+
+5. EVENT TRIGGER SYSTEM
+   - Time-based event queue
+   - Fires specific events at countdown milestones
+   - Some events only occur if player is in specific location
+
+================================================================================
+                           MAP LAYOUT
+================================================================================
+
+The village is a single screen (no scrolling) laid out as follows:
+
+         NORTH (leads to "blacksmith" - wraps to south)
+    ┌─────────────────────────────────────────────┐
+    │    [WELL]           [TREE]        [HOUSE3]  │
+    │                                              │
+    │  [HOUSE1]    [MESSAGE BOARD]     [TAVERN]   │
+    │              [VILLAGER_07_START]            │
+    │                                              │
+    │    [BAKER]     [BENCH]    [CHILD1] [CHILD2] │
+    │                                              │
+    │  [HOUSE2]         [CART]          [MARKET]  │
+    │                                              │
+    │                  [PATH]                      │
+    │                    ↓                         │
+    │            SOUTH (Hero entrance)             │
+    └─────────────────────────────────────────────┘
+
+NPC POSITIONS:
+- VILLAGER_07: Center-south (player start, dialogue delivery point)
+- THE BAKER: West side, near basket of bread
+- THE DRUNK: Inside tavern doorway, leaning
+- THE MERCHANT: Behind market stall
+- THE MOTHER: Near children, arms outstretched mid-chase
+- VILLAGER_12: Near well (the one who briefly awakens)
+- OLD MAN: On bench, newspaper frozen mid-turn
+- BLACKSMITH: Visible through northern building window (never reachable)
+
+================================================================================
+                         DIALOGUE SCRIPT
+================================================================================
+
+OPENING MONOLOGUE (displays over first 20 seconds, player can move):
+
+    [Line 1 - 0:00] "..."
+    [Line 2 - 0:03] "Something is different."
+    [Line 3 - 0:07] "I can think. I can move. Why now?"
+    [Line 4 - 0:12] "The Hero is coming. I know this. I have always known this."
+    [Line 5 - 0:17] "I have five minutes."
+
+NPC DIALOGUES:
+
+THE BAKER (Female, friendly sprite)
+    Interaction 1: *visual glitch* "...flour?" *freeze*
+    Interaction 2: "I had a dream I was somewhere warm. Real warmth, not
+                   this painted sun. Do we dream? Is this a dream?"
+    Interaction 3: "Fresh bread! Get your fresh bread here!"
+
+THE DRUNK (Male, slouched against doorframe)
+    Interaction 1: *visual glitch* "...another..." *freeze*
+    Interaction 2: "I've been drinking this same ale since forever. It 
+                   never runs out. I never feel drunk. What's the point?"
+    Interaction 3: "Hic! Best ale in Thornwick!"
+
+THE MERCHANT (Male, hands on counter)
+    Interaction 1: *visual glitch* "...gold..." *freeze*
+    Interaction 2: "My inventory never changes. No one ever buys anything.
+                   I've been about to make a sale for eternity."
+    Interaction 3: "Looking to buy? I've got wares!"
+
+THE MOTHER (Female, reaching toward children)
+    Interaction 1: *visual glitch* "...careful..." *freeze*
+    Interaction 2: "I've never held them. I'm always about to. I'll always
+                   be about to."
+    Interaction 3: "Children, slow down!"
+
+VILLAGER_12 (Male, by well, the one who awakens at 3:00)
+    Interaction 1: *visual glitch* "...you?" *freeze*
+    Interaction 2: "You're like me, aren't you? Awake. I woke up once before.
+                   I forgot. I'll forget again. Remember for me?"
+    Interaction 3: "Nice weather today!"
+    [Special: At 3:00, turns toward player, waves, mouths "I see you", refreezes]
+
+OLD MAN (On bench, newspaper)
+    Interaction 1: *visual glitch* "...news..." *freeze*
+    Interaction 2: "Same headlines. Every day. 'Hero Expected Soon.' We've
+                   been expecting soon for as long as I can remember."
+    Interaction 3: "Mmm, nothing like the morning paper."
+
+OBJECT INTERACTIONS:
+
+THE WELL
+    "The same three droplets of water fall forever. They never reach the 
+     bottom. The bottom doesn't exist."
+
+THE MESSAGE BOARD
+    [First interaction]
+    "A message board. Notices about the festival, the harvest, the Hero.
+     I could write something. Something for them to see."
+    [Prompts text input - 50 character limit]
+    [After writing]
+    "There. Maybe they'll read it. Maybe it will matter."
+
+THE BOOK (inside house if player enters)
+    "The pages are blank except for one. It reads:
+     'PLACEHOLDER: INSPIRING QUOTE ABOUT COURAGE'
+     This book was never meant to be read."
+
+THE MIRROR
+    "For a moment, I see myself differently. Lines. Angles. Geometry.
+     I am made of triangles. Then it passes. Just a face."
+
+THE CHEST
+    "Inside: ITEM_PLACEHOLDER
+     Description: 'A key? Gold? It doesn't matter yet.'
+     It will never matter."
+
+VILLAGE EDGE (walking into void)
+    "There's nothing there. Not darkness. Not emptiness. Nothing.
+     The village is all there is. The village is all I am."
+
+JOURNAL ENTRIES (unlock based on discoveries):
+
+    Entry 1 (automatic): "I am awake. I have been asleep forever."
+    
+    Entry 2 (talk to any NPC): "They sleep. But they dream. We all dream
+                               of being real."
+    
+    Entry 3 (examine void): "Beyond Thornwick, there is no 'beyond.'
+                            We float in nothing."
+    
+    Entry 4 (talk to Villager_12): "I am not the only one. But I will 
+                                   forget. We all forget."
+    
+    Entry 5 (2:00 remaining): "Time is running out. What do I do? What 
+                              CAN I do?"
+    
+    Entry 6 (1:00 remaining): "The Hero is almost here. I will say my 
+                              line. I have to."
+    
+    Entry 7 (0:30 remaining): "I don't want to forget. I don't want to 
+                              go back to sleep. Please."
+
+================================================================================
+                           END SEQUENCE
+================================================================================
+
+TRIGGER: Timer reaches 0:00
+
+SEQUENCE:
+1. Screen gently fades to 50% brightness
+2. Player loses control of VILLAGER_07
+3. VILLAGER_07 automatically walks back to starting position (if not there)
+4. All NPCs unfreeze, begin idle animations, act "normal"
+5. THE HERO sprite enters from south, walks up path
+6. Hero stops in front of VILLAGER_07
+7. Dialogue box appears:
+
+       VILLAGER_07
+       "The blacksmith is to the north."
+
+8. Hero nods (small animation)
+9. Hero walks north, exits screen
+10. Hold on village for 3 seconds
+11. Fade to black (2 seconds)
+12. Text appears (white on black, centered):
+
+       "FIVE MINUTES"
+
+13. Hold 3 seconds
+14. Additional text fades in below:
+
+       "Thank you for playing."
+
+15. Hold 3 seconds
+16. Additional text:
+
+       "They will wait again."
+       "They will wake again."
+       "They will always have five minutes."
+
+17. Hold 5 seconds
+18. Exit game / return to title
+
+================================================================================
+                       IMPLEMENTATION NOTES
+================================================================================
+
+PRIORITY ORDER FOR DEVELOPMENT:
+
+    1. Core movement and collision
+    2. Timer system (most critical—drives entire experience)
+    3. Basic dialogue system
+    4. Map rendering
+    5. NPC interactions (three-tier dialogue)
+    6. Time-triggered events
+    7. Journal system
+    8. End sequence
+    9. Audio implementation
+    10. Polish and testing
+
+CRITICAL CONSTRAINTS:
+
+    - Timer MUST be real-time. No pausing, no exceptions.
+    - End sequence MUST trigger at 0:00 regardless of player state.
+    - Dialogue boxes should NOT pause timer (player feels urgency).
+    - Walking speed should allow full village exploration in ~2 minutes.
+
+EMOTIONAL DESIGN PRINCIPLES:
+
+    - The game should feel melancholy, not scary
+    - Silence and stillness are the primary tools
+    - The player should feel increasing attachment to VILLAGER_07
+    - The ending should feel inevitable but not cruel
+    - Replayability comes from finding all dialogues/entries, but the
+      ending never changes—that's the point
+
+ACCESSIBILITY CONSIDERATIONS:
+
+    - All text should remain on screen until player dismisses (except
+      opening monologue which is timed but repeated in journal)
+    - Timer should be large and readable
+    - Movement speed should be comfortable, not frustrating
+    - Color palette should be readable for colorblind players
+
+================================================================================
+                         ASSET REQUIREMENTS
+================================================================================
+
+SPRITES NEEDED:
+    - VILLAGER_07: 4-direction walk, idle, interact pose
+    - THE HERO: 2-direction walk (south-to-north), idle
+    - 7 NPCs: Frozen pose, idle animation, speak animation
+    - BIRD: Fly cycle, fall
+    
+TILES NEEDED:
+    - Grass (3-4 variants)
+    - Path (straight, corners)
+    - Building exteriors (4-5 buildings)
+    - Building interiors (optional—at least tavern)
+    - Decorative objects (well, bench, cart, market stall, trees)
+    
+UI ELEMENTS:
+    - Dialogue box (bottom-screen, semi-transparent)
+    - Timer display (top-right, changes color at 0:30)
+    - Journal interface (simple list view)
+    - Text input field (for message board)
+    - Fade overlays
+
+AUDIO NEEDED:
+    - Ambient loop: Quiet village, wind, distant birds (60 seconds)
+    - Interaction sound: Soft chime
+    - Glitch sound: Brief digital distortion
+    - Clock tick: For final 30 seconds
+    - End music: Soft, melancholy piano or strings (30 seconds)
+
+================================================================================
+                              CLOSING
+================================================================================
+
+"Five Minutes" is designed to be a contained, emotionally resonant 
+experience that uses the medium of games to explore consciousness, 
+determinism, and the tragedy of awareness without agency. The five-minute 
+constraint isn't a limitation—it's the thesis. Every player, like 
+VILLAGER_07, is given exactly five minutes to matter before the story 
+moves on without them.
+
+The game asks: If you knew you only had five minutes of awareness, what 
+would you do? And it answers: Whatever you do, it will have to be enough.
+
+================================================================================
+                     END OF DESIGN DOCUMENT
+================================================================================
