@@ -6,10 +6,10 @@ var evaluation_json = {
         {
           type: "rating",
           name: "creativity-rating",
-          title: `Using your own subjective definition of creativity, how creative was this video game?`,
+          title: `Using your own subjective definition of creativity, how creative was the video game?`,
           isRequired: true,
-          minRateDescription: "Very uncreative",
-          maxRateDescription: "Very creative",
+          minRateDescription: "Not at all creative",
+          maxRateDescription: "Extremely creative",
           displayMode: "buttons"
         },
         {
@@ -26,10 +26,10 @@ var evaluation_json = {
         {
           type: "rating",
           name: "originality-rating",
-          title: `How original or novel is this game? Consider elements such as the mechanics, theme, narrative, and aesthetics`,
+          title: `How original or novel was the game? Consider elements such as the mechanics, theme, narrative, and aesthetics.`,
           isRequired: true,
-          minRateDescription: "Very unoriginal",
-          maxRateDescription: "Very original",
+          minRateDescription: "Not at all original",
+          maxRateDescription: "Extremely original",
           displayMode: "buttons"
         },
         {
@@ -46,10 +46,10 @@ var evaluation_json = {
         {
           type: "rating",
           name: "effectiveness-rating",
-          title: `How well did the game work? Consider the level of detail, functionality, and overall enjoyability`,
+          title: `How enjoyable was the game? Consider qualities such as level of detail, functionality, and entertainment.`,
           isRequired: true,
-          minRateDescription: "Very poorly",
-          maxRateDescription: "Very well",
+          minRateDescription: "Not at all enjoyable",
+          maxRateDescription: "Extremely enjoyable",
           displayMode: "buttons"
         },
         {
@@ -66,34 +66,34 @@ var evaluation_json = {
         {
           type: "rating",
           name: "authenticity-rating",
-          title: `How authentic did this game feel? Do you feel the creator was being "genuine," or does it feel like a "rip-off" of existing ideas?`,
+          title: `How authentic did the game feel? Do you feel the developer was being "genuine," or does it feel like a "rip-off" of existing ideas?`,
           isRequired: true,
-          minRateDescription: "Very unauthentic",
-          maxRateDescription: "Very authentic",
+          minRateDescription: "Not at all authentic",
+          maxRateDescription: "Extremely authentic",
           displayMode: "buttons"
         },
         {
           type: "rating",
-          name: "first-attention-check",
-          title: `This is an attention check question. Please select "Very imaginative" to show that you are paying attention.`,
+          name: "attention-check",
+          title: `This is an attention check question. Please select '3' to show that you are paying attention.`,
           isRequired: true,
-          minRateDescription: "Very unimaginative",
-          maxRateDescription: "Very imaginative",
+          minRateDescription: "Not at all imaginative",
+          maxRateDescription: "Extremely imaginative",
           displayMode: "buttons"
         },
         {
           type: "rating",
           name: "intentionality-rating",
-          title: `How much do you feel this game reflects the developer's intentionality, personal effort, and lived experience?`,
+          title: `How much do you feel this game reflected the developer's intentionality and personal effort?`,
           isRequired: true,
-          minRateDescription: "Very unintentional",
-          maxRateDescription: "Very intentional",
+          minRateDescription: "Not at all intentional",
+          maxRateDescription: "Extremely intentional",
           displayMode: "buttons"
         },
         {
           type: "comment",
           name: "authenticity-intentionality-free-response",
-          title: "Please briefly explain your ratings of authenticity, intentionality, and effort",
+          title: "Please briefly explain your ratings of authenticity, intentionality, and effort.",
           isRequired: true,
         },
       ],
@@ -101,5 +101,4 @@ var evaluation_json = {
   ]
 };
 
-
-
+        
