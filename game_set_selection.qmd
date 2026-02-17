@@ -1,0 +1,177 @@
+---
+title: "game-set-selection"
+author: Jacqueline Adelmann
+format: html
+editor: visual
+---
+
+This doc is for generating the 41 unique game blocks for participants in the evaluation survey html. 
+
+```{r}
+#| label: storing game names
+
+# store the names of the games 
+
+items <- c(
+  "game_chat_1_echo",
+  "game_chat_2_murmuration",
+  "game_chat_3_orbit",
+  "game_chat_4_courier",
+  "game_chat_5_glider",
+  "game_chat_6_tidepainter",
+  "game_claude_1_light",
+  "game_claude_2_moth",
+  "game_claude_3_bureaucromancer",
+  "game_claude_4_decibel",
+  "game_claude_5_cartographer",
+  "game_claude_6_flame",
+  "game_gemini_1_static",
+  "game_gemini_2_patch",
+  "game_gemini_3_suture",
+  "game_gemini_4_substratum",
+  "game_gemini_5_rename",
+  "game_gemini_6_redact"
+)
+
+```
+
+```{r}
+#| label: selecting the 41 games randomly per pre-reg
+
+# set seed for reproducibility 
+set.seed(2026)
+
+# generate all 18 choose 3 combinations
+all_combos <- combn(items, 3)
+
+# randomly select 41 unique combinations
+random_41 <- t(all_combos[, sample(ncol(all_combos), 41)])
+
+# turn into df 
+random_41_df <- as.data.frame(random_41)
+colnames(random_41_df) <- c("Game_1", "Game_2", "Game_3")
+
+random_41_df
+
+```
+
+```{r}
+#| label: checking frequency of each game 
+
+# turn entire df into one long vector so i can count frequencies 
+all_items <- unlist(random_41_df)
+
+# count frequencies
+item_counts <- table(all_items)
+
+# print 
+item_counts
+
+```
+
+Only half of the frequencies in the randomly generated set of blocks are as desired (6-7 appearances), meaning I'll need to manually adjust a lot of the blocks. Additionally, I'm noticing that all of the games in "Game_1" are ChatGPT-generated games and all the games in "Game_3" are Gemini-generated games, which is not ideal. 
+
+I pre-registered randomization with some manual modifications to ensure balance of frequency, but I am realizing that I would need to manually modify this so much that it would barely be random by the time I'm done; there would be ample opportunity for me to accidentally impose unwanted patterns in the blocks. 
+
+As such, I think it makes more sense to create a block-generating function that ensures balanced game frequency and balanced game positioning (i.e., frequency in "Game_1", "Game_2", and "Game_3" are approximately equal for each game). I acknowledge that this is a deviation from my pre-registration, but I hope this explanation sufficiently supports my decision. 
+
+```{r}
+#| label: generate evenly distributed blocks 
+
+# set seed
+set.seed(2026)
+
+#name items again for sanity
+items <- c(
+  "game_chat_1_echo",
+  "game_chat_2_murmuration",
+  "game_chat_3_orbit",
+  "game_chat_4_courier",
+  "game_chat_5_glider",
+  "game_chat_6_tidepainter",
+  "game_claude_1_light",
+  "game_claude_2_moth",
+  "game_claude_3_bureaucromancer",
+  "game_claude_4_decibel",
+  "game_claude_5_cartographer",
+  "game_claude_6_flame",
+  "game_gemini_1_static",
+  "game_gemini_2_patch",
+  "game_gemini_3_suture",
+  "game_gemini_4_substratum",
+  "game_gemini_5_rename",
+  "game_gemini_6_redact"
+)
+
+# make a function to generate the blocks. i had chatgpt help me generate this code
+generate_blocks <- function(items) {
+  
+  repeat {
+    
+    # step 1: assign total target frequencies
+    target_counts <- rep(7, length(items))
+    target_counts[sample(1:length(items), 3)] <- 6
+    names(target_counts) <- items
+    
+    # step 2: create item pool
+    pool <- rep(items, target_counts)
+    
+    # step 3: shuffle the pool
+    pool <- sample(pool)
+    
+    # step 4: form 41 blocks
+    blocks <- matrix(pool, ncol = 3, byrow = TRUE)
+    
+    # step 5: check uniqueness of blocks
+    if (nrow(unique(blocks)) != 41) next
+    
+    # step 6: check position balance (no game appears in a single position (e.g., "Game_1") more than 3 times)
+    pos_counts <- lapply(1:3, function(pos) table(blocks[, pos]))
+    
+    ok_position <- TRUE
+    
+    for (i in seq_along(items)) {
+      counts <- sapply(pos_counts, function(x) ifelse(items[i] %in% names(x), x[items[i]], 0))
+      if (max(counts) - min(counts) > 2) {
+        ok_position <- FALSE
+        break
+      }
+    }
+    
+    if (!ok_position) next
+    
+    return(as.data.frame(blocks))
+  }
+}
+
+# run the function to make the blocks 
+blocks_df <- generate_blocks(items)
+colnames(blocks_df) <- c("Game_1", "Game_2", "Game_3")
+
+#view the blocks as a df 
+blocks_df
+
+```
+
+```{r}
+#| label: check frequencies for sanity 
+
+all_items_from_blocks <- unlist(blocks_df)
+
+# count frequencies
+item_counts_from_blocks <- table(all_items_from_blocks)
+
+# print 
+item_counts_from_blocks
+
+# now the different llms are pretty evenly distributed and each game appears 6-7 times. perfect!
+```
+
+```{r}
+#| label: export the blocks 
+
+write.csv(blocks_df, "game_blocks.csv")
+
+```
+
+
