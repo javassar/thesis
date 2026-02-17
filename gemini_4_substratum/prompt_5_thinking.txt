@@ -1,0 +1,176 @@
+✓  Edit gemini_4_substratum_game/game.js: const tileWidth = 50; // Defin...… │
+│                                                                              │
+│ 149   }                                                                      │
+│ 150                                                                          │
+│ 151   const tileWidth = 50; // Define globally for access                    │
+│ 152 - const levelData = [                                                    │
+│ 153 -     ['STONE', 'STONE', 'VOID', 'STONE', 'STONE', 'VOID', 'STONE',      │
+│     'STONE', 'VOID', 'STONE', 'STONE', 'VOID'], // Strip 0                   │
+│ 154 -     ['STONE', 'STONE', 'SPIKE', 'STONE', 'STONE', 'SPIKE', 'STONE',    │
+│     'STONE', 'SPIKE', 'STONE', 'STONE', 'SPIKE'], // Strip 1                 │
+│ 155 -     ['STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE',    │
+│     'STONE', 'STONE', 'STONE', 'STONE', 'STONE']  // Strip 2                 │
+│ 152 +                                                                        │
+│ 153 + // --- LEVEL DATA ---                                                  │
+│ 154 + // Each level can have its own tile layout and special rules.          │
+│ 155 + const levels = [                                                       │
+│ 156 +     { // Level 1: The Basics                                           │
+│ 157 +         data: [                                                        │
+│ 158 +             ['STONE', 'STONE', 'VOID', 'STONE', 'STONE', 'VOID',       │
+│     'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'VOID',   │
+│     'STONE'],                                                                │
+│ 159 +             ['STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE',     │
+│     'SPIKE', 'STONE', 'STONE', 'SPIKE', 'STONE', 'STONE', 'STONE', 'STONE',  │
+│     'STONE'],                                                                │
+│ 160 +             ['STONE', 'VOID', 'STONE', 'STONE', 'VOID', 'STONE',       │
+│     'STONE', 'STONE', 'STONE', 'STONE', 'VOID', 'STONE', 'STONE', 'STONE',   │
+│     'VOID']                                                                  │
+│ 161 +         ],                                                             │
+│ 162 +         heroStartStrip: 1,                                             │
+│ 163 +         goalX: 14 * tileWidth // End of the first segment              │
+│ 164 +     },                                                                 │
+│ 165 +     // More levels will be added here                                  │
+│ 166   ];                                                                     │
+│ 157 - const totalStripLength = levelData[0].length * tileWidth; // Total     │
+│     pixel width of one cycle of tiles                                        │
+│ ════════════════════════════════════════════════════════════════════════════ │
+│ 167                                                                          │
+│ 168 + let currentLevelIndex = 0;                                             │
+│ 169 + let totalStripLength = levels[currentLevelIndex].data[0].length *      │
+│     tileWidth;                                                               │
+│ 170 +                                                                        │
+│ 171 +                                                                        │
+│ 172       currentStripData.offset = snappedX;                                │
+│ 173                                                                          │
+│ 174   function getStripAt(yPos) {                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ x  Edit {"new_string":"function createGameElements() {\n    // --- Visual E… │
+│                                                                              │
+│ Failed to edit, 0 occurrences found for old_string in                        │
+│ /Users/jackie3/Desktop/thesis/thesis/gemini_4_substratum_game/game.js.       │
+│ Ensure you're not escaping content incorrectly and check whitespace,         │
+│ indentation, and context. Use read_file tool to verify.                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ ✓  ReadFile gemini_4_substratum_game/game.js                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ ✓  Edit gemini_4_substratum_game/game.js: let hero;... => const config = {.… │
+│                                                                              │
+│   1 - let hero;                                                              │
+│   2 - let heroSpeed = 2; // Initial speed                                    │
+│   3 - let currentLevelTime = 0; // To track game time for speed increase     │
+│   4 - let stripsData = []; // To hold strip Phaser objects and their tile    │
+│     data                                                                     │
+│   5 -                                                                        │
+│   1   const config = {                                                       │
+│   2       type: Phaser.AUTO,                                                 │
+│   3       width: 1000,                                                       │
+│   4       height: 600,                                                       │
+│  10 -     backgroundColor: '#300060',                                        │
+│   5       scene: {                                                           │
+│   6           preload: preload,                                              │
+│   7           create: create,                                                │
+│  11                                                                          │
+│  12   const game = new Phaser.Game(config);                                  │
+│  13                                                                          │
+│  14 + // --- Global Game Variables ---                                       │
+│  15 + let hero;                                                              │
+│  16 + let heroSpeed = 2;                                                     │
+│  17 + let currentLevelTime = 0;                                              │
+│  18 + let stripsData = [];                                                   │
+│  19 + let isGameOver = false;                                                │
+│  20 + let respawnDelay = 1000;                                               │
+│  21 + let dustParticles;                                                     │
+│  22 + let dustEmitter;                                                       │
+│  23 + let progressBar;                                                       │
+│  24 + let instructionsText;                                                  │
+│  25 +                                                                        │
+│  26 + // --- Level Data ---                                                  │
+│  27 + const tileWidth = 50;                                                  │
+│  28 + const levels = [                                                       │
+│  29 +     { // Level 1: The Basics                                           │
+│  30 +         data: [                                                        │
+│  31 +             ['STONE', 'STONE', 'VOID', 'STONE', 'STONE', 'STONE',      │
+│     'STONE', 'VOID', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE',   │
+│     'VOID', 'STONE', 'STONE', 'STONE'],                                      │
+│  32 +             ['STONE', 'STONE', 'STONE', 'STONE', 'SPIKE', 'STONE',     │
+│     'STONE', 'STONE', 'STONE', 'SPIKE', 'STONE', 'STONE', 'STONE', 'SPIKE',  │
+│     'STONE', 'STONE', 'STONE', 'STONE'],                                     │
+│  33 +             ['STONE', 'VOID', 'STONE', 'STONE', 'STONE', 'VOID',       │
+│     'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'VOID', 'STONE', 'STONE',   │
+│     'STONE', 'VOID', 'STONE', 'STONE']                                       │
+│  34 +         ],                                                             │
+│  35 +         heroStartStrip: 1,                                             │
+│  36 +         goalX: 17 * tileWidth,                                         │
+│  37 +         instruction: 'Drag the strips to create a path for the hero.'  │
+│  38 +     },                                                                 │
+│  39 +     { // Level 2: Shattered Bridge (Leapfrog)                          │
+│  40 +         data: [                                                        │
+│  41 +             ['VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'STONE', 'VOID',  │
+│     'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID',  │
+│     'VOID', 'VOID'],                                                         │
+│  42 +             ['VOID', 'VOID', 'STONE', 'VOID', 'VOID', 'VOID', 'VOID',  │
+│     'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID',  │
+│     'VOID', 'VOID'],                                                         │
+│  43 +             ['VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID',   │
+│     'VOID', 'STONE', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', 'VOID', │
+│     'VOID', 'VOID']                                                          │
+│  44 +         ],                                                             │
+│  45 +         heroStartStrip: 1,                                             │
+│  46 +         goalX: 15 * tileWidth,                                         │
+│  47 +         instruction: 'Leapfrog the platforms to cross the void!'       │
+│  48 +     },                                                                 │
+│  49 +     { // Level 3: Counter-Sliding                                      │
+│  50 +         data: [                                                        │
+│  51 +             ['STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE',     │
+│     'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE',  │
+│     'STONE', 'STONE', 'STONE', 'STONE'],                                     │
+│  52 +             ['SPIKE', 'SPIKE', 'SPIKE', 'SPIKE', 'VOID', 'SPIKE',      │
+│     'SPIKE', 'SPIKE', 'SPIKE', 'SPIKE', 'VOID', 'SPIKE', 'SPIKE', 'SPIKE',   │
+│     'SPIKE', 'SPIKE', 'VOID', 'SPIKE'],                                      │
+│  53 +             ['STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE',     │
+│     'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE', 'STONE',  │
+│     'STONE', 'STONE', 'STONE', 'STONE']                                      │
+│  54 +         ],                                                             │
+│  55 +         heroStartStrip: 0,                                             │
+│  56 +         goalX: 17 * tileWidth,                                         │
+│  57 +         rule: 'counter-slide', // Top and bottom strips move opposite  │
+│     to each other                                                            │
+│  58 +         instruction: 'Beware! Some paths are linked.'                  │
+│  59 +     }                                                                  │
+│  60 + ];                                                                     │
+│  61 +                                                                        │
+│  62 + let currentLevelIndex = 0;                                             │
+│  63 + let totalStripLength = levels[currentLevelIndex].data[0].length *      │
+│     tileWidth;                                                               │
+│  64 +                                                                        │
+│  65 + // --- Main Phaser Functions ---                                       │
+│  66 +                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+✦ I have revised the game to be more creative and engaging.
+
+
+  Key Improvements:
+   * Level Progression: The game now features three distinct levels that
+     introduce new mechanics progressively: a basic tutorial, a "Shattered
+     Bridge" puzzle requiring players to leapfrog platforms, and a
+     "Counter-Sliding" level where linked strips move in opposite directions.
+   * Enhanced Visuals: The flat colors have been replaced with a gradient
+     background, more detailed tile graphics for stone and spikes, and a
+     "bobbing" animation for the hero to simulate walking.
+   * Improved Player Feedback: A particle effect now creates a "poof of dust"
+     when the hero dies. A functional progress bar at the top of the screen
+     shows how close the hero is to finishing the current level.
+   * Dynamic Instructions: On-screen instructions now update at the start of
+     each level to explain the new challenges.
+
+
+  These changes create a more dynamic and interesting player journey, fulfilling
+  more of the creative potential outlined in the original design document. The
+  game is playable and complete in its revised form.
+
+
+                                 

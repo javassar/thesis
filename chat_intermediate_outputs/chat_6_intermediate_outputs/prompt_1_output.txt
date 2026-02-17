@@ -1,0 +1,49 @@
+1) Fold Circuit
+- Description: A minimalist puzzle about folding a sheet of “paper” to connect batteries to bulbs without crossing wires. Each level is a blueprint of nodes and hazards; you have a limited number of creases and can unfold to try alternate solutions. The visual is crisp line art with satisfying crease animations.
+- Core mechanic: Planar folding—click-and-drag to create creases that mirror parts of the board, aligning connectors while avoiding short circuits.
+- Unique hook: Combines origami logic with circuit routing, forcing spatial thinking across layers as folds stack and can be partially undone.
+
+2) Pigeon Courier
+- Description: A side-scrolling delivery dash across a hand-drawn city skyline. Ride wind currents, draft behind kites, and dodge rooftop chaos to drop letters into moving mail slots. Short, score-chasing runs with escalating urban weather.
+- Core mechanic: Momentum surfing—entering and chaining colored wind lanes grants speed, while flaps have stamina costs and precise landings score bonuses.
+- Unique hook: “Traffic” is made of air—shifting gusts form temporary rails you must read and exploit like a living level.
+
+3) Echo Thief
+- Description: A top-down stealth caper in a museum where alarms are sound-reactive. You can capture ambient noises (footsteps, coughs, doors) and play them back to lure guards or overload sound sensors. Heists are bite-sized with multiple creative solutions.
+- Core mechanic: Sound sampling—right-click to record a nearby sound into a slot, left-click to project it in a cone or through vents; noise shape and volume affect AI.
+- Unique hook: Stealth built around a portable soundboard turns every object into a tool, enabling trick plays like “ventriloquizing” yourself across the map.
+
+4) Witch’s Soup Sprint
+- Description: A frantic 2D cauldron arcade where ingredients bounce like pinballs and potions have picky personalities. Toss, stir, and swat ingredients mid-air to hit timers, flavors, and combo sigils before the brew sours. Rounds last two minutes; mastery is delicious chaos.
+- Core mechanic: Physics juggling—bat ingredients with a ladle to arc them through floating recipe gates while the cauldron’s bubbling alters trajectories.
+- Unique hook: Recipes as live targets that drift and change states; cooking becomes score-attack pinball with alchemy modifiers.
+
+5) Orbital Garden
+- Description: A meditative rhythm-puzzle set on a tiny solar system. Seeds must be released so they fall into orbiting soil rings at the right phase to bloom and terraform a planet. Soothing beats match orbital periods; levels can be finished in under three minutes.
+- Core mechanic: Phase timing—tap to deploy seeds whose apogee/perigee are affected by simple gravity knobs; chaining blooms creates polyrhythms.
+- Unique hook: Rhythm emerges from orbital mechanics, not notes—players learn to feel gravity like a metronome.
+
+6) MicroMetro: Rush Hour Lines
+- Description: A compact transport strategy where you draw subway lines to move colored commuter dots between changing stations. Trains are few, upgrades are scarce, and rush waves threaten to gridlock your minimalist map. Designed for quick, replayable scenarios.
+- Core mechanic: Real-time path drawing and rerouting with limited cars and interchange capacity; pause, plan, and unpause to test flow.
+- Unique hook: Passengers have simple “moods” that influence station behavior (impatient dots spawn faster, tourists linger), subtly altering optimal networks.
+
+7) Pinball Dungeon
+- Description: A roguelite where your hero is the ball and each room is a mini-pinball arena of monsters and bumpers. Use flippers to combo enemies, trigger loot lanes, and collect relics that mutate physics (sticky flips, multi-ball familiars). Short runs with escalating “tables.”
+- Core mechanic: Flipper combat—precise nudging and timing to aim skill shots while managing cooldown traps and enemy patterns.
+- Unique hook: Pinball vocabulary repurposed as action-RPG progression; items rewrite classic pinball rules mid-run.
+
+8) TimeSplit Janitor
+- Description: You’re the night janitor in a museum that exists in three time layers: Past construction, Present exhibit, and Future ruin. Switch layers to move through blocked halls, clean spills that don’t exist yet, and ferry artifacts by leaving them where they’ll be found later. Puzzle rooms resolve in clever, compact loops.
+- Core mechanic: Layer swapping with persistent object states—drop, push, and clean in one timeline to affect pathing in another.
+- Unique hook: Cleaning actions as time-manipulation tools; “maintenance” becomes a brainy cause-and-effect playground.
+
+9) Glitch Weaver
+- Description: A puzzle-platformer in a corrupted computer where tiles have rules (gravity up, bouncy, vanishing) you can stitch temporary “patches” over. Patches spread rule-changes in woven patterns for a few seconds, letting you fabricate paths and cancel hazards. Levels are tight and speedrun-friendly.
+- Core mechanic: Rule patching—place limited-duration overlays that propagate to adjacent tiles based on weave pattern (line, cross, spiral).
+- Unique hook: You don’t move platforms—you rewrite their laws locally, turning each screen into a micro programming puzzle without text.
+
+10) Tidepainter
+- Description: A calm color-flow puzzler on a beach where tides carry paints along carved grooves in the sand. Draw channels and place stones so waves mix colors to match target shells before the tide recedes. Quick levels, satisfying swishes, no fail state—just iterate.
+- Core mechanic: Fluid-routing with periodic pulses—anticipate wave timing to let pigments blend and split correctly.
+- Unique hook: Turn-based water—discrete wave ticks make fluid logic approachable and puzzle-like rather than purely physics-chaotic.

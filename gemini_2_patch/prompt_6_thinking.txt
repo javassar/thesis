@@ -1,0 +1,10 @@
+The game "Patch Note #0" delivers a genuinely creative and smooth experience. As a
+  first-time player, I found the theme, instructions, and visual feedback intuitive and
+  engaging. The flickering 'glitch' cursor, clear object highlighting on hover, and visual
+  corruption effects effectively convey the core mechanic. The hero's autonomous movement
+  allowed me to focus on corruption. Dynamic patching, introducing new platforms and
+  anti-gravity zones, provided excellent progression and challenge, forcing adaptation. The
+  escalating dev dialogue and 'Live Coding' visual heightened the climax to a satisfying
+  'UNINSTALL' ending. I experienced no confusion, unfair difficulty, or lack of reaction time.
+  The game's pacing and feedback were excellent, resulting in a frustration-free playtest. No
+  changes are needed.

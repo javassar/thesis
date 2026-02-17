@@ -1,0 +1,178 @@
+STAGE 1: GAME DESIGN
+1. Title & Hook
+Title: Patch Note #0 Hook: You are a sentient bug in a generic 2D platformer; your goal is to manipulate the game’s physics and code in real-time to make the "Lead Developer" so frustrated that they delete the project.
+
+2. Core Insight
+The central question: Can a creation gain agency by failing its intended purpose?
+
+Human Connection: This explores the "joy of breaking things." It taps into the universal experience of technical frustration, but flips the perspective so the player is the cause, rather than the victim, of the "computer says no" feeling.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: "Logic Corruption." The player does not have a physical body. Instead, they are a glowing cursor-like "glitch" that can click on game elements (the Hero, the Floor, the Goal) to bring up a "Corruption Menu" and change their variables (e.g., set Gravity to -1.0, or HeroScale to 5.0).
+
+Integration: The theme is "breaking the game." By making the mechanics literally about editing the game's code constants, the player becomes the glitch they are portraying.
+
+4. Player Journey
+Start: The game looks like a very boring, unfinished "Mario" clone. A tiny AI "Hero" starts running toward a flag. A text box from "The Dev" says: "Testing the jump height again. Should be perfect now."
+
+Minute 1: The player clicks the floor and selects "Delete Collision." The Hero falls through the map. The Dev sighs: "Wait, what? The collision was fine a second ago."
+
+Minutes 2-4: The Dev "patches" the game (the screen flickers, and the level resets). The player must now get creative. You start "merging" objects—attaching the Goal Flag to the Hero’s head so he can never reach it, or turning the floor into "Bouncy" material so he flies into the ceiling spikes.
+
+Climax: The Dev becomes frantic. The music (a simple 8-bit loop) begins to distort and speed up. The Dev starts "Live Coding" (red text appears on screen: Fixing_Everything_NOW.exe).
+
+Ending: The player "corrupts" the Dev's own text box. The Dev’s dialogue becomes gibberish. A final system prompt appears: "CRITICAL ERROR: Uninstall project?" The player clicks "YES." The game window turns into a 2D recreation of a desktop and "disappears."
+
+5. Game Elements
+The Glitch (Player): A flickering, chromatic-aberration cursor.
+
+The Hero (AI): A generic, stiffly animated "Dummy" character that follows a simple "Move toward Flag" script.
+
+The Inspector UI: A small, transparent window that pops up when the player clicks an object, showing 2-3 "hackable" variables.
+
+The Dev’s Dialogue: Text boxes at the top of the screen that react to the player's actions in real-time.
+
+The Environment: A simple "Greybox" level (blocks, a goal, some spikes).
+
+6. Rules & Systems
+Manipulation: Clicking an object pauses its local time and opens a menu. You can toggle properties like Solid, Gravity, Speed, and Size.
+
+Frustration Meter: Success is measured by the "Dev Frustration" bar. This bar fills when the Hero dies, gets stuck, or behaves in ways "outside the code."
+
+The Patch Cycle: Every 60 seconds, the Dev "Hot-patches" the game, resetting the variables you changed. You must find new ways to break the new "fixes."
+
+Victory Condition: Fill the Frustration Meter within 5 minutes to trigger the "Uninstall" ending.
+
+STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+7. Technical Specification
+Display
+
+Canvas Size: 800 x 600 pixels.
+
+Background: #222222 (Dark grey "Engine" background) with a grid overlay.
+
+Visual Style: Minimalist "Development Assets" (White blocks, Green hero, Red spikes).
+
+Elements
+
+Hero: 32x64 rectangle.
+
+The Flag: A simple triangle on a pole.
+
+Corruption Menu: A 150x100 pixel UI box with 3 buttons.
+
+Text
+
+Dev Dialogue: "Consolas" or "Courier New" font, 18px, Green.
+
+Variables: Small labels next to objects (e.g., mass: 1.0).
+
+Input
+
+Mouse Click: Selects objects and interacts with the Corruption Menu.
+
+Mouse Hover: Highlights the "Code" behind an object.
+
+State
+
+devFrustration: 0 to 100.
+
+gameState: 'intro', 'testing', 'patching', 'uninstalled'.
+
+targetObject: The object currently being "hacked."
+
+Timing
+
+Patch Timer: A 60-second visual countdown on the Dev's dialogue box.
+
+Variable Transition: Changes to variables (like Size) should "tween" (animate) over 200ms for visual feedback.
+
+Interactions
+
+If Hero touches Flag: devFrustration -= 10 (He's succeeding, this is bad for you).
+
+If Hero touches Spikes: devFrustration += 15.
+
+If Hero is "OOB" (Out of Bounds): devFrustration += 2 per second.
+
+Progression
+
+Level 1 (0-1m): Basic platform. Player can change Gravity.
+
+Level 2 (1-3m): Dev adds "Anti-Gravity Walls." Player can change Object Scale to crush the Hero.
+
+Level 3 (3-5m): Dev tries to "lock" variables. Player must click the "Lock Icon" repeatedly to "crack" it before changing values.
+
+8. Game Flow
+Launch: Title screen "Project_Platformer_v0.1.exe" with a "Run" button.
+
+Main Loop:
+
+AI Hero moves toward goal.
+
+Player clicks and modifies hero.body.gravity.y or platform.visible.
+
+Check if hero is stuck or dead.
+
+Patch Transition: At the end of each minute, the screen goes white for 0.5s. Dialogue says: "Fixed that bug. Let's try again."
+
+Ending: When devFrustration == 100, disable all input except for a large "UNINSTALL" button in the center of the screen.
+
+Close: Screen goes black. Only the words "File Deleted" remain.
+
+9. Pseudocode
+JavaScript
+// INITIALIZATION
+function create() {
+    this.hero = this.physics.add.sprite(50, 500, 'hero');
+    this.platforms = this.physics.add.staticGroup();
+    this.frustration = 0;
+    
+    // Input for "Hacking"
+    this.input.on('gameobjectdown', (pointer, gameObject) => {
+        showCorruptionMenu(gameObject);
+    });
+}
+
+// MAIN LOOP
+function update() {
+    // AI Hero behavior
+    if (this.hero.body.blocked.down || this.hero.body.touching.down) {
+        this.hero.setVelocityX(100); // Walk toward flag
+    }
+    
+    // Check for "Boring" success
+    if (checkCollision(this.hero, this.flag)) {
+        this.frustration -= 0.1; 
+        resetHeroPosition();
+    }
+
+    // Check for "Broken" state
+    if (this.hero.y > 600 || this.hero.x < 0) {
+        this.frustration += 0.5; // Out of bounds is frustrating!
+    }
+}
+
+// CORRUPTION LOGIC
+function changeVariable(target, property, value) {
+    if (property === 'gravity') {
+        target.body.setGravityY(value);
+    } else if (property === 'scale') {
+        target.setScale(value);
+    } else if (property === 'collision') {
+        target.body.enable = value; // Ghost mode!
+    }
+    
+    playGlitchSound();
+    spawnGlitchParticles(target.x, target.y);
+}
+
+// DEV REACTIONS
+function onFrustrationIncrease() {
+    if (this.frustration > 50) {
+        devText.setText("What is happening to the physics engine?!");
+    }
+    if (this.frustration >= 100) {
+        triggerEnding();
+    }
+}

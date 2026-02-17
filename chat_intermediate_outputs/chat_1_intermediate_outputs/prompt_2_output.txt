@@ -1,0 +1,349 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Echo Chambers — A top-down stealth puzzle where you see with sound: every noise briefly reveals the maze, but also alerts the guards.
+
+## 2. Core Insight
+- Central question: How much noise do you dare to make when noise is both knowledge and danger?
+- Why it matters: It transforms a familiar stealth loop into a tense decision: reveal the path and risk pursuit, or grope in the dark and stay safe. Each ping is a meaningful choice you feel.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Emit controlled sonar pings and make (or suppress) footsteps to reveal the map in bursts while navigating to an objective.
+- Embodying the theme: Sound is vision. The same act that grants awareness (pings, steps, dropping decoys) also creates threat (guards hear it). Information and risk are the same currency.
+
+## 4. Player Journey
+- Start: The screen is near-black with only a small glow around the player. A prompt invites: “Press SPACE to ping.” The first ping blooms outward, sketching walls, corridors, and a patrolling guard silhouette for a split second—then darkness.
+- First minute learning: The player learns WASD movement, crouching to quiet steps, and that guards turn toward sounds. They try a small ping, watch a guard peel off its route, then slip past as the echo fades.
+- Evolution over five minutes: The level reveals layered challenges: narrow corridors where any noise spreads far; open chambers that beg for a big pulse; a bottleneck patrolled by two guards requiring a decoy drop to lure them away. The player masters timing pings just as they round corners, using crouch-walk to thread gaps.
+- Climax: Near the relic, a large open hall forces a risky, long ping to understand the layout. Multiple guards converge on the sound; the player must stay calm, sneak around their investigation cones using only footstep blips.
+- Ending and emotion: The player grabs the relic; a soft chime marks success and the exit lights up. A final careful traverse returns to the start/exit. Crossing the threshold within the five-minute limit triggers a quiet exhale and satisfaction—the feeling of having “read” the darkness without letting it read you.
+
+## 5. Game Elements
+- Player: A small cyan circle with a minimal self-glow. States: walk, crouch.
+- Guards: Red triangles that patrol along waypoints. States: patrol, investigate (move to last heard sound), searching (briefly scanning around), then return to patrol. Contact with player = caught.
+- Walls/Floor: Dark, high-contrast tilemap. Floor nearly black, walls dark gray. No-detail aesthetic supports the audio-vision concept.
+- Sound Pings: Expanding rings (soft cyan) that reveal geometry for a short time. Footsteps auto-emit tiny rings; manual pings emit larger rings. Dropped decoys emit a pulsing ring for a few seconds.
+- Relic: A pale gold icon. Collecting it updates the goal.
+- Exit: A door marked in white/teal. Initially closed; opens upon relic pickup.
+- UI:
+  - Timer: 5:00 countdown top-center.
+  - Decoy count: three small icons top-left.
+  - Minimal prompts for controls at start; fade out after first actions.
+  - Subtle waveform icon that pulses with your last-made sound (feedback).
+- Screens:
+  - Title: “Echo Chambers” with “See with sound.” Press any key to start.
+  - End: Win screen with time and “Quiet Footsteps” stat; Lose screen if caught or timer expires; both offer Restart/Quit.
+
+## 6. Rules & Systems
+- Player actions:
+  - Move with WASD.
+  - Crouch with Shift: slower, smaller/rarer footstep sounds.
+  - Ping with Space: emit a burst revealing an area but alerting guards in range.
+  - Drop Decoy with E: places a chime that emits soft pings for 3 seconds; limited to 3 uses.
+- World response:
+  - Each sound source has a radius and timestamp. It briefly reveals terrain within radius (mask fades).
+  - Guards within their hearing radius of a sound switch to investigate the sound’s position (last known).
+- Success/Progress:
+  - Goal 1: Reach and collect the relic.
+  - Goal 2: Reach the exit after obtaining the relic.
+  - Win by exiting before the 5:00 timer reaches 0.
+- Failure:
+  - If a guard collides with the player at any time.
+  - If timer hits 0 before exiting.
+- Dynamics over time:
+  - Visibility is always temporary. Without sound, only a small self-glow is visible.
+  - The player learns to “slice” the space with controlled pings, chaining small reveals to keep bearings.
+  - Resource tension: 3 decoys, finite time, and the risk radius of noise.
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display
+- Canvas: 960 x 540 pixels (16:9), parent container responsive but fixed internal resolution.
+- Background color: #0A0A0A (near-black).
+- Render style: Flat colors, minimal textures.
+- Camera: Static (entire level fits within canvas) or slight camera follow if level larger; for v1, level fits in 960x540.
+
+Elements
+- Player:
+  - Shape: Circle, radius 8 px, color #33D1FF.
+  - Self-glow: A faint radial gradient drawn on the fog mask at radius 24 px each frame (alpha 0.15).
+  - Speed: walk 110 px/s, crouch 60 px/s.
+- Guards:
+  - Shape: Triangle (equilateral) inscribed in circle radius 10 px, color #FF3B30.
+  - Patrol speed: 90 px/s.
+  - Investigate speed: 120 px/s.
+  - Hearing radius: 260 px (distance to sound origin ≤ radius triggers investigate).
+  - Investigate timeout: 2.5 s since last heard sound; then return to patrol route.
+- Walls:
+  - Tiles: 24x24 px grid.
+  - Color: #2A2A2A.
+  - Collision: Impassable for player and guards.
+- Floor:
+  - Color: #111111.
+- Relic:
+  - Sprite: 16x16 px icon, color #F6C25B, pulsing scale 0.95–1.05 over 1.2 s.
+- Exit:
+  - Door: 24x36 px rectangle, color closed #888888, open #33D1FF outline; positioned near player start.
+  - Initially locked; unlocks on relic pickup.
+- Sound Visualization:
+  - Ping rings: Graphics drawn to a RenderTexture used as a world reveal mask.
+  - Ring properties:
+    - Manual ping: start radius 0, expand to 220 px over 280 ms; mask alpha peak 0.9 fading to 0 by 850 ms.
+    - Footstep ping (walk): expand to 60 px over 160 ms; fade by 500 ms.
+    - Footstep ping (crouch): expand to 20 px over 160 ms; fade by 350 ms.
+    - Decoy ping: pulses every 0.5 s to 110 px; each pulse fades by 600 ms; decoy lasts 3.0 s total.
+- Decoy:
+  - Dropped item: 8x8 px dot #66FFAA; non-colliding; emits timed pings; limited to 3 uses.
+
+Text
+- Title: “ECHO CHAMBERS” in bold sans-serif 36 px, #FFFFFF, centered.
+- Subtitle: “See with sound.” 18 px, #A0A0A0.
+- HUD:
+  - Timer: Top-center “Time 5:00” 20 px, #FFFFFF.
+  - Decoys: Top-left “Decoys: [●●●]” using filled circles (#66FFAA) for remaining and hollow (#224433) for used, 16 px.
+  - Start prompt: “WASD move • Shift crouch • Space ping • E decoy” 16 px, #A0A0A0 bottom-center, fades after first actions.
+- End screen: “You Escaped!” or “Caught!”/“Time’s Up!” 32 px, #FFFFFF; subtext shows elapsed time and restarts hint.
+
+Input
+- Keyboard:
+  - W/A/S/D or Arrow keys: movement.
+  - Shift: toggle crouch (hold to crouch).
+  - Space: emit manual ping (cooldown 0.7 s).
+  - E: drop decoy at current position if decoysRemaining > 0 (cooldown 0.5 s).
+  - R: restart on end screens.
+  - Any key: start from title.
+- Mouse: not required.
+
+State
+- player: x, y, vx, vy, isCrouching (bool), lastFootstepTime, lastPingTime.
+- guards: array of {x, y, state: 'patrol'|'investigate'|'return', targetPoint, lastHeardTime, patrolIndex}.
+- sounds: array of active sound events {x, y, type: 'ping'|'footstep'|'decoy', radiusMax, tStart, durationReveal, durationFade, currentRadius}.
+- decoys: array of active decoys {x, y, tStart, tEnd, nextPulseTime}.
+- relicCollected (bool), exitOpen (bool).
+- timer: timeRemainingMs (starts at 300000).
+- gameState: 'TITLE'|'PLAY'|'WIN'|'LOSE'.
+- map: tile data, collision layer.
+- revealMask: RenderTexture/Bitmap used as mask; also housekeeping list to fade previous draws if needed.
+
+Timing
+- Movement tick: per frame based on delta.
+- Footstep emission intervals:
+  - Walk: every 400 ms when moving and not crouching.
+  - Crouch: every 600 ms when moving and crouching.
+- Manual ping cooldown: 700 ms.
+- Decoy lifetime: 3000 ms; pulses at 0 ms, 500 ms, 1000 ms, 1500 ms, 2000 ms, 2500 ms.
+- Reveal fade:
+  - Each sound ring draws with alpha mapped by life progress; see Interactions.
+
+Interactions
+- Sound generation:
+  - When a sound is created, push a sound event to sounds array; also notify guards: if distance(guard, sound) <= guardHearingRadius, set guard.state='investigate' and guard.targetPoint=sound position; guard.lastHeardTime=now.
+- Reveal mask drawing:
+  - Each frame, clear mask to fully opaque black.
+  - Draw a faint local glow circle around player (radius 24 px, alpha 0.15).
+  - For each active sound event:
+    - Compute progress p = clamp((now - tStart)/durationReveal, 0..1) for expansion, and alpha a = curve depending on time:
+      - During reveal phase (0..durationReveal): a = 0.9 * easeOutQuad(1 - p).
+      - During fade (durationReveal..durationReveal+durationFade): interpolate from remaining alpha to 0.
+    - Draw a filled circle at sound.x,y with radius = radiusMax * p during reveal, then keep radius at radiusMax while alpha falls during fade.
+  - Apply this texture as an inverted alpha mask on a black overlay above the world; revealed areas show the world; unrevealed remain black.
+- Guard behavior:
+  - Patrol: move toward next waypoint; on reach (within 6 px), advance index.
+  - Investigate: move toward targetPoint; if reached within 10 px or time since lastHeardTime > investigateTimeout, switch to 'return' (go to nearest patrol waypoint) or back to 'patrol'.
+  - Collision: If distance to player < 10 px, trigger Lose.
+  - Wall avoidance: simple tile collision and steering around corners.
+- Relic/Exit:
+  - On overlap with relic: relicCollected=true; exitOpen=true; play chime; update UI.
+  - Exit opens visually; overlapping exit when exitOpen true triggers Win if timer > 0.
+
+Progression
+- Single handcrafted map sized to canvas with:
+  - Start area near exit (closed).
+  - Mid corridors with a single guard.
+  - Open hall before relic with 2 guards.
+  - Shortcut back that’s readable with a small ping and crouch steps.
+- Distinct ending states: Win on exit, Lose on catch or time out.
+
+## 8. Game Flow
+- Load:
+  - Boot -> Preload assets (tilemap JSON, simple shapes/sprites, fonts).
+  - Create title scene with logo and “Press any key to start.”
+- Start main experience:
+  - On key press: initialize game variables; spawn player at start; spawn guards with patrols; place relic and closed exit; set timer to 5:00; show brief control tooltip.
+- During play:
+  - Each frame:
+    - Update input: movement, crouch, ping, decoy.
+    - Update timer; if <= 0, go to Lose.
+    - Emit footsteps by interval when moving.
+    - Update sounds array; cull expired.
+    - Update guards by FSM.
+    - Check collisions: player-walls resolved; player-relic pickup; player-exit if open; guard-player catch.
+    - Render world, guards, UI; rebuild reveal mask and apply.
+- End conditions:
+  - Win: player overlaps exit when exitOpen and timeRemaining > 0 -> freeze input, show Win screen with time.
+  - Lose: guard catches player or timer <= 0 -> freeze input, show Lose screen.
+- After end:
+  - Press R to restart to Play; Esc or close returns to Title if desired (R restarts is sufficient).
+
+## 9. Pseudocode
+
+Initialization (setup)
+- Global constants:
+  - CANVAS_W=960, CANVAS_H=540
+  - PLAYER_SPEED=110, PLAYER_CROUCH_SPEED=60
+  - PING_COOLDOWN=700 ms
+  - FOOTSTEP_INTERVAL_WALK=400 ms, FOOTSTEP_INTERVAL_CROUCH=600 ms
+  - GUARD_PATROL_SPEED=90, GUARD_INVESTIGATE_SPEED=120
+  - GUARD_HEARING_RADIUS=260, INVESTIGATE_TIMEOUT=2500 ms
+  - MANUAL_PING_RADIUS=220, MANUAL_PING_REVEAL=280 ms, MANUAL_PING_FADE=570 ms
+  - FOOTSTEP_WALK_RADIUS=60, FOOTSTEP_WALK_REVEAL=160 ms, FOOTSTEP_WALK_FADE=340 ms
+  - FOOTSTEP_CROUCH_RADIUS=20, FOOTSTEP_CROUCH_REVEAL=160 ms, FOOTSTEP_CROUCH_FADE=190 ms
+  - DECOY_RADIUS=110, DECOY_PULSE_INTERVAL=500 ms, DECOY_LIFETIME=3000 ms, DECOY_PULSE_FADE=600 ms
+  - START_TIME_MS=300000
+- Create scenes: TitleScene, GameScene, EndScene (with parameters {result:'WIN'|'LOSE', time}).
+
+TitleScene.create():
+- Draw title text centered
+- On any key: start GameScene
+
+GameScene.create():
+- Load/construct tilemap; create collision layer
+- Create player at startPos with fields: lastFootstepTime=0, lastPingTime=-INF, isCrouching=false, decoysRemaining=3
+- Create guards array with each guard:
+  - {sprite, waypoints: [p1,p2,...], patrolIndex=0, state='patrol', targetPoint=null, lastHeardTime=-INF}
+- Place relic sprite; exit sprite (closed); flags relicCollected=false, exitOpen=false
+- Create revealMaskRT = this.make.renderTexture(CANVAS_W, CANVAS_H, add=false)
+- Create blackOverlay = full-screen rectangle black; set blackOverlay.mask = new BitmapMask(revealMaskRT)
+- Initialize sounds=[], decoys=[]
+- Timer = START_TIME_MS
+- UI: timerText, decoyText, controlsHint
+
+GameScene.update(time, delta):
+- If gameState != 'PLAY': return
+- Handle input:
+  - MoveDirection from WASD
+  - isCrouching = Shift.isDown
+  - speed = isCrouching ? PLAYER_CROUCH_SPEED : PLAYER_SPEED
+  - Attempt move player by speed*dt with collision resolution
+  - If Space pressed and time - player.lastPingTime >= PING_COOLDOWN:
+    - createSound(player.x, player.y, 'ping', MANUAL_PING_RADIUS, MANUAL_PING_REVEAL, MANUAL_PING_FADE)
+    - player.lastPingTime = time
+  - If E pressed and player.decoysRemaining > 0 and not on cooldown:
+    - spawnDecoy(player.x, player.y, time)
+    - player.decoysRemaining--
+- Footsteps:
+  - if player is moving:
+    - interval = isCrouching ? FOOTSTEP_INTERVAL_CROUCH : FOOTSTEP_INTERVAL_WALK
+    - if time - player.lastFootstepTime >= interval:
+      - if isCrouching:
+        createSound(player.x, player.y, 'footstep', FOOTSTEP_CROUCH_RADIUS, FOOTSTEP_CROUCH_REVEAL, FOOTSTEP_CROUCH_FADE)
+      - else:
+        createSound(player.x, player.y, 'footstep', FOOTSTEP_WALK_RADIUS, FOOTSTEP_WALK_REVEAL, FOOTSTEP_WALK_FADE)
+      - player.lastFootstepTime = time
+- Update decoys:
+  - For each decoy d:
+    - if time >= d.tEnd: mark for removal
+    - else if time >= d.nextPulseTime:
+      - createSound(d.x, d.y, 'decoy', DECOY_RADIUS, DECOY_PULSE_INTERVAL, DECOY_PULSE_FADE) // reveal uses interval as expansion time
+      - d.nextPulseTime += DECOY_PULSE_INTERVAL
+- Update sounds:
+  - For each sound s:
+    - age = time - s.tStart
+    - if age >= s.durationReveal + s.durationFade: mark expired
+- Notify guards of sounds (on creation only):
+  - In createSound(), after pushing to sounds[], loop guards:
+    - if distance(guard, soundPos) <= GUARD_HEARING_RADIUS:
+      - guard.state='investigate'
+      - guard.targetPoint = {x: sound.x, y: sound.y}
+      - guard.lastHeardTime = time
+- Update guards FSM:
+  - For each guard g:
+    - if g.state == 'patrol':
+      - target = g.waypoints[g.patrolIndex]
+      - moveToward(g, target, GUARD_PATROL_SPEED, delta) with tile collision
+      - if near target: g.patrolIndex = (g.patrolIndex+1) % waypoints.length
+    - else if g.state == 'investigate':
+      - moveToward(g, g.targetPoint, GUARD_INVESTIGATE_SPEED, delta)
+      - if distance to target < 10:
+        - if time - g.lastHeardTime > INVESTIGATE_TIMEOUT:
+          - g.state='return'; g.targetPoint=null
+      - if time - g.lastHeardTime > INVESTIGATE_TIMEOUT:
+        - g.state='return'
+    - else if g.state == 'return':
+      - nearestIdx = nearestWaypointIndex(g.position)
+      - moveToward(g, g.waypoints[nearestIdx], GUARD_PATROL_SPEED, delta)
+      - if near: g.patrolIndex = nearestIdx; g.state='patrol'
+    - if overlaps player (distance < 10):
+      - endGame('LOSE')
+- Relic/Exit:
+  - if !relicCollected and overlap(player, relic):
+    - relicCollected=true; exitOpen=true; hide relic; update exit visual
+  - if exitOpen and overlap(player, exit):
+    - endGame('WIN')
+- Timer:
+  - timeRemainingMs -= delta
+  - if timeRemainingMs <= 0: endGame('LOSE')
+  - Update timerText to mm:ss
+  - Update decoyText to filled/hollow dots based on decoysRemaining
+- Reveal mask render:
+  - revealMaskRT.clear()
+  - drawLocalGlow(player.x, player.y, radius=24, alpha=0.15)
+  - For each active sound s:
+    - age = time - s.tStart
+    - if age <= s.durationReveal:
+      - p = age / s.durationReveal
+      - r = s.radiusMax * p
+      - a = 0.9 * (1 - easeOutQuad(p))
+    - else if age <= s.durationReveal + s.durationFade:
+      - r = s.radiusMax
+      - f = (age - s.durationReveal) / s.durationFade
+      - a = 0.9 * (1 - f)
+    - else continue
+    - drawFilledCircleOnMask(s.x, s.y, r, alpha=a) // white on mask to reveal
+  - Apply mask to blackOverlay (inverted so white reveals)
+- Controls hint:
+  - If player has performed move + ping once, fade out controlsHint
+
+Helper functions
+- createSound(x, y, type, radiusMax, durationReveal, durationFade):
+  - sounds.push({x, y, type, radiusMax, tStart=now, durationReveal, durationFade})
+  - notify guards as above
+- spawnDecoy(x, y, t):
+  - decoys.push({x, y, tStart=t, tEnd=t+DECOY_LIFETIME, nextPulseTime=t})
+- moveToward(entity, target, speed, delta):
+  - dir = normalize(target - entity)
+  - attemptMove(entity, dir*speed*delta)
+- attemptMove(entity, dx, dy):
+  - move along x, resolve tile collisions; then along y
+
+End handling
+- endGame(result):
+  - gameState='END'
+  - stop input listeners or gate updates
+  - launch EndScene with {result, time: START_TIME_MS - timeRemainingMs}
+
+EndScene.create(data):
+- Show result text and stats
+- Show “Press R to Restart”
+- On R: start GameScene
+- Optionally any key to Title
+
+Ease function
+- easeOutQuad(t): return 1 - (1 - t)*(1 - t)
+
+Collision/overlap checks
+- overlap(a, b): bounding circle or rectangle checks
+- Tile collision: use Phaser’s arcade physics with immovable walls/tile collisions
+
+Notes for Phaser implementation
+- Use Phaser 3 Scene system.
+- RenderTexture or BitmapMask for reveal:
+  - World is drawn in a container; blackOverlay rectangle above uses BitmapMask from revealMaskRT where white = visible. Ensure the mask updates every frame.
+- For shapes (player, guards), use Graphics or simple sprites generated at runtime.
+- Tilemap can be created from a simple array in code for v1.
+
+This plan specifies all values, inputs, and flows to implement Echo Chambers as a five-minute, end-contained 2D Phaser game.

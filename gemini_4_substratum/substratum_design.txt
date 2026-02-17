@@ -1,0 +1,165 @@
+STAGE 1: GAME DESIGN
+1. Title & Hook
+Substratum "The hero is legendary, but he’s also an idiot who only walks in a straight line; you must rearrange the physical layers of the world to keep him from falling into the void."
+
+2. Core Insight
+This game explores invisible support. It highlights the frantic work that goes on behind the scenes to make a "heroic journey" possible. It turns the environment from a static backdrop into a puzzle that must be solved in real-time.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: "Layer Sliding." The game world is divided into three horizontal strips (Top, Middle, Bottom). The player can click and drag these strips left or right independently, like a sliding tile puzzle.
+
+Integration: The theme is "The Architecture of Fate." By sliding the world, you aren't just moving platforms; you are literally "aligning destiny." If the hero reaches a gap, you must slide a piece of solid ground from a different part of the level into his path before he arrives.
+
+4. Player Journey
+Start (0:00 - 1:00): A tiny, gold-armored Knight (The Hero) starts walking right. He never stops. The player sees the level is split into three horizontal bands. Sliding a band is intuitive. The first few obstacles are simple gaps that need a platform slid into place.
+
+Learning (1:00 - 2:00): Complexity increases. Now, there are hazards (spikes) on some strips. The player must slide the "Safe Ground" strip under the Hero and slide the "Spike" strip away.
+
+Evolution (2:00 - 4:00): The Knight starts picking up speed. The strips now contain "Interconnected Triggers." Sliding the top strip might cause the bottom strip to move in the opposite direction (Counter-sliding). The player feels like a frantic clockmaker.
+
+Climax (4:00 - 4:45): "The Shattered Bridge." The Knight enters a long void. The player has only three small blocks of ground across all three strips and must "leapfrog" them—sliding the block the Knight just left to the front of his path, over and over, until he reaches the end.
+
+Ending (4:45 - 5:00): The Knight reaches a giant, glowing door. He stops, poses heroically, and a text box appears: "I did it all by myself." The game fades to black. The player should feel a sense of "unsung accomplishment" and humorous frustration.
+
+5. Game Elements
+The Hero (Sir Pompous): A small 2D sprite with a confident, high-stepping walk cycle.
+
+The Strips: Three distinct horizontal 2D layers. Each has its own background color/pattern to distinguish them.
+
+The Tiles: Elements within the strips—Stone (Solid), Spikes (Death), Springs (Jump), and Voids (Death).
+
+The Cursor: A "Glove" icon that can grab and "shove" the strips.
+
+The Progress Bar: A simple gold line at the top showing how close the Hero is to the castle.
+
+6. Rules & Systems
+The Constant: The Hero moves at a fixed x-velocity. He cannot be controlled.
+
+The Shift: Clicking and dragging a strip moves all objects within that horizontal Y-range.
+
+Wrapping: If a strip is pushed off the left side of the screen, it "wraps" back around to the right (looping).
+
+Failure: If the Hero’s hitbox overlaps with a "Spike" or falls below the midline of a "Void," he poofs into a cloud of dust and the current segment restarts.
+
+Success: Reaching the x-coordinate of the Goal Door.
+
+STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+7. Technical Specification
+Display
+
+Canvas Size: 1000 x 600 pixels.
+
+Background: Deep purple gradient.
+
+Strip Height: 200px each.
+
+Elements
+
+Hero Sprite: 40x40px. Hitbox: 20x35px centered.
+
+Tiles: 50x200px (The full height of a strip).
+
+Goal Door: 100x150px sprite at the final X-coordinate.
+
+Input
+
+Mouse Down: Capture startX and identify which strip (1, 2, or 3) was clicked based on Y-position.
+
+Mouse Drag: Calculate currentX - startX. Apply this offset to the x position of all tiles in that strip.
+
+Mouse Up: Snap the strip so the nearest tile aligns with the grid (50px increments).
+
+State
+
+heroX: Float (increments by speed every frame).
+
+stripOffsets: Array of 3 floats [offset1, offset2, offset3].
+
+isGameOver: Boolean.
+
+Timing
+
+heroSpeed: Starts at 2px/frame. Increases by 0.2 every 60 seconds.
+
+respawnDelay: 1 second.
+
+Interactions
+
+Collision: Every frame, check heroX against the tile types at that x in the Hero's current Y-strip.
+
+Wrapping Logic: If tile.x < -50, tile.x += stripWidth.
+
+8. Game Flow
+Initialize: Generate 3 arrays of Tile Types (e.g., [S, S, V, S, P, S]).
+
+Start: Title "SUBSTRATUM". Click to "Grant the Hero Passage."
+
+Main Loop:
+
+Update heroX.
+
+Handle strip dragging/wrapping.
+
+Check for "Hero vs. Spike" or "Hero vs. Void" collisions.
+
+End: Hero hits TargetX. Disable input. Play "Fanfare" animation. Show "Victory" text.
+
+9. Pseudocode
+JavaScript
+// STRIP DATA STRUCTURE
+let strips = [
+    { yRange: [0, 200], tiles: [], offset: 0 },
+    { yRange: [201, 400], tiles: [], offset: 0 },
+    { yRange: [401, 600], tiles: [], offset: 0 }
+];
+
+// UPDATE CYCLE
+function update() {
+    if (playing) {
+        hero.x += currentSpeed;
+        
+        // Find which strip the hero is on
+        let activeStrip = getStripAt(hero.y);
+        
+        // Get the specific tile under the hero's feet
+        let tileAtHero = activeStrip.getTileAt(hero.x);
+        
+        if (tileAtHero.type === 'VOID') {
+            hero.fall();
+            restartSegment();
+        } else if (tileAtHero.type === 'SPIKE') {
+            hero.die();
+            restartSegment();
+        }
+        
+        if (hero.x >= GOAL_X) {
+            winGame();
+        }
+    }
+}
+
+// INPUT: SLIDING THE WORLD
+function onDrag(pointer) {
+    let stripIndex = Math.floor(pointer.y / 200);
+    let deltaX = pointer.x - pointer.prevX;
+    
+    // Move all tiles in this horizontal slice
+    strips[stripIndex].offset += deltaX;
+    
+    for (let tile of strips[stripIndex].tiles) {
+        tile.x += deltaX;
+        
+        // Wrap around logic
+        if (tile.x > canvas.width) tile.x -= levelWidth;
+        if (tile.x < -tileWidth) tile.x += levelWidth;
+    }
+}
+
+// LEVEL GENERATION (Example for Segment 1)
+function createLevel() {
+    // Strip 0: Mostly voids with one platform
+    // Strip 1: Solid ground with occasional spikes
+    // Strip 2: Mostly platforms
+    // The player must slide Strip 0 or 2 into the Hero's Y-path 
+    // when the Hero encounters a Spike in Strip 1.
+}

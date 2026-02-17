@@ -1,0 +1,952 @@
+
+Explored 3 files, 6 lists
+Listed files
+Read instructions.md
+Listed files in chat_3_murmuration
+Listed files
+Read murmuration_design.txt
+Listed files in chat_2_murmuration
+Listed files
+Listed files
+Read index.html
+Ran command for 1s
+$ mkdir -p chat_3_murmuration
+
+No output
+
+Success
+Ran command for 1s
+$ cat <<'EOF' > chat_3_murmuration/index.html
+<"'!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Murmuration</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0d162b;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script>
+    const CONFIG = {
+      width: 960,
+      height: 540,
+      worldWidth: 3000,
+      worldHeight: 540
+    };
+
+    const COLORS = {
+      skyTop: 0x1b2a49,
+      skyBottom: 0x0d162b,
+      lureBase: 0xFCE588,
+      lureGlow: 0xFFD47E,
+      bird: 0xE6F0FF,
+      gate: 0xFFD47E,
+      gateDim: 0x8a6d3b,
+      textMain: '"'#FFFFFF',
+      textSub: '#BBD4FF',
+      hud: '#BBD4FF',
+      wall: 0x0a0f1f,
+      roost: 0x3a5a2f,
+      roostGlow: 0x88c47a
+    };
+
+    const GAME_STATE = {
+      PLAYING: 'PLAYING',
+      ENDING: 'ENDING'
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function formatTime(seconds) {
+      const total = Math.max(0, Math.ceil(seconds));
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return "'`${m}:${s.toString().padStart(2, '"'0')}"'`;
+    }
+
+    function mapSepToWeight(sepBase) {
+      const t = clamp((sepBase - 18) / (60 - 18), 0, 1);
+      return 1.2 - t * 0.8;
+    }
+
+    function normalize(x, y) {
+      const len = Math.hypot(x, y);
+      if (len === 0) {
+        return { x: 0, y: 0 };
+      }
+      return { x: x / len, y: y / len };
+    }
+
+    class BootScene extends Phaser.Scene {
+      constructor() {
+        super('"'Boot');
+      }
+
+      create() {
+        this.createTextures();
+        this.scene.start('Title');
+      }
+
+      createTextures() {
+        const g = this.add.graphics();
+
+        g.fillStyle(0xffffff, 1);
+        g.fillTriangle(0, 16, 8, 0, 16, 16);
+        g.generateTexture('bird', 16, 16);
+        g.clear();
+
+        g.fillStyle(0xffffff, 1);
+        g.fillRect(0, 4, 14, 2);
+        g.fillTriangle(14, 1, 14, 9, 20, 5);
+        g.generateTexture('windArrow', 20, 10);
+        g.clear();
+
+        g.fillStyle(0xffffff, 1);
+        g.fillCircle(4, 4, 4);
+        g.generateTexture('dot', 8, 8);
+        g.clear();
+
+        g.fillGradientStyle(COLORS.skyTop, COLORS.skyTop, COLORS.skyBottom, COLORS.skyBottom, 1);
+        g.fillRect(0, 0, CONFIG.width, CONFIG.height);
+        g.generateTexture('sky', CONFIG.width, CONFIG.height);
+        g.clear();
+
+        g.fillGradientStyle(COLORS.skyTop, COLORS.skyTop, COLORS.skyBottom, COLORS.skyBottom, 1);
+        g.fillRect(0, 0, CONFIG.worldWidth, CONFIG.worldHeight);
+        g.generateTexture('skyWide', CONFIG.worldWidth, CONFIG.worldHeight);
+        g.clear();
+
+        g.destroy();
+      }
+    }
+
+    class TitleScene extends Phaser.Scene {
+      constructor() {
+        super('Title');
+      }
+
+      create() {
+        this.add.image(0, 0, 'sky').setOrigin(0, 0);
+
+        for (let i = 0; i < 28; i++) {
+          const dot = this.add.image(
+            Phaser.Math.Between(0, CONFIG.width),
+            Phaser.Math.Between(0, CONFIG.height),
+            'dot'
+          );
+          dot.setAlpha(Phaser.Math.FloatBetween(0.2, 0.5));
+          dot.setScale(Phaser.Math.FloatBetween(0.4, 0.8));
+          this.tweens.add({
+            targets: dot,
+            y: dot.y + Phaser.Math.Between(-20, 20),
+            x: dot.x + Phaser.Math.Between(-30, 30),
+            duration: Phaser.Math.Between(3500, 6000),
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+          });
+        }
+
+        this.add.text(CONFIG.width / 2, 160, 'MURMURATION', {
+          fontSize: '48px',
+          color: COLORS.textMain,
+          fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        this.add.text(CONFIG.width / 2, 240,
+          'Move mouse. Left-click call. Right-click scatter. Q/E Tighten. A/D Align. Press Space.',
+          { fontSize: '20px', color: COLORS.textSub }
+        ).setOrigin(0.5);
+
+        this.input.keyboard.once('keydown-SPACE', () => {
+          this.scene.start('Game');
+        });
+      }
+    }
+
+    class GameScene extends Phaser.Scene {
+      constructor() {
+        super('Game');
+      }
+
+      create() {
+        this.add.image(0, 0, 'skyWide').setOrigin(0, 0);
+        this.cameras.main.setBounds(0, 0, CONFIG.worldWidth, CONFIG.worldHeight);
+        this.input.mouse.disableContextMenu();
+
+        this.segmentTargets = {
+          1: 0,
+          2: 960,
+          3: CONFIG.worldWidth - CONFIG.width
+        };
+
+        this.lure = { x: 150, y: 300, calling: false, scattering: false };
+        this.lureGraphics = this.add.graphics();
+
+        this.birds = [];
+        this.birdsAlive = 0;
+
+        this.weights = {
+          separationBase: 34,
+          alignmentWeight: 0.35,
+          cohesionWeight: 0.22,
+          attractionBase: 0.45
+        };
+
+        this.crosswindDir = 1;
+        this.crosswindTimer = 0;
+        this.eddyPhase = 0;
+
+        this.crosswindTile = this.add.tileSprite(960, 0, 1000, 540, 'windArrow')
+          .setOrigin(0)
+          .setAlpha(0.2)
+          .setTint(0xBBD4FF);
+
+        this.eddyTile = this.add.tileSprite(2000, 70, 700, 400, 'windArrow')
+          .setOrigin(0)
+          .setAlpha(0.2)
+          .setTint(0xBBD4FF);
+        this.eddyTile.setAngle(90);
+
+        this.hawk = {
+          x: 1200,
+          y: 240,
+          dir: 1,
+          laneTimer: 0,
+          lane: 0
+        };
+        this.hawkGraphic = this.add.graphics();
+        this.hawkWidth = 360;
+
+        this.gateState = {
+          gate1Open: false,
+          gate2Open: false,
+          gate3Open: false,
+          ringEntries: [],
+          gate2Hold: 0,
+          gate3Hold: 0
+        };
+
+        this.gateGraphics = this.add.graphics();
+        this.wallGraphics = this.add.graphics();
+        this.roostGraphics = this.add.graphics();
+
+        this.wallRects = [];
+        this.buildWalls();
+
+        this.ui = {};
+        this.createHUD();
+
+        this.endOverlay = this.add.rectangle(0, 0, CONFIG.width, CONFIG.height, 0x000000, 0.45)
+          .setOrigin(0)
+          .setScrollFactor(0)
+          .setVisible(false);
+
+        this.endText = this.add.text(CONFIG.width / 2, CONFIG.height / 2 - 20, '"''"', {
+          fontSize: '32px',
+          color: COLORS.textMain
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+
+        this.endSubText = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 30, '"''"', {
+          fontSize: '18px',
+          color: COLORS.textSub
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+
+        this.keys = this.input.keyboard.addKeys({
+          q: 'Q',
+          e: 'E',
+          a: 'A',
+          d: 'D',
+          r: 'R'
+        });
+
+        this.input.keyboard.on('keydown-Q', () => {
+          this.weights.separationBase = clamp(this.weights.separationBase - 2, 18, 60);
+        });
+        this.input.keyboard.on('keydown-E', () => {
+          this.weights.separationBase = clamp(this.weights.separationBase + 2, 18, 60);
+        });
+        this.input.keyboard.on('keydown-A', () => {
+          this.weights.alignmentWeight = clamp(this.weights.alignmentWeight - 0.05, 0, 0.8);
+        });
+        this.input.keyboard.on('keydown-D', () => {
+          this.weights.alignmentWeight = clamp(this.weights.alignmentWeight + 0.05, 0, 0.8);
+        });
+
+        this.startGame();
+      }
+
+      startGame() {
+        this.birds.forEach((bird) => bird.sprite.destroy());
+        this.birds = [];
+        this.birdsAlive = 50;
+        for (let i = 0; i < 50; i++) {
+          this.spawnBirdAround(150, 300);
+        }
+
+        this.timer = 300;
+        this.segmentIndex = 1;
+        this.gateState.gate1Open = false;
+        this.gateState.gate2Open = false;
+        this.gateState.gate3Open = false;
+        this.gateState.ringEntries = [];
+        this.gateState.gate2Hold = 0;
+        this.gateState.gate3Hold = 0;
+
+        this.crosswindDir = 1;
+        this.crosswindTimer = 0;
+        this.hawk.laneTimer = 0;
+        this.hawk.lane = 0;
+        this.hawk.x = 1200;
+        this.hawk.y = 240;
+        this.hawk.dir = 1;
+
+        this.cameras.main.scrollX = this.segmentTargets[1];
+        this.ui.tipText.setText('Move the glow to gather your flock. Left-click call. Right-click scatter.');
+        this.ui.tipText.setAlpha(1);
+        this.tweens.add({
+          targets: this.ui.tipText,
+          alpha: 0,
+          delay: 4200,
+          duration: 800
+        });
+
+        this.gameState = GAME_STATE.PLAYING;
+        this.endOverlay.setVisible(false);
+        this.endText.setVisible(false);
+        this.endSubText.setVisible(false);
+        this.setHudVisible(true);
+      }
+
+      spawnBirdAround(cx, cy) {
+        const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        const radius = Phaser.Math.FloatBetween(0, 40);
+        const x = cx + Math.cos(angle) * radius;
+        const y = cy + Math.sin(angle) * radius;
+        const velAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        const speed = Phaser.Math.FloatBetween(30, 60);
+        const vx = Math.cos(velAngle) * speed;
+        const vy = Math.sin(velAngle) * speed;
+        const sprite = this.add.sprite(x, y, 'bird');
+        sprite.setTint(COLORS.bird);
+        sprite.setOrigin(0.5, 0.5);
+        this.birds.push({ x, y, vx, vy, sprite, hawkTick: 0, ringInside: false, remove: false });
+      }
+
+      buildWalls() {
+        this.wallRects = [];
+        this.wallGraphics.clear();
+        this.wallGraphics.fillStyle(COLORS.wall, 1);
+
+        const doorX = 1800;
+        const gapTop = 200;
+        const gapHeight = 160;
+        this.wallRects.push({ x: doorX - 60, y: 0, w: 120, h: gapTop });
+        this.wallRects.push({ x: doorX - 60, y: gapTop + gapHeight, w: 120, h: CONFIG.height - (gapTop + gapHeight) });
+
+        const canyonX = 2520;
+        const canyonWidth = 520;
+        this.wallRects.push({ x: canyonX, y: 0, w: canyonWidth, h: 240 });
+        this.wallRects.push({ x: canyonX, y: 340, w: canyonWidth, h: 200 });
+
+        this.wallRects.forEach((wall) => {
+          this.wallGraphics.fillRect(wall.x, wall.y, wall.w, wall.h);
+        });
+      }
+
+      createHUD() {
+        this.ui.timerText = this.add.text(CONFIG.width / 2, 24, '05:00', {
+          fontSize: '28px',
+          color: COLORS.textMain
+        }).setOrigin(0.5).setScrollFactor(0);
+
+        this.ui.flockText = this.add.text(20, 20, 'Flock: 50', {
+          fontSize: '18px',
+          color: COLORS.hud
+        }).setScrollFactor(0);
+
+        this.ui.sliderLabel1 = this.add.text(20, CONFIG.height - 60, 'Tightness (Q/E)', {
+          fontSize: '14px',
+          color: COLORS.hud
+        }).setScrollFactor(0);
+
+        this.ui.sliderLabel2 = this.add.text(20, CONFIG.height - 30, 'Alignment (A/D)', {
+          fontSize: '14px',
+          color: COLORS.hud
+        }).setScrollFactor(0);
+
+        this.ui.sliderGraphics = this.add.graphics().setScrollFactor(0);
+
+        this.ui.tipText = this.add.text(CONFIG.width / 2, 64, '"''"', {
+          fontSize: '16px',
+          color: COLORS.textSub
+        }).setOrigin(0.5).setScrollFactor(0);
+      }
+
+      setHudVisible(visible) {
+        this.ui.timerText.setVisible(visible);
+        this.ui.flockText.setVisible(visible);
+        this.ui.sliderLabel1.setVisible(visible);
+        this.ui.sliderLabel2.setVisible(visible);
+        this.ui.sliderGraphics.setVisible(visible);
+        this.ui.tipText.setVisible(visible);
+      }
+
+      update(time, delta) {
+        if (this.gameState === GAME_STATE.ENDING) {
+          if (Phaser.Input.Keyboard.JustDown(this.keys.r)) {
+            this.scene.start('Title');
+          }
+          return;
+        }
+
+        const dt = delta / 1000;
+        this.timer -= dt;
+
+        this.updateInput();
+        this.updateWind(dt);
+        this.updateHawk(dt);
+        this.updateBirds(dt);
+        this.evaluateGates(dt);
+        this.checkRoost();
+        this.checkLoss();
+        this.updateHUD();
+        this.drawLure();
+        this.drawGates();
+        this.drawRoost();
+      }
+
+      updateInput() {
+        const pointer = this.input.activePointer;
+        const wx = clamp(pointer.worldX, 0, CONFIG.worldWidth);
+        const wy = clamp(pointer.worldY, 40, CONFIG.worldHeight - 40);
+        this.lure.x = wx;
+        this.lure.y = wy;
+        this.lure.calling = pointer.leftButtonDown();
+        this.lure.scattering = pointer.rightButtonDown();
+      }
+
+      updateWind(dt) {
+        this.crosswindTimer += dt;
+        if (this.crosswindTimer >= 4) {
+          this.crosswindTimer = 0;
+          this.crosswindDir *= -1;
+        }
+
+        this.crosswindTile.tilePositionX += this.crosswindDir * 30 * dt;
+        this.crosswindTile.flipX = this.crosswindDir < 0;
+
+        this.eddyPhase += dt;
+        this.eddyTile.tilePositionY = Math.sin(this.eddyPhase * 1.2) * 10;
+      }
+
+      updateHawk(dt) {
+        if (this.segmentIndex < 2) {
+          this.hawkGraphic.clear();
+          return;
+        }
+
+        this.hawk.laneTimer += dt;
+        if (this.hawk.laneTimer >= 3) {
+          this.hawk.laneTimer = 0;
+          this.hawk.lane = (this.hawk.lane + 1) % 2;
+          this.hawk.y = this.hawk.lane === 0 ? 240 : 340;
+        }
+
+        const camLeft = this.cameras.main.scrollX - 200;
+        const camRight = this.cameras.main.scrollX + CONFIG.width + 200;
+        this.hawk.x += this.hawk.dir * 140 * dt;
+        if (this.hawk.x < camLeft || this.hawk.x > camRight) {
+          this.hawk.dir *= -1;
+        }
+
+        this.hawkGraphic.clear();
+        this.hawkGraphic.fillStyle(0x000000, 0.2);
+        this.hawkGraphic.fillRect(this.hawk.x - this.hawkWidth / 2, this.hawk.y - 60, this.hawkWidth, 120);
+      }
+
+      sampleWind(x, y) {
+        if (x >= 960 && x < 1960) {
+          return { x: this.crosswindDir * 40, y: 0 };
+        }
+        if (x >= 2000) {
+          return { x: 0, y: 20 * Math.sin((x + this.time.now * 0.06) / 140) };
+        }
+        return { x: 0, y: 0 };
+      }
+
+      avoidWalls(bird) {
+        let ax = 0;
+        let ay = 0;
+        for (const wall of this.wallRects) {
+          const nearestX = clamp(bird.x, wall.x, wall.x + wall.w);
+          const nearestY = clamp(bird.y, wall.y, wall.y + wall.h);
+          const dx = bird.x - nearestX;
+          const dy = bird.y - nearestY;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 0 && dist < 24) {
+            const force = (24 - dist) / 24 * 60;
+            ax += (dx / dist) * force;
+            ay += (dy / dist) * force;
+          }
+        }
+        return { x: ax, y: ay };
+      }
+
+      updateBirds(dt) {
+        const neighborRadius = 80;
+        const maxSpeed = 120;
+        const steerMax = 90;
+        const sepRadius = this.weights.separationBase + (this.lure.scattering ? 16 : 0);
+        const sepWeight = mapSepToWeight(this.weights.separationBase);
+        const alignBoost = this.lure.calling ? 0.1 : 0;
+        const attractBoost = (this.lure.calling ? 0.7 : 0) + (this.lure.scattering ? -0.5 : 0);
+
+        for (let i = 0; i < this.birds.length; i++) {
+          const bird = this.birds[i];
+          let neighborCount = 0;
+          let avgPosX = 0;
+          let avgPosY = 0;
+          let avgVelX = 0;
+          let avgVelY = 0;
+          let sepX = 0;
+          let sepY = 0;
+
+          for (let j = 0; j < this.birds.length; j++) {
+            if (i === j) continue;
+            const other = this.birds[j];
+            const dx = bird.x - other.x;
+            const dy = bird.y - other.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < neighborRadius) {
+              neighborCount++;
+              avgPosX += other.x;
+              avgPosY += other.y;
+              avgVelX += other.vx;
+              avgVelY += other.vy;
+              if (dist < sepRadius && dist > 0) {
+                const strength = 1 - dist / sepRadius;
+                sepX += (dx / dist) * strength;
+                sepY += (dy / dist) * strength;
+              }
+            }
+          }
+
+          let cohX = 0;
+          let cohY = 0;
+          let aliX = 0;
+          let aliY = 0;
+          if (neighborCount > 0) {
+            avgPosX /= neighborCount;
+            avgPosY /= neighborCount;
+            avgVelX /= neighborCount;
+            avgVelY /= neighborCount;
+            const coh = normalize(avgPosX - bird.x, avgPosY - bird.y);
+            const ali = normalize(avgVelX, avgVelY);
+            cohX = coh.x;
+            cohY = coh.y;
+            aliX = ali.x;
+            aliY = ali.y;
+          }
+
+          const lureVec = normalize(this.lure.x - bird.x, this.lure.y - bird.y);
+          const distToLure = Math.hypot(this.lure.x - bird.x, this.lure.y - bird.y);
+          const lureFalloff = distToLure > 0 ? Math.min(1, 200 / distToLure) : 0;
+          const attractWeight = this.weights.attractionBase + attractBoost;
+
+          const wind = this.sampleWind(bird.x, bird.y);
+          const wall = this.avoidWalls(bird);
+
+          let ax = 0;
+          let ay = 0;
+          ax += sepX * sepWeight;
+          ay += sepY * sepWeight;
+          ax += cohX * this.weights.cohesionWeight;
+          ay += cohY * this.weights.cohesionWeight;
+          ax += aliX * (this.weights.alignmentWeight + alignBoost);
+          ay += aliY * (this.weights.alignmentWeight + alignBoost);
+          ax += lureVec.x * attractWeight * lureFalloff;
+          ay += lureVec.y * attractWeight * lureFalloff;
+          ax += wind.x * 0.6;
+          ay += wind.y * 0.6;
+          ax += wall.x;
+          ay += wall.y;
+
+          const accelLen = Math.hypot(ax, ay);
+          if (accelLen > steerMax) {
+            ax = (ax / accelLen) * steerMax;
+            ay = (ay / accelLen) * steerMax;
+          }
+
+          bird.vx += ax * dt;
+          bird.vy += ay * dt;
+
+          const speed = Math.hypot(bird.vx, bird.vy);
+          if (speed > maxSpeed) {
+            bird.vx = (bird.vx / speed) * maxSpeed;
+            bird.vy = (bird.vy / speed) * maxSpeed;
+          }
+
+          bird.x += bird.vx * dt;
+          bird.y += bird.vy * dt;
+
+          if (bird.x < 0) {
+            bird.x = 0;
+            bird.vx *= -0.5;
+          }
+          if (bird.x > CONFIG.worldWidth) {
+            bird.x = CONFIG.worldWidth;
+            bird.vx *= -0.5;
+          }
+          if (bird.y < 40) {
+            bird.y = 40;
+            bird.vy *= -0.5;
+          }
+          if (bird.y > CONFIG.worldHeight - 40) {
+            bird.y = CONFIG.worldHeight - 40;
+            bird.vy *= -0.5;
+          }
+
+          bird.sprite.x = bird.x;
+          bird.sprite.y = bird.y;
+          bird.sprite.rotation = Math.atan2(bird.vy, bird.vx);
+
+          if (this.segmentIndex >= 2) {
+            const rectX = this.hawk.x - this.hawkWidth / 2;
+            const rectY = this.hawk.y - 60;
+            if (bird.x >= rectX && bird.x <= rectX + this.hawkWidth && bird.y >= rectY && bird.y <= rectY + 120) {
+              bird.hawkTick += dt;
+              if (bird.hawkTick >= 0.2) {
+                bird.hawkTick = 0;
+                if (Math.random() < 0.12) {
+                  bird.remove = true;
+                }
+              }
+            } else {
+              bird.hawkTick = 0;
+            }
+          }
+        }
+
+        if (this.segmentIndex >= 2) {
+          const remaining = [];
+          for (const bird of this.birds) {
+            if (bird.remove) {
+              bird.sprite.destroy();
+              this.birdsAlive -= 1;
+            } else {
+              remaining.push(bird);
+            }
+          }
+          this.birds = remaining;
+        }
+      }
+
+      evaluateGates(dt) {
+        const now = this.time.now / 1000;
+
+        if (this.segmentIndex === 1 && "'!this.gateState.gate1Open) {
+          const gateX = 900;
+          const gateY = 280;
+          const radius = 70;
+          for (const bird of this.birds) {
+            const dist = Math.hypot(bird.x - gateX, bird.y - gateY);
+            const inside = dist <= radius;
+            if (inside && !bird.ringInside) {
+              this.gateState.ringEntries.push(now);
+            }
+            bird.ringInside = inside;
+          }
+          this.gateState.ringEntries = this.gateState.ringEntries.filter((t) => now - t <= 1.0);
+          if (this.gateState.ringEntries.length >= 25) {
+            this.gateState.gate1Open = true;
+            this.tweenCameraToSegment(2);
+            this.showTip('"'Crosswinds ahead. Tap Right-click to scatter under the shadow.');
+          }
+        }
+
+        if (this.segmentIndex === 2 && "'!this.gateState.gate2Open) {
+          const sensorX = 1760;
+          const centroid = this.getCentroid();
+          if (Math.abs(centroid.x - sensorX) <= 40) {
+            let minX = Infinity;
+            let maxX = -Infinity;
+            let found = 0;
+            for (const bird of this.birds) {
+              if (Math.abs(bird.x - sensorX) <= 40 && Math.abs(bird.y - 280) <= 100) {
+                minX = Math.min(minX, bird.x);
+                maxX = Math.max(maxX, bird.x);
+                found += 1;
+              }
+            }
+            const width = found > 0 ? maxX - minX : Infinity;
+            if (width < 180) {
+              this.gateState.gate2Hold += dt;
+            } else {
+              this.gateState.gate2Hold = Math.max(0, this.gateState.gate2Hold - dt * 0.5);
+            }
+            if (this.gateState.gate2Hold >= 0.8) {
+              this.gateState.gate2Open = true;
+              this.tweenCameraToSegment(3);
+              this.showTip('"'Hold Call to steady. Keep the flock narrow and aligned.');
+            }
+          } else {
+            this.gateState.gate2Hold = Math.max(0, this.gateState.gate2Hold - dt * 0.5);
+          }
+        }
+
+        if (this.segmentIndex === 3 && "'!this.gateState.gate3Open) {
+          let minX = Infinity;
+          let maxX = -Infinity;
+          let avgVX = 0;
+          let avgVY = 0;
+          let count = 0;
+          for (const bird of this.birds) {
+            if (bird.x >= 2700 && bird.x <= 2780 && bird.y >= 260 && bird.y <= 320) {
+              minX = Math.min(minX, bird.x);
+              maxX = Math.max(maxX, bird.x);
+              avgVX += bird.vx;
+              avgVY += bird.vy;
+              count += 1;
+            }
+          }
+          if (count > 0) {
+            avgVX /= count;
+            avgVY /= count;
+            const width = maxX - minX;
+            const angle = Math.atan2(avgVY, avgVX) * (180 / Math.PI);
+            const aligned = Math.abs(angle) <= 18;
+            if (width < 140 && aligned) {
+              this.gateState.gate3Hold += dt;
+            } else {
+              this.gateState.gate3Hold = Math.max(0, this.gateState.gate3Hold - dt * 0.5);
+            }
+            if (this.gateState.gate3Hold >= 1.5) {
+              this.gateState.gate3Open = true;
+              this.showTip('"'The roost is near. Guide the centroid into the glow.');
+            }
+          } else {
+            this.gateState.gate3Hold = Math.max(0, this.gateState.gate3Hold - dt * 0.5);
+          }
+        }
+      }
+
+      getCentroid() {
+        if (this.birds.length === 0) {
+          return { x: 0, y: 0 };
+        }
+        let sumX = 0;
+        let sumY = 0;
+        for (const bird of this.birds) {
+          sumX += bird.x;
+          sumY += bird.y;
+        }
+        return { x: sumX / this.birds.length, y: sumY / this.birds.length };
+      }
+
+      checkRoost() {
+        if ("'!this.gateState.gate3Open) {
+          return;
+        }
+        const centroid = this.getCentroid();
+        const dist = Math.hypot(centroid.x - 2900, centroid.y - 280);
+        if (dist <= 80 && this.birdsAlive >= 24) {
+          this.endGame(true);
+        }
+      }
+
+      checkLoss() {
+        if (this.timer <= 0 || this.birdsAlive < 18) {
+          this.endGame(false);
+        }
+      }
+
+      endGame(win) {
+        this.gameState = GAME_STATE.ENDING;
+        this.setHudVisible(false);
+        this.endOverlay.setVisible(true);
+        this.endText.setVisible(true);
+        this.endSubText.setVisible(true);
+        const homeText = `Birds Home: ${this.birdsAlive}/50`;
+        this.endText.setText(win ? homeText : `Night falls. ${homeText}`);
+        this.endSubText.setText('"'Press R to Restart');
+      }
+
+      tweenCameraToSegment(seg) {
+        const targetX = this.segmentTargets[seg];
+        this.tweens.add({
+          targets: this.cameras.main,
+          scrollX: targetX,
+          duration: 1200,
+          ease: 'Sine.easeInOut'
+        });
+        this.segmentIndex = seg;
+      }
+
+      updateHUD() {
+        this.ui.timerText.setText(formatTime(this.timer));
+        this.ui.flockText.setText("'`Flock: ${this.birdsAlive}`);
+
+        const sepNorm = (this.weights.separationBase - 18) / (60 - 18);
+        const alignNorm = this.weights.alignmentWeight / 0.8;
+
+        this.ui.sliderGraphics.clear();
+        this.ui.sliderGraphics.fillStyle(0x1c2b4a, 0.9);
+        this.ui.sliderGraphics.fillRect(140, CONFIG.height - 56, 120, 8);
+        this.ui.sliderGraphics.fillRect(140, CONFIG.height - 26, 120, 8);
+        this.ui.sliderGraphics.fillStyle(0xBBD4FF, 1);
+        this.ui.sliderGraphics.fillRect(140, CONFIG.height - 56, 120 * sepNorm, 8);
+        this.ui.sliderGraphics.fillRect(140, CONFIG.height - 26, 120 * alignNorm, 8);
+      }
+
+      drawLure() {
+        const pulse = (Math.sin(this.time.now * 0.02) + 1) / 2;
+        const baseRadius = 6;
+        const callRadius = 6 + pulse * 6;
+        const radius = this.lure.calling ? callRadius : (this.lure.scattering ? 4 + pulse * 2 : baseRadius);
+
+        this.lureGraphics.clear();
+        if (this.lure.calling) {
+          this.lureGraphics.fillStyle(COLORS.lureGlow, 0.35);
+          this.lureGraphics.fillCircle(this.lure.x, this.lure.y, radius + 6);
+        }
+        if (this.lure.scattering) {
+          this.lureGraphics.fillStyle(COLORS.lureGlow, 0.25 + pulse * 0.2);
+          this.lureGraphics.fillCircle(this.lure.x, this.lure.y, radius + 4);
+        }
+        this.lureGraphics.fillStyle(COLORS.lureBase, 1);
+        this.lureGraphics.fillCircle(this.lure.x, this.lure.y, radius);
+      }
+
+      drawGates() {
+        this.gateGraphics.clear();
+
+        const gateX = 900;
+        const gateY = 280;
+        const radius = 70;
+        this.gateGraphics.lineStyle(3, this.gateState.gate1Open ? COLORS.gateDim : COLORS.gate, 0.9);
+        this.gateGraphics.strokeCircle(gateX, gateY, radius);
+        if (!this.gateState.gate1Open) {
+          const progress = clamp(this.gateState.ringEntries.length / 25, 0, 1);
+          this.gateGraphics.lineStyle(6, COLORS.lureGlow, 0.8);
+          this.gateGraphics.beginPath();
+          this.gateGraphics.arc(gateX, gateY, radius + 6, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress, false);
+          this.gateGraphics.strokePath();
+        }
+
+        const gate2X = 1800;
+        this.gateGraphics.lineStyle(2, this.gateState.gate2Open ? COLORS.gateDim : COLORS.gate, 0.8);
+        this.gateGraphics.strokeRect(gate2X - 50, 200, 100, 160);
+        if (!this.gateState.gate2Open) {
+          const holdRatio = clamp(this.gateState.gate2Hold / 0.8, 0, 1);
+          this.gateGraphics.lineStyle(4, COLORS.lureGlow, 0.6);
+          this.gateGraphics.beginPath();
+          this.gateGraphics.arc(gate2X, 280, 40, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * holdRatio, false);
+          this.gateGraphics.strokePath();
+        }
+
+        this.gateGraphics.lineStyle(2, this.gateState.gate3Open ? COLORS.gateDim : COLORS.gate, 0.8);
+        this.gateGraphics.strokeRect(2700, 260, 80, 60);
+        if (!this.gateState.gate3Open) {
+          const holdRatio3 = clamp(this.gateState.gate3Hold / 1.5, 0, 1);
+          this.gateGraphics.lineStyle(4, COLORS.lureGlow, 0.6);
+          this.gateGraphics.beginPath();
+          this.gateGraphics.arc(2740, 290, 40, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * holdRatio3, false);
+          this.gateGraphics.strokePath();
+        }
+      }
+
+      drawRoost() {
+        this.roostGraphics.clear();
+        const glowAlpha = this.gateState.gate3Open ? 0.35 : 0.15;
+        this.roostGraphics.fillStyle(COLORS.roostGlow, glowAlpha);
+        this.roostGraphics.fillCircle(2900, 280, 80);
+        this.roostGraphics.fillStyle(COLORS.roost, 1);
+        this.roostGraphics.fillCircle(2900, 270, 35);
+        this.roostGraphics.fillRect(2890, 300, 20, 40);
+      }
+
+      showTip(text) {
+        this.ui.tipText.setText(text);
+        this.ui.tipText.setAlpha(1);
+        this.tweens.add({
+          targets: this.ui.tipText,
+          alpha: 0,
+          delay: 3800,
+          duration: 800
+        });
+      }
+    }
+
+    const game = new Phaser.Game({
+      type: Phaser.AUTO,
+      width: CONFIG.width,
+      height: CONFIG.height,
+      parent: '"'game-container',
+      backgroundColor: '#0d162b',
+      scene: [BootScene, TitleScene, GameScene]
+    });
+  </script>
+</body>
+</html>
+EOF
+
+No output
+
+Success
+Explored 1 search
+Searched for files
+Edited file
+index.html
++4
+-1
+
+      checkRoost() {
+        if (!this.gateState.gate3Open) {
+        if (this.gameState === GAME_STATE.ENDING || !this.gateState.gate3Open) {
+          return;
+      checkLoss() {
+        if (this.gameState === GAME_STATE.ENDING) {
+          return;
+        }
+        if (this.timer <= 0 || this.birdsAlive < 18) {
+Worked for 6m 37s
+Implemented a complete Phaser version of Murmuration in index.html (960×540 canvas, 3000px world, flocking rules, lure controls, wind fields, hawk hazard, three gates, roost goal, HUD, tips, and win/loss screens).
+
+Note: murmuration_design.txt wasn’t present on disk, so I used murmuration_design.txt as the spec source. If you want, I can copy or move that design file into chat_3_murmuration/.
+
+Next steps (optional):
+
+Open index.html in a browser (or serve it) and play-test.
+Tell me if you want the design doc duplicated into chat_3_murmuration/.
+
+1 file changed
+Undo
+
+Review
+index.html

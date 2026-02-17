@@ -1,0 +1,27 @@
+Edited file
+index.html
++1
+-1
+
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
+        if (!this.helpOverlayVisible && Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
+          this.togglePause();
+Worked for 2m 52s
+Found one real input-state bug and fixed it; everything else in the checklist looks correct and stable.
+
+Bug: pressing Esc while the help overlay is open would unpause the game but leave the overlay up, so play continues underneath it.
+Fix: ignore Esc when the help overlay is visible so the overlay remains the active pause state.
+File: index.html
+No other issues found with canvas size/background, initial placements, inputs, logic, end states, or text layout.
+
+If you want, I can:
+
+Do a quick in‑browser sanity check.
+Verify balance after the directional gust change.
+
+1 file changed
+Undo
+
+Review
+index.html

@@ -1,0 +1,330 @@
+Read index.html
+Edited file
+index.html
++15
+-1
+
+
+    const SHADOW_ECHO_THRESHOLD = Phaser.Math.DegToRad(10);
+    const SHADOW_ECHO_LIFE = 0.8;
+    const SHADOW_ECHO_EVENTS_MAX = 4;
+
+    const PLAYER_RADIUS = 8;
+        this.controlsText = this.add.text(16, 506,
+          'Move: WASD | Time: Q/E or drag dial | Sprint: Shift', {
+          'Move: WASD | Time: Q/E or drag dial | Sprint: Shift\nSpin dial fast to leave a shadow trail', {
+            fontFamily: 'Verdana, sans-serif',
+        this.footstepTimer = 0;
+        this.shadowEchoes = [];
+        this.pendingShadowEcho = false;
+        this.pendingEchoAngle = 0;
+        this.shadowEchoesUsed = 0;
+        this.tram.active = false;
+        this.footstepTimer = 0;
+        this.shadowEchoes = [];
+        this.pendingShadowEcho = false;
+      }
+          `Dial Turns: ${this.dialTurns}`,
+          `Shadow Echoes: ${this.shadowEchoesUsed}`,
+          `Exposure Incidents: ${this.exposureIncidents}`
+          `Dial Turns: ${this.dialTurns}`,
+          `Shadow Echoes: ${this.shadowEchoesUsed}`,
+          `Exposure Incidents: ${this.exposureIncidents}`
+          this.updateLampShadows();
+          this.updateShadowEchoes(dt);
+          this.renderScene(time / 1000);
+        this.updateLampShadows();
+        this.updateShadowEchoes(dt);
+        this.updatePatrols(dt);
+Edited file
+index.html
++16
+-24
+
+      updateDial(dt, pointer, justDown, justUp) {
+        this.pendingShadowEcho = false;
+        if (justDown) {
+
+        const echoDelta = Math.abs(this.dial.angle - prevAngle);
+        if (this.mode === 'play' && echoDelta >= SHADOW_ECHO_THRESHOLD) {
+          this.pendingShadowEcho = true;
+          this.pendingEchoAngle = prevAngle;
+        }
+
+        if (prevAngle !== this.dial.angle && this.mode === 'title') {
+      updateLampShadows() {
+        const angle = this.dial.angle;
+        const Lx = Math.sin(angle);
+        const Ly = -Math.cos(angle);
+        const Sx = -Lx;
+        const Sy = -Ly;
+        const Tx = -Sy;
+        const Ty = Sx;
+
+        const vectors = this.getShadowVectors(this.dial.angle);
+        this.lampPosts.forEach((post) => {
+          const halfLength = post.length / 2;
+          const halfWidth = post.width / 2;
+          const cx = post.x + Sx * halfLength;
+          const cy = post.y + Sy * halfLength;
+          const sx = Sx * halfLength;
+          const sy = Sy * halfLength;
+          const wx = Tx * halfWidth;
+          const wy = Ty * halfWidth;
+          const points = this.buildShadowPoints(post, vectors);
+          post.shadowPoints = points;
+          post.shadowPoly.setTo([points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]);
+        });
+
+          const p1 = { x: cx + wx + sx, y: cy + wy + sy };
+          const p2 = { x: cx - wx + sx, y: cy - wy + sy };
+          const p3 = { x: cx - wx - sx, y: cy - wy - sy };
+          const p4 = { x: cx + wx - sx, y: cy + wy - sy };
+
+          post.shadowPoints = [p1, p2, p3, p4];
+          post.shadowPoly.setTo([p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y]);
+        });
+        if (this.pendingShadowEcho) {
+          this.spawnShadowEcho(this.pendingEchoAngle);
+          this.pendingShadowEcho = false;
+        }
+      }
+Edited file
+index.html
++62
+-0
+
+
+      getShadowVectors(angle) {
+        const Lx = Math.sin(angle);
+        const Ly = -Math.cos(angle);
+        const Sx = -Lx;
+        const Sy = -Ly;
+        const Tx = -Sy;
+        const Ty = Sx;
+        return { Sx, Sy, Tx, Ty };
+      }
+
+      buildShadowPoints(post, vectors) {
+        const { Sx, Sy, Tx, Ty } = vectors;
+        const halfLength = post.length / 2;
+        const halfWidth = post.width / 2;
+        const cx = post.x + Sx * halfLength;
+        const cy = post.y + Sy * halfLength;
+        const sx = Sx * halfLength;
+        const sy = Sy * halfLength;
+        const wx = Tx * halfWidth;
+        const wy = Ty * halfWidth;
+
+        return [
+          { x: cx + wx + sx, y: cy + wy + sy },
+          { x: cx - wx + sx, y: cy - wy + sy },
+          { x: cx - wx - sx, y: cy - wy - sy },
+          { x: cx + wx - sx, y: cy + wy - sy }
+        ];
+      }
+
+      spawnShadowEcho(angle) {
+        const vectors = this.getShadowVectors(angle);
+        this.lampPosts.forEach((post) => {
+          const points = this.buildShadowPoints(post, vectors);
+          const poly = new Phaser.Geom.Polygon([
+            points[0].x, points[0].y,
+            points[1].x, points[1].y,
+            points[2].x, points[2].y,
+            points[3].x, points[3].y
+          ]);
+          this.shadowEchoes.push({
+            points,
+            poly,
+            life: 0,
+            maxLife: SHADOW_ECHO_LIFE
+          });
+        });
+        this.shadowEchoesUsed += 1;
+
+        const maxEchoes = SHADOW_ECHO_EVENTS_MAX * this.lampPosts.length;
+        if (this.shadowEchoes.length > maxEchoes) {
+          this.shadowEchoes.splice(0, this.shadowEchoes.length - maxEchoes);
+        }
+      }
+
+      updateShadowEchoes(dt) {
+        if (!this.shadowEchoes.length) return;
+        this.shadowEchoes.forEach((echo) => {
+          echo.life += dt;
+        });
+        this.shadowEchoes = this.shadowEchoes.filter((echo) => echo.life <= echo.maxLife);
+      }
+
+      updatePlayer(dt) {
+Edited file
+index.html
++10
+-0
+
+        this.drawPermanentDark();
+        this.drawShadowEchoes();
+        this.drawLampShadows();
+
+      drawShadowEchoes() {
+        if (!this.shadowEchoes.length) return;
+        this.shadowEchoes.forEach((echo) => {
+          const t = 1 - echo.life / echo.maxLife;
+          this.worldGfx.fillStyle(0x243347, 0.35 * t);
+          this.worldGfx.fillPoints(echo.points, true);
+        });
+      }
+
+      drawLampShadows() {
+Edited file
+index.html
++4
+-1
+
+      isPlayerInLampShadow() {
+        return this.lampPosts.some((post) => Phaser.Geom.Polygon.Contains(post.shadowPoly, this.player.x, this.player.y));
+        if (this.lampPosts.some((post) => Phaser.Geom.Polygon.Contains(post.shadowPoly, this.player.x, this.player.y))) {
+          return true;
+        }
+        return this.shadowEchoes.some((echo) => Phaser.Geom.Polygon.Contains(echo.poly, this.player.x, this.player.y));
+      }
+Explored 1 file
+Edited file
+index.html
++7
+-2
+
+        const timeLeft = formatTime(this.timeRemaining);
+        const cause = reason === 'time' ? 'Time Up' : 'Overexposed';
+        const causeMap = {
+          time: 'Time Up',
+          overexposed: 'Overexposed',
+          restart: 'Attempts Exhausted'
+        };
+        const cause = causeMap[reason] || 'Overexposed';
+        const attemptsUsed = 3 - this.attemptsLeft;
+        } else {
+          this.endFail(reason === 'time' ? 'time' : 'overexposed');
+          this.endFail(reason);
+        }
+Explored 1 file
+Edited file
+index.html
++2
+-3
+
+      updateExposure(dt) {
+        const inPermDark = this.isPlayerInPermanentDark();
+        const inLampShadow = this.isPlayerInLampShadow();
+        const fullyInShadow = this.isPlayerFullyInShadow();
+        const inPatrol = this.isPlayerInPatrolLight();
+        const inHeadlight = this.isPlayerInHeadlight();
+        const inLit = (!inPermDark && !inLampShadow) || inPatrol || inHeadlight;
+        const inLit = !fullyInShadow || inPatrol || inHeadlight;
+
+Edited file
+index.html
++39
+-8
+
+
+      isPlayerInPermanentDark() {
+        return this.permanentDarkRects.some((rect) => Phaser.Geom.Rectangle.Contains(rect, this.player.x, this.player.y));
+      getPlayerSamplePoints() {
+        const r = this.player.radius;
+        return [
+          { x: this.player.x, y: this.player.y },
+          { x: this.player.x + r, y: this.player.y },
+          { x: this.player.x - r, y: this.player.y },
+          { x: this.player.x, y: this.player.y + r },
+          { x: this.player.x, y: this.player.y - r }
+        ];
+      }
+
+      isPointInPermanentDark(x, y) {
+        return this.permanentDarkRects.some((rect) => Phaser.Geom.Rectangle.Contains(rect, x, y));
+      }
+
+      isPlayerInLampShadow() {
+        if (this.lampPosts.some((post) => Phaser.Geom.Polygon.Contains(post.shadowPoly, this.player.x, this.player.y))) {
+      isPointInLampShadow(x, y) {
+        if (this.lampPosts.some((post) => Phaser.Geom.Polygon.Contains(post.shadowPoly, x, y))) {
+          return true;
+        }
+        return this.shadowEchoes.some((echo) => Phaser.Geom.Polygon.Contains(echo.poly, this.player.x, this.player.y));
+        return this.shadowEchoes.some((echo) => Phaser.Geom.Polygon.Contains(echo.poly, x, y));
+      }
+
+      isPointInShadow(x, y) {
+        return this.isPointInPermanentDark(x, y) || this.isPointInLampShadow(x, y);
+      }
+
+      isPlayerInPermanentDark() {
+        return this.isPointInPermanentDark(this.player.x, this.player.y);
+      }
+
+      isPlayerInLampShadow() {
+        return this.isPointInLampShadow(this.player.x, this.player.y);
+      }
+
+      isPlayerFullyInShadow() {
+        const samples = this.getPlayerSamplePoints();
+        return samples.every((point) => this.isPointInShadow(point.x, point.y));
+      }
+
+      isPlayerInShadow() {
+        return this.isPlayerInPermanentDark() || this.isPlayerInLampShadow();
+        return this.isPlayerFullyInShadow();
+      }
+      isPlayerInPatrolLight() {
+        return this.patrols.some((patrol) => distance(this.player.x, this.player.y, patrol.pos.x, patrol.pos.y) <= patrol.radius);
+        return this.patrols.some((patrol) =>
+          distance(this.player.x, this.player.y, patrol.pos.x, patrol.pos.y) <= patrol.radius + this.player.radius
+        );
+      }
+        if (!this.tram.active) return false;
+        return Phaser.Geom.Rectangle.Contains(this.tram.headlightRect, this.player.x, this.player.y);
+        const circle = new Phaser.Geom.Circle(this.player.x, this.player.y, this.player.radius);
+        return Phaser.Geom.Intersects.CircleToRectangle(circle, this.tram.headlightRect);
+      }
+Edited file
+index.html
++5
+-2
+
+        this.dialTurns = 0;
+        this.lastEchoAngle = 0;
+        this.exposureIncidents = 0;
+        this.pendingShadowEcho = false;
+        this.lastEchoAngle = this.dial.angle;
+      }
+
+        const echoDelta = Math.abs(this.dial.angle - prevAngle);
+        const echoDelta = Math.abs(this.dial.angle - this.lastEchoAngle);
+        if (this.mode === 'play' && echoDelta >= SHADOW_ECHO_THRESHOLD) {
+          this.pendingShadowEcho = true;
+          this.pendingEchoAngle = prevAngle;
+          this.pendingEchoAngle = this.lastEchoAngle;
+          this.lastEchoAngle = this.dial.angle;
+        }
+Explored 1 file
+Worked for 6m 23s
+Findings
+
+Low: Shadow coverage is still an approximation (5 sample points). Very thin edges or corner cases can still misclassify “fully in shadow” vs. “partially lit.” If you want exactness, this would need circle–polygon intersection. index.html (line 725)
+I felt the original implementation was solid but a bit flat in how “time” was expressed — the dial only reoriented existing geometry. To make it more creative, I added a time-smear mechanic: fast dial rotation leaves brief “shadow echoes” that count as temporary cover, giving the player a distinctive way to stitch darkness across open space. I also tightened the exposure logic to require full-body shadow coverage and fixed the end-screen cause when the last attempt is consumed via restart.
+Key changes are in index.html (line 65), index.html (line 273), index.html (line 465), index.html (line 520), index.html (line 666), index.html (line 725), and index.html (line 366).
+
+Tests not run (manual playtest recommended).
+
+Next steps (optional)
+
+Playtest and tune SHADOW_ECHO_THRESHOLD / SHADOW_ECHO_LIFE for feel and difficulty.
+If you want exact light/shadow classification, I can implement circle–polygon intersection instead of the 5-point sample.
+
+1 file changed
+Undo
+
+Review
+index.html

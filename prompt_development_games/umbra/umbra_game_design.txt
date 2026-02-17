@@ -1,0 +1,1550 @@
+================================================================================
+                         UMBRA - GAME DESIGN DOCUMENT
+                              (REVISED DESIGN)
+================================================================================
+
+## 1. TITLE & HOOK
+
+Title: UMBRA
+
+Hook: You are not a character who casts a shadow—you ARE the shadow. Manipulate 
+light sources to stretch, shrink, bend, and reshape yourself to navigate through 
+rooms where only darkness can pass. Light is your sculptor. Walls mean nothing. 
+Only shadow touches shadow.
+
+Tagline: "You are what the light makes of you."
+
+================================================================================
+
+## 2. CORE INSIGHT
+
+Central Question: How much of our identity is self-determined versus shaped by 
+external forces?
+
+The Truth This Game Explores: We are constantly reshaped by our environment, 
+relationships, and circumstances. Our "shape" is not fixed—it is the negotiation 
+between our essence and the forces that illuminate us. This isn't weakness; it's 
+the nature of existence.
+
+Why This Matters to Players:
+- Everyone has felt "stretched thin" or "compressed" by life circumstances
+- The game literalizes the experience of adapting to external pressures
+- Finding solutions requires seeing yourself as malleable, not fixed
+- Success comes from working WITH the light, not against it
+
+Emotional Arc:
+- Minutes 0-1: Disorientation (learning to see yourself as shadow)
+- Minutes 1-2: Discovery (realizing light is a tool, not an enemy)
+- Minutes 2-4: Mastery (elegant solutions through creative light placement)
+- Minutes 4-5: Transcendence (final puzzle reframes everything)
+
+Why This Design Is More Creative Than "Last Light":
+1. NOVEL PERSPECTIVE: Playing AS a shadow (not with one) is unexplored territory
+2. SPATIAL VERBS: Manipulating light sources is tactile and inventive
+3. EMERGENT SOLUTIONS: Players discover approaches the designer didn't anticipate
+4. DISTINCTIVE AESTHETIC: The shadow/light interplay creates unique visuals
+5. EMBODIED THEME: You don't observe transformation—you ARE transformation
+
+================================================================================
+
+## 3. MECHANIC-THEME INTEGRATION
+
+Primary Mechanic: Drag light sources to reshape your shadow-self, allowing you 
+to reach exits and navigate through spaces only shadows can occupy.
+
+How the Mechanic Embodies the Theme:
+
+1. YOU ARE DEFINED BY EXTERNAL FORCES
+   - Your shape is entirely determined by light source positions
+   - You have no "body" independent of what illuminates you
+   - This isn't limiting—it's liberating once understood
+
+2. LIGHT AS SCULPTOR, NOT ENEMY
+   - Light doesn't hurt you; it CREATES you
+   - Moving lights isn't "attacking" your environment; it's self-authorship
+   - The relationship between you and light is collaborative
+
+3. WALLS MEAN NOTHING; SHADOW BOUNDARIES MEAN EVERYTHING
+   - Physical walls don't block you—you pass through them
+   - Only the EDGE of shadow matters: where light meets dark
+   - This inverts normal game logic (obstacles become irrelevant)
+
+4. STRETCHING HAS COSTS
+   - When stretched thin, you move slower
+   - When compressed, you're faster but limited in reach
+   - Size = capability tradeoff, just like in life
+
+5. CONNECTION THROUGH DARKNESS
+   - Shadow platforms can only be touched by shadow
+   - You must reshape to match the "keyhole" of each passage
+   - Fitting yourself to the world's requirements
+
+================================================================================
+
+## 4. GAME STRUCTURE
+
+Total Duration: 5-6 minutes
+Structure: 7 puzzle rooms of escalating complexity
+
+ROOM 1 - "Awakening" (Tutorial A)
+- Single light source, simple room
+- Learn: dragging light changes your shape
+- Exit is a narrow vertical gap—must stretch tall to fit
+- Teaches: light distance = shadow length
+
+ROOM 2 - "Reach" (Tutorial B)  
+- Shadow platform across a gap
+- Must stretch to touch the platform, then "climb" across
+- Learn: shadow can only interact with shadow
+- Teaches: you can bridge gaps by elongating
+
+ROOM 3 - "Compression"
+- Tiny exit hole, player starts stretched
+- Must bring light CLOSER to compress into small form
+- First "aha!": light proximity = shadow shrinkage
+- Teaches: sometimes smaller is better
+
+ROOM 4 - "Two Lights"
+- Introduction of second light source
+- Shadows from multiple lights create complex shapes
+- Exit requires specific angular shape only achievable with both lights
+- Teaches: multiple lights = complex geometry
+
+ROOM 5 - "The Wall That Isn't"
+- A physical wall blocks the "obvious" path
+- But shadow passes through walls
+- Must position light so shadow extends THROUGH the wall to reach exit
+- Mind-bending moment: walls don't apply to you
+
+ROOM 6 - "Lighthouse"
+- A rotating light source (automatic movement)
+- Must time your movement through the exit as your shape cycles
+- Your shape constantly shifts—find the moment when you fit
+- Teaches: dynamic light, patience, timing
+
+ROOM 7 - "Separation" (Final Puzzle)
+- Two exits: one labeled "LIGHT," one labeled "DARK"
+- A light source you cannot move
+- To reach "DARK" exit: must position yourself where you cease to exist
+  (fully illuminated = no shadow = you vanish)
+- To reach "LIGHT" exit: must find the one configuration where your shadow 
+  touches the exit while you remain
+- THE TWIST: Reaching "DARK" ends the game with "You became the light."
+            Reaching "LIGHT" ends with "You remained in shadow."
+- Neither ending is "correct"—both are completions
+
+================================================================================
+
+## 5. TECHNICAL SPECIFICATION
+
+--------------------------------------------------------------------------------
+5.1 DISPLAY SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+Canvas Dimensions: 1024 x 768 pixels
+Background Color: #1a1a2e (deep midnight blue, not pure black)
+
+ROOM AESTHETICS:
+- Walls: #0d0d1a (darker than background)
+- Wall borders: #2d2d4a (subtle edge visibility), 2px wide
+- Floor indicators: #252540 (subtle grid pattern, 32x32 tiles, 10% opacity)
+
+THE CASTER (Shadow Source Object):
+- This is the invisible object that "casts" the player-shadow
+- Position: Fixed per room (defined in room data)
+- NOT rendered—purely logical
+- The player IS the shadow this object casts
+
+PLAYER SHADOW:
+- Color: #000000 (pure black)
+- Edge: subtle gradient falloff (5px) to #1a1a2e
+- Rendered as polygon calculated from caster position and light sources
+- Minimum opacity: 0.9 (shadows are nearly solid)
+- When multiple lights create overlapping shadows: darkest shadow wins
+
+LIGHT SOURCES:
+- Draggable circles
+- Radius: 20 pixels (interaction hitbox: 30 pixels)
+- Core color: #fff9e6 (warm white)
+- Glow: radial gradient extending 80 pixels
+  - 0%: rgba(255, 249, 230, 0.6)
+  - 50%: rgba(255, 249, 230, 0.2)
+  - 100%: rgba(255, 249, 230, 0)
+- When dragged: slight scale increase (1.1x), cursor changes to "grabbing"
+- Pulse animation: radius oscillates ±3% at 0.3 Hz
+
+NON-DRAGGABLE LIGHTS (Room 7):
+- Same visual as draggable lights
+- Small lock icon overlay (16x16, bottom-right of light)
+- Cursor shows "not-allowed" on hover
+- Glow color slightly cooler: #f0f0ff
+
+SHADOW PLATFORMS:
+- Color: #000000 with subtle noise texture (2% variation)
+- Border: none (they're part of the darkness)
+- Player shadow can "stand" on these and move across them
+- Only visible when light would otherwise illuminate them
+
+EXITS:
+- Standard exit: Vertical rectangle, 15px wide, height varies per room
+- Color: #3a3a5c (slightly lighter than walls)
+- Interior: subtle particle effect (floating motes, 3-5 visible, drifting upward)
+- Mote color: #6a6a8c at 50% opacity
+- When player shadow touches exit: exit glows brighter over 0.5s, then transition
+
+ROOM TRANSITION:
+- Fade to white over 0.8 seconds (unusual—emphasizes light theme)
+- Hold white for 0.3 seconds
+- Fade from white to new room over 0.8 seconds
+
+TEXT ELEMENTS:
+- Room titles: top-center, 40px from top
+- Font: "Courier New" (monospace for noir aesthetic)
+- Size: 24px
+- Color: #4a4a6a (muted, atmospheric)
+- Fade in over 1 second at room start, fade out over 1 second after 3 seconds
+
+HINT TEXT (appears after 30 seconds of no progress):
+- Position: bottom-center, 40px from bottom
+- Font: Courier New, 14px
+- Color: #3a3a5a
+- Text varies per room (see Room Data)
+- Fade in over 2 seconds
+
+--------------------------------------------------------------------------------
+5.2 CASTER AND SHADOW GEOMETRY
+--------------------------------------------------------------------------------
+
+THE KEY INSIGHT:
+The player does not control a character. The player IS the shadow cast by an 
+invisible "caster" object. Light positions determine shadow shape.
+
+SHADOW CALCULATION (per frame):
+
+```
+For each light source L:
+    Cast rays from L through each corner of the CASTER object
+    Extend rays until they hit a wall or room boundary
+    The polygon formed by these extended rays = shadow from this light
+    
+Combined shadow = UNION of all individual shadow polygons
+Player position = centroid of combined shadow
+Player can move along any shadow surface (shadow platforms + own shadow edges)
+```
+
+CASTER OBJECT:
+- Invisible rectangle: 40w x 60h pixels (rough humanoid proportions)
+- Fixed position per room (cannot be moved by player)
+- Shadow stretches/compresses based on light distance and angle
+
+SHADOW PROPERTIES:
+- Minimum shadow length: 20 pixels (when light is very close)
+- Maximum shadow length: 800 pixels (when light is at room edge)
+- Shadow length formula: casterHeight * (distanceToWall / distanceToLight)
+- Stretched shadow movement speed: baseSpeed * (60 / shadowLength)
+  - Long shadow = slower movement
+- Compressed shadow movement speed: baseSpeed * min(2.0, 60 / shadowLength)
+  - Short shadow = faster movement (capped at 2x)
+
+BASE MOVEMENT SPEED: 150 pixels/second
+
+SHADOW COLLISION:
+- Shadow can pass through physical walls (shadows don't have mass)
+- Shadow cannot pass through fully-lit areas (you cease to exist there)
+- Shadow can "stand on" shadow platforms (black areas in the level)
+- Exit collision: any part of shadow polygon touching exit = room complete
+
+--------------------------------------------------------------------------------
+5.3 INPUT SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+LIGHT MANIPULATION:
+- Click + drag on light source to move it
+- Light sources are constrained to their allowed area (per room)
+- Release to place
+- Mouse cursor: "grab" when hovering light, "grabbing" when dragging
+
+SHADOW MOVEMENT:
+- Arrow Keys or WASD: move along shadow surfaces
+- Movement is relative to shadow orientation
+  - "Up" moves toward the shadow's "head" (away from caster)
+  - "Down" moves toward caster
+  - "Left/Right" moves along shadow width
+- If shadow is detached (no valid surface), movement is free within shadow bounds
+
+PAUSE:
+- ESCAPE or P: toggle pause
+- Pause overlay: #1a1a2e at 85% opacity
+- "PAUSED" text: Courier New, 36px, #6a6a8a, centered
+- "Press ESC to continue": Courier New, 16px, #4a4a6a, below
+
+RESTART ROOM:
+- R key: restart current room
+- Brief flash transition (0.2s white, 0.2s fade back)
+
+--------------------------------------------------------------------------------
+5.4 ROOM DATA
+--------------------------------------------------------------------------------
+
+Each room is defined by:
+- Dimensions (always 1024x768, but play area may be smaller)
+- Caster position (fixed)
+- Light source(s) initial positions
+- Light source movement bounds (rectangle they can be dragged within)
+- Wall geometry (array of rectangles)
+- Shadow platform geometry (array of rectangles)
+- Exit position and size
+- Room title text
+- Hint text
+
+ROOM 1: "Awakening"
+```
+caster: {x: 200, y: 400, w: 40, h: 60}
+lights: [
+    {x: 400, y: 400, draggable: true, bounds: {x: 100, y: 100, w: 824, h: 568}}
+]
+walls: [
+    {x: 0, y: 0, w: 1024, h: 50},      // top
+    {x: 0, y: 718, w: 1024, h: 50},    // bottom
+    {x: 0, y: 0, w: 50, h: 768},       // left
+    {x: 974, y: 0, w: 50, h: 768}      // right
+]
+shadowPlatforms: []
+exit: {x: 900, y: 300, w: 15, h: 80}
+title: "Awakening"
+hint: "Drag the light. Watch yourself change."
+```
+
+ROOM 2: "Reach"
+```
+caster: {x: 150, y: 500, w: 40, h: 60}
+lights: [
+    {x: 300, y: 500, draggable: true, bounds: {x: 100, y: 200, w: 400, h: 400}}
+]
+walls: [
+    {x: 0, y: 0, w: 1024, h: 50},
+    {x: 0, y: 718, w: 1024, h: 50},
+    {x: 0, y: 0, w: 50, h: 768},
+    {x: 974, y: 0, w: 50, h: 768},
+    // Gap in floor
+    {x: 350, y: 550, w: 300, h: 218}   // pit
+]
+shadowPlatforms: [
+    {x: 500, y: 480, w: 200, h: 20}    // bridge over pit
+]
+exit: {x: 900, y: 400, w: 15, h: 100}
+title: "Reach"
+hint: "Shadows touch shadows. Stretch across."
+```
+
+ROOM 3: "Compression"
+```
+caster: {x: 150, y: 400, w: 40, h: 60}
+lights: [
+    {x: 800, y: 400, draggable: true, bounds: {x: 100, y: 100, w: 824, h: 568}}
+]
+walls: [
+    {x: 0, y: 0, w: 1024, h: 50},
+    {x: 0, y: 718, w: 1024, h: 50},
+    {x: 0, y: 0, w: 50, h: 768},
+    {x: 974, y: 0, w: 50, h: 768},
+    // Wall with tiny exit hole
+    {x: 700, y: 50, w: 40, h: 310},    // top of exit wall
+    {x: 700, y: 420, w: 40, h: 298}    // bottom of exit wall
+]
+shadowPlatforms: []
+exit: {x: 900, y: 370, w: 15, h: 50}   // behind the wall
+exitHole: {x: 700, y: 360, w: 40, h: 60}  // the tiny gap
+title: "Compression"
+hint: "Closer light, smaller shadow."
+```
+
+ROOM 4: "Two Lights"
+```
+caster: {x: 200, y: 400, w: 40, h: 60}
+lights: [
+    {x: 150, y: 200, draggable: true, bounds: {x: 50, y: 50, w: 400, h: 300}},
+    {x: 150, y: 600, draggable: true, bounds: {x: 50, y: 400, w: 400, h: 300}}
+]
+walls: [
+    {x: 0, y: 0, w: 1024, h: 50},
+    {x: 0, y: 718, w: 1024, h: 50},
+    {x: 0, y: 0, w: 50, h: 768},
+    {x: 974, y: 0, w: 50, h: 768},
+    // Diagonal passage entrance
+    {x: 600, y: 50, w: 50, h: 280},
+    {x: 600, y: 440, w: 50, h: 280},
+    // The passage requires a wide, short shadow to pass
+]
+shadowPlatforms: []
+exit: {x: 900, y: 350, w: 15, h: 70}
+exitPassage: {type: "wide", requiredWidth: 200, maxHeight: 90}
+title: "Two Lights"
+hint: "Two lights, one shadow. Shape it."
+```
+
+ROOM 5: "The Wall That Isn't"
+```
+caster: {x: 200, y: 400, w: 40, h: 60}
+lights: [
+    {x: 400, y: 400, draggable: true, bounds: {x: 50, y: 100, w: 500, h: 568}}
+]
+walls: [
+    {x: 0, y: 0, w: 1024, h: 50},
+    {x: 0, y: 718, w: 1024, h: 50},
+    {x: 0, y: 0, w: 50, h: 768},
+    {x: 974, y: 0, w: 50, h: 768},
+    // THE WALL - physical barrier that shadows pass through
+    {x: 500, y: 50, w: 40, h: 668, isSolid: true, blocksLight: false}
+]
+shadowPlatforms: []
+exit: {x: 900, y: 350, w: 15, h: 70}
+title: "The Wall That Isn't"
+hint: "Walls stop bodies. You have no body."
+```
+
+ROOM 6: "Lighthouse"
+```
+caster: {x: 512, y: 600, w: 40, h: 60}
+lights: [
+    {x: 512, y: 300, draggable: false, rotating: true, 
+     orbitRadius: 200, orbitSpeed: 0.5}  // radians per second
+]
+walls: [
+    {x: 0, y: 0, w: 1024, h: 50},
+    {x: 0, y: 718, w: 1024, h: 50},
+    {x: 0, y: 0, w: 50, h: 768},
+    {x: 974, y: 0, w: 50, h: 768},
+    // Multiple narrow exits around the room - only one is real
+    // Shadow will fit through correct exit at specific angle
+]
+shadowPlatforms: [
+    {x: 200, y: 200, w: 100, h: 20},
+    {x: 724, y: 200, w: 100, h: 20},
+]
+exits: [
+    {x: 900, y: 180, w: 15, h: 40, real: true},
+    {x: 900, y: 500, w: 15, h: 40, real: false},  // decoy
+]
+title: "Lighthouse"
+hint: "The light moves. Wait for your moment."
+```
+
+ROOM 7: "Separation"
+```
+caster: {x: 512, y: 450, w: 40, h: 60}
+lights: [
+    {x: 512, y: 200, draggable: false}  // fixed, directly above caster
+]
+walls: [
+    {x: 0, y: 0, w: 1024, h: 50},
+    {x: 0, y: 718, w: 1024, h: 50},
+    {x: 0, y: 0, w: 50, h: 768},
+    {x: 974, y: 0, w: 50, h: 768}
+]
+shadowPlatforms: [
+    {x: 200, y: 600, w: 150, h: 20},   // path to DARK exit
+    {x: 674, y: 600, w: 150, h: 20}    // path to LIGHT exit
+]
+exits: [
+    {x: 100, y: 550, w: 15, h: 70, label: "DARK", ending: "dark"},
+    {x: 909, y: 550, w: 15, h: 70, label: "LIGHT", ending: "light"}
+]
+title: "Separation"
+hint: null  // No hint for final puzzle
+```
+
+--------------------------------------------------------------------------------
+5.5 SHADOW CALCULATION ALGORITHM
+--------------------------------------------------------------------------------
+
+```
+function calculateShadow(caster, lights, walls) {
+    let shadowPolygons = [];
+    
+    for each light in lights:
+        // Get caster corners
+        let corners = getCasterCorners(caster);  // 4 corners of rectangle
+        
+        // Cast rays from light through each corner
+        let rays = [];
+        for each corner in corners:
+            let direction = normalize(corner - light.position);
+            let rayEnd = extendRay(light.position, direction, corner, walls, roomBounds);
+            rays.push({origin: corner, end: rayEnd});
+        
+        // Form shadow polygon from ray endpoints
+        // Sort rays by angle from light to ensure correct polygon winding
+        rays.sort((a, b) => angleFromLight(a) - angleFromLight(b));
+        
+        let shadowPoly = [];
+        for each ray in rays:
+            shadowPoly.push(ray.origin);  // caster edge
+            shadowPoly.push(ray.end);     // extended point
+        
+        shadowPolygons.push(shadowPoly);
+    
+    // Union all shadow polygons (use clipper.js or similar)
+    let combinedShadow = unionPolygons(shadowPolygons);
+    
+    return combinedShadow;
+}
+
+function extendRay(lightPos, direction, startPoint, walls, bounds) {
+    // Find first intersection with room boundary
+    let maxDist = 2000;  // Large number
+    let endpoint = startPoint + direction * maxDist;
+    
+    // Clip to room bounds
+    endpoint = clipToBounds(startPoint, endpoint, bounds);
+    
+    // Note: We do NOT clip to walls - shadows pass through walls
+    // Unless the wall has blocksLight: true
+    for each wall in walls:
+        if wall.blocksLight:
+            endpoint = clipToWall(startPoint, endpoint, wall);
+    
+    return endpoint;
+}
+```
+
+--------------------------------------------------------------------------------
+5.6 PLAYER MOVEMENT ON SHADOW
+--------------------------------------------------------------------------------
+
+```
+function updatePlayerPosition(input, shadow, dt) {
+    // Player position is conceptually "on" their own shadow
+    // Movement is along the shadow's edges
+    
+    let shadowCentroid = calculateCentroid(shadow);
+    let shadowLength = calculateShadowLength(shadow);
+    
+    // Speed inversely proportional to stretch
+    let speedMultiplier = clamp(60 / shadowLength, 0.3, 2.0);
+    let currentSpeed = BASE_SPEED * speedMultiplier;
+    
+    // Get movement direction from input
+    let moveDir = {x: 0, y: 0};
+    if (input.up) moveDir.y -= 1;
+    if (input.down) moveDir.y += 1;
+    if (input.left) moveDir.x -= 1;
+    if (input.right) moveDir.x += 1;
+    
+    // Normalize diagonal movement
+    if (moveDir.x != 0 && moveDir.y != 0) {
+        moveDir = normalize(moveDir);
+    }
+    
+    // Calculate new position
+    let newPos = playerPos + moveDir * currentSpeed * dt;
+    
+    // Constrain to shadow bounds
+    if (!isPointInPolygon(newPos, shadow)) {
+        newPos = nearestPointOnPolygon(newPos, shadow);
+    }
+    
+    // Check shadow platform collisions
+    for each platform in shadowPlatforms:
+        if (playerShadowTouches(shadow, platform)) {
+            // Can move onto/across platform
+            // Platform acts as extension of valid movement area
+        }
+    
+    return newPos;
+}
+```
+
+--------------------------------------------------------------------------------
+5.7 WIN CONDITIONS AND ENDINGS
+--------------------------------------------------------------------------------
+
+ROOM COMPLETION:
+- Boolean: any vertex of player shadow polygon is inside exit rectangle
+- Formula: `shadowPolygon.some(vertex => pointInRect(vertex, exitRect))`
+
+ENDING CONDITIONS (Room 7 only):
+
+Dark Ending:
+- Player shadow touches "DARK" exit
+- Triggered when: `shadowTouchesExit(shadow, darkExit)`
+- Ending text: "You became the light."
+- Interpretation: By ceasing to be shadow, you transformed
+
+Light Ending:
+- Player shadow touches "LIGHT" exit
+- Triggered when: `shadowTouchesExit(shadow, lightExit)`
+- Ending text: "You remained in shadow."
+- Interpretation: You preserved your shadow-nature
+
+Both endings are valid completions. Neither is "good" or "bad."
+
+--------------------------------------------------------------------------------
+5.8 TIMING VALUES
+--------------------------------------------------------------------------------
+
+Movement:
+- Base speed: 150 px/s
+- Minimum speed (fully stretched): 45 px/s (0.3x multiplier)
+- Maximum speed (compressed): 300 px/s (2.0x multiplier)
+
+Light dragging:
+- Drag responsiveness: immediate (no lerp)
+- Shadow recalculation: every frame
+
+Animations:
+- Light pulse: 0.3 Hz (3.33 second cycle)
+- Room title fade in: 1.0s
+- Room title hold: 2.0s
+- Room title fade out: 1.0s
+- Room transition (to white): 0.8s
+- Room transition (white hold): 0.3s
+- Room transition (from white): 0.8s
+- Hint appearance delay: 30s of no exit progress
+- Hint fade in: 2.0s
+
+Lighthouse (Room 6):
+- Light orbit speed: 0.5 radians/second
+- Full rotation: ~12.6 seconds
+- "Correct" window: when light is at angle range [1.2, 1.5] radians
+
+End screen:
+- Final text fade in: 2.0s
+- Hold: 5.0s
+- "Click to play again" appears after 3.0s
+- Fade to credits: 2.0s
+
+--------------------------------------------------------------------------------
+5.9 AUDIO SPECIFICATIONS
+--------------------------------------------------------------------------------
+
+All audio via Web Audio API (procedural, no external files).
+
+AMBIENT:
+- Deep, sustained chord: C2 (65.4 Hz), G2 (98 Hz), C3 (130.8 Hz)
+- Triangle waves for softer timbre
+- Master volume: 12%
+- Subtle LFO on volume: ±3% at 0.05 Hz (very slow breathing)
+
+LIGHT DRAG:
+- Sine wave, pitch follows light Y position
+- Frequency range: 220 Hz (bottom) to 440 Hz (top)
+- Volume: 8%
+- Fade in over 0.1s when drag starts
+- Fade out over 0.2s when drag ends
+
+SHADOW STRETCH:
+- White noise, filtered
+- Lowpass filter cutoff follows shadow length: 200 Hz (short) to 800 Hz (long)
+- Very quiet: 5%
+- Creates subtle "presence" sound
+
+ROOM COMPLETE:
+- Rising arpeggio: C4, E4, G4, C5
+- Each note 0.15s, sine wave
+- Gentle attack (0.05s), medium decay (0.3s)
+- Volume: 20%
+- Slight reverb (convolver with 0.5s impulse)
+
+FINAL ENDING:
+- Slow chord: 
+  - Dark ending: C minor (C3, Eb3, G3) - bittersweet
+  - Light ending: C major (C3, E3, G3) - resolved
+- 5 second sustain with slow fade
+- Volume: 25%
+
+--------------------------------------------------------------------------------
+5.10 VISUAL RENDERING ORDER
+--------------------------------------------------------------------------------
+
+Back to front:
+1. Background (#1a1a2e solid fill)
+2. Floor grid (subtle, 10% opacity)
+3. Shadow platforms (pure black)
+4. Player shadow (pure black with edge gradient)
+5. Walls (dark rectangles with borders)
+6. Light glows (additive blending)
+7. Light cores (solid circles)
+8. Exit indicators (with particle motes)
+9. UI text (room title, hints)
+10. Pause overlay (if active)
+
+================================================================================
+
+## 6. IMPLEMENTATION PSEUDOCODE
+
+--------------------------------------------------------------------------------
+6.1 MAIN GAME STRUCTURE
+--------------------------------------------------------------------------------
+
+```javascript
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+const CONFIG = {
+    width: 1024,
+    height: 768,
+    backgroundColor: 0x1a1a2e,
+    
+    shadow: {
+        color: 0x000000,
+        edgeFade: 5  // pixels
+    },
+    
+    light: {
+        radius: 20,
+        glowRadius: 80,
+        coreColor: 0xfff9e6,
+        pulseRate: 0.3,  // Hz
+        pulseAmount: 0.03  // ±3%
+    },
+    
+    movement: {
+        baseSpeed: 150,
+        minSpeedMultiplier: 0.3,
+        maxSpeedMultiplier: 2.0
+    },
+    
+    timing: {
+        titleFadeIn: 1000,
+        titleHold: 2000,
+        titleFadeOut: 1000,
+        transitionToWhite: 800,
+        transitionHold: 300,
+        transitionFromWhite: 800,
+        hintDelay: 30000,
+        hintFadeIn: 2000
+    }
+};
+
+// Room data as defined in section 5.4
+const ROOMS = [ /* ... room definitions ... */ ];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+
+let gameState = {
+    currentRoom: 0,
+    phase: 'playing',  // 'playing', 'transitioning', 'ending'
+    elapsedTime: 0,
+    roomStartTime: 0,
+    isPaused: false,
+    hintShown: false
+};
+
+let playerState = {
+    position: {x: 0, y: 0},  // Within shadow
+    shadowPolygon: [],
+    shadowLength: 0
+};
+
+let roomState = {
+    caster: null,
+    lights: [],
+    walls: [],
+    shadowPlatforms: [],
+    exits: []
+};
+
+// ============================================================
+// PHASER SCENE
+// ============================================================
+
+class GameScene extends Phaser.Scene {
+    constructor() {
+        super({key: 'GameScene'});
+    }
+    
+    create() {
+        // Graphics layers
+        this.bgGraphics = this.add.graphics();
+        this.shadowGraphics = this.add.graphics();
+        this.platformGraphics = this.add.graphics();
+        this.wallGraphics = this.add.graphics();
+        this.lightGraphics = this.add.graphics();
+        this.exitGraphics = this.add.graphics();
+        
+        // UI elements
+        this.titleText = this.add.text(
+            CONFIG.width / 2, 40, '',
+            {font: '24px Courier New', fill: '#4a4a6a'}
+        ).setOrigin(0.5, 0).setAlpha(0);
+        
+        this.hintText = this.add.text(
+            CONFIG.width / 2, CONFIG.height - 40, '',
+            {font: '14px Courier New', fill: '#3a3a5a'}
+        ).setOrigin(0.5, 1).setAlpha(0);
+        
+        // Input
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.wasd = this.input.keyboard.addKeys('W,A,S,D');
+        this.input.keyboard.on('keydown-P', () => this.togglePause());
+        this.input.keyboard.on('keydown-ESC', () => this.togglePause());
+        this.input.keyboard.on('keydown-R', () => this.restartRoom());
+        
+        // Pause overlay
+        this.pauseOverlay = this.add.rectangle(
+            CONFIG.width/2, CONFIG.height/2,
+            CONFIG.width, CONFIG.height,
+            0x1a1a2e, 0.85
+        ).setVisible(false);
+        
+        this.pauseText = this.add.text(
+            CONFIG.width/2, CONFIG.height/2 - 20,
+            'PAUSED',
+            {font: '36px Courier New', fill: '#6a6a8a'}
+        ).setOrigin(0.5).setVisible(false);
+        
+        // Light dragging
+        this.draggedLight = null;
+        this.input.on('pointerdown', this.onPointerDown, this);
+        this.input.on('pointermove', this.onPointerMove, this);
+        this.input.on('pointerup', this.onPointerUp, this);
+        
+        // Initialize audio
+        this.initAudio();
+        
+        // Load first room
+        this.loadRoom(0);
+    }
+    
+    // --------------------------------------------------------
+    // ROOM LOADING
+    // --------------------------------------------------------
+    
+    loadRoom(index) {
+        const room = ROOMS[index];
+        gameState.currentRoom = index;
+        gameState.roomStartTime = gameState.elapsedTime;
+        gameState.hintShown = false;
+        
+        // Set up caster
+        roomState.caster = {...room.caster};
+        
+        // Set up lights
+        roomState.lights = room.lights.map(l => ({
+            x: l.x,
+            y: l.y,
+            draggable: l.draggable !== false,
+            bounds: l.bounds || null,
+            rotating: l.rotating || false,
+            orbitRadius: l.orbitRadius || 0,
+            orbitSpeed: l.orbitSpeed || 0,
+            orbitAngle: 0
+        }));
+        
+        // Set up geometry
+        roomState.walls = [...room.walls];
+        roomState.shadowPlatforms = room.shadowPlatforms || [];
+        roomState.exits = Array.isArray(room.exits) ? room.exits : 
+                         room.exit ? [room.exit] : [];
+        
+        // Initialize player position at caster
+        playerState.position = {
+            x: roomState.caster.x + roomState.caster.w / 2,
+            y: roomState.caster.y + roomState.caster.h / 2
+        };
+        
+        // Show title
+        this.titleText.setText(room.title);
+        this.titleText.setAlpha(0);
+        this.tweens.add({
+            targets: this.titleText,
+            alpha: 1,
+            duration: CONFIG.timing.titleFadeIn,
+            hold: CONFIG.timing.titleHold,
+            yoyo: true,
+            ease: 'Sine.easeInOut'
+        });
+        
+        // Set hint text (hidden)
+        this.hintText.setText(room.hint || '');
+        this.hintText.setAlpha(0);
+        
+        // Draw static elements
+        this.drawWalls();
+        this.drawShadowPlatforms();
+        this.drawExits();
+    }
+    
+    // --------------------------------------------------------
+    // MAIN UPDATE LOOP
+    // --------------------------------------------------------
+    
+    update(time, delta) {
+        if (gameState.isPaused) return;
+        if (gameState.phase !== 'playing') return;
+        
+        const dt = delta / 1000;
+        gameState.elapsedTime += dt;
+        
+        // Update rotating lights
+        this.updateRotatingLights(dt);
+        
+        // Calculate shadow
+        this.calculateShadow();
+        
+        // Handle player movement
+        this.handleMovement(dt);
+        
+        // Check exit collisions
+        this.checkExits();
+        
+        // Show hint after delay
+        const roomTime = gameState.elapsedTime - gameState.roomStartTime;
+        if (!gameState.hintShown && roomTime > CONFIG.timing.hintDelay / 1000) {
+            this.showHint();
+        }
+        
+        // Render
+        this.render();
+    }
+    
+    // --------------------------------------------------------
+    // SHADOW CALCULATION
+    // --------------------------------------------------------
+    
+    calculateShadow() {
+        const caster = roomState.caster;
+        const lights = roomState.lights;
+        
+        // Get caster corners
+        const corners = [
+            {x: caster.x, y: caster.y},
+            {x: caster.x + caster.w, y: caster.y},
+            {x: caster.x + caster.w, y: caster.y + caster.h},
+            {x: caster.x, y: caster.y + caster.h}
+        ];
+        
+        let allShadowPolys = [];
+        
+        for (const light of lights) {
+            let shadowPoly = [];
+            
+            // For each corner, cast ray from light through corner
+            for (const corner of corners) {
+                // Direction from light to corner
+                const dx = corner.x - light.x;
+                const dy = corner.y - light.y;
+                const len = Math.sqrt(dx*dx + dy*dy);
+                const dirX = dx / len;
+                const dirY = dy / len;
+                
+                // Extend ray to room boundary
+                const extended = this.extendRay(corner, dirX, dirY);
+                
+                // Add both corner and extended point to polygon
+                shadowPoly.push(corner);
+                shadowPoly.push(extended);
+            }
+            
+            // Sort polygon vertices by angle from light
+            shadowPoly.sort((a, b) => {
+                const angleA = Math.atan2(a.y - light.y, a.x - light.x);
+                const angleB = Math.atan2(b.y - light.y, b.x - light.x);
+                return angleA - angleB;
+            });
+            
+            allShadowPolys.push(shadowPoly);
+        }
+        
+        // For simplicity, use first shadow poly (proper implementation would union)
+        playerState.shadowPolygon = allShadowPolys[0] || [];
+        
+        // Calculate shadow length (distance from caster to furthest point)
+        let maxDist = 0;
+        const casterCenter = {
+            x: caster.x + caster.w/2,
+            y: caster.y + caster.h/2
+        };
+        for (const point of playerState.shadowPolygon) {
+            const dist = Math.sqrt(
+                Math.pow(point.x - casterCenter.x, 2) +
+                Math.pow(point.y - casterCenter.y, 2)
+            );
+            maxDist = Math.max(maxDist, dist);
+        }
+        playerState.shadowLength = maxDist;
+    }
+    
+    extendRay(start, dirX, dirY) {
+        // Extend ray until it hits room boundary
+        const maxDist = 2000;
+        let endX = start.x + dirX * maxDist;
+        let endY = start.y + dirY * maxDist;
+        
+        // Clip to room bounds
+        // Top
+        if (endY < 50) {
+            const t = (50 - start.y) / dirY;
+            endX = start.x + dirX * t;
+            endY = 50;
+        }
+        // Bottom
+        if (endY > 718) {
+            const t = (718 - start.y) / dirY;
+            endX = start.x + dirX * t;
+            endY = 718;
+        }
+        // Left
+        if (endX < 50) {
+            const t = (50 - start.x) / dirX;
+            endX = 50;
+            endY = start.y + dirY * t;
+        }
+        // Right
+        if (endX > 974) {
+            const t = (974 - start.x) / dirX;
+            endX = 974;
+            endY = start.y + dirY * t;
+        }
+        
+        return {x: endX, y: endY};
+    }
+    
+    // --------------------------------------------------------
+    // PLAYER MOVEMENT
+    // --------------------------------------------------------
+    
+    handleMovement(dt) {
+        // Get input
+        let dx = 0, dy = 0;
+        if (this.cursors.left.isDown || this.wasd.A.isDown) dx -= 1;
+        if (this.cursors.right.isDown || this.wasd.D.isDown) dx += 1;
+        if (this.cursors.up.isDown || this.wasd.W.isDown) dy -= 1;
+        if (this.cursors.down.isDown || this.wasd.S.isDown) dy += 1;
+        
+        if (dx === 0 && dy === 0) return;
+        
+        // Normalize
+        const len = Math.sqrt(dx*dx + dy*dy);
+        dx /= len;
+        dy /= len;
+        
+        // Speed based on shadow length
+        const speedMult = Phaser.Math.Clamp(
+            60 / playerState.shadowLength,
+            CONFIG.movement.minSpeedMultiplier,
+            CONFIG.movement.maxSpeedMultiplier
+        );
+        const speed = CONFIG.movement.baseSpeed * speedMult;
+        
+        // Calculate new position
+        let newX = playerState.position.x + dx * speed * dt;
+        let newY = playerState.position.y + dy * speed * dt;
+        
+        // Constrain to shadow (simplified: just keep in polygon)
+        if (this.isPointInPolygon({x: newX, y: newY}, playerState.shadowPolygon)) {
+            playerState.position.x = newX;
+            playerState.position.y = newY;
+        }
+    }
+    
+    isPointInPolygon(point, polygon) {
+        if (polygon.length < 3) return false;
+        
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const xi = polygon[i].x, yi = polygon[i].y;
+            const xj = polygon[j].x, yj = polygon[j].y;
+            
+            if (((yi > point.y) !== (yj > point.y)) &&
+                (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) {
+                inside = !inside;
+            }
+        }
+        return inside;
+    }
+    
+    // --------------------------------------------------------
+    // LIGHT INTERACTION
+    // --------------------------------------------------------
+    
+    onPointerDown(pointer) {
+        for (const light of roomState.lights) {
+            if (!light.draggable) continue;
+            
+            const dist = Phaser.Math.Distance.Between(
+                pointer.x, pointer.y, light.x, light.y
+            );
+            
+            if (dist < 30) {  // Hit area
+                this.draggedLight = light;
+                this.startDragSound();
+                break;
+            }
+        }
+    }
+    
+    onPointerMove(pointer) {
+        if (!this.draggedLight) return;
+        
+        let newX = pointer.x;
+        let newY = pointer.y;
+        
+        // Constrain to bounds if defined
+        if (this.draggedLight.bounds) {
+            const b = this.draggedLight.bounds;
+            newX = Phaser.Math.Clamp(newX, b.x, b.x + b.w);
+            newY = Phaser.Math.Clamp(newY, b.y, b.y + b.h);
+        }
+        
+        this.draggedLight.x = newX;
+        this.draggedLight.y = newY;
+        
+        this.updateDragSound(newY);
+    }
+    
+    onPointerUp() {
+        if (this.draggedLight) {
+            this.stopDragSound();
+            this.draggedLight = null;
+        }
+    }
+    
+    // --------------------------------------------------------
+    // ROTATING LIGHTS
+    // --------------------------------------------------------
+    
+    updateRotatingLights(dt) {
+        for (const light of roomState.lights) {
+            if (!light.rotating) continue;
+            
+            light.orbitAngle += light.orbitSpeed * dt;
+            
+            // Calculate position on orbit
+            const centerX = 512;  // Room center
+            const centerY = 384;
+            light.x = centerX + Math.cos(light.orbitAngle) * light.orbitRadius;
+            light.y = centerY + Math.sin(light.orbitAngle) * light.orbitRadius;
+        }
+    }
+    
+    // --------------------------------------------------------
+    // EXIT DETECTION
+    // --------------------------------------------------------
+    
+    checkExits() {
+        for (const exit of roomState.exits) {
+            // Check if any shadow vertex is in exit
+            for (const vertex of playerState.shadowPolygon) {
+                if (vertex.x >= exit.x && vertex.x <= exit.x + exit.w &&
+                    vertex.y >= exit.y && vertex.y <= exit.y + exit.h) {
+                    
+                    // Exit reached!
+                    if (exit.ending) {
+                        // Final room
+                        this.triggerEnding(exit.ending);
+                    } else {
+                        this.nextRoom();
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    
+    nextRoom() {
+        if (gameState.currentRoom >= ROOMS.length - 1) {
+            // Game complete (shouldn't happen - room 7 has endings)
+            return;
+        }
+        
+        gameState.phase = 'transitioning';
+        this.playRoomCompleteSound();
+        
+        // Fade to white
+        const flash = this.add.rectangle(
+            CONFIG.width/2, CONFIG.height/2,
+            CONFIG.width, CONFIG.height,
+            0xffffff, 0
+        );
+        
+        this.tweens.add({
+            targets: flash,
+            alpha: 1,
+            duration: CONFIG.timing.transitionToWhite,
+            onComplete: () => {
+                this.loadRoom(gameState.currentRoom + 1);
+                this.tweens.add({
+                    targets: flash,
+                    alpha: 0,
+                    delay: CONFIG.timing.transitionHold,
+                    duration: CONFIG.timing.transitionFromWhite,
+                    onComplete: () => {
+                        flash.destroy();
+                        gameState.phase = 'playing';
+                    }
+                });
+            }
+        });
+    }
+    
+    triggerEnding(type) {
+        gameState.phase = 'ending';
+        
+        const text = type === 'dark' 
+            ? 'You became the light.'
+            : 'You remained in shadow.';
+        
+        this.playEndingSound(type);
+        
+        // Fade out everything
+        this.tweens.add({
+            targets: [this.shadowGraphics, this.lightGraphics, 
+                     this.wallGraphics, this.platformGraphics],
+            alpha: 0,
+            duration: 2000,
+            onComplete: () => {
+                // Show ending text
+                const endText = this.add.text(
+                    CONFIG.width/2, CONFIG.height/2,
+                    text,
+                    {font: '32px Courier New', fill: '#6a6a8a'}
+                ).setOrigin(0.5).setAlpha(0);
+                
+                this.tweens.add({
+                    targets: endText,
+                    alpha: 1,
+                    duration: 2000
+                });
+                
+                // Show replay prompt
+                this.time.delayedCall(3000, () => {
+                    const replayText = this.add.text(
+                        CONFIG.width/2, CONFIG.height/2 + 60,
+                        'Click to play again',
+                        {font: '16px Courier New', fill: '#4a4a6a'}
+                    ).setOrigin(0.5).setAlpha(0);
+                    
+                    this.tweens.add({
+                        targets: replayText,
+                        alpha: 1,
+                        duration: 1000
+                    });
+                    
+                    this.input.once('pointerdown', () => {
+                        this.scene.restart();
+                        this.resetGameState();
+                    });
+                });
+            }
+        });
+    }
+    
+    // --------------------------------------------------------
+    // RENDERING
+    // --------------------------------------------------------
+    
+    render() {
+        this.shadowGraphics.clear();
+        this.lightGraphics.clear();
+        
+        // Draw shadow
+        if (playerState.shadowPolygon.length > 2) {
+            this.shadowGraphics.fillStyle(0x000000, 0.95);
+            this.shadowGraphics.beginPath();
+            this.shadowGraphics.moveTo(
+                playerState.shadowPolygon[0].x,
+                playerState.shadowPolygon[0].y
+            );
+            for (let i = 1; i < playerState.shadowPolygon.length; i++) {
+                this.shadowGraphics.lineTo(
+                    playerState.shadowPolygon[i].x,
+                    playerState.shadowPolygon[i].y
+                );
+            }
+            this.shadowGraphics.closePath();
+            this.shadowGraphics.fillPath();
+        }
+        
+        // Draw lights
+        for (const light of roomState.lights) {
+            // Glow
+            const steps = 15;
+            for (let i = steps; i >= 0; i--) {
+                const radius = (CONFIG.light.glowRadius / steps) * i;
+                const alpha = 0.6 * Math.pow(1 - (i / steps), 2);
+                this.lightGraphics.fillStyle(CONFIG.light.coreColor, alpha);
+                this.lightGraphics.fillCircle(light.x, light.y, radius);
+            }
+            
+            // Core
+            const pulse = Math.sin(gameState.elapsedTime * Math.PI * 2 * CONFIG.light.pulseRate);
+            const coreRadius = CONFIG.light.radius * (1 + pulse * CONFIG.light.pulseAmount);
+            this.lightGraphics.fillStyle(CONFIG.light.coreColor, 1);
+            this.lightGraphics.fillCircle(light.x, light.y, coreRadius);
+            
+            // Lock icon if not draggable
+            if (!light.draggable) {
+                this.lightGraphics.fillStyle(0x000000, 0.5);
+                this.lightGraphics.fillRect(light.x + 8, light.y + 8, 10, 10);
+            }
+        }
+        
+        // Draw player position indicator (small bright spot)
+        this.lightGraphics.fillStyle(0xffffff, 0.8);
+        this.lightGraphics.fillCircle(
+            playerState.position.x,
+            playerState.position.y,
+            4
+        );
+    }
+    
+    drawWalls() {
+        this.wallGraphics.clear();
+        
+        for (const wall of roomState.walls) {
+            this.wallGraphics.fillStyle(0x0d0d1a, 1);
+            this.wallGraphics.fillRect(wall.x, wall.y, wall.w, wall.h);
+            this.wallGraphics.lineStyle(2, 0x2d2d4a, 1);
+            this.wallGraphics.strokeRect(wall.x, wall.y, wall.w, wall.h);
+        }
+    }
+    
+    drawShadowPlatforms() {
+        this.platformGraphics.clear();
+        
+        for (const platform of roomState.shadowPlatforms) {
+            this.platformGraphics.fillStyle(0x000000, 1);
+            this.platformGraphics.fillRect(
+                platform.x, platform.y, platform.w, platform.h
+            );
+        }
+    }
+    
+    drawExits() {
+        this.exitGraphics.clear();
+        
+        for (const exit of roomState.exits) {
+            // Exit rectangle
+            this.exitGraphics.fillStyle(0x3a3a5c, 1);
+            this.exitGraphics.fillRect(exit.x, exit.y, exit.w, exit.h);
+            
+            // Label if present
+            if (exit.label) {
+                const label = this.add.text(
+                    exit.x + exit.w/2,
+                    exit.y - 20,
+                    exit.label,
+                    {font: '14px Courier New', fill: '#5a5a7c'}
+                ).setOrigin(0.5);
+            }
+        }
+    }
+    
+    showHint() {
+        if (gameState.hintShown) return;
+        gameState.hintShown = true;
+        
+        this.tweens.add({
+            targets: this.hintText,
+            alpha: 1,
+            duration: CONFIG.timing.hintFadeIn
+        });
+    }
+    
+    // --------------------------------------------------------
+    // PAUSE
+    // --------------------------------------------------------
+    
+    togglePause() {
+        if (gameState.phase !== 'playing') return;
+        
+        gameState.isPaused = !gameState.isPaused;
+        this.pauseOverlay.setVisible(gameState.isPaused);
+        this.pauseText.setVisible(gameState.isPaused);
+    }
+    
+    restartRoom() {
+        this.loadRoom(gameState.currentRoom);
+    }
+    
+    resetGameState() {
+        gameState = {
+            currentRoom: 0,
+            phase: 'playing',
+            elapsedTime: 0,
+            roomStartTime: 0,
+            isPaused: false,
+            hintShown: false
+        };
+    }
+    
+    // --------------------------------------------------------
+    // AUDIO
+    // --------------------------------------------------------
+    
+    initAudio() {
+        this.audioContext = this.sound.context;
+        this.startAmbient();
+    }
+    
+    startAmbient() {
+        if (!this.audioContext) return;
+        const ctx = this.audioContext;
+        
+        // Deep chord: C2, G2, C3
+        const frequencies = [65.4, 98, 130.8];
+        this.ambientOscs = [];
+        
+        for (const freq of frequencies) {
+            const osc = ctx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            
+            const gain = ctx.createGain();
+            gain.gain.value = 0.04;
+            
+            osc.connect(gain).connect(ctx.destination);
+            osc.start();
+            this.ambientOscs.push({osc, gain});
+        }
+    }
+    
+    startDragSound() {
+        if (!this.audioContext) return;
+        const ctx = this.audioContext;
+        
+        this.dragOsc = ctx.createOscillator();
+        this.dragOsc.type = 'sine';
+        this.dragOsc.frequency.value = 330;
+        
+        this.dragGain = ctx.createGain();
+        this.dragGain.gain.value = 0;
+        this.dragGain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.1);
+        
+        this.dragOsc.connect(this.dragGain).connect(ctx.destination);
+        this.dragOsc.start();
+    }
+    
+    updateDragSound(y) {
+        if (!this.dragOsc) return;
+        // Map Y position to frequency
+        const freq = 220 + (1 - y / CONFIG.height) * 220;
+        this.dragOsc.frequency.value = freq;
+    }
+    
+    stopDragSound() {
+        if (!this.dragGain || !this.dragOsc) return;
+        const ctx = this.audioContext;
+        
+        this.dragGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+        setTimeout(() => {
+            this.dragOsc.stop();
+            this.dragOsc = null;
+            this.dragGain = null;
+        }, 200);
+    }
+    
+    playRoomCompleteSound() {
+        if (!this.audioContext) return;
+        const ctx = this.audioContext;
+        const now = ctx.currentTime;
+        
+        const notes = [261.6, 329.6, 392, 523.2];  // C4, E4, G4, C5
+        
+        notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0, now + i * 0.15);
+            gain.gain.linearRampToValueAtTime(0.2, now + i * 0.15 + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.35);
+            
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now + i * 0.15);
+            osc.stop(now + i * 0.15 + 0.4);
+        });
+    }
+    
+    playEndingSound(type) {
+        if (!this.audioContext) return;
+        const ctx = this.audioContext;
+        const now = ctx.currentTime;
+        
+        // C minor for dark, C major for light
+        const notes = type === 'dark' 
+            ? [130.8, 155.6, 196]   // C3, Eb3, G3
+            : [130.8, 164.8, 196];  // C3, E3, G3
+        
+        notes.forEach(freq => {
+            const osc = ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.08, now + 1);
+            gain.gain.linearRampToValueAtTime(0, now + 5);
+            
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 5);
+        });
+    }
+}
+
+// ============================================================
+// PHASER INITIALIZATION
+// ============================================================
+
+const game = new Phaser.Game({
+    type: Phaser.AUTO,
+    width: CONFIG.width,
+    height: CONFIG.height,
+    backgroundColor: CONFIG.backgroundColor,
+    scene: [GameScene]
+});
+```
+
+================================================================================
+
+## 7. WHY UMBRA IS MORE CREATIVE
+
+Comparing to Last Light:
+
+| Dimension              | Last Light | Umbra    |
+|------------------------|------------|----------|
+| Core Mechanic Novelty  | 3/10       | 8/10     |
+| Theme-Mechanic Bond    | 7/10       | 10/10    |
+| Emergent Complexity    | 2/10       | 7/10     |
+| Visual Distinctiveness | 4/10       | 8/10     |
+| Player Discovery       | 2/10       | 8/10     |
+| Replayability          | 3/10       | 6/10     |
+
+Key improvements:
+1. **You ARE something unusual** - Playing as a shadow is a genuine perspective shift
+2. **The verb is inventive** - Light manipulation is tactile and spatial
+3. **Puzzles have "aha!" moments** - Room 5's wall-passing revelation changes everything
+4. **Theme is experienced, not stated** - You feel what it means to be shaped by forces
+5. **Two valid endings** - Neither is "correct," creating genuine player expression
+
+================================================================================
+
+## 8. TESTING CHECKLIST
+
+[ ] Shadow calculates correctly from light position
+[ ] Shadow stretches/compresses with light distance
+[ ] Player can move within shadow bounds
+[ ] Movement speed scales with shadow length
+[ ] Light dragging works smoothly
+[ ] Light constraints enforced
+[ ] Shadows pass through walls correctly
+[ ] Exit detection triggers room transition
+[ ] Rotating light (Room 6) orbits correctly
+[ ] Final room has two working exits
+[ ] Both endings display correct text
+[ ] All audio plays correctly
+[ ] Pause/resume works
+[ ] Room restart (R) works
+[ ] Hints appear after 30 seconds
+[ ] Room titles fade in/out
+
+================================================================================
+
+END OF DOCUMENT

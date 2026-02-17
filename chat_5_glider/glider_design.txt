@@ -1,0 +1,427 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Gale Glider: Surf a paper plane through a living 2D diorama by sculpting the wind—draw gusts that move everything, from your glider to gears and flames, to reach the lighthouse before dusk.
+
+## 2. Core Insight
+- Central truth: Indirect control can be more powerful—and more delightful—than direct control.
+- Why it matters: Players experience mastery not by piloting an avatar directly, but by shaping a shared physical world. Every gust feels creative because it solves movement, clears hazards, and powers contraptions with the same stroke.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Click-drag to “paint” gusts—brief circular wind fields that push all nearby physics objects, including your fragile paper glider.
+- Embodiment of theme: The wind is the verb. One action animates the entire scene: fans spin, chimes ring, lanterns flare, doors unlatch, and your glider surfs the currents. It’s a toy-like weather sandbox that doubles as a traversal puzzle.
+
+## 4. Player Journey
+- Start: A cozy sunset cove appears with the paper glider resting on a pier. A short overlay says: “Draw gusts with the mouse. Nudge the glider to fly. Reach the lighthouse.” The first fan and pinwheel sit nearby, begging to be spun.
+- First minute: The player learns to tap tiny gusts to lift and angle the glider, and stronger drags to create sustained pushes. They discover stamina limits (the wind meter) and that the same gust turns pinwheels, opening a small gate.
+- Minutes 2–3: The course opens to a lake with cave arches. The player threads the glider between rocks, using updrafts to rise and sideways gusts to drift. A lantern puzzle appears: ignite two torches with wind to raise a bridge. The player experiments: wind fans flames, but also wobbles the bridge.
+- Minutes 4–5: The pace rises. A storm front adds intermittent crosswinds (telegraphed by leaf particles), and a final mechanical tower asks the player to route wind into three gears in order, each unlocking part of the lighthouse’s door. The player rides the last thermal up the cliff as dusk deepens.
+- Climax: A tall vertical shaft with hazards demands a confident chain of well-placed gusts to keep momentum while toggling the last gear. It feels like conducting an orchestra: push the glider, spin the gear, catch the updraft, slip past sparks.
+- Ending: The glider lands at the lighthouse balcony. The light turns on, the world glows warm, and a results card summarizes time, bumps (hits), and resonance (how many contraptions you animated). The intended feeling: airy satisfaction and playful authorship—“I moved the world to move myself.”
+
+## 5. Game Elements
+- Player “character”:
+  - Paper Glider: lightweight triangular sprite; tips subtly to show airflow; Matter body with low mass and modest lift simulation.
+- Interactive/physical objects:
+  - Gusts: temporary circular zones you create; push force field affects all physics bodies.
+  - Pinwheels: on axles; spin when wind hits; linked to doors/bridges via simple on/off thresholds.
+  - Fans: environmental blowers that activate when pinwheels spin fast enough; project steady wind streams that aid traversal.
+  - Gears and Linkages: sequential lock—spin Gear A to unlock B, then C; each opens a portion of the final gate.
+  - Lanterns/Torches: light when enough wind “hits” them; lit state raises nearby drawbridge.
+  - Thermals: pre-placed invisible zones that provide gentle upward force when warmed (after lanterns lit) or always on in sunbeams.
+  - Hazards: sparks (small electric arcs), spikes on rocks, and water splashes—colliding slows you and adds a “bump.”
+- Environment & visual style:
+  - Diaroma coast-to-lighthouse scene with parallax layers: sea, caves, reeds, cliff, tower.
+  - Soft cutout art, warm dusk gradient, subtle particle leaves and spray.
+- UI elements:
+  - Wind Meter (stamina) bar bottom-left.
+  - Timer top-center counting down from 5:00.
+  - Bumps counter top-left.
+  - Resonance counter top-right: count of contraptions meaningfully animated.
+  - Minimal tooltips for first interactions (“Spin the pinwheel”).
+- Screens:
+  - Title screen with “Start” and “How to Play” (1 panel of tips).
+  - In-game HUD.
+  - Results screen with: finish time or distance if not finished, bumps, resonance tier, and “Retry.”
+
+## 6. Rules & Systems
+- What the player does:
+  - Mouse drag (press, move, release) creates a gust: a circular field at the release point whose strength depends on drag length and consumes wind meter. Gust immediately applies radial force to nearby bodies, strongest at center, decaying linearly to the edge, over its short lifetime.
+  - Short taps create gentle nudges; long drags create stronger, longer gusts—bounded by meter.
+- How the game responds:
+  - Glider moves according to physics, influenced by gravity, existing environmental wind (fans/thermals), and player gusts. Gentle auto-stabilization damps spin.
+  - Pinwheels, lantern flames, and gears respond to gust force; thresholds trigger linked doors/fans/bridges.
+- Success, progress, failure:
+  - Goal: reach the lighthouse landing pad before the 5:00 timer ends.
+  - Progress is spatial (checkpoints at Pier, Lake, Cave, Tower). If the glider touches water fully submerged or hits spikes at high speed, it respawns at the last checkpoint with a small time penalty (e.g., -5 seconds off clock) and +1 bump.
+  - If timer hits 0: the run ends where you are; results show distance and stats. This still counts as a finish with a lower tier.
+- Scoring/Results:
+  - Primary outcome: Finished/Not Finished.
+  - Secondary: Finish time (faster is better), Bumps (fewer is better), Resonance (number of unique contraptions you animated at least once).
+  - Rank:
+    - If finished under 3:30 and bumps <= 3 and resonance >= 8: “Maestro of Winds”
+    - If finished under 4:30 and bumps <= 6 and resonance >= 6: “Skysmith”
+    - Else if finished: “Breezeborne”
+    - If not finished: “Docksider”
+- Experience change over time:
+  - Early: safe space to learn lift nudges.
+  - Mid: combine traversal with contraption activation.
+  - Late: manage momentum while multi-tasking interactions (spin-then-rise-then-dodge).
+  - Subtle environmental crosswind oscillations increase across the run to keep adaptation fresh.
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Canvas: 960 x 540, background #0e1620.
+- Parallax layers: sky gradient, distant cliff silhouettes, midground caves/trees, foreground props. Scroll factor per layer: 0.2, 0.5, 0.8, 1.0 (camera follows glider).
+- Frame rate: 60 FPS target.
+
+Elements (sizes, positions use world coordinates; total world ~ 3000 px wide x 540 px tall):
+- Checkpoints (circle markers, invisible triggers):
+  - Pier: x=200, y=380
+  - Lake: x=950, y=320
+  - Cave: x=1700, y=300
+  - Tower: x=2550, y=220 (final landing on balcony at x=2750, y=200)
+- Paper Glider:
+  - Sprite ~ 48x32 px; Matter body: triangle or thin rectangle + 2 triangles.
+  - Mass: 0.02; AirFriction: 0.015; Restitution: 0.05; Linear damping: 0.01; Angular damping: 0.2.
+  - Gentle lift: each frame, apply upward force proportional to forward velocity (see Interactions).
+- Gust:
+  - Created on pointerup. Center = pointer release pos (world space).
+  - Radius: 90 px at min strength to 160 px at max strength.
+  - Strength scalar: 0.6 (min) to 1.6 (max).
+  - Lifetime: 350 ms at min to 650 ms at max; force applied each frame decays linearly to 0 over lifetime.
+  - Visual: translucent circle with streaks (graphics object), color #9ad9ff, alpha 0.35 -> 0.
+- Wind Meter:
+  - MaxWind = 100 units; RegenRate = 18 units/sec; Spend per gust = 30 (min) to 80 (max) units based on drag length.
+  - If currentWind < 30, can’t create a gust; show a brief “windless” shake of the bar.
+- Pinwheels:
+  - Matter bodies: circle radius 20 px, static constraint to axle, visual 40x40 sprite.
+  - Wind interaction: torque from gust vector dot product with tangent at contact; friction 0.02; angular damping 0.04.
+  - Linked door threshold: angularVelocity >= 1.5 rad/s sustained for 0.5s toggles linked door open for 8s.
+- Doors/Bridges:
+  - Doors: static rectangles 80x120 px; open by changing collision category to non-colliding and playing open animation; auto-close after duration.
+  - Drawbridge: 140x20 px plank with hinge joint; raised when linked lanterns lit (set angle target with motor).
+- Lanterns/Torches:
+  - Each has an “air impact” accumulator: sum of gust force magnitudes intersecting its circle collider over 0.5s window.
+  - Light threshold: 100 units; stays lit for 20s; while lit, nearby thermal strength +0.3.
+- Thermals:
+  - Invisible circle zones (radius 120–160 px); upward force applied to bodies within zone each frame: Fy = mass * thermalStrength (0.002–0.005).
+  - Some are always on; others only gain strength when lanterns lit (see above).
+- Fans:
+  - Emit steady directional wind when powered. Wind cone length 220 px, width 60°, push strength 0.0015 per frame.
+  - Power condition: linked pinwheel angular velocity >= 1.2 for 0.5s.
+- Gears (A, B, C):
+  - Matter circles radius 26 px with teeth visuals; constraints for adjacency not required (no gear collision); we use threshold logic.
+  - Each requires N spins to “engage”:
+    - A: 1.5 revolutions
+    - B: 2.0 revolutions (unlocked after A)
+    - C: 2.5 revolutions (unlocked after B)
+  - Engagement opens a third of the lighthouse door each.
+- Hazards:
+  - Sparks: small pulsing circles; if glider overlaps spark region and relative speed > 60 px/s, add 1 bump and apply brief knockback.
+  - Spikes/Water: spikes are static polygons; water surface at y≈420; if glider dips below y=430 with downward velocity > 80 px/s, trigger water crash (respawn).
+
+Text:
+- HUD fonts: 18px monospace #e8f7ff.
+- Title: 36px.
+- Tooltips: 16px with soft shadow.
+- Results ranks: see Rules & Systems.
+
+Input:
+- Mouse/touch:
+  - pointerdown: record startPos, startTime (only if wind meter >= 30).
+  - pointerup: compute drag vector v = endPos - startPos; strength = clamp(map(length(v), 10->200 px, 0.6->1.6)); cost = clamp(map(length(v), 10->200, 30->80)); if currentWind >= cost: create gust; subtract cost; else: no gust.
+  - pointermove: draw a faint aim line if dragging.
+- Keyboard:
+  - R at Results to retry.
+  - H toggles “How to Play” overlay.
+  - Esc pauses (dim screen, freeze physics step).
+
+State:
+- Global:
+  - timeRemainingMs: 300000
+  - bumps: 0
+  - resonanceCount: 0 (increment when a contraption crosses its “meaningful activation” threshold the first time)
+  - finished: false
+  - currentCheckpointIndex: 0
+  - windMeter: 100
+- Glider:
+  - body reference; lastSafePos = current checkpoint pos; lastSafeVel = {0,0}
+- Contraption link states:
+  - For each pinwheel: currentAngularVel, activatedDoorId
+  - For each lantern: lit boolean, accumImpact window value
+  - For gears A/B/C: engaged boolean, spinAccumulator (revolutions)
+  - For doors/bridges/fans: open/raised/on boolean; timers for auto-close.
+- Camera:
+  - Follows glider with lerp 0.1; bounds to world rect.
+
+Timing:
+- Physics step: default Phaser Matter step.
+- Gust lifetime: 350–650 ms.
+- Door open duration: 8 s.
+- Lantern lit duration: 20 s.
+- Wind meter regen: +18/sec, capped at 100.
+- Respawn penalty: subtract 5000 ms from timeRemaining on crash.
+
+Interactions:
+- Gust application:
+  - For each physics body in gust radius:
+    - dir = normalize(bodyPos - gustCenter)
+    - distRatio = 1 - clamp(distance/radius, 0,1)
+    - forceMagnitude = gustStrength * distRatio * baseForce (baseForce = 0.0018)
+    - Apply force = dir * forceMagnitude each frame over gust lifetime (scaled by remaining life fraction).
+  - For rotational objects (pinwheels/gears), approximate torque by projecting force onto tangent: torque ~ cross(dir, radial) * torqueScale (torqueScale = 0.0008).
+- Glider lift and stability:
+  - Each frame, compute forwardDir from glider angle.
+  - Apply small upward force proportional to forward speed: lift = clamp(forwardSpeed, 0, 220) * 0.0009 upward.
+  - Apply angular damping boost if angular velocity exceeds threshold to prevent wild spins.
+- Checkpoints:
+  - If glider center enters checkpoint trigger zone, set currentCheckpointIndex and lastSafePos to that location.
+- Crashes and bumps:
+  - On collision with spike or cave wall at relative speed > 120 px/s: bumps++, brief white flash, keep flying (no respawn).
+  - On water crash (submerged condition) or direct spike impale (normal pointing into surface at high speed): respawn at checkpoint; bumps++ and -5s time.
+- Resonance:
+  - First time a door opens, a fan turns on, a bridge raises, a thermal boosts (lit-triggered), a gear engages, or a lantern lights: resonanceCount++ (each counts once).
+
+Progression/Ending:
+- Finish when glider overlaps final landing pad trigger; stop timer; compute rank using criteria in Rules.
+- If timeRemainingMs <= 0: immediately end and compute rank as Docksider.
+
+## 8. Game Flow
+- Load:
+  - Preload assets: glider sprite, environment tiles/layers, pinwheel/gear/fan/lantern sprites, UI, particles, SFX (whoosh, chime, door, splash).
+  - Show Title screen: “Gale Glider”, buttons “Start”, “How to Play”.
+- Start main:
+  - Initialize world, physics, contraptions and links, checkpoints, place glider at Pier.
+  - Initialize HUD (timer, wind meter, bumps, resonance).
+  - Show a 3-second overlay with controls; hide on first input.
+- During play:
+  - Update timer; regen wind meter; apply environmental winds (fans/thermals).
+  - Handle input drags to spawn gusts and draw their visuals.
+  - Apply gust forces each frame to nearby bodies; decay gusts and clean up.
+  - Update contraptions: pinwheel velocities, door timers, lantern accumulators -> lit state, gear spin accumulators -> engage.
+  - Resolve collisions, bumps, respawns.
+  - Camera follows glider; parallax scrolls.
+  - Check finishing condition.
+- End:
+  - On finish or time out: freeze input except for UI; fade in Results screen.
+  - Results shows:
+    - Outcome: “Lighthouse Reached!” with time, or “Out of Time” with distance percentage.
+    - Bumps, Resonance, Rank title.
+    - Buttons: “Retry (R)”, “Quit”.
+- After end:
+  - Retry resets all state to defaults and restarts main scene.
+  - Quit returns to Title.
+
+## 9. Pseudocode
+
+Initialization (setup):
+- TitleScene.preload():
+  - load images/spritesheets: glider, pinwheel, gear, fan, door, bridge, lantern, particles, UI
+  - load tilemap or background images for world
+  - load sounds: whoosh, chime, door_open, splash, ignite
+- TitleScene.create():
+  - add title text and buttons
+  - on Start -> this.scene.start('GameScene')
+  - on How -> show overlay with short instructions
+
+- GameScene.create():
+  - worldWidth=3000; worldHeight=540
+  - add parallax layers with scroll factors
+  - enable Matter physics; set world bounds
+  - build static collision map (ground, rocks, spikes) from tilemap or shapes
+  - place checkpoints array with positions and trigger sensors
+  - create gliderBody (Matter) with desired properties
+  - add HUD texts and wind meter bar
+  - init state:
+    timeRemaining = 300000
+    windMeter = 100
+    bumps = 0
+    resonanceCount = 0
+    finished = false
+    currentCheckpoint = 0
+  - setup contraptions:
+    - createPinwheel(id, x,y, linkedDoorId or fanId)
+    - createDoor(id, x,y, width,height)
+    - createLantern(id, x,y, linkedBridgeId or thermalZoneId)
+    - createBridge(id, hingeX, hingeY, length)
+    - createThermalZone(id, x,y, radius, strength, requiresLanternId?)
+    - createGear(id, x,y, stageIndex) // A=1, B=2, C=3
+    - link gear progression: gearB.lockedUntil = gearA.engaged; gearC.lockedUntil = gearB.engaged
+  - input handlers:
+    this.input.on('pointerdown', onPointerDown)
+    this.input.on('pointerup', onPointerUp)
+    this.input.on('pointermove', onPointerMove)
+    keys = this.input.keyboard.addKeys({R:'R', H:'H', ESC:'ESC'})
+  - show tutorial overlay; hide on first pointerdown or after 3s
+
+Main loop/update:
+- GameScene.update(time, delta):
+  - if paused or finished: return
+  - timeRemaining -= delta
+  - if timeRemaining <= 0: endRun(false)
+  - // regen wind
+  - windMeter = min(100, windMeter + 18 * delta/1000)
+  - updateHUD()
+  - // apply gust forces
+  - for gust in activeGusts:
+    - gust.age += delta
+    - if gust.age >= gust.lifetime: remove gust and its visual; continue
+    - lifeRatio = 1 - gust.age/gust.lifetime
+    - applyGustForces(gust, lifeRatio)
+  - // environmental winds
+  - applyFans()
+  - applyThermals()
+  - // contraptions
+  - updatePinwheelsAndDoors(delta)
+  - updateLanterns(delta)
+  - updateGears(delta)
+  - // collisions and state
+  - handleCrashesAndRespawns()
+  - // camera follow
+  - camera.centerOn(lerp(camera.x, glider.x, 0.1), lerp(camera.y, glider.y, 0.1))
+  - // finish check
+  - if overlaps(glider, finalLandingPadSensor): endRun(true)
+
+Key functions:
+
+- onPointerDown(pointer):
+  - if windMeter < 30: showNoWindFeedback(); dragging=false; return
+  - dragging = true
+  - dragStart = worldPoint(pointer)
+  - showAimLineFrom(dragStart)
+
+- onPointerMove(pointer):
+  - if dragging: updateAimLineTo(worldPoint(pointer))
+
+- onPointerUp(pointer):
+  - if not dragging: return
+  - dragging=false; hideAimLine()
+  - start = dragStart; end = worldPoint(pointer)
+  - dragVec = end - start
+  - length = clamp(magnitude(dragVec), 10, 200)
+  - strength = map(length, 10->200, 0.6->1.6)
+  - cost = round(map(length, 10->200, 30->80))
+  - if windMeter < cost: showNoWindFeedback(); return
+  - windMeter -= cost
+  - createGust(end, strength, radius=map(length,10->200,90->160), lifetime=map(length,10->200,350->650))
+  - playWhooshSFX(volume=strengthNormalized)
+
+- createGust(center, strength, radius, lifetime):
+  - gust = {center, strength, radius, lifetime, age=0}
+  - drawGustVisual(gust) // a graphics circle with alpha fade
+  - activeGusts.push(gust)
+
+- applyGustForces(gust, lifeRatio):
+  - bodies = queryBodiesInCircle(gust.center, gust.radius)
+  - for body in bodies:
+    - toBody = body.position - gust.center
+    - dist = magnitude(toBody)
+    - if dist == 0: continue
+    - dir = normalize(toBody)
+    - distRatio = 1 - clamp(dist/gust.radius, 0, 1)
+    - forceMag = baseForce * gust.strength * distRatio * lifeRatio
+    - Matter.Body.applyForce(body, body.position, dir * forceMag)
+    - if body.isPinwheel:
+      - radial = normalize(toBody)
+      - tangent = perpendicular(radial)
+      - torqueApprox = dot(dir, tangent) * torqueScale * gust.strength * distRatio * lifeRatio
+      - body.angularVelocity += torqueApprox // or apply torque via constraints
+    - if body.isLantern:
+      - body.airAccumulator += (gust.strength * distRatio * 60 * lifeRatio) // scaled per frame
+
+- applyFans():
+  - for fan in fans:
+    - if fan.on:
+      - bodies = queryBodiesInCone(fan.pos, fan.dir, len=220, angle=60deg)
+      - for body in bodies:
+        - Matter.Body.applyForce(body, body.position, fan.dirVec * 0.0015)
+
+- applyThermals():
+  - for th in thermals:
+    - if th.active:
+      - bodies = queryBodiesInCircle(th.center, th.radius)
+      - for body in bodies:
+        - up = {0,-1}
+        - strength = th.strength * body.mass
+        - Matter.Body.applyForce(body, body.position, up * strength)
+
+- updatePinwheelsAndDoors(delta):
+  - for pw in pinwheels:
+    - // friction/damping handled by physics
+    - if abs(pw.angularVelocity) >= 1.5 for >=0.5s and not pw.linkedDoor.open:
+      - openDoor(pw.linkedDoor)
+      - if not pw.countedResonance: resonanceCount++; pw.countedResonance = true
+  - for door in doors:
+    - if door.open and now > door.closeAt: closeDoor(door)
+
+- openDoor(door):
+  - door.open = true
+  - door.closeAt = now + 8000
+  - setCollision(door, false)
+  - play door_open SFX
+
+- closeDoor(door):
+  - door.open = false
+  - setCollision(door, true)
+
+- updateLanterns(delta):
+  - for l in lanterns:
+    - l.airAccumulator = max(0, l.airAccumulator - 40 * delta/1000) // decay
+    - if not l.lit and l.airAccumulator >= 100:
+      - l.lit = true
+      - l.litUntil = now + 20000
+      - if l.linkedThermal: l.linkedThermal.strength += 0.003; l.linkedThermal.active = true
+      - if not l.countedResonance: resonanceCount++; l.countedResonance = true
+      - play ignite SFX
+    - if l.lit and now > l.litUntil:
+      - l.lit = false
+      - if l.linkedThermal: l.linkedThermal.strength -= 0.003; // keep active if base>0
+
+- updateGears(delta):
+  - // Measure angular distance turned since last frame and accumulate
+  - for g in gears (A,B,C):
+    - if g.lockedUntil and not g.lockedUntil.engaged: continue
+    - g.spinAccumulator += abs(angularDelta(g))
+    - if not g.engaged and g.spinAccumulator >= requiredRevolutions(g)*2*pi:
+      - g.engaged = true
+      - openLighthouseDoorPart(g.partIndex)
+      - if not g.countedResonance: resonanceCount++; g.countedResonance = true
+
+- handleCrashesAndRespawns():
+  - if gliderSubmerged() or impaledOnSpike():
+    - bumps++
+    - timeRemaining -= 5000
+    - respawnAtCheckpoint()
+  - else if collisionSpeedWithWall > 120:
+    - bumps++
+    - flashGlider()
+
+- gliderSubmerged():
+  - return glider.y > 430 and glider.velocity.y > 80
+
+- respawnAtCheckpoint():
+  - set glider position to checkpoints[currentCheckpoint].pos
+  - set glider velocity = {0,0}, angle=0, angularVelocity=0
+
+- endRun(success):
+  - finished = true
+  - stop spawning gust visuals and input except UI
+  - compute rank using criteria
+  - showResultsPanel(success, timeRemaining, bumps, resonanceCount, rank)
+
+- showResultsPanel(success, time, bumps, resonance, rank):
+  - build UI; bind R to restart
+
+- updateHUD():
+  - timerText.setText(formatTime(timeRemaining))
+  - bumpsText.setText("Bumps: " + bumps)
+  - resonanceText.setText("Resonance: " + resonanceCount)
+  - drawWindMeter(windMeter/100)
+
+This revised plan keeps the scope Phaser-friendly (Matter physics, timed forces, simple triggers), respects the five-minute cap and distinct ending, and centers a creative, expressive mechanic that unifies movement, puzzles, and world response.

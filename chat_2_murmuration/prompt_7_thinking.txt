@@ -1,0 +1,10 @@
+Explored 1 search
+Searched for GAME_STATE|TitleScene|GameScene|update\(time in index.html
+Worked for 3m 3s
+No issues found.
+
+Residual risks / testing gaps
+
+I didn’t run the game in a browser, so input edge cases (e.g., right‑click behavior on trackpads or pointer coordinates before first mouse move) aren’t empirically verified.
+Visual overlap/legibility may vary slightly with browser font rendering; a quick manual check would confirm HUD spacing.
+

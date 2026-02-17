@@ -1,0 +1,3 @@
+**Selecting a game idea**
+
+I need to choose the best idea from a list for a creative and feasible 5-minute game in Phaser 2D. Several options are viable, but “Museum Heist: Lines Only” stands out with its unique scope—pre-drawing paths and replaying them sounds great! Echo Grotto could be visually tricky. The focus on simple line path planning and distinct success or failure endings makes Lines Only a solid choice. I’ll proceed with producing a .txt document that outlines the design and technical specs for the game.

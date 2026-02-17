@@ -1,0 +1,278 @@
+Explored 1 file
+Read index.html
+Edited file
+index.html
++2
+-0
+
+    const START_TIME = 300000;
+    const RESIDUE_LIFE = 2200;
+
+        this.decoys = [];
+        this.residue = [];
+        this.pillars = [];
+Edited file
+index.html
++18
+-3
+
+
+      materialModifierAt(x, y, freq) {
+      tileAt(x, y) {
+        const col = Math.floor(x / TILE);
+        const row = Math.floor((y - GRID_Y) / TILE);
+        if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return 0;
+        const tile = this.tiles[row][col];
+        if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return null;
+        return this.tiles[row][col];
+      }
+
+      materialAt(x, y) {
+        const tile = this.tileAt(x, y);
+        return tile ? (tile.material || 'default') : 'default';
+      }
+
+      isPassable(x, y) {
+        const tile = this.tileAt(x, y);
+        return tile ? !tile.solid : false;
+      }
+
+      materialModifierAt(x, y, freq) {
+        const tile = this.tileAt(x, y);
+        if (!tile) return 0;
+        const material = tile.material || 'default';
+Edited file
+index.html
++1
+-0
+
+        this.updateSounds(now);
+        this.updateResidue(now);
+        this.updateDoors(now);
+Edited file
+index.html
++74
+-15
+
+      createSound(x, y, freq, source, opts = {}) {
+        let props;
+        if (freq === FREQS.FOOT) {
+          props = {
+            radiusMax: opts.radiusMax || 50,
+            reveal: opts.reveal || 140,
+            fade: opts.fade || 320,
+            color: opts.color || COLORS.FOOT
+          };
+        } else {
+          props = PING_PROPS[freq];
+        }
+        const baseProps = (freq === FREQS.FOOT)
+          ? { radiusMax: 50, reveal: 140, fade: 320, color: COLORS.FOOT }
+          : PING_PROPS[freq];
+        const props = {
+          radiusMax: opts.radiusMax ?? baseProps.radiusMax,
+          reveal: opts.reveal ?? baseProps.reveal,
+          fade: opts.fade ?? baseProps.fade,
+          color: opts.color ?? baseProps.color
+        };
+
+        const radiusMax = props.radiusMax * (opts.radiusScale || 1);
+        const radiusMax = props.radiusMax * (opts.radiusScale ?? 1);
+        const sound = {
+          color: props.color,
+          tStart: this.time.now,
+          alertable: opts.alertable || false
+          tStart: this.time.now + (opts.delay || 0),
+          intensity: opts.intensity ?? 1,
+          alertable: opts.alertable === true
+        };
+        this.sounds.push(sound);
+        this.notifyGuards(sound);
+        if (opts.notify !== false) {
+          this.notifyGuards(sound);
+        }
+
+        }
+
+        if (opts.residue !== false && freq !== FREQS.FOOT && (source === 'player' || source === 'decoy')) {
+          this.residue.push({
+            x,
+            y,
+            color: props.color,
+            tStart: this.time.now,
+            life: RESIDUE_LIFE,
+            radius: radiusMax * 0.75,
+            alpha: 0.18
+          });
+        }
+
+        if (!opts.suppressResonance && freq !== FREQS.FOOT) {
+          const material = this.materialAt(x, y);
+          if (freq === FREQS.LOW && material === 'stone') {
+            const angle = Phaser.Math.DegToRad(Phaser.Math.Between(0, 360));
+            const offset = 18;
+            this.createSound(
+              x + Math.cos(angle) * offset,
+              y + Math.sin(angle) * offset,
+              freq,
+              'echo',
+              {
+                radiusMax: radiusMax * 0.6,
+                reveal: 220,
+                fade: 650,
+                color: props.color,
+                intensity: 0.55,
+                delay: 140,
+                notify: false,
+                alertable: false,
+                suppressResonance: true,
+                residue: false
+              }
+            );
+          }
+          if (freq === FREQS.MID && material === 'metal') {
+            this.createSound(
+              x,
+              y,
+              freq,
+              'echo',
+              {
+                radiusMax: radiusMax * 0.55,
+                reveal: 260,
+                fade: 1400,
+                color: props.color,
+                intensity: 0.4,
+                delay: 80,
+                notify: false,
+                alertable: false,
+                suppressResonance: true,
+                residue: false
+              }
+            );
+          }
+        }
+      }
+Edited file
+index.html
++18
+-0
+
+            }
+            const pulseRadius = sound.freq === FREQS.LOW ? 70 : sound.freq === FREQS.MID ? 55 : 40;
+            this.createSound(
+              g.sprite.x,
+              g.sprite.y,
+              sound.freq,
+              'guard',
+              {
+                radiusMax: pulseRadius,
+                reveal: 120,
+                fade: 220,
+                color: sound.color,
+                intensity: 0.35,
+                notify: false,
+                alertable: false,
+                suppressResonance: true,
+                residue: false
+              }
+            );
+          }
+Edited file
+index.html
++9
+-0
+
+
+      updateResidue(now) {
+        for (let i = this.residue.length - 1; i >= 0; i--) {
+          const r = this.residue[i];
+          if (now - r.tStart >= r.life) {
+            this.residue.splice(i, 1);
+          }
+        }
+      }
+
+      updatePillars(now) {
+Edited file
+index.html
++9
+-1
+
+
+        this.residue.forEach(r => {
+          const age = now - r.tStart;
+          if (age < 0 || age > r.life) return;
+          const a = r.alpha * (1 - age / r.life);
+          this.drawRevealCircle(r.x, r.y, r.radius, a, r.color);
+        });
+
+        this.sounds.forEach(s => {
+          const age = now - s.tStart;
+          if (age >= s.revealDur + s.fadeDur) return;
+          if (age < 0 || age >= s.revealDur + s.fadeDur) return;
+          let r = 0;
+          }
+          a *= s.intensity ?? 1;
+          const mod = this.materialModifierAt(s.x, s.y, s.freq);
+Edited file
+index.html
++15
+-2
+
+          if (dist > 1) {
+            g.sprite.x += (dx / dist) * speed * dt;
+            g.sprite.y += (dy / dist) * speed * dt;
+            const nx = g.sprite.x + (dx / dist) * speed * dt;
+            const ny = g.sprite.y + (dy / dist) * speed * dt;
+            if (this.isPassable(nx, ny)) {
+              g.sprite.x = nx;
+              g.sprite.y = ny;
+            } else {
+              if (g.state === 'investigate') {
+                g.state = 'return';
+                g.patrolIndex = this.findNearestWaypointIndex(g);
+              } else if (g.state === 'patrol') {
+                g.patrolIndex = (g.patrolIndex + 1) % g.waypoints.length;
+              } else if (g.state === 'return') {
+                g.state = 'patrol';
+              }
+            }
+          }
+Edited file
+index.html
++1
+-1
+
+
+        if (freq === FREQS.MID) {
+        if (freq === FREQS.MID && (source === 'player' || source === 'decoy')) {
+          this.activatePillars(x, y);
+Explored 1 file, 1 search
+Worked for 6m 1s
+Updated the game to deepen the sonic feel (afterglow + material resonance echoes + guard hearing pulses) and to keep guards from walking through walls.
+
+Findings
+
+High: Pings still reveal through walls with no occlusion or grate‑only passthrough, so spatial stealth is flattened into simple radius checks. The reveal is purely radial in renderReveal and only uses a single‑tile material modifier, which skips any wall blocking logic. index.html (line 1014) index.html (line 1069)
+Medium: Guard investigation is still straight‑line movement with no pathfinding; with the new wall passability check they can stall or oscillate when targets are behind walls. This can make investigations feel “stuck” instead of searching. index.html (line 902)
+Medium: Every audible sound now spawns a guard pulse; with decoy pulses every 0.5s this can clutter the echo mask and reduce legibility of the player’s pings. index.html (line 778)
+Changes applied
+
+Added a faint echo afterglow so pings leave a brief sonic memory (residue fade). index.html (line 719)
+Added material‑specific resonance: low/stone generates a delayed bounce, mid/metal generates a sustained hum. index.html (line 731)
+Added guard “hearing pulses” for immediate feedback on which frequency triggered them. index.html (line 778)
+Prevented guards from stepping into solid tiles to stop wall‑clipping. index.html (line 902)
+Limited pillar activation to player/decoy mid pings (not visual echoes). index.html (line 715)
+Assumptions / questions
+
+If you want full “echo‑around‑corners” stealth, should I add wall‑blocked propagation (grid flood/raycast) and true grate passthrough next?
+Next steps
+
+Playtest the feel of the new echo afterglow + resonance; I can tune intensities and lifetimes quickly.
+If desired, I can implement wall‑blocked sound propagation to make navigation/patrolling much more puzzle‑like.
+
+1 file changed
+Undo
+
+Review
+index.html

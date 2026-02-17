@@ -1,0 +1,210 @@
+Let me read the full game code to do a thorough mental playtest.
+
+Read index.html
+Let me mentally simulate the full player experience step by step, tracing through the code carefully.
+
+TITLE SCREEN
+
+I see "Moth & Flame" in golden text. A small moth body bobs up and down. "Click to begin" pulses below. I click. The screen fades to black over 800ms, then GameScene starts.
+
+GAME START
+
+The screen fades in over 800ms. I see a very dark background (#0a0a1a). There's a ground at the bottom (dark rectangles). Trees are scattered - dark trunks and canopies, barely visible against the dark background.
+
+My moth is at (80, 300) - a small cream-colored circle with two tiny wings that flap.
+
+A particle trail streams behind it as it moves. The HUD shows three dim circles for flame counter in the top-left, a glow icon, a progress bar, and instructions at the bottom: "Left click: light | Right click: extinguish". After 1.5 seconds, "Click to light the way." fades in over 2 seconds.
+
+FIRST 30 SECONDS - LEARNING
+
+The moth begins wandering on its own. At Phase 0 (x=80, so phase = 80/1200 = 0.067), the wander speed calculates to approximately 15.2 based on a linear interpolation between 15 and 50.
+
+The wandering angle uses a noise-based system with three sine waves at different periods that combine to create roughly ±2.6 radians of drift, allowing the moth to move in many directions including backward and upward. But there's a constraint—the code prevents the moth from going below x=0 by checking against checkpointX, so while it can drift backward toward 0 from x=80, it's bounded by the checkpoint system.
+
+The core mechanic is becoming clear: I'm not directly controlling the moth. Instead, I place flames by clicking, and the moth autonomously moves toward them when they're within its 200px attraction radius at phase 0, moving at speed 70. My job is to strategically place flames ahead of the moth to guide it rightward across the 6400px world, essentially creating a path of light for it to follow.
+
+But there's a critical design element I'm noticing—the attraction radius decreases as the moth progresses through phases, reaching zero by phase 5 around x=6000. This means the moth's reliance on my guidance diminishes over time, and by mid-game it's already becoming harder to control since the radius shrinks proportionally with progress.
+
+I'm also spotting a potential issue with the wandering behavior: the noise function can push the moth's angle far enough that it moves backward or upward, and while it's clamped to the checkpoint boundary, the angle lerp is slow enough that the moth could get stuck drifting in an unproductive direction for several seconds before correcting.
+
+The first-time player experience seems okay though—the "Click to light the way" instruction combined with the visual feedback of flames appearing should make it clear that clicking guides the moth, so most players should figure it out within 10-15 seconds.
+
+Now I'm thinking through the spider threat scenario, particularly the first spider positioned at (650, 400) as a dark shape that blends into the background.
+
+The spider mechanics work like this: it stays hidden until a flame gets within 80 pixels, which reveals it with a reddish texture, and then if the moth gets within 60 pixels of the revealed spider, the moth enters avoidance mode and flees at speed 60. The real question is whether the moth could accidentally wander into the spider before the player even realizes it's there. Given that the moth starts at (80, 300) and drifts rightward at about 15 pixels per second, it would take roughly 38 seconds to reach the spider's x-position—plenty of time for the player to place flames and either reveal the spider or guide the moth around it.
+
+There's a potential issue though: the spiders are nearly invisible when hidden, so the player has no warning they exist until a flame reveals one. If the moth walks into an unrevealed spider, the player dies without any indication of what happened. However, the game's design mitigates this—the moth moves slowly enough that the player has time to place flames ahead of it, and those flames reveal dangers within 80 pixels. The real risk scenario is if the player places a flame to guide the moth toward it, but that flame doesn't reach far enough to reveal a nearby spider, leaving the moth to wander into danger.
+
+The death mechanic uses checkpoints though, so a single death isn't catastrophic. And the first death actually serves a teaching purpose—the player sees "The moth was lost..." but doesn't understand why until they retry and place a flame near that same spot, revealing the spider they hit. This seems like intentional design, and the opening should be survivable since the moth spawns far from the first spider.
+
+The moth can't get stuck in the world—it's clamped to safe boundaries and trees only block flame placement, not moth movement. But there's a confusion mechanic I need to think through: placing flames increases a confusion counter that decays slowly, and once the moth reaches later phases with a high counter, it enters an erratic confused state. This could create unintended difficulty spikes if the player places too many flames too quickly.
+
+Now I'm checking whether the moth can actually reach the ending at x=5700. At the highest phases, the noise-based wandering becomes more directional and the moth should trend rightward, but I need to verify the attraction mechanics don't interfere—at Phase 4+, the attraction radius drops to nearly zero, so flames won't pull the moth off course. The moth will have to navigate there through its own wandering behavior with reduced noise, which should work but might cause some weaving.
+
+Let me trace through the earlier phases to see where the real bottleneck might be.
+
+At the start, the moth crawls at just 15px/s with a 200px attraction radius, so it barely moves without player clicks. If a new player clicks too far ahead—say 320px away when the moth is at x=80—the flame falls outside the attraction range and gets ignored, leaving them confused about why the moth won't respond.
+
+The core issue is that this 200px radius constraint isn't communicated anywhere. The instruction "Click to light the way" doesn't hint that clicks need to be close to the moth, so players naturally try clicking far ahead and get frustrated when nothing happens. Other attractors like echo moths and plants are too distant to help at the start.
+
+During a playtest, the player discovers through trial and error that flames only work when placed nearby—they click far ahead, the moth ignores it, then they realize proximity matters. As they guide the moth rightward, they also discover that flames reveal hidden creatures: flowers turn purple-blue, spiders appear reddish, and the moth flees from threats. The progress bar fills as they advance, but when they place too many flames in quick succession, the moth's behavior becomes unpredictable.
+
+Now I'm analyzing the actual pacing and design issues. The moth's wandering speed at the start is quite slow, and even with seeking behavior, crossing the full 5700-pixel world would take several minutes of constant guidance. The 200-pixel attraction radius creates a learning curve—players who click too far away get confused—but it's learnable within the first 30 seconds since the instruction "Click to light the way" hints at the mechanic.
+
+The biggest UX problem I'm spotting is the lack of clear feedback when a flame is placed outside the attraction range. I'm also tracing through the spider collision logic more carefully: spiders kill the moth if the distance drops below 15 pixels, whether they're revealed or not, which means players need to light them up with flames first to see them coming. The plant lure mechanic with its pulsing pink appearance is another element I'm examining.
+
+Looking at the plant positions, there are only two in the game at (4200, 280) and (5000, 320), both appearing late enough that players should understand the reveal mechanic by then. But at that point in the game, the attraction radius tightens significantly to around 60 pixels, which means the player needs to be much more precise with their flame placement to safely reveal plants before the moth gets lured to them.
+
+The pulsing pink-orange appearance of plants should give players a visual cue to investigate them, which would trigger the reveal. The camera tracking seems solid too—it lags slightly behind the moth with a 100-pixel offset, giving the player a good view ahead even at the moth's seeking speed.
+
+Looking deeper, I see two real problems. First, the moth can wander significantly backward at the start due to the multi-frequency noise at full scale, and with the slow angle lerp, it might drift left for over 10 seconds before noise corrects it. The moth gets clamped at x >= 0, so it could get stuck at the left edge. This is only an issue when no flame is attracting the moth—a player who understands the mechanic won't notice, but a first-time player in those opening seconds might find the backward drift confusing.
+
+Second, there's no visual or auditory feedback when placing a flame succeeds or fails.
+
+Actually, rethinking this—the flame always appears where you click unless you're on a tree trunk. The real mechanic is that the moth seeks the nearest flame within 200px, not just newly placed ones. So a player can place a flame 300px ahead, and once the moth wanders close enough to enter that 200px radius, it starts moving toward it.
+
+The 6-second lifetime is a constraint though. At the moth's wandering speed of 15px/s, it only covers about 90px in that time, so a flame placed 200px away might expire before the moth reaches it if the moth doesn't wander in the right direction consistently.
+
+I'm noticing a potential issue with the ending sequence—the camera is set to follow the moth during creation and that persists through the ending, so as the moth moves right, the camera should follow. But I need to check what happens to the moth's movement during the ending phase.
+
+The moth accelerates to 60-70px/s during the ending, and from its starting position at x=5700, it could theoretically travel past the world boundary at x=6400 over the 13.5 seconds until "Again?" appears. However, the camera itself is bounded at x=6400, so it would stop following if the moth exits. The moth fades out by 8 seconds anyway though, so it becomes invisible around x=6200 before it could actually leave the visible area.
+
+Now I'm realizing the camera bounds work differently—the scrollX is clamped to [0, 5600] since the viewport is 800 pixels wide. So once the moth reaches around x=6000, the camera stops panning and the moth continues rightward until it exits the right edge of the screen.
+
+Let me trace through the moth's position during the fade sequence. Starting from around x=5880 at the 3-second mark, it accelerates through different speed phases, eventually reaching approximately x=6170 by the time the fade completes at 8 seconds. With the camera locked at scrollX=5600, the moth would appear at screen position 570 pixels—still well within the visible 800-pixel width, so the fade-out should work fine visually.
+
+The game actually feels pretty solid for a first playthrough. The main friction points are the moth potentially wandering backward initially (though the click prompt arrives quickly enough to redirect it) and the lack of explicit feedback about the attraction range, which players discover through trial and error in about 30 seconds. But checking the math on the very first frame—at gameTime=0, all the noise functions evaluate to zero, so the moth starts heading rightward, which is exactly what we want. That's a good sign.
+
+Now I'm tracing through the trajectory over the first few seconds. At one second in, the angle shifts to around 61 degrees, still maintaining rightward momentum. By the five-second mark, the noise values are shifting again, and I'm calculating where that puts the moth's heading.
+
+The angle reaches about 108 degrees, which means the moth is actually turning backward and upward now. With the cosine at -0.31, it's moving in the opposite direction at roughly 4.65 pixels per second. But here's the thing—the angle lerp is so gradual that the moth's actual heading takes a long time to catch up to these target angles. I'm realizing the lerp factor of 0.015 per frame means the angle only shifts about 1.5% of the remaining difference each frame, so even after a full second of frames, the moth hasn't fully rotated to face the new direction.
+
+The exponential decay of the lerp means the moth reaches about 60% of the target angle after one second, and 84% after two seconds. So if the target angle shifts to that backward-upward heading around the 5-second mark, the moth would still be lagging behind, gradually trending that direction. By the time it actually starts moving upper-left, we're already 5-10 seconds in, but the player should have clicked a flame by then since the instruction appears at 1.5 seconds and stays visible for 6 seconds.
+
+Looking at the respawn mechanics, when the moth dies and respawns at the checkpoint, flames get cleared but all the previously revealed dangers—spiders and plant lures—remain visible and avoidable. The moth won't re-encounter the same hazards it's already learned about, which feels right. The game seems playable as-is.
+
+But there's a wrinkle with plants: if the moth dies by walking into an unrevealed plant lure, it respawns at the checkpoint with that same plant still unrevealed and still pulsing with its lure animation. The player now knows something dangerous is there from experience, so they'd naturally place a flame to reveal it. That's actually decent design.
+
+Now I'm tracing through a realistic early-game scenario with spider collision to see if there's a genuine problem I'm missing.
+
+The moth starts at (80, 300) and the player guides it rightward with flames. When the moth reaches around x=500, the player places a flame at (600, 350). A spider at (650, 400) is about 70 pixels away from that flame, so it gets revealed. The moth continues toward the flame since the spider isn't close enough to trigger avoidance yet. Once the flame decays after 6 seconds, the moth is near the flame location and the spider is roughly 70 pixels away—close enough now that the moth should start fleeing.
+
+I'm checking the avoidance logic...
+
+So the avoidance behavior triggers when a revealed spider or plant is within 60px, but the death collision only checks if the moth gets within 15px of any spider—revealed or not. That means an unrevealed spider creates a blind spot: it won't trigger avoidance, but it'll still kill you if you wander into its 15px radius.
+
+This is intentional design—you're supposed to use flames to reveal threats before the moth walks into them. But there's a problem: if the moth is seeking a flame and that flame is positioned beyond the spider's reveal range (80px), the moth will path directly toward the flame and potentially walk through an unrevealed spider on the way. In the example with a spider at (650, 400) and a flame at (800, 400), the distance is 150px—too far to reveal the spider—so the moth would walk straight through it and die if it gets within 15px.
+
+This is actually a legitimate scenario, though it might be intentional rather than a bug. The design document emphasizes careful flame placement to reveal dangers, so placing flames carelessly far ahead could be a real risk. For new players, the first 30 seconds should be survivable since the first spider is far enough away that the moth won't reach it before the player starts placing flames strategically.
+
+Now I'm reconsidering the overall pacing and how the speed values affect the moth's movement. 's say the player clicks every 10 seconds. The moth wanders for ~5 seconds (75px), then seeks for ~2 seconds (140px), then wanders for ~5 seconds, etc. Average progress: ~21px/s. To reach x=5700: 271 seconds ≈ 4.5 minutes.
+
+That seems like a reasonable game length. Not too short, not too long.
+
+After careful analysis, I think the game is genuinely playable with no critical bugs. The main friction points are learnable—the player might initially click too far from the moth and wonder why it doesn't respond, but the 200px radius is generous enough to figure out quickly. The very start before the first click could see some slight drift, but the prompt guides them immediately. No game-breaking bugs, softlocks, or unfair deaths in the opening 30 seconds.
+
+Let me double-check the seeking behavior around unrevealed plants though. The moth gets attracted to them from 100px away and dies if it gets within 12px, so between those distances it's actively seeking. The seeking uses a gradual turn with lerp, and when close enough it orbits instead of charging straight in.
+
+Examining the seeking behavior mechanics... I'm wondering if the moth could drift inward to the 12px death threshold due to the slight angular perturbations accumulating over time—the orbit isn't perfectly stable, so numerical imprecision might gradually pull it closer to the target.
+
+But this is really only a concern in the late game when plants appear, and the design actually accounts for it: the player is meant to reveal plants with flames before the moth gets close enough to die. Once revealed, the avoidance kicks in at 60px, keeping the moth safely away. Investigation phases where the moth gets within 5px of flowers are fine since flowers aren't dangerous. Let me trace through one more scenario to make sure I'm not missing something.
+
+Echo moths work similarly—they attract the moth when no flames are placed, but since they're not in the collision list, orbiting them doesn't cause death. Even if investigation triggers and the moth spends 1.5 seconds orbiting an echo moth, it just returns to wandering afterward. That's harmless, just atmospheric.
+
+Now I'm thinking about the very first moment when the game starts. The moth spawns at (80, 300) with the camera clamped at x=0, so it appears near the left edge of the screen. The player sees mostly darkness ahead to the right, scattered trees, and the ground below. When the "Click to light the way" prompt appears after 1.5 seconds, they might instinctively click toward the darkness—say at screen x=300, which translates to world x=300. That's 220 pixels away from the moth, well within the flame placement range.
+
+But here's the thing: that click would be just outside the moth's 200-pixel attraction radius. The flame appears, but the moth doesn't move toward it. That's the frustrating moment where the player's first action seems to have no effect. Though realistically, if they click a bit closer—around screen x=250—they'd be within range. And even if they miss, the flame persists for 6 seconds, giving the moth time to wander into range on its own.
+
+I'm also checking the ending scenario. When the moth reaches x=5700, the ending triggers and the moth keeps moving rightward, but it might be mid-stride at that exact position. The camera was tracking it up until that point, so I need to see what happens to the camera positioning once the ending starts.
+
+At x=5700, the camera would be at scrollX = 5200 (accounting for the 400-pixel offset and the -100 adjustment, clamped to the max of 5600). That puts the moth at screen x = 500, right in the middle-right area of the screen. The background transitions in, stars fade in—everything lines up correctly for the ending sequence.
+
+I've been thorough enough. The game flows properly from start to finish. The only real concern is that first click potentially being out of range, but it's self-correcting since the moth wanders and the flame lasts long enough for the player to figure it out. The first 30 seconds are safe, and everything else checks out.
+
+There's one minor thing worth noting: the slow sine wave noise term can push the moth backward pretty hard early on. Around 6800ms, that noise component alone could contribute around 1.5 to the angle calculation, and combined with the other noise terms, the total could reach 2.4 radians. That means the moth might wander upward and slightly left for an extended period, but that's just part of the natural wandering behavior.
+
+The moth can walk through trees visually since there's no collision detection for it there, which is fine. Now I'm checking whether the player could ever get stuck permanently—specifically, if all flames expire while the moth is in a late-game area with a tight attraction radius, whether the player would have any way to recover.
+
+Looking at the math: in Phase 4 with the moth's wandering behavior, it still makes rightward progress at around 31px per second even without player input, so that's not a dead end. But what about Phase 3 with an unrevealed plant lure 600 pixels ahead? The moth would wander rightward, eventually detect the plant within 100px, start seeking it, and orbit at 15px distance—the question is whether it ever gets close enough to trigger death.
+
+If the moth just orbits forever at that distance, the player gets stuck watching it circle the plant. They could place flames to reveal it, and since the moth is only 15px from the plant, clicking near the moth would definitely be within the 80px reveal radius. Once revealed, the plant triggers avoidance, but here's the catch: the flame itself would be placed at the moth's position when clicked, which is now within the plant's tiny attraction radius, so the flame might actually pull the moth back toward the plant even as it tries to avoid it.
+
+Actually, that resolves itself naturally—the player can always break the orbit by placing a flame, and the avoidance behavior will kick in once the plant is revealed. The game is playable.
+
+Now I'm checking for potential runtime errors. The particle tint handling has a try-catch for API compatibility, and all textures are generated in BootScene, so there are no external resource dependencies to worry about. Looking at the code for null reference issues—trailParticles is initialized in create(), and the death and ending logic should be safe.
+
+One thing I'm wondering about: when the player clicks "Again?" and restarts to TitleScene, then starts a new game, does Phaser properly clean up the old GameScene objects? When a scene starts, it should shut down and destroy the previous scene, so the old LEVEL_DATA objects should be garbage collected. again later, create() rebuilds everything. So there shouldn't be any state leakage. Good.
+
+Actually wait - there's a subtle issue. The LEVEL_DATA object is global and shared across runs. The darkShapes array references are used to create the this.darkShapes array in create(). Each run creates NEW sprite objects from the same LEVEL_DATA positions. The darkShapes objects in this.darkShapes are NEW objects each time (created in the for loop). So previous play state doesn't carry over.
+
+Similarly, echoMoths, overglowZones, etc. are all recreated each time.
+
+OK, I'm confident the game is playable. No fixes needed.
+
+Wait actually one more thing. During the ending, updateEnding is called from update. It uses this.moth.alpha > 0.01 to decide whether to move the moth. The fade tween starts at 5000ms and lasts 3000ms, so between 5000-8000ms the alpha fades to 0. Once alpha drops below 0.01, the moth stops moving. The glow continues scaling up to 1.5 over 6000ms, then fades alongside the moth from 5000-8000ms. Wing and glow positions keep updating even after movement stops since those position updates aren't guarded by the movement check. At 8500ms the trail particles stop, and then at 13
+
+500ms the "Again?" prompt appears. The camera follows the moth throughout, stabilizing once it stops moving around 6-7 seconds in while stars and background remain visible.
+
+The game runs fine. Though I'm noticing a potential UX issue: when the moth orbits a flame at close range, it stays locked to that flame even if the player places a new one nearby. The moth won't switch targets until the current flame decays or it naturally drifts closer to the new one, which might feel unresponsive to the player.
+
+But there are actually a few ways this resolves itself. The player can right-click to extinguish the old flame if they know about that mechanic. Or they can just wait—flames decay in 6 seconds anyway. And with the 3-flame limit, placing more flames will eventually cycle out the old one. So it's probably not a major friction point.
+
+Now I'm wondering what happens if the player doesn't interact at all—the moth just wanders from its starting position with noise-driven movement. I realize the user is asking me to mentally playtest the game since no actual feedback has come in yet. After working through the mechanics thoroughly, I haven't found any game-breaking issues—the game functions as intended with a reasonable learning curve and the moth stays safe long enough for players to understand the controls. I should walk through my playtest findings and give a final verdict.
+
+Mental Playtest
+Title Screen
+
+I see "Moth & Flame" in golden text on a dark background. A tiny moth bobs up and down. "Click to begin" pulses below. I click. Fade to black.
+
+First 10 seconds
+
+The screen fades in. Very dark - a forest at night. I see a small cream-colored moth near the left side of the screen with tiny flapping wings and a faint particle trail. Dark tree shapes are barely visible. At the bottom: "Left click: light | Right click: extinguish". After a beat, "Click to light the way." fades in.
+
+The moth is drifting on its own - slowly, aimlessly. It's heading vaguely rightward but weaving. I click to the right of it - a golden flame appears with a soft glow! One of the three HUD circles lights up. The moth changes course and heads toward my flame. It works! I'm guiding it.
+
+Seconds 10-30
+
+I click ahead again, placing another flame. The moth follows. I'm getting a rhythm: click ahead, moth follows, click again. A dark blob near my flame suddenly transforms into a blue-purple flower - pretty! The moth pauses near it briefly, then continues.
+
+I place a flame near another dark shape and - it turns reddish with web lines. A spider? The moth immediately veers away from it. OK, so flames reveal what's hidden, and some things are dangerous. Good to know.
+
+Seconds 30-60
+
+I'm clicking further ahead now. I notice the moth sometimes ignores my flame if I click too far away - maybe I need to stay within a certain range? I click closer and it works. Lesson learned: guide the moth step by step, not in huge leaps.
+
+The progress bar is slowly filling. The three flame circles in the HUD show how many active flames I have. Old flames shrink and disappear after a few seconds. I need to keep placing new ones.
+
+Mid-game (2-3 minutes in)
+
+The moth seems to be developing a faint glow of its own. It's moving a bit faster and more purposefully. I notice I need to click closer to it now - the attraction range seems to be shrinking? The moth is becoming more independent.
+
+I stumble into an area with faintly glowing teal mushrooms on the ground. The moth seems less responsive to my flames here. I click carefully, placing flames just ahead.
+
+Oh - a pulsing pink-orange shape. It looks different from the dark blobs. The moth seems drawn to it... I quickly place a flame near it and it transforms into something brown and jagged. The moth recoils. That was close - some kind of predatory plant? Good thing I lit it up.
+
+Late game (3-4 minutes in)
+
+The moth barely needs me anymore. It has a visible warm glow and is moving confidently rightward. My flames barely attract it. I'm mostly using them to reveal the last few dark shapes along the path.
+
+The sky is brightening slightly. Stars are appearing! The trees are thinning. The darkness is lifting.
+
+Ending (x > 5700)
+
+The moth enters an open meadow. I can no longer guide it - it's flying on its own. Its glow expands. The moth slows for a moment... lingering... then picks up speed and flies forward with purpose. It shrinks into the distance, fading. The trail of particles dissolves.
+
+Stillness. Stars overhead. Then, softly in the corner: "Again?"
+
+I click. Fade to black. Back to the title.
+
+Verdict
+The game plays smoothly from start to finish with no critical frustration points.
+
+Key observations:
+
+First 30 seconds are safe. The nearest spider is at x=650, which is 570px from the moth's start position. At 15px/s wandering speed, that's 38+ seconds before any danger is reachable - and the player is actively clicking flames well before then.
+Controls are communicated clearly. Both the hint text and the instruction text appear within the first 2 seconds.
+The attraction range is learnable. A player who clicks too far away will try clicking closer within a few attempts. The flame's 6-second lifetime also gives the moth time to wander into range.
+Death is fair. If the moth hits an unrevealed spider, the player respawns at a checkpoint with previously revealed shapes still visible. They learn and adapt.
+The ending sequence works. Camera stays within world bounds, the moth fades before exiting the visible area, and the "Again?" prompt appears after appropriate stillness.
+No softlocks found. The moth always trends rightward on average (noise is centered around angle 0), flames can always break orbit/lure situations, and the right-click extinguish mechanic lets players manage stuck scenarios.
+No changes needed.

@@ -1,0 +1,35 @@
+Edited file
+index.html
++2
+-1
+
+          new Phaser.Geom.Rectangle(420, 200, 120, 60),
+          new Phaser.Geom.Rectangle(700, 320, 200, 90)
+          new Phaser.Geom.Rectangle(700, 320, 200, 90),
+          new Phaser.Geom.Rectangle(40, 420, 140, 90)
+        ];
+Worked for 56s
+I mentally play through the flow and hit a survivability issue in the first seconds, so I fixed it by adding a small permanent-dark “stoop shadow” around the start so new players can read and experiment without instantly overexposing.
+
+Playtest Narrative
+I see the title screen with the dial on the right. I read the short instructions and wiggle the dial; the shadows swing, cool. I click to start.
+Okay, I’m a small white circle at the bottom-left. I tap WASD and start moving. The exposure bar at the top is already climbing fast. I don’t immediately see a safe spot nearby, and I haven’t learned what “in shadow” feels like yet. I’m about to hit failure in just a couple seconds.
+Confused: Why am I getting exposed so quickly right out of the gate? I want a few seconds to understand the rules.
+I restart, try sprinting and rotating the dial, but it still feels like I’m punished before I know where to go.
+
+Issues & Fixes
+
+Issue 1: Exposure starts climbing immediately at spawn, making the first 30 seconds feel unfair.
+Player experience: I’m overexposing within ~2–3 seconds before I understand the rules.
+Root cause: The start position is in the default lit area; exposure increases at +40/sec unless fully in shadow. updateExposure (index.html (line 666)) + start position (index.html (line 178)) + permanent dark zones do not cover the start (index.html (line 126)).
+Fix: Added a small permanent-dark rectangle around the start so the player can learn safely. index.html (line 126)
+No other frustration points surfaced in the mental run after that change.
+
+Tests not run (manual playtest recommended).
+
+
+1 file changed
+Undo
+
+Review
+index.html

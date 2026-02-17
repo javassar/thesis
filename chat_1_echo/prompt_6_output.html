@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Echo Chambers: Frequency Heist</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0A0A0A;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      height: 100%;
+      overflow: hidden;
+    }
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0A0A0A;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script>
+    const CONFIG = {
+      width: 960,
+      height: 540,
+      bgColor: 0x0a0a0a
+    };
+
+    const TILE = 24;
+    const COLS = 40;
+    const ROWS = 22;
+    const GRID_Y = Math.floor((CONFIG.height - ROWS * TILE) / 2);
+
+    const SPEED_WALK = 110;
+    const SPEED_CROUCH = 60;
+    const PING_COOLDOWN = 700;
+    const FOOT_WALK_INTERVAL = 400;
+    const FOOT_CROUCH_INTERVAL = 650;
+    const HEARING_BASE = 200;
+    const INVESTIGATE_TIMEOUT = 2500;
+
+    const PILLAR_RANGE = 64;
+    const PILLAR_ACTIVE_MS = 2000;
+    const DOOR_SYNC_MS = 2200;
+    const DOOR_GRACE_MS = 4000;
+
+    const START_TIME = 300000;
+    const RESIDUE_LIFE = 2200;
+
+    const FREQS = {
+      LOW: 'low',
+      MID: 'mid',
+      HIGH: 'high',
+      FOOT: 'foot'
+    };
+
+    const COLORS = {
+      LOW: 0x3da5ff,
+      MID: 0x4cd964,
+      HIGH: 0xff9500,
+      PLAYER: 0x33d1ff,
+      FOOT: 0x88ffff,
+      PILLAR: 0x6ee7b7,
+      DOOR_CLOSED: 0x777777,
+      DOOR_OPEN: 0x4cd964,
+      RELIC: 0xf6c25b,
+      EXIT_OPEN: 0x33d1ff
+    };
+
+    const PING_PROPS = {
+      low: { radiusMax: 240, reveal: 320, fade: 900, color: COLORS.LOW },
+      mid: { radiusMax: 180, reveal: 260, fade: 750, color: COLORS.MID },
+      high: { radiusMax: 120, reveal: 180, fade: 550, color: COLORS.HIGH }
+    };
+
+    const MATERIAL_MOD = {
+      low: { stone: 0.2, metal: 0.0, fabric: -0.1, grate: 0.0, default: 0.0 },
+      mid: { stone: 0.0, metal: 0.1, fabric: -0.2, grate: 0.0, default: 0.0 },
+      high: { stone: -0.2, metal: 0.0, fabric: -0.5, grate: 0.0, default: 0.0 }
+    };
+
+    const HEARING_MULT = {
+      blue: { low: 1.0, mid: 0.8, high: 0.5 },
+      green: { low: 0.8, mid: 1.0, high: 0.8 },
+      orange: { low: 0.5, mid: 0.8, high: 1.0 },
+      foot: { low: 0.6, mid: 0.6, high: 0.6 }
+    };
+
+    function tileCenter(col, row) {
+      return {
+        x: col * TILE + TILE / 2,
+        y: GRID_Y + row * TILE + TILE / 2
+      };
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function formatTime(ms) {
+      const total = Math.max(0, Math.ceil(ms / 1000));
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    class BootScene extends Phaser.Scene {
+      constructor() {
+        super('Boot');
+      }
+
+      create() {
+        this.createTextures();
+        this.scene.start('Title');
+      }
+
+      createTextures() {
+        const g = this.add.graphics();
+
+        g.fillStyle(0xffffff, 1);
+        g.fillCircle(64, 64, 64);
+        g.generateTexture('revealStamp', 128, 128);
+        g.clear();
+
+        g.fillStyle(COLORS.PLAYER, 1);
+        g.fillCircle(8, 8, 8);
+        g.generateTexture('player', 16, 16);
+        g.clear();
+
+        g.fillStyle(COLORS.LOW, 1);
+        g.fillTriangle(10, 0, 20, 20, 0, 20);
+        g.generateTexture('guardBlue', 20, 20);
+        g.clear();
+
+        g.fillStyle(COLORS.MID, 1);
+        g.fillTriangle(10, 0, 20, 20, 0, 20);
+        g.generateTexture('guardGreen', 20, 20);
+        g.clear();
+
+        g.fillStyle(COLORS.HIGH, 1);
+        g.fillTriangle(10, 0, 20, 20, 0, 20);
+        g.generateTexture('guardOrange', 20, 20);
+        g.clear();
+
+        g.fillStyle(COLORS.PILLAR, 1);
+        g.fillRect(0, 0, 12, 18);
+        g.generateTexture('pillar', 12, 18);
+        g.clear();
+
+        g.fillStyle(COLORS.RELIC, 1);
+        g.fillRect(0, 0, 16, 16);
+        g.generateTexture('relic', 16, 16);
+        g.clear();
+
+        g.fillStyle(0xffffff, 1);
+        g.fillCircle(4, 4, 4);
+        g.generateTexture('decoy', 8, 8);
+        g.clear();
+
+        g.destroy();
+      }
+    }
+
+    class TitleScene extends Phaser.Scene {
+      constructor() {
+        super('Title');
+      }
+
+      create() {
+        this.cameras.main.setBackgroundColor(CONFIG.bgColor);
+        const title = this.add.text(CONFIG.width / 2, CONFIG.height / 2 - 40,
+          'ECHO CHAMBERS: FREQUENCY HEIST',
+          { fontSize: '32px', color: '#FFFFFF', fontStyle: 'bold' }
+        ).setOrigin(0.5);
+
+        const subtitle = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 10,
+          'Tune your vision.',
+          { fontSize: '18px', color: '#A0A0A0' }
+        ).setOrigin(0.5);
+
+        const prompt = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 60,
+          'Press any key to start',
+          { fontSize: '16px', color: '#A0A0A0' }
+        ).setOrigin(0.5);
+
+        this.input.keyboard.once('keydown', () => {
+          this.scene.start('Game');
+        });
+      }
+    }
+
+    class GameScene extends Phaser.Scene {
+      constructor() {
+        super('Game');
+      }
+
+      create() {
+        this.cameras.main.setBackgroundColor(CONFIG.bgColor);
+
+        this.buildMap();
+
+        this.revealRT = this.add.renderTexture(0, 0, CONFIG.width, CONFIG.height)
+          .setOrigin(0, 0)
+          .setDepth(50)
+          .setBlendMode(Phaser.BlendModes.ADD);
+        this.revealMask = this.revealRT.createBitmapMask();
+
+        this.revealStamp = this.make.image({ key: 'revealStamp', add: false }).setOrigin(0, 0);
+
+        this.sounds = [];
+        this.decoys = [];
+        this.residue = [];
+        this.pillars = [];
+        this.doors = [];
+        this.guards = [];
+
+        this.relicCollected = false;
+        this.exitOpen = false;
+        this.alertsCount = 0;
+
+        this.lastPingTime = -Infinity;
+        this.lastDecoyTime = -Infinity;
+        this.lastFootstepTime = 0;
+
+        this.timerMs = START_TIME;
+        this.gameState = 'PLAY';
+        this.guardWakeTime = this.time.now + 3500;
+
+        this.spawnPlayer();
+        this.spawnGuards();
+        this.spawnPillarsAndDoors();
+        this.spawnRelicAndExit();
+        this.createHud();
+
+        this.keys = this.input.keyboard.addKeys({
+          up: 'W', down: 'S', left: 'A', right: 'D',
+          up2: Phaser.Input.Keyboard.KeyCodes.UP,
+          down2: Phaser.Input.Keyboard.KeyCodes.DOWN,
+          left2: Phaser.Input.Keyboard.KeyCodes.LEFT,
+          right2: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+          shift: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+          one: Phaser.Input.Keyboard.KeyCodes.ONE,
+          two: Phaser.Input.Keyboard.KeyCodes.TWO,
+          three: Phaser.Input.Keyboard.KeyCodes.THREE,
+          space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+          e: Phaser.Input.Keyboard.KeyCodes.E,
+          r: Phaser.Input.Keyboard.KeyCodes.R
+        });
+
+        this.hasPinged = false;
+        this.hasTuned = false;
+        this.hintStartTime = this.time.now;
+
+        this.applyMaskToWorld();
+      }
+
+      buildMap() {
+        this.tiles = [];
+        for (let r = 0; r < ROWS; r++) {
+          const row = [];
+          for (let c = 0; c < COLS; c++) {
+            row.push({ solid: true, material: 'wall' });
+          }
+          this.tiles.push(row);
+        }
+
+        const carveRect = (c1, r1, c2, r2, material = 'default') => {
+          for (let r = r1; r <= r2; r++) {
+            for (let c = c1; c <= c2; c++) {
+              if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
+              this.tiles[r][c].solid = false;
+              this.tiles[r][c].material = material;
+            }
+          }
+        };
+
+        carveRect(1, 9, 7, 13, 'default');
+        carveRect(8, 11, 11, 11, 'default');
+        carveRect(12, 8, 16, 14, 'stone');
+        carveRect(17, 11, 18, 11, 'default');
+        carveRect(19, 6, 25, 16, 'fabric');
+        carveRect(26, 11, 27, 11, 'default');
+        carveRect(28, 8, 35, 14, 'metal');
+        carveRect(36, 10, 38, 12, 'metal');
+
+        carveRect(30, 15, 30, 19, 'default');
+        carveRect(7, 19, 30, 19, 'default');
+        carveRect(7, 13, 7, 19, 'default');
+
+        for (let r = 7; r <= 9; r++) {
+          const c = 22;
+          this.tiles[r][c].solid = true;
+          this.tiles[r][c].material = 'grate';
+        }
+
+        for (let r = 8; r <= 14; r++) {
+          if (r === 11) continue;
+          this.tiles[r][32].solid = true;
+          this.tiles[r][32].material = 'wall';
+        }
+
+        this.mapGfx = this.add.graphics().setDepth(0);
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const tile = this.tiles[r][c];
+            const x = c * TILE;
+            const y = GRID_Y + r * TILE;
+            let color = 0x111111;
+            if (tile.solid) {
+              color = tile.material === 'grate' ? 0x1b1b1b : 0x2a2a2a;
+            } else if (tile.material === 'stone') {
+              color = 0x1b1f2a;
+            } else if (tile.material === 'metal') {
+              color = 0x202328;
+            } else if (tile.material === 'fabric') {
+              color = 0x2a1418;
+            }
+            this.mapGfx.fillStyle(color, 1);
+            this.mapGfx.fillRect(x, y, TILE, TILE);
+            if (tile.material === 'grate') {
+              this.mapGfx.lineStyle(1, 0x2f2f2f, 0.8);
+              this.mapGfx.lineBetween(x + 2, y + 2, x + TILE - 2, y + TILE - 2);
+              this.mapGfx.lineBetween(x + TILE - 2, y + 2, x + 2, y + TILE - 2);
+            }
+          }
+        }
+
+        this.wallGroup = this.physics.add.staticGroup();
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            if (!this.tiles[r][c].solid) continue;
+            const x = c * TILE + TILE / 2;
+            const y = GRID_Y + r * TILE + TILE / 2;
+            const wall = this.add.rectangle(x, y, TILE, TILE, 0x000000, 0);
+            this.physics.add.existing(wall, true);
+            this.wallGroup.add(wall);
+          }
+        }
+
+        this.physics.world.setBounds(0, GRID_Y, CONFIG.width, ROWS * TILE);
+      }
+
+      spawnPlayer() {
+        const start = tileCenter(3, 11);
+        this.player = this.physics.add.image(start.x, start.y, 'player');
+        this.player.setDepth(10);
+        this.player.body.setCircle(8);
+        this.player.body.setOffset(0, 0);
+        this.player.setCollideWorldBounds(true);
+
+        this.playerRing = this.add.circle(start.x, start.y, 12, 0x000000, 0);
+        this.playerRing.setStrokeStyle(2, COLORS.MID, 0.9);
+        this.playerRing.setDepth(9);
+
+        this.playerFrequency = FREQS.MID;
+        this.isCrouching = false;
+        this.decoysRemaining = 3;
+
+        this.physics.add.collider(this.player, this.wallGroup);
+      }
+
+      spawnGuards() {
+        const g1 = this.add.image(432, 282, 'guardGreen').setDepth(8);
+        const g2 = this.add.image(360, 270, 'guardBlue').setDepth(8);
+        const g3 = this.add.image(540, 280, 'guardOrange').setDepth(8);
+
+        this.guards.push({
+          sprite: g1,
+          type: 'green',
+          state: 'patrol',
+          waypoints: [
+            { x: 420, y: 282 },
+            { x: 444, y: 282 }
+          ],
+          patrolIndex: 0,
+          target: null,
+          lastHeardTime: 0
+        });
+
+        this.guards.push({
+          sprite: g2,
+          type: 'blue',
+          state: 'patrol',
+          waypoints: [
+            { x: 330, y: 230 },
+            { x: 390, y: 230 },
+            { x: 390, y: 320 },
+            { x: 330, y: 320 }
+          ],
+          patrolIndex: 0,
+          target: null,
+          lastHeardTime: 0
+        });
+
+        this.guards.push({
+          sprite: g3,
+          type: 'orange',
+          state: 'patrol',
+          waypoints: [
+            { x: 500, y: 200 },
+            { x: 580, y: 200 },
+            { x: 580, y: 350 },
+            { x: 500, y: 350 }
+          ],
+          patrolIndex: 0,
+          target: null,
+          lastHeardTime: 0
+        });
+      }
+
+      spawnPillarsAndDoors() {
+        const tutorialPillar = this.add.image(200, 270, 'pillar').setDepth(7);
+        const p1 = { sprite: tutorialPillar, x: 200, y: 270, activeUntil: 0 };
+
+        const metalPillar1 = this.add.image(700, 260, 'pillar').setDepth(7);
+        const metalPillar2 = this.add.image(820, 300, 'pillar').setDepth(7);
+        const p2 = { sprite: metalPillar1, x: 700, y: 260, activeUntil: 0 };
+        const p3 = { sprite: metalPillar2, x: 820, y: 300, activeUntil: 0 };
+
+        this.pillars.push(p1, p2, p3);
+
+        const tutorialDoor = this.add.rectangle(240, 270, 24, 36, COLORS.DOOR_CLOSED, 1)
+          .setDepth(6);
+        tutorialDoor.setStrokeStyle(0, 0x000000, 0);
+        this.physics.add.existing(tutorialDoor, true);
+
+        const resonanceDoor = this.add.rectangle(780, 280, 24, 36, COLORS.DOOR_CLOSED, 1)
+          .setDepth(6);
+        resonanceDoor.setStrokeStyle(0, 0x000000, 0);
+        this.physics.add.existing(resonanceDoor, true);
+
+        this.doorGroup = this.physics.add.staticGroup();
+        this.doorGroup.add(tutorialDoor);
+        this.doorGroup.add(resonanceDoor);
+
+        this.physics.add.collider(this.player, this.doorGroup);
+
+        this.doors.push({
+          sprite: tutorialDoor,
+          isOpen: false,
+          openUntil: 0,
+          pillarIds: [0]
+        });
+
+        this.doors.push({
+          sprite: resonanceDoor,
+          isOpen: false,
+          openUntil: 0,
+          pillarIds: [1, 2]
+        });
+      }
+
+      spawnRelicAndExit() {
+        this.relic = this.add.image(880, 280, 'relic').setDepth(7);
+        this.physics.add.existing(this.relic, true);
+
+        this.exitDoor = this.add.rectangle(60, 270, 24, 36, 0x444444, 1).setDepth(7);
+        this.exitDoor.setStrokeStyle(2, 0x222222, 1);
+        this.physics.add.existing(this.exitDoor, true);
+
+        this.physics.add.overlap(this.player, this.relic, () => {
+          if (this.relicCollected) return;
+          this.relicCollected = true;
+          this.exitOpen = true;
+          this.relic.setVisible(false);
+        });
+
+        this.physics.add.overlap(this.player, this.exitDoor, () => {
+          if (this.exitOpen && this.relicCollected) {
+            this.endGame('WIN');
+          }
+        });
+
+        this.tweens.add({
+          targets: this.relic,
+          scale: { from: 0.95, to: 1.05 },
+          duration: 1200,
+          yoyo: true,
+          repeat: -1
+        });
+      }
+
+      createHud() {
+        this.timerText = this.add.text(CONFIG.width / 2, 12, 'Time 5:00', {
+          fontSize: '20px',
+          color: '#FFFFFF'
+        }).setOrigin(0.5, 0).setDepth(100);
+
+        this.freqContainer = this.add.container(12, 12).setDepth(100);
+        this.freqLowText = this.add.text(0, 0, 'LOW [1]', { fontSize: '16px', color: '#3DA5FF' });
+        this.freqSep1 = this.add.text(0, 0, '|', { fontSize: '16px', color: '#A0A0A0' });
+        this.freqMidText = this.add.text(0, 0, 'MID [2]', { fontSize: '16px', color: '#4CD964' });
+        this.freqSep2 = this.add.text(0, 0, '|', { fontSize: '16px', color: '#A0A0A0' });
+        this.freqHighText = this.add.text(0, 0, 'HIGH [3]', { fontSize: '16px', color: '#FF9500' });
+
+        this.freqContainer.add([this.freqLowText, this.freqSep1, this.freqMidText, this.freqSep2, this.freqHighText]);
+        this.layoutFreqHud();
+
+        this.decoyLabel = this.add.text(CONFIG.width - 140, 12, 'Decoys:', {
+          fontSize: '16px',
+          color: '#FFFFFF'
+        }).setDepth(100);
+
+        this.decoyIcons = [];
+        for (let i = 0; i < 3; i++) {
+          const dot = this.add.circle(CONFIG.width - 70 + i * 12, 20, 4, 0x66ffaa, 1).setDepth(100);
+          this.decoyIcons.push(dot);
+        }
+
+        this.hintText = this.add.text(CONFIG.width / 2, CONFIG.height - 28,
+          'WASD move | Shift crouch | 1/2/3 tune | Space ping | E decoy',
+          { fontSize: '16px', color: '#A0A0A0' }
+        ).setOrigin(0.5).setDepth(100);
+
+        this.endTitle = this.add.text(CONFIG.width / 2, CONFIG.height / 2 - 30, '', {
+          fontSize: '32px',
+          color: '#FFFFFF'
+        }).setOrigin(0.5).setVisible(false).setDepth(120);
+
+        this.endSub = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 10, '', {
+          fontSize: '18px',
+          color: '#A0A0A0'
+        }).setOrigin(0.5).setVisible(false).setDepth(120);
+
+        this.endHint = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 50, 'Press R to restart, any other key for title', {
+          fontSize: '16px',
+          color: '#A0A0A0'
+        }).setOrigin(0.5).setVisible(false).setDepth(120);
+      }
+
+      layoutFreqHud() {
+        this.freqLowText.setPosition(0, 0);
+        this.freqSep1.setPosition(this.freqLowText.width + 6, 0);
+        this.freqMidText.setPosition(this.freqSep1.x + this.freqSep1.width + 6, 0);
+        this.freqSep2.setPosition(this.freqMidText.x + this.freqMidText.width + 6, 0);
+        this.freqHighText.setPosition(this.freqSep2.x + this.freqSep2.width + 6, 0);
+      }
+
+      applyMaskToWorld() {
+        const apply = (obj) => {
+          if (obj && obj.setMask) obj.setMask(this.revealMask);
+        };
+
+        apply(this.mapGfx);
+        apply(this.player);
+        apply(this.playerRing);
+        apply(this.relic);
+        apply(this.exitDoor);
+
+        this.guards.forEach(g => apply(g.sprite));
+        this.pillars.forEach(p => apply(p.sprite));
+        this.doors.forEach(d => apply(d.sprite));
+      }
+
+      update(time, delta) {
+        if (this.gameState !== 'PLAY') {
+          return;
+        }
+
+        const now = this.time.now;
+        this.handleInput(delta, now);
+        this.updateFootsteps(now);
+        this.updateDecoys(now);
+        this.updateSounds(now);
+        this.updateResidue(now);
+        this.updateDoors(now);
+        this.updatePillars(now);
+        this.updateGuards(delta, now);
+        this.updateTimer(delta);
+        this.updateHud(now);
+        this.renderReveal(now);
+        this.checkRelicExit();
+      }
+
+      handleInput(delta, now) {
+        const left = this.keys.left.isDown || this.keys.left2.isDown;
+        const right = this.keys.right.isDown || this.keys.right2.isDown;
+        const up = this.keys.up.isDown || this.keys.up2.isDown;
+        const down = this.keys.down.isDown || this.keys.down2.isDown;
+
+        let dx = (left ? -1 : 0) + (right ? 1 : 0);
+        let dy = (up ? -1 : 0) + (down ? 1 : 0);
+
+        const moving = dx !== 0 || dy !== 0;
+        this.isCrouching = this.keys.shift.isDown;
+
+        let speed = this.isCrouching ? SPEED_CROUCH : SPEED_WALK;
+        if (dx !== 0 && dy !== 0) {
+          const inv = 1 / Math.sqrt(2);
+          dx *= inv;
+          dy *= inv;
+        }
+
+        this.player.body.setVelocity(dx * speed, dy * speed);
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.one)) {
+          this.playerFrequency = FREQS.LOW;
+          this.hasTuned = true;
+        } else if (Phaser.Input.Keyboard.JustDown(this.keys.two)) {
+          this.playerFrequency = FREQS.MID;
+          this.hasTuned = true;
+        } else if (Phaser.Input.Keyboard.JustDown(this.keys.three)) {
+          this.playerFrequency = FREQS.HIGH;
+          this.hasTuned = true;
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.space)) {
+          if (now - this.lastPingTime >= PING_COOLDOWN) {
+            this.createSound(this.player.x, this.player.y, this.playerFrequency, 'player', { alertable: true });
+            this.lastPingTime = now;
+            this.hasPinged = true;
+          }
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.e)) {
+          if (now - this.lastDecoyTime >= 500 && this.decoysRemaining > 0) {
+            this.spawnDecoy(now);
+            this.lastDecoyTime = now;
+          }
+        }
+
+        this.playerRing.setPosition(this.player.x, this.player.y);
+      }
+
+      updateFootsteps(now) {
+        const vel = this.player.body.velocity;
+        const moving = Math.abs(vel.x) > 1 || Math.abs(vel.y) > 1;
+        if (!moving) return;
+
+        const interval = this.isCrouching ? FOOT_CROUCH_INTERVAL : FOOT_WALK_INTERVAL;
+        if (now - this.lastFootstepTime >= interval) {
+          const radiusMax = this.isCrouching ? 18 : 50;
+          this.createSound(this.player.x, this.player.y, FREQS.FOOT, 'foot', {
+            radiusMax,
+            reveal: 140,
+            fade: 320,
+            color: COLORS.FOOT,
+            alertable: !this.isCrouching
+          });
+          this.lastFootstepTime = now;
+        }
+      }
+
+      spawnDecoy(now) {
+        const freq = this.playerFrequency;
+        const sprite = this.add.image(this.player.x, this.player.y, 'decoy');
+        sprite.setTint(PING_PROPS[freq].color);
+        sprite.setDepth(7);
+        sprite.setMask(this.revealMask);
+
+        this.decoys.push({
+          x: this.player.x,
+          y: this.player.y,
+          freq,
+          sprite,
+          tEnd: now + 3000,
+          nextPulse: now
+        });
+
+        this.decoysRemaining -= 1;
+      }
+
+      updateDecoys(now) {
+        for (let i = this.decoys.length - 1; i >= 0; i--) {
+          const d = this.decoys[i];
+          if (now >= d.tEnd) {
+            d.sprite.destroy();
+            this.decoys.splice(i, 1);
+            continue;
+          }
+          if (now >= d.nextPulse) {
+            this.createSound(d.x, d.y, d.freq, 'decoy', { radiusScale: 0.6, alertable: false });
+            d.nextPulse += 500;
+          }
+        }
+      }
+
+      createSound(x, y, freq, source, opts = {}) {
+        const baseProps = (freq === FREQS.FOOT)
+          ? { radiusMax: 50, reveal: 140, fade: 320, color: COLORS.FOOT }
+          : PING_PROPS[freq];
+        const props = {
+          radiusMax: opts.radiusMax ?? baseProps.radiusMax,
+          reveal: opts.reveal ?? baseProps.reveal,
+          fade: opts.fade ?? baseProps.fade,
+          color: opts.color ?? baseProps.color
+        };
+
+        const radiusMax = props.radiusMax * (opts.radiusScale ?? 1);
+        const sound = {
+          x,
+          y,
+          freq,
+          source,
+          radiusMax,
+          revealDur: props.reveal,
+          fadeDur: props.fade,
+          color: props.color,
+          tStart: this.time.now + (opts.delay || 0),
+          intensity: opts.intensity ?? 1,
+          alertable: opts.alertable === true
+        };
+
+        this.sounds.push(sound);
+        if (opts.notify !== false) {
+          this.notifyGuards(sound);
+        }
+
+        if (freq === FREQS.MID && (source === 'player' || source === 'decoy')) {
+          this.activatePillars(x, y);
+        }
+
+        if (opts.residue !== false && freq !== FREQS.FOOT && (source === 'player' || source === 'decoy')) {
+          this.residue.push({
+            x,
+            y,
+            color: props.color,
+            tStart: this.time.now,
+            life: RESIDUE_LIFE,
+            radius: radiusMax * 0.75,
+            alpha: 0.18
+          });
+        }
+
+        if (!opts.suppressResonance && freq !== FREQS.FOOT) {
+          const material = this.materialAt(x, y);
+          if (freq === FREQS.LOW && material === 'stone') {
+            const angle = Phaser.Math.DegToRad(Phaser.Math.Between(0, 360));
+            const offset = 18;
+            this.createSound(
+              x + Math.cos(angle) * offset,
+              y + Math.sin(angle) * offset,
+              freq,
+              'echo',
+              {
+                radiusMax: radiusMax * 0.6,
+                reveal: 220,
+                fade: 650,
+                color: props.color,
+                intensity: 0.55,
+                delay: 140,
+                notify: false,
+                alertable: false,
+                suppressResonance: true,
+                residue: false
+              }
+            );
+          }
+          if (freq === FREQS.MID && material === 'metal') {
+            this.createSound(
+              x,
+              y,
+              freq,
+              'echo',
+              {
+                radiusMax: radiusMax * 0.55,
+                reveal: 260,
+                fade: 1400,
+                color: props.color,
+                intensity: 0.4,
+                delay: 80,
+                notify: false,
+                alertable: false,
+                suppressResonance: true,
+                residue: false
+              }
+            );
+          }
+        }
+      }
+
+      notifyGuards(sound) {
+        const now = this.time.now;
+        if (now < this.guardWakeTime) return;
+        this.guards.forEach(g => {
+          const dx = g.sprite.x - sound.x;
+          const dy = g.sprite.y - sound.y;
+          const dist = Math.hypot(dx, dy);
+          let mult;
+          if (sound.freq === FREQS.FOOT) {
+            mult = HEARING_MULT.foot.mid;
+          } else {
+            mult = HEARING_MULT[g.type][sound.freq];
+          }
+          const eff = HEARING_BASE * mult;
+          if (dist <= eff) {
+            const wasInvestigating = g.state === 'investigate';
+            g.state = 'investigate';
+            g.target = { x: sound.x, y: sound.y };
+            g.lastHeardTime = now;
+            if (sound.alertable && !wasInvestigating) {
+              this.alertsCount += 1;
+            }
+            const pulseRadius = sound.freq === FREQS.LOW ? 70 : sound.freq === FREQS.MID ? 55 : 40;
+            this.createSound(
+              g.sprite.x,
+              g.sprite.y,
+              sound.freq,
+              'guard',
+              {
+                radiusMax: pulseRadius,
+                reveal: 120,
+                fade: 220,
+                color: sound.color,
+                intensity: 0.35,
+                notify: false,
+                alertable: false,
+                suppressResonance: true,
+                residue: false
+              }
+            );
+          }
+        });
+      }
+
+      activatePillars(x, y) {
+        const now = this.time.now;
+        this.pillars.forEach(p => {
+          const dist = Phaser.Math.Distance.Between(x, y, p.x, p.y);
+          if (dist <= PILLAR_RANGE) {
+            p.activeUntil = Math.max(p.activeUntil, now + PILLAR_ACTIVE_MS);
+          }
+        });
+      }
+
+      updateSounds(now) {
+        for (let i = this.sounds.length - 1; i >= 0; i--) {
+          const s = this.sounds[i];
+          const age = now - s.tStart;
+          if (age >= s.revealDur + s.fadeDur) {
+            this.sounds.splice(i, 1);
+          }
+        }
+      }
+
+      updateResidue(now) {
+        for (let i = this.residue.length - 1; i >= 0; i--) {
+          const r = this.residue[i];
+          if (now - r.tStart >= r.life) {
+            this.residue.splice(i, 1);
+          }
+        }
+      }
+
+      updatePillars(now) {
+        this.pillars.forEach(p => {
+          const active = p.activeUntil > now;
+          if (active) {
+            const pulse = 0.6 + 0.4 * Math.sin(now / 120);
+            p.sprite.setScale(1 + 0.05 * pulse);
+          } else {
+            p.sprite.setScale(1);
+          }
+        });
+      }
+
+      updateDoors(now) {
+        this.doors.forEach(door => {
+          let shouldOpen = false;
+          if (door.pillarIds.length === 1) {
+            const p = this.pillars[door.pillarIds[0]];
+            shouldOpen = p.activeUntil > now;
+          } else if (door.pillarIds.length === 2) {
+            const p1 = this.pillars[door.pillarIds[0]];
+            const p2 = this.pillars[door.pillarIds[1]];
+            const bothActive = p1.activeUntil > now && p2.activeUntil > now;
+            const synced = Math.abs(p1.activeUntil - p2.activeUntil) <= DOOR_SYNC_MS;
+            shouldOpen = bothActive && synced;
+          }
+
+          if (shouldOpen) {
+            door.isOpen = true;
+            door.openUntil = Math.max(door.openUntil, now + DOOR_GRACE_MS);
+          }
+
+          if (door.isOpen && now > door.openUntil) {
+            door.isOpen = false;
+          }
+
+          if (door.isOpen) {
+            door.sprite.setFillStyle(0x000000, 0);
+            door.sprite.setStrokeStyle(2, COLORS.DOOR_OPEN, 1);
+            if (door.sprite.body) door.sprite.body.enable = false;
+          } else {
+            door.sprite.setFillStyle(COLORS.DOOR_CLOSED, 1);
+            door.sprite.setStrokeStyle(0, 0x000000, 0);
+            if (door.sprite.body) door.sprite.body.enable = true;
+          }
+        });
+
+        if (this.exitOpen) {
+          this.exitDoor.setFillStyle(0x000000, 0);
+          this.exitDoor.setStrokeStyle(2, COLORS.EXIT_OPEN, 1);
+        }
+      }
+
+      updateGuards(delta, now) {
+        const dt = delta / 1000;
+        this.guards.forEach(g => {
+          let speed = 90;
+          let target = null;
+
+          if (g.state === 'patrol') {
+            target = g.waypoints[g.patrolIndex];
+            speed = 90;
+          } else if (g.state === 'investigate') {
+            target = g.target;
+            speed = 120;
+          } else if (g.state === 'return') {
+            target = g.waypoints[g.patrolIndex];
+            speed = 90;
+          }
+
+          if (!target) return;
+          const dx = target.x - g.sprite.x;
+          const dy = target.y - g.sprite.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 1) {
+            const nx = g.sprite.x + (dx / dist) * speed * dt;
+            const ny = g.sprite.y + (dy / dist) * speed * dt;
+            if (this.isPassable(nx, ny)) {
+              g.sprite.x = nx;
+              g.sprite.y = ny;
+            } else {
+              if (g.state === 'investigate') {
+                g.state = 'return';
+                g.patrolIndex = this.findNearestWaypointIndex(g);
+              } else if (g.state === 'patrol') {
+                g.patrolIndex = (g.patrolIndex + 1) % g.waypoints.length;
+              } else if (g.state === 'return') {
+                g.state = 'patrol';
+              }
+            }
+          }
+
+          if (g.state === 'patrol' && dist < 6) {
+            g.patrolIndex = (g.patrolIndex + 1) % g.waypoints.length;
+          }
+
+          if (g.state === 'investigate') {
+            if (dist < 10 || now - g.lastHeardTime > INVESTIGATE_TIMEOUT) {
+              g.state = 'return';
+              g.patrolIndex = this.findNearestWaypointIndex(g);
+            }
+          }
+
+          if (g.state === 'return' && dist < 6) {
+            g.state = 'patrol';
+          }
+
+          const caught = Phaser.Math.Distance.Between(
+            g.sprite.x, g.sprite.y,
+            this.player.x, this.player.y
+          ) < 10;
+          if (caught) {
+            this.endGame('CAUGHT');
+          }
+        });
+      }
+
+      findNearestWaypointIndex(guard) {
+        let best = 0;
+        let bestDist = Infinity;
+        guard.waypoints.forEach((wp, i) => {
+          const d = Phaser.Math.Distance.Between(guard.sprite.x, guard.sprite.y, wp.x, wp.y);
+          if (d < bestDist) {
+            bestDist = d;
+            best = i;
+          }
+        });
+        return best;
+      }
+
+      updateTimer(delta) {
+        this.timerMs -= delta;
+        if (this.timerMs <= 0) {
+          this.timerMs = 0;
+          this.endGame('TIME');
+        }
+      }
+
+      updateHud(now) {
+        this.timerText.setText(`Time ${formatTime(this.timerMs)}`);
+
+        const lowColor = this.playerFrequency === FREQS.LOW ? '#3DA5FF' : '#224455';
+        const midColor = this.playerFrequency === FREQS.MID ? '#4CD964' : '#22AA55';
+        const highColor = this.playerFrequency === FREQS.HIGH ? '#FF9500' : '#AA5533';
+
+        this.freqLowText.setColor(lowColor);
+        this.freqMidText.setColor(midColor);
+        this.freqHighText.setColor(highColor);
+
+        const freqColor = this.playerFrequency === FREQS.LOW ? COLORS.LOW :
+          this.playerFrequency === FREQS.MID ? COLORS.MID : COLORS.HIGH;
+        this.playerRing.setStrokeStyle(2, freqColor, 0.9);
+
+        for (let i = 0; i < this.decoyIcons.length; i++) {
+          const filled = i < this.decoysRemaining;
+          this.decoyIcons[i].setFillStyle(filled ? 0x66ffaa : 0x224433, 1);
+        }
+
+        if (this.hintText.visible) {
+          if (now - this.hintStartTime > 10000 || (this.hasPinged && this.hasTuned)) {
+            this.hintText.setVisible(false);
+          }
+        }
+      }
+
+      renderReveal(now) {
+        this.revealRT.clear();
+        this.drawRevealCircle(this.player.x, this.player.y, 24, 0.15, COLORS.PLAYER);
+
+        this.pillars.forEach(p => {
+          if (p.activeUntil > now) {
+            this.drawRevealCircle(p.x, p.y, 70, 0.35, COLORS.MID);
+          }
+        });
+
+        this.residue.forEach(r => {
+          const age = now - r.tStart;
+          if (age < 0 || age > r.life) return;
+          const a = r.alpha * (1 - age / r.life);
+          this.drawRevealCircle(r.x, r.y, r.radius, a, r.color);
+        });
+
+        this.sounds.forEach(s => {
+          const age = now - s.tStart;
+          if (age < 0 || age >= s.revealDur + s.fadeDur) return;
+          let r = 0;
+          let a = 0;
+          if (age <= s.revealDur) {
+            const p = age / s.revealDur;
+            r = s.radiusMax * p;
+            a = 0.9 * (1 - Math.pow(1 - p, 2));
+          } else {
+            r = s.radiusMax;
+            const f = (age - s.revealDur) / s.fadeDur;
+            a = 0.9 * (1 - f);
+          }
+          a *= s.intensity ?? 1;
+          const mod = this.materialModifierAt(s.x, s.y, s.freq);
+          const rEff = clamp(r * (1 + mod), r * 0.4, r * 1.4);
+          this.drawRevealCircle(s.x, s.y, rEff, a, s.color);
+        });
+      }
+
+      tileAt(x, y) {
+        const col = Math.floor(x / TILE);
+        const row = Math.floor((y - GRID_Y) / TILE);
+        if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return null;
+        return this.tiles[row][col];
+      }
+
+      materialAt(x, y) {
+        const tile = this.tileAt(x, y);
+        return tile ? (tile.material || 'default') : 'default';
+      }
+
+      isPassable(x, y) {
+        const tile = this.tileAt(x, y);
+        return tile ? !tile.solid : false;
+      }
+
+      materialModifierAt(x, y, freq) {
+        const tile = this.tileAt(x, y);
+        if (!tile) return 0;
+        const material = tile.material || 'default';
+        const key = freq === FREQS.FOOT ? 'mid' : freq;
+        return MATERIAL_MOD[key][material] ?? 0;
+      }
+
+      drawRevealCircle(x, y, radius, alpha, color) {
+        if (radius <= 0 || alpha <= 0) return;
+        const baseSize = 128;
+        const scale = (radius * 2) / baseSize;
+        this.revealStamp.setScale(scale);
+        this.revealStamp.setTint(color);
+        this.revealStamp.setAlpha(alpha);
+        this.revealRT.draw(this.revealStamp, x - radius, y - radius);
+      }
+
+      checkRelicExit() {
+        if (this.exitOpen) {
+          this.exitDoor.setStrokeStyle(2, COLORS.EXIT_OPEN, 1);
+        }
+      }
+
+      endGame(reason) {
+        if (this.gameState !== 'PLAY') return;
+        this.gameState = reason === 'WIN' ? 'WIN' : 'LOSE';
+        this.player.body.setVelocity(0, 0);
+
+        let title = 'Caught!';
+        if (reason === 'WIN') title = 'You Escaped!';
+        if (reason === 'TIME') title = "Time's Up!";
+
+        this.endTitle.setText(title).setVisible(true);
+        this.endSub.setText(`Time left ${formatTime(this.timerMs)} | Alerts ${this.alertsCount}`).setVisible(true);
+        this.endHint.setVisible(true);
+
+        this.input.keyboard.once('keydown', (evt) => {
+          if (evt.code === 'KeyR') {
+            this.scene.restart();
+          } else {
+            this.scene.start('Title');
+          }
+        });
+      }
+    }
+
+    const config = {
+      type: Phaser.AUTO,
+      width: CONFIG.width,
+      height: CONFIG.height,
+      backgroundColor: CONFIG.bgColor,
+      parent: 'game-container',
+      physics: {
+        default: 'arcade',
+        arcade: {
+          debug: false
+        }
+      },
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+      },
+      scene: [BootScene, TitleScene, GameScene]
+    };
+
+    new Phaser.Game(config);
+  </script>
+</body>
+</html>

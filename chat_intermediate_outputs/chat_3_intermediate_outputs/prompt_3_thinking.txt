@@ -1,0 +1,3 @@
+**Evaluating design creativity**
+
+I need to evaluate the creativity of the Echo Courier concept and see if it may fall short. Then, I should create a revised design plan that's more creative yet detailed for Phaser with specific stages, specs, and pseudocode. I'm thinking about choosing a more unique earlier idea. "Shadow Shepherd" has potential with its light and shadow mechanics, although it might be complex. I like the idea of guiding a shadow silhouette toward darkness as a creative mechanic.

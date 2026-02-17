@@ -1,0 +1,3 @@
+**Brainstorming Game Ideas**
+
+I need to create a scratchpad but think internally instead. I want to generate about 8-10 diverse game ideas across genres. I'm considering titles like a sokoban puzzle variant involving light and shadow, an action platformer with rewind mechanics, and a strategy roguelite deck game set on a 2D grid. I'll also include concepts like a physics-based slingshot bridge builder and a casual gardening game with a time loop. Finally, I’ll ensure each idea has a concise description.

@@ -1,0 +1,49 @@
+1) THE UMBRA COURIER
+- Description: A delivery puzzler set in a city where shadows become solid. Guide a courier through hazard-filled alleys by positioning crates and rotating streetlamps so their shadows form bridges, ramps, and shields.
+- Core mechanic: Move objects and pivot light sources to cast usable, time-limited shadows that reshape the level.
+- Unique hook: Shadows are physical platforms; solving puzzles means sculpting geometry with light, including moving light while you traverse its shifting shadows.
+
+2) ECHO RUNNER
+- Description: A tight 2D platformer where every 12 seconds your past run replays as a solid “echo” that can press switches, block lasers, or also get in your way. Plan routes so future-you can piggyback off past-you.
+- Core mechanic: Record-and-replay ghosts that physically interact with the world (and with you), stacking multi-echo solutions.
+- Unique hook: Self-co-op level design—puzzles and speed sections revolve around orchestrating a team of your past selves.
+
+3) BEAT BISTRO
+- Description: A rhythm-cooking arcade game. Chop, stir, flip, and plate to the beat as ingredients queue up in lanes; nail the rhythm and the kitchen sings, miss a few beats and the dish “remixes” into chaotic delights.
+- Core mechanic: Multi-lane, timing-based inputs mapped to kitchen actions, with recipe-specific patterns and tempo shifts.
+- Unique hook: Recipes are songs—ingredient choices morph the track and difficulty mid-run, and “happy accidents” create secret dishes with alternate rhythms.
+
+4) SWITCHYARD SHUFFLE
+- Description: A minimalist rail-management puzzler. Sketch temporary tracks to route colored trains to matching stations in real time while avoiding collisions in a cramped railyard.
+- Core mechanic: Draw-and-erase tracks with limited “ink,” using slow-motion while drawing; tracks fade over time, forcing dynamic rerouting.
+- Unique hook: Ephemeral infrastructure—levels are about improvising transient rails and timing fades for perfect, elegant traffic flow.
+
+5) PAPER SIEGE
+- Description: A 2D siege sandbox on a sheet of paper. Fire physics-based projectiles at a castle, then fold the paper world to align tunnels, reflect shots, or bring distant structures into range.
+- Core mechanic: Toggling between aiming/cannon physics and interactive paper folds that rearrange adjacency and collision.
+- Unique hook: Origami level-warping—folds can combine mechanisms, bridge moats, or turn enemies’ defenses against them in delightful, tactile ways.
+
+6) CLOUDFARMER
+- Description: A relaxing sky-gardening sim on drifting islands. Sow seeds that ride the wind to bloom into patterns you’re trying to match, from spirals to constellations.
+- Core mechanic: Paint wind currents with mouse strokes to guide seed trails; adjust humidity, thermals, and updrafts to sculpt growth.
+- Unique hook: Gardening meets fluid play—your brush controls invisible weather, creating living sky-art that grows in response to flow.
+
+7) WHISPER TOWN
+- Description: A short-loop detective puzzle set in a wordless village. The clock resets every 10 minutes; rearrange props and schedules to cause eavesdrop chains that reveal clues.
+- Core mechanic: Timeline tinkering—move objects, block doors, ring bells to alter NPC routes and trigger overheard whispers or secret meetings.
+- Unique hook: No dialogue choices; you create the conversation opportunities. The narrative emerges from orchestrated coincidences.
+
+8) PALETTE PATROL
+- Description: A 2D arena shooter where color equals combat language. Fire RGB shots and mix on the fly to match enemy colors; wrong mixes split foes or power them up.
+- Core mechanic: Real-time color mixing wheel for ammo; terrain and hazards can be painted to alter properties (slippery cyan ice, sticky magenta goop).
+- Unique hook: Combat puzzles through color theory—master additive mixing while repainting the battlefield to control enemy movement.
+
+9) HEIST LINES
+- Description: A blueprint-style stealth caper where you draw your crew’s paths as clean vector lines. Place waypoints, set timings, then scrub time to nudge routes until the perfect theft unfolds.
+- Core mechanic: Draw-to-plan, then simulate; adjust keyframes and delays to sync door hacks, guard avoidance, and loot grabs.
+- Unique hook: Stealth as animation—levels are solved by editing motion curves and timings like a 2D heist storyboard.
+
+10) MURMURATION
+- Description: Guide a flock of tiny birds through abstract ruins. You don’t control a single bird—you tune cohesion, alignment, and separation to coax the swarm through puzzles and predators.
+- Core mechanic: Three sliders/gestures that influence flocking behavior; tap to pulse scares or lure the swarm through tight formations.
+- Unique hook: Emergent control—mastering the “feel” of a living group replaces direct movement, turning navigation into a graceful dance.

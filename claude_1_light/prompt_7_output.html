@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Last Light</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+<script>
+
+// ============================================================
+// LEVEL DATA
+// ============================================================
+const LEVEL_COLORS = {
+    1: { top: 0xFF9A3C, bottom: 0x2D1400 },
+    2: { top: 0xE87830, bottom: 0x231000 },
+    3: { top: 0xCC4444, bottom: 0x1A0800 },
+    4: { top: 0xA03050, bottom: 0x120408 },
+    5: { top: 0x7B2D6E, bottom: 0x0A0210 },
+    6: { top: 0x4A1A6B, bottom: 0x060010 },
+    7: { top: 0x1E0E40, bottom: 0x000000 },
+};
+
+// Deflection rules (verified):
+// "/" : right→up, up→right, left→down, down→left   (newDirX=-dirY, newDirY=-dirX)
+// "\" : right→down, down→right, left→up, up→left   (newDirX=dirY, newDirY=dirX)
+// Moth standing on platform at p.y → moth.y = p.y - 16
+// Max jump height ≈ 90px, so platform gaps must be < 90px vertical
+
+const LEVEL_DATA = [
+    null, // index 0 unused
+
+    // LEVEL 1: One anchor. Beam right → "/" → up → crystal above.
+    {
+        playerStart: { x: 100, y: 490 },
+        sunSource: { x: 0, y: 400 },
+        crystal: { x: 400, y: 100 },
+        shadowSpeed: 12,
+        platforms: [
+            { x: 0, y: 544, w: 960, h: 96 },
+            { x: 200, y: 480, w: 120, h: 16 },
+            { x: 360, y: 416, w: 100, h: 16 },
+        ],
+        walls: [],
+        darkZones: [],
+        anchors: [
+            { x: 400, y: 400, type: '/', isPrism: false },
+        ],
+    },
+
+    // LEVEL 2: Two anchors. right→A(/)→up→B(/)→right→crystal.
+    {
+        playerStart: { x: 80, y: 490 },
+        sunSource: { x: 0, y: 450 },
+        crystal: { x: 800, y: 170 },
+        shadowSpeed: 22,
+        platforms: [
+            { x: 0, y: 544, w: 960, h: 96 },
+            { x: 270, y: 466, w: 100, h: 16 },
+            { x: 270, y: 392, w: 100, h: 16 },
+            { x: 270, y: 318, w: 100, h: 16 },
+            { x: 270, y: 244, w: 100, h: 16 },
+            { x: 270, y: 186, w: 100, h: 16 },
+        ],
+        walls: [],
+        darkZones: [],
+        anchors: [
+            { x: 320, y: 450, type: '/', isPrism: false },
+            { x: 320, y: 170, type: '/', isPrism: false },
+        ],
+    },
+
+    // LEVEL 3: Two anchors + dark gap. Player must shadow-form across.
+    // right→A(/)→up→B(/)→right→crystal
+    {
+        playerStart: { x: 80, y: 490 },
+        sunSource: { x: 0, y: 300 },
+        crystal: { x: 880, y: 120 },
+        shadowSpeed: 30,
+        platforms: [
+            { x: 0, y: 544, w: 350, h: 96 },
+            { x: 550, y: 544, w: 410, h: 96 },
+            { x: 560, y: 468, w: 100, h: 16 },
+            { x: 560, y: 392, w: 100, h: 16 },
+            { x: 560, y: 316, w: 100, h: 16 },
+            { x: 560, y: 240, w: 100, h: 16 },
+            { x: 560, y: 178, w: 100, h: 16 },
+            { x: 560, y: 136, w: 100, h: 16 },
+        ],
+        walls: [],
+        darkZones: [
+            { x: 350, y: 300, w: 200, h: 244 },
+        ],
+        anchors: [
+            { x: 600, y: 300, type: '/', isPrism: false },
+            { x: 600, y: 120, type: '/', isPrism: false },
+        ],
+    },
+
+    // LEVEL 4: Three anchors (only A+C needed). B is red herring.
+    // right→A(/)→up→C(/)→right→crystal.  B(\) leads to floor dead-end.
+    {
+        playerStart: { x: 80, y: 490 },
+        sunSource: { x: 0, y: 350 },
+        crystal: { x: 800, y: 150 },
+        shadowSpeed: 38,
+        platforms: [
+            { x: 0, y: 544, w: 960, h: 96 },
+            { x: 260, y: 468, w: 100, h: 16 },
+            { x: 260, y: 418, w: 100, h: 16 },
+            { x: 260, y: 366, w: 100, h: 16 },
+            { x: 260, y: 290, w: 100, h: 16 },
+            { x: 260, y: 228, w: 100, h: 16 },
+            { x: 260, y: 166, w: 100, h: 16 },
+            { x: 510, y: 366, w: 100, h: 16 },
+        ],
+        walls: [],
+        darkZones: [],
+        anchors: [
+            { x: 300, y: 350, type: '/', isPrism: false },
+            { x: 300, y: 150, type: '/', isPrism: false },
+            { x: 550, y: 350, type: '\\', isPrism: false },
+        ],
+    },
+
+    // LEVEL 5: 3 anchors + 1 prism.
+    // right→A(/)→up→P(prism)→splits left+right
+    //   right beam→B(\)→down→C(\)→right→crystal
+    //   left beam illuminates dark zone for safe passage
+    {
+        playerStart: { x: 80, y: 490 },
+        sunSource: { x: 0, y: 400 },
+        crystal: { x: 880, y: 400 },
+        shadowSpeed: 45,
+        shadowDelay: 5000,
+        platforms: [
+            { x: 0, y: 544, w: 960, h: 96 },
+            { x: 260, y: 468, w: 100, h: 16 },
+            { x: 260, y: 416, w: 100, h: 16 },
+            { x: 260, y: 340, w: 100, h: 16 },
+            { x: 260, y: 264, w: 100, h: 16 },
+            { x: 260, y: 216, w: 100, h: 16 },
+            { x: 400, y: 264, w: 160, h: 16 },
+            { x: 560, y: 216, w: 100, h: 16 },
+            { x: 560, y: 264, w: 100, h: 16 },
+            { x: 560, y: 340, w: 100, h: 16 },
+            { x: 560, y: 416, w: 100, h: 16 },
+            { x: 560, y: 468, w: 100, h: 16 },
+        ],
+        walls: [],
+        darkZones: [
+            { x: 80, y: 300, w: 180, h: 244 },
+        ],
+        anchors: [
+            { x: 300, y: 400, type: '/', isPrism: false },
+            { x: 300, y: 200, type: 'prism', isPrism: true },
+            { x: 600, y: 200, type: '\\', isPrism: false },
+            { x: 600, y: 400, type: '\\', isPrism: false },
+        ],
+    },
+
+    // LEVEL 6: 4 anchors, A in dark zone (left third).
+    // right→A(\)→down→B(\)→right→C(/)→up→D(/)→right→crystal
+    {
+        playerStart: { x: 400, y: 490 },
+        sunSource: { x: 0, y: 200 },
+        crystal: { x: 880, y: 200 },
+        shadowSpeed: 55,
+        shadowDelay: 6000,
+        platforms: [
+            { x: 0, y: 544, w: 960, h: 96 },
+            { x: 110, y: 496, w: 80, h: 16 },
+            { x: 110, y: 420, w: 80, h: 16 },
+            { x: 110, y: 344, w: 80, h: 16 },
+            { x: 110, y: 268, w: 80, h: 16 },
+            { x: 110, y: 216, w: 80, h: 16 },
+            { x: 460, y: 496, w: 80, h: 16 },
+            { x: 460, y: 420, w: 80, h: 16 },
+            { x: 460, y: 344, w: 80, h: 16 },
+            { x: 460, y: 268, w: 80, h: 16 },
+            { x: 460, y: 216, w: 80, h: 16 },
+        ],
+        walls: [],
+        darkZones: [
+            { x: 0, y: 0, w: 280, h: 544 },
+        ],
+        anchors: [
+            { x: 150, y: 200, type: '\\', isPrism: false },
+            { x: 150, y: 480, type: '\\', isPrism: false },
+            { x: 500, y: 480, type: '/', isPrism: false },
+            { x: 500, y: 200, type: '/', isPrism: false },
+        ],
+    },
+
+    // LEVEL 7: 4 anchors + shadow moth.
+    // right→shadow(/)→up→A(/)→right→B(\)→down→linked(\)→right→crystal
+    // Shadow anchor activated when player perches linked anchor.
+    {
+        playerStart: { x: 480, y: 490 },
+        sunSource: { x: 0, y: 320 },
+        crystal: { x: 900, y: 320 },
+        shadowSpeed: 65,
+        shadowDelay: 8000,
+        platforms: [
+            { x: 0, y: 544, w: 960, h: 96 },
+            { x: 200, y: 468, w: 80, h: 16 },
+            { x: 200, y: 392, w: 80, h: 16 },
+            { x: 200, y: 336, w: 80, h: 16 },
+            { x: 200, y: 260, w: 80, h: 16 },
+            { x: 200, y: 184, w: 80, h: 16 },
+            { x: 200, y: 136, w: 80, h: 16 },
+            { x: 380, y: 260, w: 200, h: 16 },
+            { x: 560, y: 136, w: 80, h: 16 },
+            { x: 560, y: 184, w: 80, h: 16 },
+            { x: 560, y: 260, w: 80, h: 16 },
+            { x: 560, y: 336, w: 80, h: 16 },
+            { x: 560, y: 392, w: 80, h: 16 },
+            { x: 560, y: 468, w: 80, h: 16 },
+        ],
+        walls: [],
+        darkZones: [],
+        anchors: [
+            { x: 240, y: 320, type: '/', isPrism: false },
+            { x: 600, y: 320, type: '\\', isPrism: false },
+            { x: 240, y: 120, type: '/', isPrism: false },
+            { x: 600, y: 120, type: '\\', isPrism: false },
+        ],
+    },
+];
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+function lerpColor(colorA, colorB, t) {
+    const rA = (colorA >> 16) & 0xFF, gA = (colorA >> 8) & 0xFF, bA = colorA & 0xFF;
+    const rB = (colorB >> 16) & 0xFF, gB = (colorB >> 8) & 0xFF, bB = colorB & 0xFF;
+    const r = Math.round(rA + (rB - rA) * t);
+    const g = Math.round(gA + (gB - gA) * t);
+    const b = Math.round(bA + (bB - bA) * t);
+    return (r << 16) | (g << 8) | b;
+}
+
+function rayIntersectAABB(rayX, rayY, dirX, dirY, rect) {
+    if (dirX === 0 && dirY === 0) return null;
+    let tmin = -Infinity, tmax = Infinity;
+    if (dirX !== 0) {
+        let t1 = (rect.x - rayX) / dirX;
+        let t2 = (rect.x + rect.w - rayX) / dirX;
+        tmin = Math.max(tmin, Math.min(t1, t2));
+        tmax = Math.min(tmax, Math.max(t1, t2));
+    } else {
+        if (rayX < rect.x || rayX > rect.x + rect.w) return null;
+    }
+    if (dirY !== 0) {
+        let t1 = (rect.y - rayY) / dirY;
+        let t2 = (rect.y + rect.h - rayY) / dirY;
+        tmin = Math.max(tmin, Math.min(t1, t2));
+        tmax = Math.min(tmax, Math.max(t1, t2));
+    } else {
+        if (rayY < rect.y || rayY > rect.y + rect.h) return null;
+    }
+    if (tmin > tmax || tmax < 0) return null;
+    let t = (tmin > 0) ? tmin : tmax;
+    if (t < 0) return null;
+    return { point: { x: rayX + dirX * t, y: rayY + dirY * t }, dist: t };
+}
+
+function rayIntersectScreenEdge(rayX, rayY, dirX, dirY) {
+    let minT = Infinity;
+    if (dirX > 0) minT = Math.min(minT, (960 - rayX) / dirX);
+    if (dirX < 0) minT = Math.min(minT, (0 - rayX) / dirX);
+    if (dirY > 0) minT = Math.min(minT, (640 - rayY) / dirY);
+    if (dirY < 0) minT = Math.min(minT, (0 - rayY) / dirY);
+    if (minT === Infinity || minT < 0) minT = 0;
+    return { point: { x: rayX + dirX * minT, y: rayY + dirY * minT }, dist: minT };
+}
+
+function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+    let t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+    const projX = x1 + t * dx, projY = y1 + t * dy;
+    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+}
+
+// ============================================================
+// TITLE SCENE
+// ============================================================
+class TitleScene extends Phaser.Scene {
+    constructor() { super('TitleScene'); }
+
+    create() {
+        this.cameras.main.setBackgroundColor('#0A0005');
+        this.mothX = 480;
+        this.mothY = 280;
+        this.titleRevealed = false;
+        this.beamX = -100;
+        this.starting = false;
+
+        this.mothGfx = this.add.graphics();
+        this.beamGfx = this.add.graphics();
+
+        this.titleText = this.add.text(480, 180, 'Last Light', {
+            fontSize: '48px', fontFamily: 'Georgia, serif', color: '#FFD54F',
+        }).setOrigin(0.5).setAlpha(0);
+
+        this.promptText = this.add.text(480, 420, 'Click to begin', {
+            fontSize: '20px', fontFamily: 'monospace', color: '#FFFFFF',
+        }).setOrigin(0.5).setAlpha(0.4);
+
+        this.tweens.add({
+            targets: this.promptText, alpha: { from: 0.4, to: 1.0 },
+            duration: 1500, yoyo: true, repeat: -1,
+        });
+
+        this.tweens.add({
+            targets: this, mothY: { from: 272, to: 288 },
+            duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+        });
+
+        this.input.on('pointerdown', () => this.startGame());
+        this.input.keyboard.on('keydown', () => this.startGame());
+    }
+
+    drawMothClosed() {
+        this.mothGfx.clear();
+        const mx = this.mothX, my = this.mothY;
+        this.mothGfx.fillStyle(0x1A0033, 1);
+        this.mothGfx.fillEllipse(mx, my, 10, 14);
+        this.mothGfx.lineStyle(2, 0x2D1050, 0.6);
+        this.mothGfx.lineBetween(mx - 3, my - 4, mx - 5, my + 5);
+        this.mothGfx.lineBetween(mx + 3, my - 4, mx + 5, my + 5);
+    }
+
+    drawMothOpen() {
+        this.mothGfx.clear();
+        const mx = this.mothX, my = this.mothY;
+        this.mothGfx.fillStyle(0xFFFDE7, 0.25);
+        this.mothGfx.fillCircle(mx, my, 40);
+        this.mothGfx.fillStyle(0xFFD54F, 0.85);
+        this.mothGfx.fillTriangle(mx - 4, my, mx - 16, my - 12, mx - 8, my + 6);
+        this.mothGfx.fillTriangle(mx + 4, my, mx + 16, my - 12, mx + 8, my + 6);
+        this.mothGfx.fillStyle(0xFFF8E1, 1);
+        this.mothGfx.fillEllipse(mx, my, 10, 14);
+    }
+
+    update(time, delta) {
+        const dt = delta / 1000;
+        this.beamX += 240 * dt;
+        if (this.beamX > 1060) this.beamX = -100;
+
+        this.beamGfx.clear();
+        this.beamGfx.lineStyle(14, 0xFFD54F, 0.12);
+        this.beamGfx.lineBetween(this.beamX - 480, 280, this.beamX, 280);
+        this.beamGfx.lineStyle(4, 0xFFD54F, 0.9);
+        this.beamGfx.lineBetween(this.beamX - 480, 280, this.beamX, 280);
+
+        if (!this.titleRevealed && Math.abs(this.beamX - 480) < 60) {
+            this.titleRevealed = true;
+            for (let i = 0; i < 12; i++) {
+                const p = this.add.circle(this.mothX, this.mothY, 2, 0xFFD54F, 0.8);
+                this.tweens.add({
+                    targets: p,
+                    x: p.x + Phaser.Math.Between(-40, 40),
+                    y: p.y + Phaser.Math.Between(-40, 40),
+                    alpha: 0, duration: 600,
+                    onComplete: () => p.destroy(),
+                });
+            }
+            this.tweens.add({ targets: this.titleText, alpha: 1, duration: 500 });
+        }
+
+        if (this.titleRevealed) this.drawMothOpen();
+        else this.drawMothClosed();
+    }
+
+    startGame() {
+        if (this.starting) return;
+        this.starting = true;
+        this.cameras.main.fadeOut(300, 0, 0, 0);
+        this.time.delayedCall(300, () => {
+            this.scene.start('TransitionScene', { level: 1 });
+        });
+    }
+}
+
+// ============================================================
+// TRANSITION SCENE
+// ============================================================
+class TransitionScene extends Phaser.Scene {
+    constructor() { super('TransitionScene'); }
+
+    create(data) {
+        this.cameras.main.setBackgroundColor('#000000');
+        const levelNum = data.level || 1;
+
+        const narratives = {
+            1: null,
+            2: 'The light fades faster than you remember.',
+            3: 'To cross the dark, you must become it.',
+            4: 'Not every path leads where you need.',
+            5: 'Light bends. Light splits. Light finds a way.',
+            6: 'The deepest anchor lies where you fear to go.',
+            7: 'You have seen the shadow move.\nIt was always you.',
+        };
+
+        const text = this.add.text(480, 300, `Level ${levelNum}`, {
+            fontSize: '36px', fontFamily: 'Georgia, serif', color: '#FFD54F',
+        }).setOrigin(0.5).setAlpha(0);
+
+        const narrative = narratives[levelNum];
+        let subtitle = null;
+        if (narrative) {
+            subtitle = this.add.text(480, 350, narrative, {
+                fontSize: '15px', fontFamily: 'Georgia, serif', color: '#D4C8A0',
+                align: 'center',
+            }).setOrigin(0.5).setAlpha(0);
+        }
+
+        const holdTime = narrative ? 2200 : 1200;
+        const totalTime = holdTime + 300;
+
+        this.tweens.add({ targets: text, alpha: 1, duration: 300 });
+        if (subtitle) {
+            this.tweens.add({ targets: subtitle, alpha: 0.7, duration: 500, delay: 200 });
+        }
+        this.time.delayedCall(holdTime, () => {
+            this.tweens.add({ targets: text, alpha: 0, duration: 300 });
+            if (subtitle) this.tweens.add({ targets: subtitle, alpha: 0, duration: 300 });
+        });
+        this.time.delayedCall(totalTime, () => {
+            this.scene.start('GameScene', { level: levelNum });
+        });
+    }
+}
+
+// ============================================================
+// GAME SCENE
+// ============================================================
+class GameScene extends Phaser.Scene {
+    constructor() { super('GameScene'); }
+
+    create(data) {
+        this.levelNum = data.level || 1;
+        this.levelData = LEVEL_DATA[this.levelNum];
+
+        // State
+        this.currentForm = 'light';
+        this.isPerched = false;
+        this.perchedAnchor = null;
+        this.shadowX = -100;
+        this.shadowActive = false;
+        this.shadowFadeTimer = 0;
+        this.beamBurnTimer = 0;
+        this.formToggleCooldown = 0;
+        this.echoes = [];
+        this.levelComplete = false;
+        this.beamSegments = [];
+        this.beamReachedCrystal = false;
+        this.wingFrame = 0;
+        this.wingTimer = 0;
+        this.isDead = false;
+        this.crystalActive = false;
+
+        // --- DRAW LAYERS (ordered back to front) ---
+
+        // Background gradient (depth 0)
+        this.bgGfx = this.add.graphics().setDepth(0);
+        const colors = LEVEL_COLORS[this.levelNum];
+        for (let y = 0; y < 640; y++) {
+            const c = lerpColor(colors.top, colors.bottom, y / 639);
+            this.bgGfx.lineStyle(1, c, 1);
+            this.bgGfx.lineBetween(0, y, 960, y);
+        }
+
+        // Dark zones (depth 1)
+        this.darkZoneGfx = this.add.graphics().setDepth(1);
+        if (this.levelData.darkZones) {
+            for (const dz of this.levelData.darkZones) {
+                this.darkZoneGfx.fillStyle(0x000000, 0.9);
+                this.darkZoneGfx.fillRect(dz.x, dz.y, dz.w, dz.h);
+            }
+        }
+
+        // Platforms & walls (depth 2)
+        this.platformGroup = this.physics.add.staticGroup();
+        this.platformRects = [];
+        for (const p of this.levelData.platforms) {
+            const plat = this.add.rectangle(p.x + p.w / 2, p.y + p.h / 2, p.w, p.h, 0x1A120A).setDepth(2);
+            plat.setStrokeStyle(1, 0x3D2B1A);
+            this.physics.add.existing(plat, true);
+            this.platformGroup.add(plat);
+            this.platformRects.push(p);
+        }
+        this.wallRects = [];
+        for (const w of this.levelData.walls) {
+            const wall = this.add.rectangle(w.x + w.w / 2, w.y + w.h / 2, w.w, w.h, 0x1A120A).setDepth(2);
+            wall.setStrokeStyle(1, 0x3D2B1A);
+            this.physics.add.existing(wall, true);
+            this.platformGroup.add(wall);
+            this.wallRects.push(w);
+        }
+
+        // Sun source (depth 3)
+        this.sunGfx = this.add.graphics().setDepth(3);
+        const sx = this.levelData.sunSource.x, sy = this.levelData.sunSource.y;
+        this.sunGfx.fillStyle(0xFFF176, 0.3);
+        this.sunGfx.fillCircle(sx, sy, 40);
+        this.sunGfx.fillStyle(0xFFF176, 1);
+        this.sunGfx.fillCircle(sx, sy, 24);
+        // Mask left half (off-screen)
+        this.sunGfx.fillStyle(0x000000, 1);
+        this.sunGfx.fillRect(sx - 50, sy - 50, 50, 100);
+
+        // Shadow wall (depth 4)
+        this.shadowWallGfx = this.add.graphics().setDepth(4);
+
+        // Beam (depth 5)
+        this.beamGfx = this.add.graphics().setDepth(5);
+
+        // Anchor visuals (depth 6)
+        this.anchorGfx = this.add.graphics().setDepth(6);
+        this.anchorTime = 0;
+
+        // Echo visuals (depth 7)
+        this.echoGfx = this.add.graphics().setDepth(7);
+
+        // Crystal (depth 8)
+        this.crystalGfx = this.add.graphics().setDepth(8);
+        this.drawCrystal(false);
+
+        // Moth glow (depth 9), moth body (depth 10)
+        this.mothGlowGfx = this.add.graphics().setDepth(9);
+        this.mothGfx = this.add.graphics().setDepth(10);
+
+        // Shadow moth (depth 4.5 — inside shadow)
+        this.shadowMothGfx = this.add.graphics().setDepth(4.5);
+        this.shadowMothVisible = this.levelNum >= 4;
+        this.shadowAnchorActive = false;
+
+        // Anchors data
+        this.anchorObjects = [];
+        for (let i = 0; i < this.levelData.anchors.length; i++) {
+            const a = this.levelData.anchors[i];
+            this.anchorObjects.push({
+                x: a.x, y: a.y,
+                deflectionType: a.type,
+                isPrism: a.isPrism || false,
+                isConsumed: false,
+                index: i,
+            });
+        }
+
+        // Player moth (physics body, invisible sprite)
+        this.moth = this.physics.add.sprite(this.levelData.playerStart.x, this.levelData.playerStart.y, '__DEFAULT');
+        this.moth.setVisible(false);
+        this.moth.setSize(24, 28);
+        this.moth.setOffset(4, 2);
+        this.moth.body.setGravityY(800);
+        this.moth.setCollideWorldBounds(true);
+        this.physics.add.collider(this.moth, this.platformGroup);
+
+        // UI (depth 20)
+        this.levelText = this.add.text(16, 16, `Level ${this.levelNum} / 7`, {
+            fontSize: '16px', fontFamily: 'monospace', color: '#FFFFFF',
+        }).setAlpha(0.7).setDepth(20);
+
+        this.formIndicatorGfx = this.add.graphics().setDepth(20);
+        this.drawFormIndicator();
+
+        // Hints
+        this.activeHints = [];
+        this.setupHints();
+
+        // Input
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keyW = this.input.keyboard.addKey('W');
+        this.keyA = this.input.keyboard.addKey('A');
+        this.keyD = this.input.keyboard.addKey('D');
+        this.keySpace = this.input.keyboard.addKey('SPACE');
+        this.keyShift = this.input.keyboard.addKey('SHIFT');
+
+        // Shadow delay (per-level, default 3s)
+        const shadowDelay = this.levelData.shadowDelay || 3000;
+        this.time.delayedCall(shadowDelay, () => { this.shadowActive = true; });
+
+        this.cameras.main.fadeIn(300);
+    }
+
+    // ========== DRAWING ==========
+
+    drawCrystal(active) {
+        this.crystalGfx.clear();
+        const cx = this.levelData.crystal.x, cy = this.levelData.crystal.y;
+        if (active) {
+            const pulse = 40 + 20 * Math.sin(this.time.now / 300);
+            this.crystalGfx.fillStyle(0xFFD54F, 0.3);
+            this.crystalGfx.fillCircle(cx, cy, pulse);
+            this.crystalGfx.fillStyle(0xFFD54F, 1);
+        } else {
+            this.crystalGfx.fillStyle(0x4A4A4A, 1);
+        }
+        this.crystalGfx.fillTriangle(cx, cy - 16, cx + 16, cy, cx, cy + 16);
+        this.crystalGfx.fillTriangle(cx, cy - 16, cx - 16, cy, cx, cy + 16);
+        const stroke = active ? 0xFFECB3 : 0x616161;
+        this.crystalGfx.lineStyle(2, stroke, 1);
+        this.crystalGfx.strokeTriangle(cx, cy - 16, cx + 16, cy, cx, cy + 16);
+        this.crystalGfx.strokeTriangle(cx, cy - 16, cx - 16, cy, cx, cy + 16);
+    }
+
+    drawMoth() {
+        this.mothGfx.clear();
+        this.mothGlowGfx.clear();
+        const mx = this.moth.x, my = this.moth.y;
+
+        if (this.currentForm === 'light') {
+            if (this.isPerched) {
+                this.mothGlowGfx.fillStyle(0xFFFDE7, 0.25);
+                this.mothGlowGfx.fillCircle(mx, my, 56);
+                this.mothGfx.fillStyle(0xFFD54F, 0.85);
+                this.mothGfx.fillTriangle(mx - 4, my, mx - 20, my - 14, mx - 10, my + 8);
+                this.mothGfx.fillTriangle(mx + 4, my, mx + 20, my - 14, mx + 10, my + 8);
+                this.mothGfx.fillStyle(0xFFF8E1, 1);
+                this.mothGfx.fillEllipse(mx, my, 10, 14);
+                this.mothGfx.lineStyle(1, 0xFFD54F, 0.3);
+                this.mothGfx.lineBetween(mx - 20, my - 14, mx - 32, my - 20);
+                this.mothGfx.lineBetween(mx + 20, my - 14, mx + 32, my - 20);
+                this.mothGfx.lineBetween(mx - 10, my + 8, mx - 18, my + 16);
+                this.mothGfx.lineBetween(mx + 10, my + 8, mx + 18, my + 16);
+            } else {
+                this.mothGlowGfx.fillStyle(0xFFFDE7, 0.25);
+                this.mothGlowGfx.fillCircle(mx, my, 40);
+                const flutter = this.wingFrame === 0 ? 0 : 2;
+                this.mothGfx.fillStyle(0xFFD54F, 0.85);
+                this.mothGfx.fillTriangle(mx - 4, my, mx - 16, my - 12 + flutter, mx - 8, my + 6);
+                this.mothGfx.fillTriangle(mx + 4, my, mx + 16, my - 12 + flutter, mx + 8, my + 6);
+                this.mothGfx.fillStyle(0xFFF8E1, 1);
+                this.mothGfx.fillEllipse(mx, my, 10, 14);
+            }
+        } else {
+            this.mothGfx.fillStyle(0x1A0033, 1);
+            this.mothGfx.fillEllipse(mx, my, 10, 14);
+            this.mothGfx.lineStyle(2, 0x2D1050, 0.6);
+            this.mothGfx.lineBetween(mx - 3, my - 4, mx - 5, my + 5);
+            this.mothGfx.lineBetween(mx + 3, my - 4, mx + 5, my + 5);
+        }
+    }
+
+    drawAnchors() {
+        this.anchorGfx.clear();
+        this.anchorTime += 1 / 60;
+        for (const anchor of this.anchorObjects) {
+            const ax = anchor.x, ay = anchor.y;
+            if (anchor.isConsumed) {
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    this.anchorGfx.fillStyle(0x333333, 0.3);
+                    this.anchorGfx.fillCircle(ax + Math.cos(angle) * 6, ay + Math.sin(angle) * 6, 2);
+                }
+                continue;
+            }
+
+            const isOccupied = this.isPerched && this.perchedAnchor === anchor;
+            const speed = isOccupied ? 1.0 : 3.0;
+            const baseAngle = (this.anchorTime / speed) * Math.PI * 2;
+            const alpha = isOccupied ? 1.0 : 0.6;
+
+            if (isOccupied) {
+                this.anchorGfx.fillStyle(0xFFD54F, 0.15);
+                this.anchorGfx.fillCircle(ax, ay, 24);
+            }
+
+            if (anchor.isPrism) {
+                const hue = (this.anchorTime / 4) % 1;
+                const rgb = Phaser.Display.Color.HSLToColor(hue, 0.8, 0.6);
+                const color = Phaser.Display.Color.GetColor(rgb.r, rgb.g, rgb.b);
+                for (let i = 0; i < 8; i++) {
+                    const angle = baseAngle + (i / 8) * Math.PI * 2;
+                    this.anchorGfx.fillStyle(color, alpha);
+                    this.anchorGfx.fillCircle(ax + Math.cos(angle) * 6, ay + Math.sin(angle) * 6, 2);
+                }
+                this.anchorGfx.fillStyle(0xFFFFFF, 0.5);
+                this.anchorGfx.fillTriangle(ax, ay - 4, ax + 4, ay, ax, ay + 4);
+                this.anchorGfx.fillTriangle(ax, ay - 4, ax - 4, ay, ax, ay + 4);
+            } else {
+                for (let i = 0; i < 6; i++) {
+                    const angle = baseAngle + (i / 6) * Math.PI * 2;
+                    this.anchorGfx.fillStyle(0xFFD54F, alpha);
+                    this.anchorGfx.fillCircle(ax + Math.cos(angle) * 6, ay + Math.sin(angle) * 6, 2);
+                }
+                this.anchorGfx.lineStyle(2, 0xFFD54F, 0.2);
+                if (anchor.deflectionType === '/') {
+                    this.anchorGfx.lineBetween(ax - 6, ay + 6, ax + 6, ay - 6);
+                } else {
+                    this.anchorGfx.lineBetween(ax - 6, ay - 6, ax + 6, ay + 6);
+                }
+            }
+        }
+    }
+
+    drawFormIndicator() {
+        this.formIndicatorGfx.clear();
+        const x = 24, y = 608;
+        if (this.currentForm === 'light') {
+            this.formIndicatorGfx.fillStyle(0xFFD54F, 1);
+            this.formIndicatorGfx.fillCircle(x, y, 10);
+            this.formIndicatorGfx.lineStyle(2, 0xFFD54F, 0.8);
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2;
+                this.formIndicatorGfx.lineBetween(
+                    x + Math.cos(angle) * 12, y + Math.sin(angle) * 12,
+                    x + Math.cos(angle) * 18, y + Math.sin(angle) * 18
+                );
+            }
+        } else {
+            this.formIndicatorGfx.fillStyle(0x4A148C, 1);
+            this.formIndicatorGfx.fillCircle(x, y, 10);
+            this.formIndicatorGfx.fillStyle(0x000000, 1);
+            this.formIndicatorGfx.fillCircle(x + 5, y - 2, 8);
+        }
+    }
+
+    drawShadowWall() {
+        this.shadowWallGfx.clear();
+        if (this.shadowX <= 0) return;
+        this.shadowWallGfx.fillStyle(0x000000, 1);
+        this.shadowWallGfx.fillRect(0, 0, Math.max(0, this.shadowX), 640);
+        for (let i = 0; i < 60; i++) {
+            this.shadowWallGfx.fillStyle(0x0A0020, 0.85 * (1 - i / 60));
+            this.shadowWallGfx.fillRect(this.shadowX + i, 0, 1, 640);
+        }
+    }
+
+    drawEchoes() {
+        this.echoGfx.clear();
+        for (const echo of this.echoes) {
+            const ex = echo.x, ey = echo.y;
+            if (echo.glowRadius > 0) {
+                this.echoGfx.fillStyle(0xFFD54F, 0.2 * (echo.alpha / 0.9));
+                this.echoGfx.fillCircle(ex, ey, echo.glowRadius);
+            }
+            this.echoGfx.fillStyle(0xFFD54F, echo.alpha);
+            this.echoGfx.fillTriangle(ex - 4, ey, ex - 18, ey - 12, ex - 8, ey + 6);
+            this.echoGfx.fillTriangle(ex + 4, ey, ex + 18, ey - 12, ex + 8, ey + 6);
+            this.echoGfx.fillEllipse(ex, ey, 8, 12);
+
+            const barW = 32 * (echo.timer / 14.0);
+            this.echoGfx.fillStyle(0x333333, 0.5 * (echo.alpha / 0.9));
+            this.echoGfx.fillRect(ex - 16, ey - 28, 32, 3);
+            this.echoGfx.fillStyle(0xFFD54F, echo.alpha);
+            this.echoGfx.fillRect(ex - 16, ey - 28, barW, 3);
+        }
+    }
+
+    drawShadowMoth() {
+        this.shadowMothGfx.clear();
+        if (!this.shadowMothVisible || this.shadowX <= 0) return;
+
+        const smx = Math.max(0, Math.min(this.shadowX, this.shadowX - (this.moth.x - this.shadowX)));
+        const smy = this.moth.y;
+        const alpha = this.levelNum < 7 ? 0.08 : 0.7;
+
+        if (this.levelNum === 7) {
+            this.shadowMothGfx.fillStyle(0x1A0033, 0.15);
+            this.shadowMothGfx.fillCircle(smx, smy, 32);
+        }
+
+        this.shadowMothGfx.fillStyle(0x1A0033, alpha);
+        this.shadowMothGfx.fillEllipse(smx, smy, 10, 14);
+        this.shadowMothGfx.lineStyle(2, 0x2D1050, alpha * 0.6);
+        this.shadowMothGfx.lineBetween(smx - 3, smy - 4, smx - 5, smy + 5);
+        this.shadowMothGfx.lineBetween(smx + 3, smy - 4, smx + 5, smy + 5);
+    }
+
+    renderBeam() {
+        this.beamGfx.clear();
+        for (const seg of this.beamSegments) {
+            this.beamGfx.lineStyle(14, 0xFFD54F, 0.12);
+            this.beamGfx.lineBetween(seg.x1, seg.y1, seg.x2, seg.y2);
+            this.beamGfx.lineStyle(4, 0xFFD54F, 0.9);
+            this.beamGfx.lineBetween(seg.x1, seg.y1, seg.x2, seg.y2);
+        }
+    }
+
+    // ========== HINTS ==========
+
+    setupHints() {
+        if (this.levelNum === 1) {
+            const h1 = this.add.text(480, 520, 'Arrow Keys / WASD to Move', {
+                fontSize: '13px', fontFamily: 'monospace', color: '#FFFFFF',
+            }).setOrigin(0.5).setAlpha(0.6).setDepth(20);
+            this.activeHints.push({ text: h1, autoFade: 6000, timer: 0 });
+
+            const anchor = this.anchorObjects[0];
+            const h2 = this.add.text(anchor.x, anchor.y + 30, 'Press SPACE near anchor to perch', {
+                fontSize: '13px', fontFamily: 'monospace', color: '#FFFFFF',
+            }).setOrigin(0.5).setAlpha(0).setDepth(20);
+            this.activeHints.push({ text: h2, showNearAnchor: true, triggered: false, anchor: anchor });
+        } else if (this.levelNum === 2) {
+            const h = this.add.text(480, 520, 'Your echo lingers...', {
+                fontSize: '13px', fontFamily: 'monospace', color: '#FFFFFF',
+            }).setOrigin(0.5).setAlpha(0).setDepth(20);
+            this.activeHints.push({ text: h, showOnFirstEcho: true, triggered: false });
+        } else if (this.levelNum === 3) {
+            const h = this.add.text(480, 520, 'Press SHIFT to enter shadow form', {
+                fontSize: '13px', fontFamily: 'monospace', color: '#FFFFFF',
+            }).setOrigin(0.5).setAlpha(0).setDepth(20);
+            this.activeHints.push({ text: h, autoShow: 2000, timer: 0, triggered: false });
+        }
+    }
+
+    updateHints(delta) {
+        for (const hint of this.activeHints) {
+            if (hint.autoFade !== undefined) {
+                hint.timer += delta;
+                if (hint.timer > hint.autoFade && hint.text.alpha > 0) {
+                    hint.text.alpha = Math.max(0, hint.text.alpha - delta / 500);
+                }
+            }
+            if (hint.showNearAnchor && !hint.triggered) {
+                const dist = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, hint.anchor.x, hint.anchor.y);
+                if (dist < 48) {
+                    hint.triggered = true;
+                    hint.text.setAlpha(0.6);
+                    this.tweens.add({ targets: hint.text, alpha: 0, delay: 4000, duration: 500 });
+                }
+            }
+            if (hint.showOnFirstEcho && !hint.triggered && this.echoes.length > 0) {
+                hint.triggered = true;
+                hint.text.setAlpha(0.6);
+                this.tweens.add({ targets: hint.text, alpha: 0, delay: 4000, duration: 500 });
+            }
+            if (hint.autoShow !== undefined && !hint.triggered) {
+                hint.timer = (hint.timer || 0) + delta;
+                if (hint.timer > hint.autoShow) {
+                    hint.triggered = true;
+                    hint.text.setAlpha(0.6);
+                    this.tweens.add({ targets: hint.text, alpha: 0, delay: 5000, duration: 500 });
+                }
+            }
+        }
+    }
+
+    // ========== ECHO SYSTEM ==========
+
+    createEcho(anchor) {
+        for (const echo of this.echoes) {
+            if (echo.anchorRef === anchor) {
+                echo.timer = 14.0;
+                echo.alpha = 0.9;
+                echo.glowRadius = 48;
+                return;
+            }
+        }
+        if (this.echoes.length >= 4) {
+            this.destroyEcho(this.echoes[0], 'replaced');
+            this.echoes.shift();
+        }
+        this.echoes.push({
+            anchorRef: anchor,
+            x: anchor.x, y: anchor.y,
+            timer: 14.0, alpha: 0.9, glowRadius: 48,
+        });
+    }
+
+    destroyEcho(echo, reason) {
+        if (reason === 'faded' || reason === 'consumed') {
+            const color = reason === 'faded' ? 0xFFD54F : 0x333333;
+            for (let i = 0; i < 8; i++) {
+                const p = this.add.circle(echo.x, echo.y, 2, color, 0.5).setDepth(12);
+                this.tweens.add({
+                    targets: p,
+                    x: echo.x + Phaser.Math.Between(-40, 40),
+                    y: echo.y + Phaser.Math.Between(-40, 40),
+                    alpha: 0, duration: reason === 'faded' ? 400 : 300,
+                    onComplete: () => p.destroy(),
+                });
+            }
+        }
+    }
+
+    // ========== BEAM CALCULATION ==========
+
+    calculateBeam() {
+        this.beamSegments = [];
+        this.beamReachedCrystal = false;
+
+        const allRects = [...this.platformRects, ...this.wallRects];
+        const crystal = this.levelData.crystal;
+
+        const beamQueue = [{
+            rayX: this.levelData.sunSource.x + 24,
+            rayY: this.levelData.sunSource.y,
+            dirX: 1, dirY: 0, bounces: 0, lastDeflector: null,
+        }];
+
+        while (beamQueue.length > 0) {
+            let { rayX, rayY, dirX, dirY, bounces, lastDeflector } = beamQueue.shift();
+
+            while (bounces <= 10) {
+                let nearestDist = Infinity;
+                let nearestHit = null;
+                let nearestType = null;
+                let nearestObj = null;
+
+                // Walls and platforms
+                for (const rect of allRects) {
+                    const hit = rayIntersectAABB(rayX, rayY, dirX, dirY, rect);
+                    if (hit && hit.dist > 2 && hit.dist < nearestDist) {
+                        nearestDist = hit.dist;
+                        nearestHit = hit.point;
+                        nearestType = 'wall';
+                    }
+                }
+
+                // Perched moth (light form)
+                if (this.isPerched && this.currentForm === 'light' && this.perchedAnchor !== lastDeflector) {
+                    const mRect = { x: this.moth.x - 16, y: this.moth.y - 16, w: 32, h: 32 };
+                    const hit = rayIntersectAABB(rayX, rayY, dirX, dirY, mRect);
+                    if (hit && hit.dist > 2 && hit.dist < nearestDist) {
+                        nearestDist = hit.dist;
+                        nearestHit = hit.point;
+                        nearestType = 'moth';
+                        nearestObj = this.perchedAnchor;
+                    }
+                }
+
+                // Active echoes
+                for (const echo of this.echoes) {
+                    if (echo.alpha >= 0.1 && echo.anchorRef !== lastDeflector) {
+                        const eRect = { x: echo.x - 14, y: echo.y - 14, w: 28, h: 28 };
+                        const hit = rayIntersectAABB(rayX, rayY, dirX, dirY, eRect);
+                        if (hit && hit.dist > 2 && hit.dist < nearestDist) {
+                            nearestDist = hit.dist;
+                            nearestHit = hit.point;
+                            nearestType = 'echo';
+                            nearestObj = echo.anchorRef;
+                        }
+                    }
+                }
+
+                // Level 7 shadow anchor
+                if (this.levelNum === 7 && this.shadowAnchorActive && this.anchorObjects[0] !== lastDeflector) {
+                    const sa = this.anchorObjects[0];
+                    const saRect = { x: sa.x - 14, y: sa.y - 14, w: 28, h: 28 };
+                    const hit = rayIntersectAABB(rayX, rayY, dirX, dirY, saRect);
+                    if (hit && hit.dist > 2 && hit.dist < nearestDist) {
+                        nearestDist = hit.dist;
+                        nearestHit = hit.point;
+                        nearestType = 'echo';
+                        nearestObj = sa;
+                    }
+                }
+
+                // Crystal
+                const cRect = { x: crystal.x - 16, y: crystal.y - 16, w: 32, h: 32 };
+                const cHit = rayIntersectAABB(rayX, rayY, dirX, dirY, cRect);
+                if (cHit && cHit.dist > 2 && cHit.dist < nearestDist) {
+                    nearestDist = cHit.dist;
+                    nearestHit = cHit.point;
+                    nearestType = 'crystal';
+                }
+
+                // Screen edge
+                const boundHit = rayIntersectScreenEdge(rayX, rayY, dirX, dirY);
+                if (boundHit.dist > 0 && boundHit.dist < nearestDist) {
+                    nearestDist = boundHit.dist;
+                    nearestHit = boundHit.point;
+                    nearestType = 'boundary';
+                }
+
+                if (!nearestHit) break;
+
+                this.beamSegments.push({ x1: rayX, y1: rayY, x2: nearestHit.x, y2: nearestHit.y });
+
+                if (nearestType === 'wall' || nearestType === 'boundary') break;
+                if (nearestType === 'crystal') {
+                    this.beamReachedCrystal = true;
+                    break;
+                }
+
+                if (nearestType === 'moth' || nearestType === 'echo') {
+                    const anchor = nearestObj;
+                    bounces++;
+                    lastDeflector = anchor;
+
+                    if (anchor.isPrism) {
+                        let dir1, dir2;
+                        if (dirX !== 0) {
+                            dir1 = { dirX: 0, dirY: -1 };
+                            dir2 = { dirX: 0, dirY: 1 };
+                        } else {
+                            dir1 = { dirX: -1, dirY: 0 };
+                            dir2 = { dirX: 1, dirY: 0 };
+                        }
+                        beamQueue.push({
+                            rayX: nearestHit.x, rayY: nearestHit.y,
+                            dirX: dir2.dirX, dirY: dir2.dirY, bounces: bounces,
+                            lastDeflector: anchor,
+                        });
+                        dirX = dir1.dirX;
+                        dirY = dir1.dirY;
+                    } else {
+                        let newDirX, newDirY;
+                        if (anchor.deflectionType === '/') {
+                            newDirX = -dirY;
+                            newDirY = -dirX;
+                        } else { // "\"
+                            newDirX = dirY;
+                            newDirY = dirX;
+                        }
+                        dirX = newDirX;
+                        dirY = newDirY;
+                    }
+
+                    rayX = nearestHit.x;
+                    rayY = nearestHit.y;
+                }
+            }
+        }
+    }
+
+    // ========== SURVIVAL CHECKS ==========
+
+    isInDarkZone(px, py) {
+        if (!this.levelData.darkZones) return false;
+        for (const dz of this.levelData.darkZones) {
+            if (px >= dz.x && px <= dz.x + dz.w && py >= dz.y && py <= dz.y + dz.h) return true;
+        }
+        return false;
+    }
+
+    isInEchoSafeZone(px, py) {
+        for (const echo of this.echoes) {
+            if (echo.alpha >= 0.1) {
+                const dist = Phaser.Math.Distance.Between(px, py, echo.x, echo.y);
+                if (dist < echo.glowRadius) return true;
+            }
+        }
+        // Perched moth in light form creates safety
+        if (this.isPerched && this.currentForm === 'light') {
+            const dist = Phaser.Math.Distance.Between(px, py, this.moth.x, this.moth.y);
+            if (dist < 56) return true;
+        }
+        return false;
+    }
+
+    isInBeamIlluminatedZone(px, py) {
+        for (const seg of this.beamSegments) {
+            const dist = pointToSegmentDistance(px, py, seg.x1, seg.y1, seg.x2, seg.y2);
+            if (dist < 20) return true;
+        }
+        return false;
+    }
+
+    isInBeamPath(px, py) {
+        for (const seg of this.beamSegments) {
+            const dist = pointToSegmentDistance(px, py, seg.x1, seg.y1, seg.x2, seg.y2);
+            if (dist < 8) return true;
+        }
+        return false;
+    }
+
+    // ========== DEATH / LEVEL COMPLETE ==========
+
+    onDeath() {
+        if (this.isDead) return;
+        this.isDead = true;
+        this.levelComplete = true;
+
+        const color = this.currentForm === 'light' ? 0xFFD54F : 0x0A0020;
+        const a = this.currentForm === 'light' ? 0.8 : 0.6;
+        for (let i = 0; i < 12; i++) {
+            const p = this.add.circle(this.moth.x, this.moth.y, 2, color, a).setDepth(15);
+            this.tweens.add({
+                targets: p,
+                x: p.x + Phaser.Math.Between(-60, 60),
+                y: p.y + Phaser.Math.Between(-80, 20),
+                alpha: 0, duration: 600,
+                onComplete: () => p.destroy(),
+            });
+        }
+        this.moth.body.enable = false;
+        this.mothGfx.clear();
+        this.mothGlowGfx.clear();
+
+        this.time.delayedCall(600, () => {
+            this.scene.restart({ level: this.levelNum });
+        });
+    }
+
+    onLevelComplete() {
+        this.levelComplete = true;
+        this.shadowActive = false;
+        this.crystalActive = true;
+
+        this.time.delayedCall(600, () => {
+            if (this.levelNum < 7) {
+                this.scene.start('TransitionScene', { level: this.levelNum + 1 });
+            } else {
+                this.victorySequence();
+            }
+        });
+    }
+
+    victorySequence() {
+        // Save moth position for merge target
+        const mothX = this.moth.x;
+        const mothY = this.moth.y;
+        const mergeX = 480, mergeY = 300;
+
+        // Phase 1: Beam brightens, echoes glow (0-1000ms)
+        this.tweens.add({
+            targets: this.beamGfx, alpha: 1.5, duration: 800,
+        });
+        for (const echo of this.echoes) {
+            echo.timer = 14.0;
+            echo.alpha = 0.9;
+        }
+
+        // Phase 2: Shadow moth emerges and approaches (1000-3000ms)
+        this.time.delayedCall(1000, () => {
+            // Make shadow moth fully visible
+            this.shadowMothGfx.clear();
+            this._victorySmx = this.shadowX - (mothX - this.shadowX);
+            this._victorySmy = mothY;
+            this._victoryMothX = mothX;
+            this._victoryMothY = mothY;
+            this._victoryPhase = 'approach';
+            this._victoryTimer = 0;
+        });
+
+        // Phase 3: Merge flash (3000ms)
+        this.time.delayedCall(3000, () => {
+            this._victoryPhase = 'merge';
+
+            // White flash
+            const flash = this.add.circle(mergeX, mergeY, 4, 0xFFFFFF, 0.9).setDepth(25);
+            this.tweens.add({
+                targets: flash,
+                radius: 200,
+                alpha: 0,
+                duration: 800,
+                onComplete: () => flash.destroy(),
+            });
+
+            // Particle burst
+            for (let i = 0; i < 20; i++) {
+                const angle = (i / 20) * Math.PI * 2;
+                const isGold = i % 2 === 0;
+                const color = isGold ? 0xFFD54F : 0x4A1A6B;
+                const p = this.add.circle(mergeX, mergeY, 2, color, 0.8).setDepth(26);
+                this.tweens.add({
+                    targets: p,
+                    x: mergeX + Math.cos(angle) * Phaser.Math.Between(60, 120),
+                    y: mergeY + Math.sin(angle) * Phaser.Math.Between(60, 120),
+                    alpha: 0, duration: 1000,
+                    onComplete: () => p.destroy(),
+                });
+            }
+
+            // Hide original moths
+            this.mothGfx.clear();
+            this.mothGlowGfx.clear();
+            this.shadowMothGfx.clear();
+        });
+
+        // Phase 4: Twilight world + merged moth (3500ms)
+        this.time.delayedCall(3500, () => {
+            this._victoryPhase = 'twilight';
+
+            // Fade existing elements
+            this.tweens.add({ targets: this.beamGfx, alpha: 0, duration: 2000 });
+            this.tweens.add({ targets: this.echoGfx, alpha: 0, duration: 2000 });
+            this.tweens.add({ targets: this.shadowWallGfx, alpha: 0, duration: 2000 });
+            this.tweens.add({ targets: this.anchorGfx, alpha: 0, duration: 2000 });
+            this.tweens.add({ targets: this.sunGfx, alpha: 0, duration: 2000 });
+            this.tweens.add({ targets: this.crystalGfx, alpha: 0, duration: 1500 });
+            this.tweens.add({ targets: this.darkZoneGfx, alpha: 0, duration: 2000 });
+
+            // Transition background to twilight
+            const twilightGfx = this.add.graphics().setDepth(0.5).setAlpha(0);
+            for (let y = 0; y < 640; y++) {
+                const c = lerpColor(0x4A4080, 0x2A2040, y / 639);
+                twilightGfx.lineStyle(1, c, 1);
+                twilightGfx.lineBetween(0, y, 960, y);
+            }
+            this.tweens.add({ targets: twilightGfx, alpha: 1, duration: 2500 });
+
+            // Draw merged moth
+            const mergedMoth = this.add.graphics().setDepth(20).setAlpha(0);
+            // Gold wing (right)
+            mergedMoth.fillStyle(0xFFD54F, 0.85);
+            mergedMoth.fillTriangle(mergeX + 4, mergeY, mergeX + 22, mergeY - 16, mergeX + 12, mergeY + 8);
+            // Indigo wing (left)
+            mergedMoth.fillStyle(0x4A1A6B, 0.85);
+            mergedMoth.fillTriangle(mergeX - 4, mergeY, mergeX - 22, mergeY - 16, mergeX - 12, mergeY + 8);
+            // Body
+            mergedMoth.fillStyle(0xFFF8E1, 1);
+            mergedMoth.fillEllipse(mergeX, mergeY, 10, 14);
+            // Dual glow
+            mergedMoth.fillStyle(0xFFD54F, 0.1);
+            mergedMoth.fillCircle(mergeX + 10, mergeY, 40);
+            mergedMoth.fillStyle(0x4A1A6B, 0.08);
+            mergedMoth.fillCircle(mergeX - 10, mergeY, 40);
+
+            this.tweens.add({ targets: mergedMoth, alpha: 1, duration: 1000, delay: 500 });
+
+            // Gentle bob
+            this.tweens.add({
+                targets: mergedMoth, y: mergedMoth.y - 6,
+                duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+            });
+        });
+
+        // Phase 5: Text (6000ms)
+        this.time.delayedCall(6000, () => {
+            const text = this.add.text(mergeX, mergeY + 80, 'You were always both.', {
+                fontSize: '28px', fontFamily: 'Georgia, serif', color: '#D4C8A0',
+            }).setOrigin(0.5).setAlpha(0).setDepth(25);
+            this.tweens.add({ targets: text, alpha: 1, duration: 1200 });
+        });
+
+        // Phase 6: Fade to warm dark (9500ms)
+        this.time.delayedCall(9500, () => {
+            const overlay = this.add.rectangle(480, 320, 960, 640, 0x1A1818, 0).setDepth(30);
+            this.tweens.add({ targets: overlay, alpha: 1, duration: 1200 });
+        });
+
+        // Phase 7: Replay (11000ms)
+        this.time.delayedCall(11000, () => {
+            this.add.text(480, 440, 'Click to play again', {
+                fontSize: '18px', fontFamily: 'monospace', color: '#D4C8A0',
+            }).setOrigin(0.5).setAlpha(0.5).setDepth(35);
+            this.input.on('pointerdown', () => {
+                this.scene.start('TitleScene');
+            });
+        });
+    }
+
+    // ========== MAIN UPDATE ==========
+
+    update(time, delta) {
+        if (this.levelComplete) {
+            if (this.crystalActive) this.drawCrystal(true);
+
+            // Victory shadow moth approach animation
+            if (this._victoryPhase === 'approach') {
+                this._victoryTimer += delta / 1000;
+                const t = Math.min(1, this._victoryTimer / 2.0);
+                const ease = t * t * (3 - 2 * t); // smoothstep
+                const smx = this._victorySmx + (480 - this._victorySmx) * ease;
+                const smy = this._victorySmy + (300 - this._victorySmy) * ease;
+                const mx = this._victoryMothX + (480 - this._victoryMothX) * ease;
+                const my = this._victoryMothY + (300 - this._victoryMothY) * ease;
+
+                // Draw shadow moth approaching
+                this.shadowMothGfx.clear();
+                this.shadowMothGfx.fillStyle(0x1A0033, 0.15);
+                this.shadowMothGfx.fillCircle(smx, smy, 32);
+                this.shadowMothGfx.fillStyle(0x1A0033, 0.7 + 0.3 * ease);
+                this.shadowMothGfx.fillEllipse(smx, smy, 10, 14);
+                this.shadowMothGfx.fillStyle(0x2D1050, 0.6);
+                this.shadowMothGfx.fillTriangle(smx - 4, smy, smx - 16, smy - 10, smx - 8, smy + 5);
+                this.shadowMothGfx.fillTriangle(smx + 4, smy, smx + 16, smy - 10, smx + 8, smy + 5);
+
+                // Move light moth toward center too
+                this.mothGfx.clear();
+                this.mothGlowGfx.clear();
+                this.mothGlowGfx.fillStyle(0xFFFDE7, 0.25 * (1 - ease * 0.5));
+                this.mothGlowGfx.fillCircle(mx, my, 56);
+                this.mothGfx.fillStyle(0xFFD54F, 0.85);
+                this.mothGfx.fillTriangle(mx - 4, my, mx - 20, my - 14, mx - 10, my + 8);
+                this.mothGfx.fillTriangle(mx + 4, my, mx + 20, my - 14, mx + 10, my + 8);
+                this.mothGfx.fillStyle(0xFFF8E1, 1);
+                this.mothGfx.fillEllipse(mx, my, 10, 14);
+            }
+
+            return;
+        }
+
+        const deltaSec = delta / 1000;
+
+        // Wing flutter
+        this.wingTimer += delta;
+        if (this.wingTimer > 300) {
+            this.wingTimer = 0;
+            this.wingFrame = 1 - this.wingFrame;
+        }
+
+        // Form toggle
+        if (this.formToggleCooldown > 0) this.formToggleCooldown -= deltaSec;
+
+        if (Phaser.Input.Keyboard.JustDown(this.keyShift) && this.formToggleCooldown <= 0 && !this.isPerched) {
+            this.currentForm = this.currentForm === 'light' ? 'shadow' : 'light';
+            this.formToggleCooldown = 0.3;
+            this.drawFormIndicator();
+        }
+
+        // Player movement (not perched)
+        if (!this.isPerched) {
+            const speed = this.currentForm === 'light' ? 220 : 242;
+            if (this.cursors.left.isDown || this.keyA.isDown) {
+                this.moth.setVelocityX(-speed);
+            } else if (this.cursors.right.isDown || this.keyD.isDown) {
+                this.moth.setVelocityX(speed);
+            } else {
+                this.moth.setVelocityX(0);
+            }
+            if ((Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyW)) && this.moth.body.blocked.down) {
+                this.moth.setVelocityY(-380);
+            }
+        }
+
+        // Space: perch / un-perch
+        if (Phaser.Input.Keyboard.JustDown(this.keySpace)) {
+            if (this.isPerched) {
+                if (this.currentForm === 'light') {
+                    this.createEcho(this.perchedAnchor);
+                    // Echo birth shimmer
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i / 6) * Math.PI * 2;
+                        const sp = this.add.circle(
+                            this.perchedAnchor.x + Math.cos(angle) * 12,
+                            this.perchedAnchor.y + Math.sin(angle) * 12,
+                            2, 0xFFD54F, 0.7
+                        ).setDepth(11);
+                        this.tweens.add({
+                            targets: sp,
+                            x: sp.x + Math.cos(angle) * 20,
+                            y: sp.y + Math.sin(angle) * 20,
+                            alpha: 0, duration: 500,
+                            onComplete: () => sp.destroy(),
+                        });
+                    }
+                }
+                this.isPerched = false;
+                this.perchedAnchor = null;
+                this.moth.body.enable = true;
+            } else {
+                let nearest = null, bestDist = 33;
+                for (const anchor of this.anchorObjects) {
+                    if (anchor.isConsumed) continue;
+                    const dist = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, anchor.x, anchor.y);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        nearest = anchor;
+                    }
+                }
+                if (nearest) {
+                    this.isPerched = true;
+                    this.perchedAnchor = nearest;
+                    this.moth.x = nearest.x;
+                    this.moth.y = nearest.y;
+                    this.moth.setVelocity(0, 0);
+                    this.moth.body.enable = false;
+
+                    // Perch pulse effect
+                    if (this.currentForm === 'light') {
+                        for (let r = 0; r < 3; r++) {
+                            const ring = this.add.circle(nearest.x, nearest.y, 8, 0xFFD54F, 0).setDepth(11);
+                            ring.setStrokeStyle(2, 0xFFD54F, 0.6);
+                            ring._pulseLife = 1.0;
+                            this.tweens.add({
+                                targets: ring,
+                                _pulseLife: 0,
+                                duration: 600,
+                                delay: r * 100,
+                                onUpdate: () => {
+                                    const a = Math.max(0, ring._pulseLife);
+                                    ring.setStrokeStyle(2, 0xFFD54F, a * 0.6);
+                                    ring.setScale(1 + (1 - a) * (3 + r));
+                                    ring.setAlpha(a);
+                                },
+                                onComplete: () => ring.destroy(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        // Shadow wall
+        if (this.shadowActive) {
+            this.shadowX += this.levelData.shadowSpeed * deltaSec;
+
+            for (const anchor of this.anchorObjects) {
+                if (!anchor.isConsumed && anchor.x < this.shadowX) {
+                    anchor.isConsumed = true;
+                    // Echoes persist — a memory of light outlives its source
+                    if (this.isPerched && this.perchedAnchor === anchor) {
+                        this.isPerched = false;
+                        this.perchedAnchor = null;
+                        this.moth.body.enable = true;
+                    }
+                }
+            }
+        }
+
+        // Update echoes
+        for (let i = this.echoes.length - 1; i >= 0; i--) {
+            const echo = this.echoes[i];
+            echo.timer -= deltaSec;
+            echo.alpha = Math.max(0, (echo.timer / 14.0)) * 0.9;
+            echo.glowRadius = Math.max(0, (echo.timer / 14.0)) * 48;
+            if (echo.alpha < 0.1) {
+                this.destroyEcho(echo, 'faded');
+                this.echoes.splice(i, 1);
+            }
+        }
+
+        // Level 7 shadow anchor
+        if (this.levelNum === 7) {
+            const linkedAnchor = this.anchorObjects[1];
+            this.shadowAnchorActive = this.isPerched && this.perchedAnchor === linkedAnchor && this.currentForm === 'light';
+        }
+
+        // Calculate beam (once)
+        this.calculateBeam();
+
+        // Check crystal
+        if (this.beamReachedCrystal) {
+            this.onLevelComplete();
+            return;
+        }
+
+        // Survival: light form in shadow
+        if (this.currentForm === 'light' && !this.isPerched) {
+            const inShadow = (this.moth.x < this.shadowX) || this.isInDarkZone(this.moth.x, this.moth.y);
+            if (inShadow) {
+                const safe = this.isInEchoSafeZone(this.moth.x, this.moth.y) ||
+                             this.isInBeamIlluminatedZone(this.moth.x, this.moth.y);
+                if (!safe) {
+                    this.shadowFadeTimer += deltaSec;
+                    if (this.shadowFadeTimer >= 1.5) { this.onDeath(); return; }
+                } else {
+                    this.shadowFadeTimer = 0;
+                }
+            } else {
+                this.shadowFadeTimer = 0;
+            }
+        } else if (this.currentForm === 'light' && this.isPerched) {
+            this.shadowFadeTimer = 0;
+        }
+
+        // Survival: shadow form in beam
+        if (this.currentForm === 'shadow') {
+            this.shadowFadeTimer = 0;
+            if (this.isInBeamPath(this.moth.x, this.moth.y)) {
+                this.beamBurnTimer += deltaSec;
+                if (this.beamBurnTimer >= 1.0) { this.onDeath(); return; }
+            } else {
+                this.beamBurnTimer = 0;
+            }
+        }
+
+        // Draw everything
+        this.drawShadowWall();
+        this.drawAnchors();
+        this.drawEchoes();
+        this.renderBeam();
+        this.drawMoth();
+        this.drawShadowMoth();
+        this.drawCrystal(false);
+        this.updateHints(delta);
+
+        // Ambient light motes in lit area
+        if (Math.random() < 0.03) {
+            const moteX = Phaser.Math.Between(Math.max(0, Math.floor(this.shadowX + 80)), 960);
+            if (moteX < 960) {
+                const moteY = Phaser.Math.Between(40, 560);
+                const mote = this.add.circle(moteX, moteY, Phaser.Math.Between(1, 2), 0xFFD54F, 0.15).setDepth(1.5);
+                this.tweens.add({
+                    targets: mote,
+                    y: moteY - Phaser.Math.Between(20, 50),
+                    x: moteX + Phaser.Math.Between(-15, 15),
+                    alpha: 0, duration: Phaser.Math.Between(2000, 4000),
+                    onComplete: () => mote.destroy(),
+                });
+            }
+        }
+
+        // Shadow edge wisps
+        if (this.shadowX > 0 && Math.random() < 0.04) {
+            const wispY = Phaser.Math.Between(0, 640);
+            const wisp = this.add.circle(this.shadowX + Phaser.Math.Between(0, 40), wispY, 2, 0x0A0020, 0.4).setDepth(4.2);
+            this.tweens.add({
+                targets: wisp,
+                x: wisp.x + Phaser.Math.Between(10, 30),
+                y: wispY + Phaser.Math.Between(-20, 20),
+                alpha: 0, duration: 1500,
+                onComplete: () => wisp.destroy(),
+            });
+        }
+
+        // Shadow form particles
+        if (this.currentForm === 'shadow' && Math.random() < 0.05) {
+            const p = this.add.circle(
+                this.moth.x + Phaser.Math.Between(-6, 6), this.moth.y,
+                2, 0x0A0020, 0.4
+            ).setDepth(11);
+            this.tweens.add({
+                targets: p, y: p.y + 20, alpha: 0, duration: 1000,
+                onComplete: () => p.destroy(),
+            });
+        }
+    }
+}
+
+// ============================================================
+// PHASER CONFIG
+// ============================================================
+const config = {
+    type: Phaser.AUTO,
+    width: 960,
+    height: 640,
+    backgroundColor: '#000000',
+    physics: {
+        default: 'arcade',
+        arcade: { gravity: { y: 0 }, debug: false },
+    },
+    scene: [TitleScene, TransitionScene, GameScene],
+};
+
+const game = new Phaser.Game(config);
+
+</script>
+</body>
+</html>

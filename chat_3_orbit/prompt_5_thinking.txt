@@ -1,0 +1,125 @@
+
+Explored 1 file
+Read index.html
+Edited file
+index.html
++75
+-0
+
+
+    const AURORA_COLORS = [0x2dd4bf, 0x60a5fa, 0x93c5fd, 0x7dd3fc];
+
+    const LAUNCHER_CONFIG = {
+        this.pointerWasDown = false;
+        this.lastDt = 1 / 60;
+        this.movementIndex = 0;
+        this.probes = [];
+        this.pulses = [];
+        this.frozen = false;
+        const dt = clamp(delta / 1000, 1 / 60, 1 / 30);
+        this.lastDt = dt;
+
+              this.stats.onBeatLaunches += 1;
+              this.pulses.push({
+                x: this.launcher.pos.x,
+                y: this.launcher.pos.y,
+                radius: 16,
+                color: 0x8ad1ff,
+                life: 0,
+                maxLife: 0.4,
+                thickness: 2,
+                expand: 18
+              });
+            }
+                ring.lastPlayTime = time;
+                this.pulses.push({
+                  x: body.pos.x,
+                  y: body.pos.y,
+                  radius: ring.radius,
+                  color: NOTE_COLORS[ring.note] || 0xffffff,
+                  life: 0,
+                  maxLife: 0.6,
+                  thickness: ring.thickness,
+                  expand: 28
+                });
+              }
+        this.drawTwinkles(time);
+        this.drawAurora(time);
+
+          this.drawBodiesAndRings();
+          this.drawPulses();
+          this.drawProbes();
+
+      drawAurora(time) {
+        const intensity = this.getAuroraIntensity();
+        if (intensity <= 0.01) return;
+        for (let i = 0; i < 4; i++) {
+          const baseY = 40 + i * 42;
+          const amp = 10 + i * 4 + intensity * 12;
+          const color = AURORA_COLORS[i % AURORA_COLORS.length];
+          const alpha = 0.08 + intensity * 0.12;
+          this.worldGfx.fillStyle(color, alpha);
+          this.worldGfx.beginPath();
+          this.worldGfx.moveTo(0, baseY);
+          for (let x = 0; x <= WIDTH; x += 40) {
+            const wave = Math.sin(time * 0.6 + x * 0.02 + i) * amp;
+            this.worldGfx.lineTo(x, baseY + wave);
+          }
+          this.worldGfx.lineTo(WIDTH, baseY + amp + 70);
+          this.worldGfx.lineTo(0, baseY + amp + 70);
+          this.worldGfx.closePath();
+          this.worldGfx.fillPath();
+        }
+      }
+
+      drawPulses() {
+        if (!this.pulses || this.pulses.length === 0) return;
+        for (let i = this.pulses.length - 1; i >= 0; i--) {
+          const pulse = this.pulses[i];
+          pulse.life += this.lastDt;
+          const t = pulse.life / pulse.maxLife;
+          if (t >= 1) {
+            this.pulses.splice(i, 1);
+            continue;
+          }
+          const alpha = (1 - t) * 0.6;
+          const radius = pulse.radius + pulse.expand * t;
+          this.worldGfx.lineStyle(pulse.thickness, pulse.color, alpha);
+          this.worldGfx.strokeCircle(pulse.x, pulse.y, radius);
+        }
+      }
+
+      getAuroraIntensity() {
+        if (this.state === 'wonMovement' || this.state === 'complete') return 0.9;
+        if (this.state === 'playing') {
+          const progress = this.phraseBeats ? (this.phraseProgress / this.phraseBeats) : 0;
+          return 0.25 + progress * 0.6;
+        }
+        return 0.2;
+      }
+
+      drawBodiesAndRings() {
+Explored 1 file
+Read index.html
+Worked for 1m 53s
+Findings
+
+Medium (Experience): On‑beat launches and ring hits had minimal visual feedback, so the “music toy” feel was muted. I added sync bursts and ring pulses to make timing and note hits instantly legible. index.html (lines 427-753)
+Medium (Experience): The background was largely static, which dulled the “compose the sky” fantasy. I added animated aurora bands that intensify with phrase progress and on clear. index.html (lines 717-763)
+Low (Experience): Beat‑sync reward was only implied via stats, not moment‑to‑moment. The on‑beat launch pulse gives immediate payoff. index.html (lines 427-439)
+Changes applied
+
+Added aurora overlay with intensity tied to phrase progress and clear state, plus a small pulse system for ring hits and on‑beat launches. index.html
+Testing
+
+Not run (manual). Open index.html and play through the three movements to confirm the new visual feedback feels responsive.
+Next steps
+
+Play-test and tell me if the aurora/pulse intensity should be dialed up/down.
+If you want stronger musicality, I can add a subtle pad layer under movement clears.
+
+1 file changed
+Undo
+
+Review
+index.html

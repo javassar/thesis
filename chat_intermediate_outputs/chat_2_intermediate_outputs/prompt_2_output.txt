@@ -1,0 +1,406 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Echo Runner: Co-op with your past selves to conquer a 45-second looping platform puzzle.
+
+## 2. Core Insight
+- Central question: Can you coordinate with your own past actions?
+- Why this matters: It turns personal planning into a playful, tangible experience—every run teaches you to leave help for future-you, making clever foresight feel rewarding.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Run, jump, and hit switches in a short platforming level while a countdown ticks; when time expires, your run becomes a solid “echo” that replays your recorded inputs, and you begin the next loop alongside it.
+- Embodying the theme: The theme is self-cooperation. The mechanic literally makes your past choices your present teammates or obstacles. Planning routes and timings becomes a conversation with yourself across loops.
+
+## 4. Player Journey
+- Start: Player drops into a clean, blueprint-style platform room with a big “45” countdown, a single door, and a visible pressure plate. It’s readable, light, and inviting.
+- First minute: The player learns to move/jump, discovers the timer ends the run, and sees their echo appear and stand where they were—a quick aha that “my past run is now a helper.”
+- Evolution over five minutes: Each loop adds a small objective: stand on plate A to open door 1 for your next self; ride a moving platform to block a laser beam; bait a turret; body-block a rolling hazard. The player layers echoes to open a final multi-lock door.
+- Climax: The final gate requires three simultaneous conditions (two plates held and a laser blocked). Orchestrating the timing with two to three echoes creates a tense, satisfying finale within the time limit.
+- Ending: If the exit is reached, the echoes line up and salute as the timer freezes; a brief summary shows “You x Echoes: 1 Team.” If time runs out on the final allowed loop without reaching the exit, the echoes fade and the message reads “The heist slips away… this time.” The intended emotion is pride in clever coordination, even if they fall short.
+
+## 5. Game Elements
+- Player character: A small, readable runner silhouette (18x26 px) with a bright accent scarf.
+- Echo characters: Semi-transparent versions of the player, tinted cyan, solid to world and triggers.
+- Platforms/terrain: Solid rectangles with simple outline art; some moving platforms with visible tracks.
+- Pressure plates: Floor buttons that depress when stood on; show a linked cable to a nearby door.
+- Doors: Vertical portcullis-style gates that open while powered (plate pressed) or permanently when unlocked.
+- Laser emitters: Horizontal beams that are blocked by any solid body (player or echo), with pulsing light.
+- Timed switches (optional single-tap): Toggles that keep a door open for a few seconds after activation.
+- Exit door: The goal; opens only when all conditions are met, marked by a bright, inviting glow.
+- UI elements:
+  - Large loop timer (center-top).
+  - Loop counter (e.g., “Loop 2/5”) top-left.
+  - Minimal tutorial prompts fading after first use.
+  - End-card summary with time and loops used.
+- Screens:
+  - Title card with “Press Space to Start.”
+  - Main game screen (single continuous room).
+  - Ending screen (Win/Loss) with “R to Restart.”
+
+## 6. Rules & Systems
+- Player actions: Move left/right, jump, restart loop (optional), interact (for a single-tap switch if used).
+- Looping: Each loop lasts a fixed duration (45 seconds). When the timer hits zero (or if the player presses Restart), the current run’s input recording is saved, a new echo is spawned that will replay those inputs in sync with the next loop, and the player resets to the start position. Up to 4 echoes can coexist (for 5 total loops).
+- Echo behavior: Echoes replay recorded inputs from loop start; they collide with platforms, can ride moving platforms, press pressure plates, and block lasers. They are solid to the player and vice versa (can help or hinder).
+- Success/progress: The player must use echoes to satisfy simultaneous conditions (plate holds/laser blocks) to open intermediate doors and ultimately reach the exit.
+- Failure: If the player dies (falls into a hazard or laser), the current loop instantly ends and becomes the next echo. If the player reaches the maximum number of loops without opening the exit, the game ends in a loss.
+- Difficulty curve: Early door requires one plate; mid gate requires one plate plus a moving platform timing; final gate requires two plates and a laser block arranged across echoes. The room is compact to make reading and retrying quick.
+- Ending: Distinct win (exit crossed), or loss (final loop ends without exit). Total playtime targets ~5 minutes including quick restarts.
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Canvas: 960 x 540 pixels
+- Background color: 0x0e1220 (dark blue-black)
+- Visual style: Flat shapes with 2px outlines; player white fill with teal scarf; echoes cyan tinted with 60% alpha; interactive elements color-coded.
+
+Elements:
+- Player:
+  - Size: 18w x 26h
+  - Color: fill 0xFFFFFF, scarf 0x35e0c6 (optional simple anim rectangles)
+  - Start position: x=80, y=420
+  - Physics: Arcade physics, gravityY=1600, dragX=0, maxVelocityX=220, maxVelocityY=1000, bounce=0
+  - Collider: body size 18x26, offset 0,0
+- Echo:
+  - Same size/physics as player
+  - Tint: 0x35e0c6, alpha=0.6
+  - Solid to world and player
+- Platforms (static unless noted):
+  - Ground: x=0, y=500, width=960, height=40
+  - Ledges:
+    - L1: x=200, y=430, w=120, h=16
+    - L2: x=380, y=380, w=140, h=16
+    - L3: x=620, y=340, w=120, h=16
+  - Moving platform M1:
+    - Platform: x=500, y=460, w=100, h=16
+    - Path: vertical between y=460 and y=360, duration 2400ms, yoyo true, ease linear
+- Doors:
+  - Door1: x=320, y=356, w=20, h=60 (blocks path between L1 and L2)
+  - Door2: x=560, y=316, w=20, h=60 (blocks path near L2/L3)
+  - Final Door (ExitDoor): x=860, y=300, w=24, h=80 (leads to exit zone)
+  - Visual: 0x7a8899 fill, 2px outline
+- Pressure Plates:
+  - Plate A (for Door1): x=150, y=484, w=40, h=8
+  - Plate B (for Door2): x=440, y=364, w=40, h=8 (on L2)
+  - Plate C (for ExitDoor): x=720, y=324, w=40, h=8 (on L3)
+  - Visual inactive: 0x555c6e; active: 0x35e0c6
+  - Activation: pressed if any solid body overlapping top with downward contact
+- Laser:
+  - Emitter: x=700, y=350, facing left
+  - Beam: horizontal from x=700 to x=600 (length 100)
+  - Cycle: on for 1200ms, off for 800ms, repeating
+  - Blocking: if any solid body overlaps beam line segment, beam is blocked (no damage)
+  - Damage: if beam on and not blocked, any overlapping player/echo dies (for player) or continues (for echo, echoes do not die—optional setting: echoes ignore damage for simplicity)
+- Exit Zone:
+  - x=900, y=300, w=40, h=80 (behind Final Door)
+  - On overlap by player with Final Door open: win
+- Cables/Indicators:
+  - Drawn lines from Plates to their Doors
+  - Door open state glow: 0x35e0c6 border pulsing
+
+Text:
+- Title screen:
+  - “ECHO RUNNER” centered, font “Monospace”, size 48px, color 0xFFFFFF
+  - “Press Space to Start” size 20px, color 0x35e0c6
+- HUD:
+  - Timer: top-center, text “00:45” countdown, font 28px, color 0xFFFFFF
+  - Loop counter: top-left “Loop X/5”, font 18px, color 0xA0ADC0
+  - Help prompts (fade out): “Stand on plates to open doors” near Plate A at first encounter; “Your last run becomes an echo” after first loop
+- Ending screen:
+  - Win: “You and your echoes escaped!” size 32px, white
+  - Loss: “Time’s up. Try orchestrating earlier help.” size 32px, white
+  - Subtext: “Press R to Restart” size 18px, 0x35e0c6
+
+Input:
+- Keyboard:
+  - Left: A or Left Arrow -> set moveDir = -1
+  - Right: D or Right Arrow -> set moveDir = +1
+  - Jump: W/Up Arrow/Space -> attempt jump if onGround or coyoteTime active
+  - Restart Loop: R -> immediately end loop and save recording
+  - Start: Space on Title or End
+- Optional gamepad:
+  - Left stick X or D-pad for movement
+  - A/Cross for jump
+  - Start for restart
+
+State:
+- gameState: "TITLE" | "PLAYING" | "ENDING"
+- loopIndex: integer starting at 1, maxLoops=5
+- timeRemaining: float (starts at 45.0 seconds)
+- player object with physics
+- echoes: array of echo objects
+- recording:
+  - currentRecording: array of frames; each frame: {t, left, right, jumpPressed}
+  - recordings: array of arrays, one per completed loop
+- world state (reset each loop unless flagged persistent):
+  - Doors default closed; Final Door depends on conditions in real time (not persistent)
+  - Moving platform phase offset preserved (time-based, not reset)
+  - Timed switches (if used) reset each loop
+- Flags:
+  - door1Open, door2Open, exitOpen (computed each frame based on plate/laser)
+  - plateAActive, plateBActive, plateCActive (computed by overlaps)
+  - laserOn (time-cycled)
+  - laserBlocked (computed by overlap with any solid body along beam)
+- Physics helpers:
+  - onGround detection with small raycast or Arcade body.blocked.down
+  - coyoteTimeMax=100ms; jumpBufferMax=120ms
+
+Timing:
+- Loop duration: 45.0 seconds
+- Physics step: 60 FPS
+- Player movement:
+  - Accel when input: 1800 px/s^2
+  - Friction when no input: dragX=1600 px/s^2
+  - Max run speed: 220 px/s
+  - Jump velocity: -450 px/s
+  - Coyote time: 0.10s
+  - Jump buffer: 0.12s
+- Moving platform M1:
+  - Tween y between 460 and 360, 2400ms, yoyo true, repeat -1
+- Laser:
+  - Cycle 2000ms (on 1200/off 800); phase starts at 0ms
+
+Interactions:
+- Player/Echo with platforms: collide
+- Player with Echo: collide (solid), no damage
+- Plate activation: if body’s bottom within 4px above plate top and horizontal overlap >50%, set active true while overlapping; multiple bodies sum (binary)
+- Doors: open (disable collider, set alpha=0.2) while linked condition is true
+  - Door1 open if Plate A active
+  - Door2 open if Plate B active OR timed switch (if used) active
+  - Final Door open if Plate C active AND laserBlocked is true
+- Laser blocking: cast rectangle beam (100x6 px). If any body (player or echo or platform) overlaps, set laserBlocked true and do not damage; else if on and player overlaps, player dies (end loop and save recording). Echoes do not die; they simply ignore laser damage, but still block.
+- Exit: if player overlaps Exit Zone and Final Door open -> win immediately
+
+Progression:
+- The single room is designed so:
+  - Plate A is near start to teach echo holding
+  - Door1 leads up to M1 and Plate B
+  - Door2 requires Plate B
+  - Laser section between Door2 and Plate C; blocking needed while crossing to Plate C
+  - Plate C plus blocked laser opens Final Door at far right
+- Win condition: reach Exit within any loop by arranging echoes to satisfy simultaneous conditions
+- Loss condition: loopIndex > maxLoops and not won
+
+## 8. Game Flow
+- On load:
+  - Show Title screen, muted background hum, prompt “Press Space to Start.”
+- Start main experience:
+  - On Space, init loopIndex=1, timeRemaining=45, clear recordings/echoes, spawn player at start, start moving platform/layer tweens and laser cycle. Transition to PLAYING.
+- During play:
+  - Each frame: update timer/UI, read inputs, record inputs into currentRecording, simulate player and echoes, compute plates/doors/laser states, check exit.
+  - If player dies: immediately end current loop (save currentRecording) and start next loop (spawn new echo from recording).
+  - If timeRemaining <= 0 or player presses R: end current loop (save), start next.
+  - When a loop ends: push currentRecording into recordings, create an echo assigned to that recording, reset player to start, increment loopIndex, reset timeRemaining=45. Echoes start replay at t=0 synchronously with the new loop.
+- End game:
+  - Win: upon exit, freeze time, fade out UI, show Win end screen with loops used and “Press R to Restart.”
+  - Loss: if loopIndex becomes 6 (past 5) without winning, fade to Loss end screen with tip and “Press R to Restart.”
+- After end:
+  - R returns to Title or restarts immediately (developer choice: return to Title for clarity).
+
+## 9. Pseudocode
+
+Initialization (setup):
+- preload():
+  - (Optional) load bitmap font; otherwise use default web fonts
+- create():
+  - set background color
+  - init gameState="TITLE"
+  - create Title UI texts
+  - define input keys: left, right, up/jump, R, Space
+  - build world geometry (platforms, doors, plates, laser, exit zone)
+  - configure physics groups:
+    - solidsGroup (platforms, doors when closed, moving platform)
+    - playersGroup (player + echoes)
+  - create tweens for moving platform
+  - setup laser timer (cycle)
+  - setup HUD texts (hidden until PLAYING)
+  - function resetToStartState()
+
+resetToStartState():
+- recordings = []
+- echoes = []
+- loopIndex = 1
+- timeRemaining = 45.0
+- spawnPlayerAtStart()
+- hide end screen, show HUD, hide title
+- startLoop()
+
+spawnPlayerAtStart():
+- if player exists, destroy
+- create player sprite at (80, 420)
+- enable Arcade physics with gravity, set body size and max velocities
+- attach custom fields:
+  - coyoteTimer = 0
+  - jumpBufferTimer = 0
+  - onGroundPrev = false
+
+startLoop():
+- currentTime = 0
+- timeRemaining = 45.0
+- currentRecording = []
+- for each echo in echoes: echo.resetReplay() // sets replayTime=0, resets position to start of recording’s first valid grounded segment or recorded start
+- place player at start
+- ensure doors are in default closed (but reactive) state
+- show “Loop X/5” with current loopIndex
+
+endLoop(saveRecording=true):
+- if saveRecording and player existed:
+  - push currentRecording to recordings
+  - createEchoFromRecording(currentRecording)
+- loopIndex += 1
+- if won flag true: gotoEndScreen("WIN")
+- else if loopIndex > maxLoops: gotoEndScreen("LOSS")
+- else: startLoop()
+
+createEchoFromRecording(rec):
+- create echo sprite at start (80, 420)
+- physics enabled, same body as player
+- tint cyan, alpha 0.6
+- echo.recording = rec
+- echo.replayTime = 0
+- echo.controllerState = {left:false,right:false,jump:false}
+- echoes.push(echo)
+
+Main update loop (update(time, delta)):
+- if gameState == "TITLE":
+  - if Space pressed: gameState="PLAYING"; resetToStartState()
+  - return
+- if gameState == "ENDING":
+  - if R pressed: gameState="TITLE"; show title; hide end
+  - return
+- // PLAYING
+- dt = delta/1000
+- timeRemaining -= dt
+- updateLaser(dt) // sets laserOn based on timer
+- handlePlayerInput(dt) // sets desired move/jump, updates coyote/buffer
+- recordCurrentFrame()
+- simulatePlayer(dt)
+- simulateEchoes(dt)
+- computePlatesAndDoors()
+- checkExit()
+- updateHUD()
+- if playerDead:
+  - endLoop(saveRecording=true)
+- else if timeRemaining <= 0 or R pressed:
+  - endLoop(saveRecording=true)
+
+handlePlayerInput(dt):
+- desiredLeft = keyLeft.isDown
+- desiredRight = keyRight.isDown
+- jumpPressedNow = (keyUp.isDown or keySpace.isDown)
+- // buffer/coyote tracking
+- if jumpPressedNow: player.jumpBufferTimer = jumpBufferMax
+- else: player.jumpBufferTimer = max(0, player.jumpBufferTimer - dt)
+- if player.body.blocked.down: player.coyoteTimer = coyoteTimeMax
+- else: player.coyoteTimer = max(0, player.coyoteTimer - dt)
+
+recordCurrentFrame():
+- currentRecording.push({
+    t: elapsedInLoop, // optional, we can rely on array index
+    left: desiredLeft,
+    right: desiredRight,
+    jump: jumpPressedNow
+  })
+
+simulatePlayer(dt):
+- // Horizontal
+- moveDir = (desiredRight ? 1 : 0) - (desiredLeft ? 1 : 0)
+- if moveDir != 0:
+    player.body.setAccelerationX(moveDir * 1800)
+  else:
+    player.body.setAccelerationX(0)
+    player.body.setDragX(1600)
+- clamp player.body.velocity.x to +/-220
+- // Jump
+- if player.jumpBufferTimer > 0 and player.coyoteTimer > 0:
+    player.body.setVelocityY(-450)
+    player.jumpBufferTimer = 0
+    player.coyoteTimer = 0
+- // Collisions handled by Arcade physics with solidsGroup
+- // Laser damage
+- if laserOn and not laserBlocked and overlapsBeam(player):
+    playerDead = true
+
+simulateEchoes(dt):
+- for each echo:
+  - // Advance replay time
+  - echo.replayTime += dt
+  - frameIndex = floor(echo.replayTime * 60)
+  - if frameIndex >= echo.recording.length: // echo stops input, stands idle
+      left=false; right=false; jump=false
+    else:
+      left = echo.recording[frameIndex].left
+      right = echo.recording[frameIndex].right
+      jump = echo.recording[frameIndex].jump
+  - applyEchoMovement(echo, left, right, jump)
+
+applyEchoMovement(echo, left, right, jump):
+- moveDir = (right ? 1 : 0) - (left ? 1 : 0)
+- if moveDir != 0:
+    echo.body.setAccelerationX(moveDir * 1800)
+  else:
+    echo.body.setAccelerationX(0)
+    echo.body.setDragX(1600)
+- if jump and echo.body.blocked.down:
+    echo.body.setVelocityY(-450)
+// Echoes ignore laser damage but still block beam; collisions with solids are enabled
+
+computePlatesAndDoors():
+- plateAActive = anyBodyStandingOn(PlateA)
+- plateBActive = anyBodyStandingOn(PlateB)
+- plateCActive = anyBodyStandingOn(PlateC)
+- laserBlocked = anySolidOverlapsBeam() // check line-rectangle overlap against players + echoes
+- door1Open = plateAActive
+- door2Open = plateBActive
+- exitOpen = plateCActive and laserBlocked
+- setDoorCollisionEnabled(Door1, not door1Open)
+- setDoorCollisionEnabled(Door2, not door2Open)
+- setDoorCollisionEnabled(ExitDoor, not exitOpen)
+- updateDoorVisuals()
+
+anyBodyStandingOn(plate):
+- For each entity in playersGroup:
+  - if entity.bottom within [plate.top-4, plate.top+2] and horizontal overlap > 50% plate width and entity.velocityY >= 0:
+      return true
+- return false
+
+anySolidOverlapsBeam():
+- Define beamRect = {x=600, y=347, w=100, h=6}
+- For each entity in playersGroup:
+  - if entity.body overlaps beamRect: return true
+- Optionally include moving platform if it crosses beam (not required here)
+- return false
+
+overlapsBeam(entity):
+- AABB check entity.body vs beamRect
+
+checkExit():
+- if exitOpen and player overlaps ExitZone:
+  - won = true
+  - endLoop(saveRecording=false) // go to end screen immediately
+
+updateLaser(dt):
+- laserTimer += dt
+- cycle = 2.0
+- phase = laserTimer % cycle
+- laserOn = phase < 1.2
+
+updateHUD():
+- timerText = format mm:ss (or ss:ms)
+- loopText = "Loop " + loopIndex + "/5"
+
+gotoEndScreen(type):
+- gameState="ENDING"
+- hide HUD
+- show end text based on type
+- freeze inputs for movement
+- stop new loop starts
+
+Notes for Phaser implementation:
+- Use Arcade Physics for simple collisions.
+- Moving platform as kinematic body moved by tween; ensure player/echo bodies check for platform support (set immovable true; update body position each frame; enable “platform” behavior by setting velocity to platform’s delta for entities standing on it).
+- To prevent jitter, ensure fixed time step or rely on Arcade’s step with 60 FPS. Record inputs per update tick; replay at same tick rate.
+- Visuals can be simple Graphics objects converted to textures for performance.

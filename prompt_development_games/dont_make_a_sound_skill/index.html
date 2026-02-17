@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DON'T MAKE A SOUND</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { display: flex; justify-content: center; align-items: center;
+           min-height: 100vh; background: #000000; overflow: hidden; cursor: none; }
+    #game-container { border-radius: 0; overflow: hidden; }
+    canvas { cursor: none !important; }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script>
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+const CONFIG = { width: 1024, height: 768, bg: 0x0a0a0a };
+
+const PLAYER_CONF = { width: 32, height: 48, speed: 150, lightRadius: 150 };
+const CURSOR_CONF = { glowRadius: 30, noiseThreshold: 2, noiseMultiplier: 5, maxNoiseRadius: 300, minNoiseRadius: 50 };
+const WAVE_CONF = { expansionSpeed: 200, wallAttenuation: 0.6, strokeWidth: 2, maxAlpha: 0.4 };
+const CREATURE_CONF = {
+  width: 40, height: 56, patrolSpeed: 40, huntSpeed: 100, returnSpeed: 50,
+  alertDuration: 1.5, searchDuration: 3, searchRadius: 60, detectionTolerance: 20
+};
+
+// ============================================================================
+// DEPTH LAYERS
+// ============================================================================
+const DEPTH = {
+  FLOOR: 0, WALLS: 5, OBSTACLES: 6, EXIT: 8, CREATURES: 10, PLAYER: 15,
+  WAVES: 20, DARKNESS: 100, CURSOR_GLOW: 200, UI: 300
+};
+
+// ============================================================================
+// LEVEL DATA
+// ============================================================================
+const BORDER = [
+  { x: 0, y: 0, w: 1024, h: 20 },
+  { x: 0, y: 748, w: 1024, h: 20 },
+  { x: 0, y: 0, w: 20, h: 768 },
+  { x: 1004, y: 0, w: 20, h: 768 }
+];
+
+const LEVELS = [
+  null, // index 0 unused
+  { // Level 1 - First Breath
+    playerStart: { x: 100, y: 384 },
+    exit: { x: 900, y: 352, w: 60, h: 80 },
+    walls: [...BORDER],
+    obstacles: [],
+    creatures: []
+  },
+  { // Level 2 - Listener
+    playerStart: { x: 100, y: 384 },
+    exit: { x: 900, y: 352, w: 60, h: 80 },
+    walls: [...BORDER],
+    obstacles: [],
+    creatures: [
+      { startX: 500, startY: 400, patrolPath: [], startState: 'PATROL' }
+    ]
+  },
+  { // Level 3 - Patrol
+    playerStart: { x: 100, y: 680 },
+    exit: { x: 900, y: 80, w: 60, h: 80 },
+    walls: [
+      ...BORDER,
+      { x: 300, y: 200, w: 400, h: 20 }
+    ],
+    obstacles: [
+      { x: 200, y: 500, w: 80, h: 80 }
+    ],
+    creatures: [
+      { startX: 500, startY: 400, patrolPath: [{ x: 300, y: 400 }, { x: 700, y: 400 }], startState: 'PATROL' }
+    ]
+  },
+  { // Level 4 - Distraction
+    playerStart: { x: 100, y: 384 },
+    exit: { x: 900, y: 352, w: 60, h: 80 },
+    walls: [
+      ...BORDER,
+      { x: 400, y: 20, w: 20, h: 380 },
+      { x: 400, y: 500, w: 20, h: 248 }
+    ],
+    obstacles: [],
+    creatures: [
+      { startX: 410, startY: 450, patrolPath: [], startState: 'PATROL' }
+    ]
+  },
+  { // Level 5 - Rooms
+    playerStart: { x: 80, y: 680 },
+    exit: { x: 920, y: 80, w: 60, h: 80 },
+    walls: [
+      ...BORDER,
+      { x: 340, y: 0, w: 20, h: 300 },
+      { x: 340, y: 400, w: 20, h: 368 },
+      { x: 680, y: 0, w: 20, h: 200 },
+      { x: 680, y: 300, w: 20, h: 468 }
+    ],
+    obstacles: [
+      { x: 150, y: 300, w: 60, h: 60 },
+      { x: 500, y: 500, w: 80, h: 40 }
+    ],
+    creatures: [
+      { startX: 170, startY: 150, patrolPath: [{ x: 100, y: 150 }, { x: 280, y: 150 }], startState: 'PATROL' },
+      { startX: 500, startY: 300, patrolPath: [{ x: 400, y: 300 }, { x: 620, y: 300 }], startState: 'PATROL' }
+    ]
+  },
+  { // Level 6 - Close
+    playerStart: { x: 100, y: 384 },
+    exit: { x: 900, y: 352, w: 60, h: 80 },
+    walls: [...BORDER],
+    obstacles: [
+      { x: 300, y: 300, w: 100, h: 100 },
+      { x: 500, y: 450, w: 80, h: 80 },
+      { x: 700, y: 280, w: 60, h: 120 }
+    ],
+    creatures: [
+      { startX: 200, startY: 384, patrolPath: [], startState: 'PATROL' }
+    ]
+  },
+  { // Level 7 - Darkness
+    playerStart: { x: 100, y: 680 },
+    exit: { x: 900, y: 80, w: 60, h: 80 },
+    walls: [
+      ...BORDER,
+      { x: 200, y: 150, w: 200, h: 20 },
+      { x: 500, y: 300, w: 20, h: 200 },
+      { x: 300, y: 500, w: 250, h: 20 },
+      { x: 650, y: 200, w: 20, h: 250 }
+    ],
+    obstacles: [],
+    creatures: [
+      { startX: 300, startY: 350, patrolPath: [{ x: 250, y: 300 }, { x: 450, y: 400 }, { x: 250, y: 450 }], startState: 'PATROL' },
+      { startX: 750, startY: 500, patrolPath: [{ x: 700, y: 400 }, { x: 850, y: 550 }], startState: 'PATROL' }
+    ],
+    lightRadius: 100
+  },
+  { // Level 8 - Chase
+    playerStart: { x: 100, y: 384 },
+    exit: { x: 900, y: 384, w: 60, h: 80 },
+    walls: [
+      ...BORDER,
+      { x: 200, y: 0, w: 20, h: 550 },
+      { x: 350, y: 200, w: 20, h: 568 },
+      { x: 500, y: 0, w: 20, h: 450 },
+      { x: 650, y: 300, w: 20, h: 468 },
+      { x: 800, y: 0, w: 20, h: 500 }
+    ],
+    obstacles: [],
+    creatures: [
+      { startX: 150, startY: 300, patrolPath: [], startState: 'HUNTING' }
+    ]
+  },
+  { // Level 9 - Silence
+    playerStart: { x: 80, y: 700 },
+    exit: { x: 940, y: 60, w: 60, h: 80 },
+    walls: [
+      ...BORDER,
+      { x: 200, y: 100, w: 20, h: 400 },
+      { x: 350, y: 250, w: 20, h: 518 },
+      { x: 500, y: 0, w: 20, h: 350 },
+      { x: 500, y: 450, w: 20, h: 318 },
+      { x: 650, y: 200, w: 20, h: 400 },
+      { x: 800, y: 0, w: 20, h: 500 },
+      { x: 800, y: 600, w: 20, h: 168 }
+    ],
+    obstacles: [
+      { x: 100, y: 550, w: 60, h: 60 },
+      { x: 420, y: 150, w: 50, h: 50 },
+      { x: 580, y: 550, w: 70, h: 40 },
+      { x: 720, y: 350, w: 50, h: 80 }
+    ],
+    creatures: [
+      { startX: 150, startY: 250, patrolPath: [{ x: 100, y: 200 }, { x: 100, y: 450 }], startState: 'PATROL' },
+      { startX: 420, startY: 600, patrolPath: [{ x: 280, y: 600 }, { x: 480, y: 700 }], startState: 'PATROL' },
+      { startX: 580, startY: 300, patrolPath: [{ x: 540, y: 200 }, { x: 620, y: 430 }], startState: 'PATROL' },
+      { startX: 920, startY: 150, patrolPath: [], startState: 'PATROL' }
+    ],
+    noiseReduction: 0.7 // cursor noise radius reduced 30%
+  }
+];
+
+// ============================================================================
+// GAME SCENE
+// ============================================================================
+class GameScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'GameScene' });
+  }
+
+  create() {
+    this.gameState = 'title'; // title, playing, ending, transition
+    this.currentLevel = 1;
+    this.isPaused = false;
+
+    // Game object arrays
+    this.wallRects = [];
+    this.wallBodies = [];
+    this.obstacleRects = [];
+    this.obstacleBodies = [];
+    this.creatureObjs = [];
+    this.soundWaves = [];
+
+    this.playerObj = null;
+    this.exitObj = null;
+    this.exitGlow = null;
+
+    // Cursor tracking
+    this.cursorPos = { x: CONFIG.width / 2, y: CONFIG.height / 2 };
+    this.prevCursorPos = { x: CONFIG.width / 2, y: CONFIG.height / 2 };
+    this.cursorVelocity = 0;
+
+    // Graphics layers
+    this.envGraphics = this.add.graphics().setDepth(DEPTH.WALLS);
+    this.obstacleGraphics = this.add.graphics().setDepth(DEPTH.OBSTACLES);
+    this.exitGraphics = this.add.graphics().setDepth(DEPTH.EXIT);
+    this.creatureGraphics = this.add.graphics().setDepth(DEPTH.CREATURES);
+    this.playerGraphics = this.add.graphics().setDepth(DEPTH.PLAYER);
+    this.waveGraphics = this.add.graphics().setDepth(DEPTH.WAVES);
+    this.cursorGraphics = this.add.graphics().setDepth(DEPTH.CURSOR_GLOW);
+
+    // Darkness overlay using RenderTexture
+    this.darknessBitmap = this.add.renderTexture(0, 0, CONFIG.width, CONFIG.height).setDepth(DEPTH.DARKNESS);
+    this.darknessBitmap.setVisible(false);
+
+    // Pre-generate light gradient textures for different sizes
+    this.lightTextures = {};
+    this.generateLightTexture('light_150', 150);
+    this.generateLightTexture('light_100', 100);
+    this.generateLightTexture('light_30', CURSOR_CONF.glowRadius);
+    this.generateLightTexture('light_100_exit', 100);
+
+
+    // Keyboard
+    this.keys = this.input.keyboard.addKeys({
+      W: Phaser.Input.Keyboard.KeyCodes.W,
+      A: Phaser.Input.Keyboard.KeyCodes.A,
+      S: Phaser.Input.Keyboard.KeyCodes.S,
+      D: Phaser.Input.Keyboard.KeyCodes.D,
+      UP: Phaser.Input.Keyboard.KeyCodes.UP,
+      DOWN: Phaser.Input.Keyboard.KeyCodes.DOWN,
+      LEFT: Phaser.Input.Keyboard.KeyCodes.LEFT,
+      RIGHT: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      R: Phaser.Input.Keyboard.KeyCodes.R,
+      ESC: Phaser.Input.Keyboard.KeyCodes.ESC
+    });
+
+    // Track mouse
+    this.input.on('pointermove', (pointer) => {
+      this.cursorPos.x = pointer.x;
+      this.cursorPos.y = pointer.y;
+    });
+
+    // Level indicator text
+    this.levelText = this.add.text(16, 16, '', {
+      fontFamily: 'Georgia, serif', fontSize: '16px', color: '#333333'
+    }).setDepth(DEPTH.UI).setAlpha(0);
+
+    // Death flash overlay
+    this.deathFlash = this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, CONFIG.width, CONFIG.height, 0xff0000)
+      .setDepth(DEPTH.UI + 10).setAlpha(0);
+
+    // Fade overlay for transitions
+    this.fadeOverlay = this.add.rectangle(CONFIG.width / 2, CONFIG.height / 2, CONFIG.width, CONFIG.height, 0x000000)
+      .setDepth(DEPTH.UI + 20).setAlpha(0);
+
+    // Current light radius (can vary per level)
+    this.lightRadius = PLAYER_CONF.lightRadius;
+    this.noiseMultiplier = 1.0;
+
+    this.showTitleScreen();
+  }
+
+  // ========================================================================
+  // TITLE SCREEN
+  // ========================================================================
+  showTitleScreen() {
+    this.gameState = 'title';
+    this.clearLevel();
+    this.darknessBitmap.setVisible(false);
+
+    this.titleText = this.add.text(CONFIG.width / 2, 320, "DON'T MAKE A SOUND", {
+      fontFamily: 'Georgia, serif', fontSize: '48px', color: '#ffffff'
+    }).setOrigin(0.5).setDepth(DEPTH.UI);
+
+    this.subtitleText = this.add.text(CONFIG.width / 2, 400, 'Click to begin', {
+      fontFamily: 'Georgia, serif', fontSize: '20px', color: '#444444'
+    }).setOrigin(0.5).setDepth(DEPTH.UI);
+
+    this.instructionText = this.add.text(CONFIG.width / 2, 480,
+      'WASD / Arrow Keys: Move    |    Mouse: Creates noise    |    R: Restart level\n\n' +
+      'They can\'t see you. They can hear everything.\n' +
+      'Keep your mouse still. Reach the exit.',
+      {
+        fontFamily: 'Georgia, serif', fontSize: '14px', color: '#333333',
+        align: 'center', lineSpacing: 6
+      }).setOrigin(0.5).setDepth(DEPTH.UI);
+
+    this.titleObjects = [this.titleText, this.subtitleText, this.instructionText];
+
+    this.input.once('pointerdown', () => {
+      if (this.gameState !== 'title') return;
+      this.startGame();
+    });
+  }
+
+  startGame() {
+    this.gameState = 'transition';
+    this.fadeOverlay.setAlpha(0);
+    this.tweens.add({
+      targets: this.fadeOverlay, alpha: 1, duration: 500,
+      onComplete: () => {
+        this.destroyTitleObjects();
+        this.currentLevel = 1;
+        this.loadLevel(this.currentLevel);
+        this.gameState = 'playing';
+        this.tweens.add({ targets: this.fadeOverlay, alpha: 0, duration: 300 });
+      }
+    });
+  }
+
+  destroyTitleObjects() {
+    if (this.titleObjects) {
+      this.titleObjects.forEach(o => o.destroy());
+      this.titleObjects = null;
+    }
+  }
+
+  // ========================================================================
+  // LEVEL MANAGEMENT
+  // ========================================================================
+  clearLevel() {
+    this.envGraphics.clear();
+    this.obstacleGraphics.clear();
+    this.exitGraphics.clear();
+    this.creatureGraphics.clear();
+    this.playerGraphics.clear();
+    this.waveGraphics.clear();
+    this.cursorGraphics.clear();
+
+    this.wallRects = [];
+    this.wallBodies = [];
+    this.obstacleRects = [];
+    this.obstacleBodies = [];
+    this.creatureObjs = [];
+    this.soundWaves = [];
+    this.playerObj = null;
+    this.exitObj = null;
+  }
+
+  loadLevel(num) {
+    this.clearLevel();
+    const data = LEVELS[num];
+    if (!data) return;
+
+    this.lightRadius = data.lightRadius || PLAYER_CONF.lightRadius;
+    this.noiseMultiplier = data.noiseReduction || 1.0;
+
+    // Walls
+    data.walls.forEach(w => {
+      this.wallRects.push({ x: w.x, y: w.y, w: w.w, h: w.h });
+    });
+
+    // Obstacles
+    data.obstacles.forEach(o => {
+      this.obstacleRects.push({ x: o.x, y: o.y, w: o.w, h: o.h });
+    });
+
+    // Exit
+    this.exitObj = { x: data.exit.x, y: data.exit.y, w: data.exit.w, h: data.exit.h };
+
+    // Player
+    this.playerObj = {
+      x: data.playerStart.x, y: data.playerStart.y,
+      vx: 0, vy: 0
+    };
+
+    // Creatures
+    data.creatures.forEach(c => {
+      const creature = {
+        x: c.startX, y: c.startY,
+        startX: c.startX, startY: c.startY,
+        state: c.startState,
+        patrolPath: c.patrolPath,
+        patrolIndex: 0,
+        targetX: c.startX, targetY: c.startY,
+        stateTimer: 0,
+        facingAngle: 0,
+        searchAngle: 0,
+        lastSoundX: c.startX, lastSoundY: c.startY,
+        swayOffset: Math.random() * Math.PI * 2
+      };
+      // If starting HUNTING, target player
+      if (creature.state === 'HUNTING') {
+        creature.targetX = data.playerStart.x;
+        creature.targetY = data.playerStart.y;
+      }
+      this.creatureObjs.push(creature);
+    });
+
+    this.soundWaves = [];
+
+    // Sync cursor tracking to prevent noise spike on first frame
+    this.prevCursorPos.x = this.cursorPos.x;
+    this.prevCursorPos.y = this.cursorPos.y;
+    this.cursorVelocity = 0;
+
+    this.darknessBitmap.setVisible(true);
+
+    // Show level indicator
+    this.levelText.setText(num + '/9').setAlpha(1);
+    this.tweens.add({
+      targets: this.levelText, alpha: 0, delay: 2000, duration: 500
+    });
+  }
+
+  // ========================================================================
+  // MAIN UPDATE
+  // ========================================================================
+  update(time, delta) {
+    const dt = delta / 1000;
+
+    // Always draw cursor glow
+    this.drawCursorGlow(time);
+
+    if (this.gameState === 'title') {
+      this.updateTitle(time, dt);
+      return;
+    }
+
+    if (this.gameState === 'ending') {
+      return;
+    }
+
+    if (this.gameState !== 'playing') return;
+
+    // Pause toggle
+    if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
+      this.isPaused = !this.isPaused;
+    }
+
+    if (this.isPaused) {
+      this.renderAll(time);
+      return;
+    }
+
+    // Restart
+    if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
+      this.loadLevel(this.currentLevel);
+      return;
+    }
+
+    // Calculate cursor velocity
+    this.calculateCursorVelocity();
+
+    // Process cursor noise
+    this.processCursorNoise();
+
+    // Update sound waves
+    this.updateSoundWaves(dt);
+
+    // Check wave-creature intersections
+    this.checkWaveCreatureHits();
+
+    // Update creatures
+    for (const c of this.creatureObjs) {
+      this.updateCreature(c, dt);
+      if (this.checkRectOverlap(
+        this.playerObj.x - PLAYER_CONF.width / 2, this.playerObj.y - PLAYER_CONF.height / 2,
+        PLAYER_CONF.width, PLAYER_CONF.height,
+        c.x - CREATURE_CONF.width / 2, c.y - CREATURE_CONF.height / 2,
+        CREATURE_CONF.width, CREATURE_CONF.height
+      )) {
+        this.playerDeath();
+        return;
+      }
+    }
+
+    // Player input and movement
+    this.handlePlayerInput();
+    this.updatePlayerPosition(dt);
+
+    // Exit check
+    if (this.exitObj && this.checkRectOverlap(
+      this.playerObj.x - PLAYER_CONF.width / 2, this.playerObj.y - PLAYER_CONF.height / 2,
+      PLAYER_CONF.width, PLAYER_CONF.height,
+      this.exitObj.x, this.exitObj.y, this.exitObj.w, this.exitObj.h
+    )) {
+      this.completeLevel();
+      return;
+    }
+
+    // Store previous cursor
+    this.prevCursorPos.x = this.cursorPos.x;
+    this.prevCursorPos.y = this.cursorPos.y;
+
+    // Render
+    this.renderAll(time);
+  }
+
+  updateTitle(time, dt) {
+    if (this.titleText) {
+      this.titleText.setAlpha(0.7 + 0.3 * Math.sin(time * 0.002));
+    }
+    // Process cursor noise on title too
+    this.calculateCursorVelocity();
+    this.processCursorNoise();
+    this.updateSoundWaves(dt);
+    this.renderWaves();
+    this.prevCursorPos.x = this.cursorPos.x;
+    this.prevCursorPos.y = this.cursorPos.y;
+  }
+
+  // ========================================================================
+  // CURSOR & SOUND WAVES
+  // ========================================================================
+  calculateCursorVelocity() {
+    const dx = this.cursorPos.x - this.prevCursorPos.x;
+    const dy = this.cursorPos.y - this.prevCursorPos.y;
+    this.cursorVelocity = Math.min(Math.sqrt(dx * dx + dy * dy), 50);
+  }
+
+  processCursorNoise() {
+    if (this.cursorVelocity > CURSOR_CONF.noiseThreshold) {
+      let maxRadius = CURSOR_CONF.minNoiseRadius + this.cursorVelocity * CURSOR_CONF.noiseMultiplier;
+      maxRadius = Math.min(maxRadius, CURSOR_CONF.maxNoiseRadius);
+      maxRadius *= this.noiseMultiplier;
+
+      this.soundWaves.push({
+        x: this.cursorPos.x,
+        y: this.cursorPos.y,
+        currentRadius: 0,
+        maxRadius: maxRadius,
+        attenuated: false
+      });
+    }
+  }
+
+  updateSoundWaves(dt) {
+    for (let i = this.soundWaves.length - 1; i >= 0; i--) {
+      const wave = this.soundWaves[i];
+      wave.currentRadius += WAVE_CONF.expansionSpeed * dt;
+
+      // Wall attenuation
+      if (!wave.attenuated) {
+        const allWalls = [...this.wallRects, ...this.obstacleRects];
+        for (const wall of allWalls) {
+          if (this.waveIntersectsRect(wave, wall)) {
+            wave.maxRadius *= WAVE_CONF.wallAttenuation;
+            wave.attenuated = true;
+            break;
+          }
+        }
+      }
+
+      if (wave.currentRadius >= wave.maxRadius) {
+        this.soundWaves.splice(i, 1);
+      }
+    }
+  }
+
+  waveIntersectsRect(wave, rect) {
+    const cx = Math.max(rect.x, Math.min(wave.x, rect.x + rect.w));
+    const cy = Math.max(rect.y, Math.min(wave.y, rect.y + rect.h));
+    const dist = Math.sqrt((wave.x - cx) ** 2 + (wave.y - cy) ** 2);
+    return dist <= wave.currentRadius;
+  }
+
+  checkWaveCreatureHits() {
+    for (const creature of this.creatureObjs) {
+      for (const wave of this.soundWaves) {
+        const dist = Math.sqrt((wave.x - creature.x) ** 2 + (wave.y - creature.y) ** 2);
+        if (Math.abs(dist - wave.currentRadius) < CREATURE_CONF.detectionTolerance) {
+          this.creatureHearSound(creature, wave.x, wave.y);
+          break;
+        }
+      }
+    }
+  }
+
+  // ========================================================================
+  // CREATURE AI
+  // ========================================================================
+  creatureHearSound(creature, sx, sy) {
+    creature.lastSoundX = sx;
+    creature.lastSoundY = sy;
+    creature.facingAngle = Math.atan2(sy - creature.y, sx - creature.x);
+
+    if (creature.state === 'PATROL' || creature.state === 'RETURNING') {
+      creature.state = 'ALERT';
+      creature.stateTimer = CREATURE_CONF.alertDuration;
+    } else if (creature.state === 'ALERT') {
+      creature.state = 'HUNTING';
+      creature.targetX = sx;
+      creature.targetY = sy;
+    } else if (creature.state === 'SEARCHING') {
+      creature.state = 'HUNTING';
+      creature.targetX = sx;
+      creature.targetY = sy;
+    }
+  }
+
+  updateCreature(creature, dt) {
+    switch (creature.state) {
+      case 'PATROL':
+        if (creature.patrolPath.length === 0) {
+          // Stationary - just sway (handled in rendering)
+        } else {
+          const wp = creature.patrolPath[creature.patrolIndex];
+          this.moveToward(creature, wp.x, wp.y, CREATURE_CONF.patrolSpeed, dt);
+          if (this.dist(creature.x, creature.y, wp.x, wp.y) < 10) {
+            creature.patrolIndex = (creature.patrolIndex + 1) % creature.patrolPath.length;
+          }
+        }
+        break;
+
+      case 'ALERT':
+        creature.stateTimer -= dt;
+        if (creature.stateTimer <= 0) {
+          creature.state = 'RETURNING';
+        }
+        break;
+
+      case 'HUNTING':
+        this.moveToward(creature, creature.targetX, creature.targetY, CREATURE_CONF.huntSpeed, dt);
+        if (this.dist(creature.x, creature.y, creature.targetX, creature.targetY) < 30) {
+          creature.state = 'SEARCHING';
+          creature.stateTimer = CREATURE_CONF.searchDuration;
+          creature.searchAngle = 0;
+        }
+        break;
+
+      case 'SEARCHING':
+        creature.searchAngle += (CREATURE_CONF.patrolSpeed / CREATURE_CONF.searchRadius) * dt;
+        creature.x = creature.targetX + Math.cos(creature.searchAngle) * CREATURE_CONF.searchRadius;
+        creature.y = creature.targetY + Math.sin(creature.searchAngle) * CREATURE_CONF.searchRadius;
+        creature.stateTimer -= dt;
+        if (creature.stateTimer <= 0) {
+          creature.state = 'RETURNING';
+        }
+        break;
+
+      case 'RETURNING':
+        let rtx, rty;
+        if (creature.patrolPath.length === 0) {
+          rtx = creature.startX;
+          rty = creature.startY;
+        } else {
+          // Find nearest waypoint
+          let minD = Infinity;
+          let nearest = creature.patrolPath[0];
+          for (const wp of creature.patrolPath) {
+            const d = this.dist(creature.x, creature.y, wp.x, wp.y);
+            if (d < minD) { minD = d; nearest = wp; }
+          }
+          rtx = nearest.x;
+          rty = nearest.y;
+        }
+        this.moveToward(creature, rtx, rty, CREATURE_CONF.returnSpeed, dt);
+        if (this.dist(creature.x, creature.y, rtx, rty) < 10) {
+          creature.state = 'PATROL';
+        }
+        break;
+    }
+  }
+
+  moveToward(creature, tx, ty, speed, dt) {
+    const dx = tx - creature.x;
+    const dy = ty - creature.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d > 1) {
+      const newX = creature.x + (dx / d) * speed * dt;
+      const newY = creature.y + (dy / d) * speed * dt;
+      const hw = CREATURE_CONF.width / 2;
+      const hh = CREATURE_CONF.height / 2;
+      const allSolids = [...this.wallRects, ...this.obstacleRects];
+
+      let canX = true, canY = true;
+      for (const s of allSolids) {
+        if (this.checkRectOverlap(newX - hw, creature.y - hh, CREATURE_CONF.width, CREATURE_CONF.height, s.x, s.y, s.w, s.h)) {
+          canX = false;
+        }
+        if (this.checkRectOverlap(creature.x - hw, newY - hh, CREATURE_CONF.width, CREATURE_CONF.height, s.x, s.y, s.w, s.h)) {
+          canY = false;
+        }
+      }
+
+      if (canX) creature.x = newX;
+      if (canY) creature.y = newY;
+      creature.facingAngle = Math.atan2(dy, dx);
+    }
+  }
+
+  // ========================================================================
+  // PLAYER
+  // ========================================================================
+  handlePlayerInput() {
+    let vx = 0, vy = 0;
+    if (this.keys.LEFT.isDown || this.keys.A.isDown) vx = -PLAYER_CONF.speed;
+    if (this.keys.RIGHT.isDown || this.keys.D.isDown) vx = PLAYER_CONF.speed;
+    if (this.keys.UP.isDown || this.keys.W.isDown) vy = -PLAYER_CONF.speed;
+    if (this.keys.DOWN.isDown || this.keys.S.isDown) vy = PLAYER_CONF.speed;
+
+    if (vx !== 0 && vy !== 0) {
+      const f = 1 / Math.SQRT2;
+      vx *= f;
+      vy *= f;
+    }
+    this.playerObj.vx = vx;
+    this.playerObj.vy = vy;
+  }
+
+  updatePlayerPosition(dt) {
+    const p = this.playerObj;
+    const newX = p.x + p.vx * dt;
+    const newY = p.y + p.vy * dt;
+    const hw = PLAYER_CONF.width / 2;
+    const hh = PLAYER_CONF.height / 2;
+
+    const allSolids = [...this.wallRects, ...this.obstacleRects];
+
+    let canX = true, canY = true;
+
+    for (const s of allSolids) {
+      if (this.checkRectOverlap(newX - hw, p.y - hh, PLAYER_CONF.width, PLAYER_CONF.height, s.x, s.y, s.w, s.h)) {
+        canX = false;
+      }
+      if (this.checkRectOverlap(p.x - hw, newY - hh, PLAYER_CONF.width, PLAYER_CONF.height, s.x, s.y, s.w, s.h)) {
+        canY = false;
+      }
+    }
+
+    if (canX) p.x = newX;
+    if (canY) p.y = newY;
+
+    // Clamp to world
+    p.x = Math.max(hw, Math.min(CONFIG.width - hw, p.x));
+    p.y = Math.max(hh, Math.min(CONFIG.height - hh, p.y));
+  }
+
+  // ========================================================================
+  // GAME FLOW
+  // ========================================================================
+  playerDeath() {
+    this.gameState = 'transition';
+    // Flash red
+    this.deathFlash.setAlpha(0.6);
+    this.tweens.add({
+      targets: this.deathFlash, alpha: 0, duration: 150,
+      onComplete: () => {
+        this.loadLevel(this.currentLevel);
+        this.gameState = 'playing';
+      }
+    });
+  }
+
+  completeLevel() {
+    this.gameState = 'transition';
+    this.currentLevel++;
+
+    if (this.currentLevel > 9) {
+      this.fadeOverlay.setAlpha(0);
+      this.tweens.add({
+        targets: this.fadeOverlay, alpha: 1, duration: 500,
+        onComplete: () => { this.displayEnding(); }
+      });
+    } else {
+      this.fadeOverlay.setAlpha(0);
+      this.tweens.add({
+        targets: this.fadeOverlay, alpha: 1, duration: 300,
+        onComplete: () => {
+          this.loadLevel(this.currentLevel);
+          this.gameState = 'playing';
+          this.tweens.add({ targets: this.fadeOverlay, alpha: 0, duration: 300 });
+        }
+      });
+    }
+  }
+
+  displayEnding() {
+    this.gameState = 'ending';
+    this.clearLevel();
+    this.darknessBitmap.setVisible(false);
+
+    // Brighten background
+    this.cameras.main.setBackgroundColor(0x1a1a2a);
+
+    // Player silhouette
+    const endPlayerGfx = this.add.graphics().setDepth(DEPTH.PLAYER);
+    endPlayerGfx.fillStyle(0x3a3a3a, 1);
+    endPlayerGfx.lineStyle(1, 0x4a4a4a, 1);
+    endPlayerGfx.fillRect(CONFIG.width / 2 - 16, 376, 32, 48);
+    endPlayerGfx.strokeRect(CONFIG.width / 2 - 16, 376, 32, 48);
+
+    this.endingObjects = [endPlayerGfx];
+
+    this.time.delayedCall(2000, () => {
+      const t1 = this.add.text(CONFIG.width / 2, 500, 'Some fears are louder than others.', {
+        fontFamily: 'Georgia, serif', fontSize: '28px', color: '#ffffff'
+      }).setOrigin(0.5).setDepth(DEPTH.UI).setAlpha(0);
+      this.tweens.add({ targets: t1, alpha: 1, duration: 1000 });
+      this.endingObjects.push(t1);
+    });
+
+    this.time.delayedCall(5000, () => {
+      const t2 = this.add.text(CONFIG.width / 2, 550, 'You learned to quiet yours.', {
+        fontFamily: 'Georgia, serif', fontSize: '24px', color: '#aaaaaa'
+      }).setOrigin(0.5).setDepth(DEPTH.UI).setAlpha(0);
+      this.tweens.add({ targets: t2, alpha: 1, duration: 1000 });
+      this.endingObjects.push(t2);
+    });
+
+    this.time.delayedCall(7000, () => {
+      const t3 = this.add.text(CONFIG.width / 2, 620, 'Click to return.', {
+        fontFamily: 'Georgia, serif', fontSize: '16px', color: '#444444'
+      }).setOrigin(0.5).setDepth(DEPTH.UI).setAlpha(0);
+      this.tweens.add({ targets: t3, alpha: 1, duration: 500 });
+      this.endingObjects.push(t3);
+
+      this.input.once('pointerdown', () => {
+        this.endingObjects.forEach(o => o.destroy());
+        this.endingObjects = [];
+        this.cameras.main.setBackgroundColor(CONFIG.bg);
+        this.fadeOverlay.setAlpha(0);
+        this.showTitleScreen();
+      });
+    });
+  }
+
+  // ========================================================================
+  // RENDERING
+  // ========================================================================
+  renderAll(time) {
+    this.renderEnvironment();
+    this.renderExit(time);
+    this.renderCreatures(time);
+    this.renderPlayer(time);
+    this.renderWaves();
+    this.renderDarkness();
+  }
+
+  renderEnvironment() {
+    this.envGraphics.clear();
+    this.obstacleGraphics.clear();
+
+    // Walls
+    this.envGraphics.fillStyle(0x1a1a1a, 1);
+    for (const w of this.wallRects) {
+      this.envGraphics.fillRect(w.x, w.y, w.w, w.h);
+      this.envGraphics.lineStyle(1, 0x252525, 1);
+      this.envGraphics.strokeRect(w.x, w.y, w.w, w.h);
+    }
+
+    // Obstacles
+    this.obstacleGraphics.fillStyle(0x151515, 1);
+    for (const o of this.obstacleRects) {
+      this.obstacleGraphics.fillRect(o.x, o.y, o.w, o.h);
+    }
+  }
+
+  renderExit(time) {
+    this.exitGraphics.clear();
+    if (!this.exitObj) return;
+    const e = this.exitObj;
+    const pulse = 0.08 + 0.04 * Math.sin(time * 0.003);
+
+    // Glow
+    this.exitGraphics.fillStyle(0xffffff, 0.03);
+    this.exitGraphics.fillCircle(e.x + e.w / 2, e.y + e.h / 2, 100);
+
+    // Door
+    this.exitGraphics.fillStyle(0xffffff, pulse);
+    this.exitGraphics.fillRect(e.x, e.y, e.w, e.h);
+  }
+
+  renderCreatures(time) {
+    this.creatureGraphics.clear();
+    for (const c of this.creatureObjs) {
+      const hw = CREATURE_CONF.width / 2;
+      const hh = CREATURE_CONF.height / 2;
+
+      // Sway for idle/alert
+      let swayX = 0;
+      if (c.state === 'PATROL' || c.state === 'ALERT') {
+        swayX = Math.sin(time * 0.002 + c.swayOffset) * 3;
+      }
+
+      // Lean forward for hunting
+      let leanX = 0;
+      if (c.state === 'HUNTING') {
+        leanX = Math.cos(c.facingAngle) * 3;
+      }
+
+      const drawX = c.x - hw + swayX + leanX;
+      const drawY = c.y - hh;
+
+      // Body
+      this.creatureGraphics.fillStyle(0x0a0a0a, 1);
+      this.creatureGraphics.fillRect(drawX, drawY, CREATURE_CONF.width, CREATURE_CONF.height);
+
+      // Dark red outline
+      this.creatureGraphics.lineStyle(1, 0x2a1010, 1);
+      this.creatureGraphics.strokeRect(drawX, drawY, CREATURE_CONF.width, CREATURE_CONF.height);
+
+      // Head area (smooth - no eyes)
+      this.creatureGraphics.fillStyle(0x080808, 1);
+      this.creatureGraphics.fillRect(drawX + 4, drawY, CREATURE_CONF.width - 8, 16);
+
+      // Alert indicator - head snap line toward sound
+      if (c.state === 'ALERT' || c.state === 'HUNTING') {
+        this.creatureGraphics.lineStyle(1, 0x331111, 0.5);
+        this.creatureGraphics.beginPath();
+        this.creatureGraphics.moveTo(c.x, c.y - hh + 8);
+        this.creatureGraphics.lineTo(
+          c.x + Math.cos(c.facingAngle) * 15,
+          c.y - hh + 8 + Math.sin(c.facingAngle) * 15
+        );
+        this.creatureGraphics.strokePath();
+      }
+    }
+  }
+
+  renderPlayer(time) {
+    this.playerGraphics.clear();
+    if (!this.playerObj) return;
+    const p = this.playerObj;
+
+    // Breathing scale
+    const breathe = 1.0 + 0.02 * Math.sin(time * 0.003);
+    const w = PLAYER_CONF.width * breathe;
+    const h = PLAYER_CONF.height * breathe;
+
+    this.playerGraphics.fillStyle(0x3a3a3a, 1);
+    this.playerGraphics.fillRect(p.x - w / 2, p.y - h / 2, w, h);
+    this.playerGraphics.lineStyle(1, 0x4a4a4a, 1);
+    this.playerGraphics.strokeRect(p.x - w / 2, p.y - h / 2, w, h);
+  }
+
+  renderWaves() {
+    this.waveGraphics.clear();
+    for (const wave of this.soundWaves) {
+      const alpha = WAVE_CONF.maxAlpha * (1 - wave.currentRadius / wave.maxRadius);
+      if (alpha <= 0) continue;
+      const alphaFinal = wave.attenuated ? alpha * 0.6 : alpha;
+      this.waveGraphics.lineStyle(WAVE_CONF.strokeWidth, 0x6666aa, alphaFinal);
+      this.waveGraphics.strokeCircle(wave.x, wave.y, wave.currentRadius);
+    }
+  }
+
+  drawCursorGlow(time) {
+    this.cursorGraphics.clear();
+    const pulse = 0.25 + 0.1 * Math.sin(time * 0.003);
+    this.cursorGraphics.fillStyle(0x8888cc, pulse);
+    this.cursorGraphics.fillCircle(this.cursorPos.x, this.cursorPos.y, CURSOR_CONF.glowRadius);
+  }
+
+  generateLightTexture(key, radius) {
+    const size = radius * 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    const gradient = ctx.createRadialGradient(radius, radius, 0, radius, radius, radius);
+    gradient.addColorStop(0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.3, 'rgba(255,255,255,0.8)');
+    gradient.addColorStop(0.7, 'rgba(255,255,255,0.3)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    this.textures.addCanvas(key, canvas);
+    this.lightTextures[radius] = key;
+  }
+
+  getLightKey(radius) {
+    // Find closest pre-generated texture
+    if (this.lightTextures[radius]) return this.lightTextures[radius];
+    // Fallback: generate on demand
+    const key = 'light_' + radius;
+    if (!this.textures.exists(key)) {
+      this.generateLightTexture(key, radius);
+    }
+    return key;
+  }
+
+  renderDarkness() {
+    if (!this.darknessBitmap.visible) return;
+    if (!this.playerObj && !this.exitObj) return;
+
+    // Fill entire render texture with darkness
+    this.darknessBitmap.clear();
+    this.darknessBitmap.fill(0x0a0a0a, 0.95);
+
+    // Erase light holes using pre-generated gradient textures
+    const lightKey = this.getLightKey(this.lightRadius);
+    if (this.playerObj) {
+      this.darknessBitmap.erase(lightKey,
+        this.playerObj.x - this.lightRadius,
+        this.playerObj.y - this.lightRadius
+      );
+    }
+
+    // Cursor light
+    const cursorKey = this.getLightKey(CURSOR_CONF.glowRadius);
+    this.darknessBitmap.erase(cursorKey,
+      this.cursorPos.x - CURSOR_CONF.glowRadius,
+      this.cursorPos.y - CURSOR_CONF.glowRadius
+    );
+
+    // Exit light
+    if (this.exitObj) {
+      const exitKey = this.getLightKey(100);
+      this.darknessBitmap.erase(exitKey,
+        this.exitObj.x + this.exitObj.w / 2 - 100,
+        this.exitObj.y + this.exitObj.h / 2 - 100
+      );
+    }
+  }
+
+  // ========================================================================
+  // UTILITIES
+  // ========================================================================
+  dist(x1, y1, x2, y2) {
+    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+  }
+
+  checkRectOverlap(x1, y1, w1, h1, x2, y2, w2, h2) {
+    return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
+  }
+}
+
+// ============================================================================
+// PHASER CONFIG
+// ============================================================================
+const config = {
+  type: Phaser.AUTO,
+  width: CONFIG.width,
+  height: CONFIG.height,
+  parent: 'game-container',
+  backgroundColor: '#0a0a0a',
+  scene: [GameScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  input: {
+    mouse: { preventDefaultWheel: true }
+  }
+};
+
+const game = new Phaser.Game(config);
+  </script>
+</body>
+</html>

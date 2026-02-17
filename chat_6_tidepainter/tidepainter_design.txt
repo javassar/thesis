@@ -1,0 +1,466 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Title: Tidepainter: Songs of the Shore
+Hook: Sculpt living sand that remembers the tide—carve grooves that erode, place runes that reshape color, and unlock coral gates by “tuning” the surf, all in a five-minute composition that ends when the sea takes it all back.
+
+## 2. Core Insight
+- Central question: What if small, intentional patterns could teach a larger force to sing back the shape you need—until it fades?
+- Why it matters: It captures the bittersweet joy of building something beautiful and temporary. Players feel clever guiding an indifferent rhythm (the tide) through design, timing, and a bit of ritual, then letting it go.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Between tidal pulses, you carve, reinforce, and adorn sand channels with a few special runes; during the pulse, paint flows, mixes, and “tunes” coral gates based on what you prepared.
+- Embodiment: The tide’s inevitability is the metronome. Grooves physically erode unless kept alive by flow, so your plan must harmonize with the tide rather than fight it. Runes are beach ephemera—chalk marks and shells that briefly change water’s nature—echoing how rituals and symbols can coax, not command, nature.
+
+## 4. Player Journey
+- Start: A serene shoreline, three colored buoys (red, blue, yellow), four shells inland with target swatches (green, purple, orange, teal), and a single closed coral gate between sources and a teal shell. A soft prompt: “Carve channels. Wave in 3…2…1.” Curiosity and calm.
+- First minute learning: The first wave shows basic flow and mixing. The player notices a carved line holds shape when it carries water but fades where it stays dry. They drop a Filter Rune (a tiny shell spiral) that cools down strong primaries, helping land green and orange. They see “Gate needs purple last wave” hovering over the coral gate.
+- Evolution: Waves 2–4 introduce:
+  - Erosion (grooves lighten if starved of flow).
+  - One-Way Ridges (little sand lips) to stop backwash loops.
+  - A Mixer Pool (a shallow puddle) that delays and blends, letting two sources meet on beat.
+  - Color-gated coral that opens next wave if fed the right hue at its side inlet.
+- Climax (around wave 7): With one or two shells incomplete and the final gate still shut, the player must retune a line to feed purple into the gate’s inlet this wave so the path opens next wave, while keeping other shells fed so their grooves don’t crumble. This is the “conductor” moment.
+- Ending: The ninth and final wave surges higher and washes all designs away regardless. If all shells filled, the beach hums one final chord and a flock of birds lifts; if not, the foam smooths everything with a wistful chime. Emotion: proud release—your score is a song the ocean briefly remembered.
+
+## 5. Game Elements
+- Cursor/tools:
+  - Shovel (Carve/Reinforce): drag to create or strengthen grooves.
+  - Runes: place limited tokens—Filter, Mixer Pool, One-Way Ridge.
+  - Brush (Erase): remove grooves or runes.
+- Paint Sources: Three buoys at the surf line (red, blue, yellow). Emit on each wave.
+- Grooves (sand channels): Tiles with stability (0–2). Visual darkening indicates strength; stability drops if no flow.
+- Stones (converted to One-Way Ridges): Small sand lips that allow flow only in their arrow direction; block reverse.
+- Runes:
+  - Filter Rune: A shell spiral tile that reduces the strongest color component by 30%, nudging mixes toward balance.
+  - Mixer Pool: A puddle tile that holds half the incoming volume for 0.4s, then releases—encourages merges and timing.
+  - One-Way Ridge: A directional barrier you place that acts like a diode; flow passes forward, not backward.
+- Coral Gates: Closed coral arch tiles that act as walls unless “tuned.” Each gate has a small side inlet; if it receives a specific color within tolerance one wave, it opens for the next wave only.
+- Shells (targets): Four shells with target swatches and circular fill rings; show current incoming hue as a tiny swatch when fed.
+- Environment: Hand-drawn beach grid, left sea band animates in pulses; subtle erosion/fill animations.
+- UI:
+  - Top bar: “Waves: X/9,” “Phase: Calm/Wave,” stones/runes remaining.
+  - Tool tray: Carve, Filter Rune, Mixer Pool, One-Way Ridge, Erase (keys 1–5).
+  - Gate hints: When hovered, show “Needs: Purple” and “Opens next wave if fed.”
+  - Tutorial nudges: One-line prompts for first 2 waves.
+- Screens:
+  - Title: “Tidepainter: Songs of the Shore” with Play and a one-sentence how-to.
+  - End: Success/failure line, shells filled count, a simple “Replay.”
+
+## 6. Rules & Systems
+- Player actions:
+  - Carve/ Reinforce: Drag to set a tile to Groove with stability 2. Dragging over an existing groove refills stability to 2.
+  - Place Runes: Click to place if you have tokens left and tile is eligible (not source/shell/gate). Filter and Mixer cost 1 token each; One-Way Ridge costs 1 and can be rotated with Q/E before placing.
+  - Erase: Drag to remove grooves (reset to sand) or remove runes (refund token).
+- Phases:
+  - Calm (edit): Place grooves/runes; see countdown.
+  - Wave (flow): Packets spawn from sources; flow along grooves; runes apply effects; gates open/close based on previous tune; shells fill if matches.
+- Flow:
+  - Packets move along groove paths; splits distribute volume evenly; one-way ridges restrict directions; rocks are not separate in this version—ridges serve blocking.
+- Erosion:
+  - After each Wave, each groove tile checks if at least V_threshold volume passed through during that wave. If yes, stability = min(2, stability+1). If not, stability -= 1. When stability reaches 0, the tile becomes sand.
+- Runes:
+  - Filter: When a packet enters, identify its largest RGB component and multiply it by 0.7; packet continues. Visual: tiny shell glows.
+  - Mixer Pool: Accumulates incoming packets into a pool for up to 0.4s delay; at release, emits one merged packet (volume-weighted average color). If multiple entries arrive during hold, they merge.
+  - One-Way Ridge: A tile edge flag; packets cannot traverse against the arrow during pathfinding.
+- Coral Gates:
+  - Each gate has a required color (e.g., Purple). During a Wave, if its side inlet tile receives matching color within tolerance at any point, set gate.openNextWave = true. At the start of the next Wave, if openNextWave is true, the gate is passable for that Wave; then resets to closed unless retriggered.
+- Shell matching:
+  - As before—within color tolerance, add to progress; otherwise dissipates harmlessly.
+- Progress and ending:
+  - 9 total Waves. Success if all four shells complete before or at Wave 9 end. Otherwise, end with partial completion summary. No fail state mid-run.
+- Audio/feel (non-mechanical but reinforcing):
+  - Each shell target maps to a chord tone; delivering paint within tolerance emits a soft note. Delivering the required color to a gate plays its “key” note. The final wave plays the accumulated chord if all shells are complete.
+
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Canvas: 960 x 600 px
+- Background:
+  - Sky gradient top 1/3: #87C6D8 to #CFE9F2
+  - Sea band left 200 px: #63A6C3 with slight animated wave texture
+  - Beach area right of sea: #F2E2B8
+
+Grid:
+- Origin: (224, 48) px
+- Tile size: 32 x 32 px
+- Grid size: 23 columns x 15 rows (736 x 480 px)
+- Sea occupies visual band left of col 0; sources emit into col 0 if grooved.
+
+Elements:
+- Tile states per cell:
+  - type: enum {Sand, Groove, Shell, Gate, RuneFilter, RuneMixer, OneWayRidge, SourceProxy}
+  - stability: int 0–2 (Groove only; 2 = dark, 1 = medium, 0 = sand on update)
+  - ridgeDir: enum {None, Up, Right, Down, Left} (for OneWayRidge)
+- Sources (virtual):
+  - Three fixed rows: 3, 8, 13 (0-indexed row indexing)
+  - Colors: Red [1,0,0], Blue [0,0,1], Yellow [1,1,0]
+  - volumePerWave: 60 units each
+  - Entry tile: (col 0, row r)
+- Shells:
+  - Four targets:
+    - Shell A (Green [0,1,0]) at (col 16, row 4)
+    - Shell B (Purple [0.6,0,0.8]) at (col 18, row 8)
+    - Shell C (Orange [1,0.5,0]) at (col 20, row 12)
+    - Shell D (Teal [0,0.7,0.7]) at (col 21, row 2) behind a coral gate
+  - requiredVolume: 100 each
+  - matchTolerance: 0.18 (Euclidean RGB)
+- Coral Gate:
+  - Gate tile clusters forming a 2x1 wall centered around (col 19, row 2) horizontally across key corridor
+  - requiredColor: Purple [0.6,0,0.8]
+  - side inlet tile: (col 18, row 2) (must receive matching color)
+  - openNextWave: boolean false initially
+- Runes:
+  - Filter Rune (RuneFilter): tile that applies filter effect when packet enters
+  - Mixer Pool (RuneMixer): tile that stores and releases after holdDuration
+  - One-Way Ridge: represented as type OneWayRidge with ridgeDir; blocks reverse edge
+- Packet visuals:
+  - Circles radius 5 px, alpha 0.9, tint RGB
+  - Speed: 256 px/s
+- UI text and buttons:
+  - Title: “Tidepainter: Songs of the Shore” center (480, 160), font 48 px bold #1B3A4B
+  - Title subtitle: “Carve, place runes, and tune the tide.” 20 px
+  - Play button: centered (480, 300), 200x56 px
+  - In-game HUD:
+    - Waves: “Waves: X/9” at (16, 12), 20 px #1B3A4B
+    - Phase/countdown: centered top (480, 12), 20 px
+    - Tokens: “Filter: N  Mixer: M  Ridge: R” at (640, 12), 20 px
+  - Tool tray buttons:
+    - Positions (16, 544), (144, 544), (272, 544), (400, 544), (528, 544), each 112x40 px: Carve [1], Filter [2], Mixer [3], Ridge [4], Erase [5]
+    - Selected tool outlined #1B3A4B
+  - Gate hint: on hover, small tooltip near cursor “Needs Purple (opens next wave)”
+  - End screen:
+    - Success: “The shore sings your song.” 36 px
+    - Failure: “The tide carries your patterns away.” 36 px
+    - Subtext: “Shells filled: N/4” and “Replay”
+
+Input:
+- Mouse:
+  - Left-drag Carve: set type=Groove; stability=2 if tile was Sand or Groove
+  - Left-click place runes: if selected rune and tokens > 0 and tile is Sand or Groove (not Shell/Gate/SourceProxy), place rune (type=RuneFilter/RuneMixer/OneWayRidge). For Ridge, rotate with Q/E before placing.
+  - Left-drag Erase: remove Grooves (set Sand) or remove Rune (refund token)
+- Keyboard:
+  - 1..5 select tools
+  - Q/E rotate ridgeDir while Ridge tool is active
+  - R to restart on End screen
+
+State:
+- phase: "Calm" | "Wave" | "End"
+- waveIndex: 1..9
+- phaseTimer: float
+- grid[type][stability][ridgeDir]
+- runeTokens:
+  - filters: 3
+  - mixers: 2
+  - ridges: 5
+- sources: as defined
+- shells: array with currentVolume, complete flag
+- gate: {tiles: [(19,2),(20,2)], requiredColor, inletPos:(18,2), openNextWave:boolean, openThisWave:boolean}
+- packets: active packet array during Wave
+  - packet: {x,y,col,row,color[3],volume,float next target, path info}
+- mixerPools: map tile-> {bufferedVolume, bufferedColor[3], holdTimer}
+- perTileFlowVolume: 2D float array reset each Wave to track erosion reinforcement
+
+Timing:
+- Calm durations:
+  - Waves 1–3: 2.2 s
+  - Waves 4–6: 1.8 s
+  - Waves 7–9: 1.4 s
+- Wave max duration: 1.2 s (or until packets exhausted)
+- Mixer holdDuration: 0.4 s
+- Countdown updates 10 Hz
+
+Interactions:
+- Flow graph building each Wave:
+  - Consider a neighbor an exit if neighbor tile is Groove or Rune (Filter/Mixer) or Shell AND the edge is not blocked by One-Way Ridge reverse rule.
+  - Reverse rule: If current tile or neighbor has OneWayRidge on the edge with direction opposite to movement, block movement.
+- Spawning:
+  - From each source, if entry tile (0, row) is passable (Groove or Rune), spawn 6 packets of 10 volume each at that tile center; else dissipate.
+- Movement:
+  - Packets move toward exits; split evenly if multiple exits.
+  - On entering RuneFilter: apply filter immediately (largest component *= 0.7).
+  - On entering RuneMixer: deposit volume and color into mixerPools for that tile; packet volume becomes 0 (consumed). Mixer releases one merged packet when holdTimer <= 0 or at Wave end if any volume remains.
+- Gates:
+  - At Wave start: gate.openThisWave = gate.openNextWave; gate.openNextWave=false
+  - During Wave: if inlet tile receives matching color (within tolerance) at any time, set gate.openNextWave=true and play gate tone. While openThisWave is true, the gate tiles are considered passable in the flow graph.
+- Shell intake:
+  - Same as original: matching adds to currentVolume; lock when complete.
+- Erosion:
+  - Track perTileFlowVolume during Wave. On switching back to Calm, iterate grooves:
+    - if perTileFlowVolume[col][row] >= 10 units: stability = min(2, stability+1)
+    - else: stability -= 1
+    - if stability <= 0: type=Sand
+- Dissipation:
+  - If no exit, sand, or packet volume <1, packet is destroyed.
+
+Progression:
+- Success check after each Wave; end early if all shells complete.
+- Else proceed until wave 9 ends; then end with result.
+
+Audio (optional but encouraged):
+- Map shells to notes (C4,E4,G4,B3). On matching delivery, play soft pluck with velocity proportional to volume.
+- Gate note (D#4) on successful tune events.
+
+## 8. Game Flow
+- Load:
+  - Show Title screen with Play.
+- Start:
+  - On Play: initialize grid as Sand; mark source entry tiles visually; place shells and gate; runeTokens set to filters=3, mixers=2, ridges=5; waveIndex=1; phase=Calm; phaseTimer=2.2; show quick tips for first two waves (“Carve grooves. Waves carry color.” then “Runes reshape the flow: Filter, Mixer, Ridge.”).
+- Loop:
+  - Calm phase:
+    - Accept editing input; update HUD; display “Wave in: X.Xs”
+    - When timer reaches 0, lock editing, build flow graph (respecting openThisWave for gate), reset perTileFlowVolume and mixerPools’ hold timers if needed, start Wave.
+  - Wave phase:
+    - Spawn packets; update movement; apply rune effects; accumulate perTileFlowVolume; process shell intake; handle gate tuning; mixer release events; continue until timer or packets exhausted.
+    - On Wave end: apply erosion pass; check completion; increment waveIndex; openNextWave gates carry to next start; switch to Calm with updated timer unless ending.
+- End:
+  - If all shells complete: show success End screen indicating “Waves used: X/9.”
+  - Else after wave 9: show failure End screen with “Shells filled: N/4.”
+  - Offer Replay button or R to restart.
+
+## 9. Pseudocode
+
+Constants:
+- TILE_SIZE=32; GRID_COLS=23; GRID_ROWS=15; GRID_ORIGIN=(224,48)
+- MAX_WAVES=9
+- CALM_DUR = {1:2.2,2:2.2,3:2.2,4:1.8,5:1.8,6:1.8,7:1.4,8:1.4,9:1.4}
+- WAVE_MAX=1.2
+- PACKETS_PER_SOURCE=6; SOURCE_VOL=60
+- SPEED=256
+- MATCH_TOL=0.18
+- REQUIRED_VOL=100
+- EROSION_THRESHOLD=10
+- FILTER_TOKENS=3; MIXER_TOKENS=2; RIDGE_TOKENS=5
+- MIXER_HOLD=0.4
+
+Data structures:
+- tile[col][row] = {
+    type: Sand|Groove|Shell|Gate|RuneFilter|RuneMixer|OneWayRidge|SourceProxy,
+    stability: 0..2,
+    ridgeDir: None|Up|Right|Down|Left
+  }
+- sources = [
+    {row:3,color:[1,0,0]}, {row:8,color:[0,0,1]}, {row:13,color:[1,1,0]}
+  ]
+- shells = [
+    {col:16,row:4,target:[0,1,0],required:100,current:0,complete:false},
+    {col:18,row:8,target:[0.6,0,0.8],required:100,current:0,complete:false},
+    {col:20,row:12,target:[1,0.5,0],required:100,current:0,complete:false},
+    {col:21,row:2,target:[0,0.7,0.7],required:100,current:0,complete:false}
+  ]
+- gate = {
+    tiles:[(19,2),(20,2)],
+    inlet:(18,2),
+    required:[0.6,0,0.8],
+    openNextWave:false,
+    openThisWave:false
+  }
+- runeTokens = {filters:3, mixers:2, ridges:5}
+- packets: []
+- mixerPools: Map key "col,row" -> {bufferVol:0, bufferColor:[0,0,0], holdTimer:0}
+- perTileFlow: float[GRID_COLS][GRID_ROWS]
+
+Helper functions:
+- inBounds(c,r)
+- tileCenter(c,r)
+- isPassableForFlow(c,r): return tile.type in {Groove,RuneFilter,RuneMixer,Shell} OR (tile.type==Gate and gate.openThisWave and tile in gate.tiles)
+- edgeAllows(c1,r1,c2,r2): checks One-Way Ridge on either tile; if ridgeDir blocks movement from (c1,r1) to (c2,r2), return false
+- neighbors(c,r): up/down/left/right if inBounds and isPassableForFlow and edgeAllows
+- colorDistance(a,b)
+- mixColorsWeighted(c1,v1,c2,v2)
+
+Initialization:
+- set all tiles to Sand
+- mark source proxies visually (not in tile.type to avoid passability confusion)
+- place shells (set tile.type=Shell at those coords)
+- place gate tiles (set tile.type=Gate at coords)
+- state: phase=Calm; waveIndex=1; phaseTimer=CALM_DUR[1]
+- tokens as constants
+- UI setup and input handlers
+
+BuildFlowGraph():
+- graph = Map key "c,r" -> list of neighbor {c,r}
+- for each cell:
+   if isPassableForFlow(c,r):
+      exits=[]
+      for each (nx,ny) in neighbors(c,r):
+         exits.push({col:nx,row:ny})
+      graph["c,r"]=exits
+- return graph
+
+StartWave():
+- phase="Wave"; phaseTimer=WAVE_MAX
+- packets=[]; perTileFlow=0; mixerPools.clear()
+- gate.openThisWave = gate.openNextWave; gate.openNextWave=false
+- graph = BuildFlowGraph()
+- for each source:
+    entry=(0, source.row)
+    if isPassableForFlow(entry):
+       for i in 1..PACKETS_PER_SOURCE:
+         packets.push({
+           col:entry.col, row:entry.row,
+           x:tileCenter(entry).x, y:tileCenter(entry).y,
+           color:source.color, volume:SOURCE_VOL/PACKETS_PER_SOURCE,
+           next:null
+         })
+
+UpdateWave(dt):
+- // release mixer pools whose hold expired
+- for each pool in mixerPools:
+    pool.holdTimer -= dt
+    if pool.holdTimer <= 0 and pool.bufferVol > 0:
+       // emit one merged packet from this tile
+       emitPacketAt(poolCoord, pool.bufferColor, pool.bufferVol)
+       pool.bufferVol=0; pool.bufferColor=[0,0,0]
+
+- // move packets
+- for each packet in packets:
+    remaining = SPEED*dt
+    while remaining > 0 and packet.volume > 0:
+      // determine next if null
+      if packet.next == null:
+         exits = graph["packet.col,packet.row"] or []
+         // remove exits blocked by One-Way Ridge dynamically (safety)
+         exits = filterByEdgeRules(packet.col,packet.row,exits)
+         if exits.length == 0:
+            packet.volume = 0; break
+         if exits.length > 1:
+            // split evenly
+            per = packet.volume / exits.length
+            for idx, ex in enumerate(exits):
+              if idx == 0:
+                 packet.next = ex
+                 packet.volume = per
+              else:
+                 newP = clone(packet)
+                 newP.next = ex
+                 newP.volume = per
+                 packets.add(newP)
+         else:
+            packet.next = exits[0]
+      // move toward center of next
+      tx,ty = tileCenter(packet.next)
+      dx,dy = tx - packet.x, ty - packet.y
+      dist = sqrt(dx*dx + dy*dy)
+      if dist <= remaining:
+         // arrive
+         packet.x=tx; packet.y=ty; remaining -= dist
+         // register flow for erosion
+         perTileFlow[packet.next.col][packet.next.row] += packet.volume
+         // advance tile
+         packet.col=packet.next.col; packet.row=packet.next.row; packet.next=null
+         // apply tile effects
+         t = tile[packet.col][packet.row]
+         if t.type == RuneFilter:
+            // reduce dominant component
+            maxIdx = argmax(packet.color)
+            packet.color[maxIdx] *= 0.7
+         else if t.type == RuneMixer:
+            key = keyFor(packet.col,packet.row)
+            pool = mixerPools[key] or createPool()
+            // merge into buffer
+            if pool.bufferVol == 0:
+               pool.bufferColor = packet.color
+            else:
+               pool.bufferColor = mixColorsWeighted(pool.bufferColor, pool.bufferVol, packet.color, packet.volume)
+            pool.bufferVol += packet.volume
+            pool.holdTimer = MIXER_HOLD
+            packet.volume = 0 // consumed into pool
+         else if t.type == Shell:
+            deliverToShell(packet)
+         else if t.type == Gate:
+            // nothing special on pass (only possible if openThisWave)
+            pass
+         // gate tuning via inlet
+         if (packet.col,packet.row) == gate.inlet and colorDistance(packet.color, gate.required) <= MATCH_TOL:
+            gate.openNextWave = true
+            playGateTone()
+      else:
+         // partial move
+         ratio = remaining / dist
+         packet.x += dx*ratio; packet.y += dy*ratio
+         remaining = 0
+
+- // merge packets occupying same tile and direction optional (bucket by col,row)
+- buckets = Map "c,r" -> list packets
+- for p in packets: buckets[key(p.col,p.row)].push(p)
+- for each bucket with >1:
+    merge into first: totalV=sum v; if totalV>0 color = sum(c_i*v_i)/totalV
+    set first.volume=totalV; first.color=merged; remove others from packets
+
+- // cleanup dead packets
+- remove packets with volume < 1
+
+EndWave():
+- // emit any remaining mixer buffer immediately without movement (ignored; wave ended)
+- applyErosion()
+- if all shells complete: goEnd(success)
+- else if waveIndex >= MAX_WAVES: goEnd(failure)
+- else:
+    waveIndex += 1
+    phase="Calm"; phaseTimer=CALM_DUR[waveIndex]
+
+deliverToShell(packet):
+- s = findShellAt(packet.col, packet.row)
+- if s and !s.complete:
+    if colorDistance(packet.color, s.target) <= MATCH_TOL:
+       needed = s.required - s.current
+       inc = min(packet.volume, needed)
+       s.current += inc
+       packet.volume -= inc
+       if s.current >= s.required: s.complete=true; playShellChord(s)
+    // else: no effect
+
+applyErosion():
+- for each cell:
+   if tile.type == Groove:
+      if perTileFlow[c][r] >= EROSION_THRESHOLD: tile.stability = min(2, tile.stability+1)
+      else: tile.stability -= 1
+      if tile.stability <= 0: tile.type = Sand
+
+filterByEdgeRules(c1,r1,exits):
+- result=[]
+- for ex in exits:
+    if oneWayBlocks(c1,r1,ex.col,ex.row) == false:
+       result.push(ex)
+- return result
+
+oneWayBlocks(c1,r1,c2,r2):
+- dir = direction from (c1,r1) to (c2,r2)
+- // block if there is a ridge on either tile whose ridgeDir equals opposite direction of movement
+- t1 = tile[c1][r1]; t2 = tile[c2][r2]
+- if t1.type == OneWayRidge and t1.ridgeDir != dir: return true // only allow through if moving in ridgeDir
+- if t2.type == OneWayRidge and t2.ridgeDir != dir: return true
+- return false
+
+Editing handlers (Calm only):
+- Carve drag:
+  - if tile is Sand or Groove (not Shell/Gate/inlet/source):
+      set type=Groove; stability=2
+- Place Filter:
+  - if tokens.filters>0 and tile Sand or Groove (not Shell/Gate/inlet/source):
+      tile.type=RuneFilter; tokens.filters--
+- Place Mixer:
+  - if tokens.mixers>0 and eligible:
+      tile.type=RuneMixer; init mixerPools for this tile; tokens.mixers--
+- Place Ridge:
+  - if tokens.ridges>0 and eligible:
+      tile.type=OneWayRidge; tile.ridgeDir = currentSelectedDir; tokens.ridges--
+- Erase drag:
+  - if tile.type == Groove: set Sand
+  - if tile.type in {RuneFilter,RuneMixer,OneWayRidge}: set Sand; refund corresponding token
+
+Game state transitions:
+- Title -> Game on Play
+- Game Calm <-> Wave via timers
+- Game -> End on success or after wave 9
+- End -> Title or restart Game on Replay/R
+
+Notes to programmer:
+- Represent packets with lightweight Graphics or Particle-like sprites; bucket merging per tile to cap entity count.
+- MixerPools can be plain objects keyed by “c,r”.
+- Gates: treat as walls unless openThisWave true; simply exclude them from passable tiles in BuildFlowGraph otherwise.
+- Audio is optional; stub playShellChord and playGateTone.

@@ -1,0 +1,1907 @@
+================================================================================
+                        BUREAUCROMANCER (REVISED)
+                  Game Design & Technical Specification
+================================================================================
+
+REVISION NOTES — WHY THE ORIGINAL FELL SHORT:
+
+The original Bureaucromancer had a brilliant theme but an ordinary mechanic.
+Strip the fantasy-office dressing away and the player was doing one thing:
+matching colors. Green form to green monster. That's the same core loop as
+a dozen mobile sorting games. The bureaucracy was cosmetic — funny labels
+on a generic mechanic.
+
+Real bureaucracy isn't about matching colors. It's about reading fine print,
+interpreting ambiguous rules, dealing with exceptions, and making judgment
+calls under pressure. The revised design makes the RULES the mechanic.
+Each monster arrives with a case file. The player reads active regulations
+and decides: APPROVE (banish), DENY (let pass harmlessly), or REDIRECT
+(send to another department). The rules change every wave, sometimes
+contradicting each other. The comedy and challenge both emerge from the
+system itself — not from text labels pasted onto a sorting game.
+
+This transforms the game from "fast color matching" into something closer
+to Papers, Please meets fantasy comedy: a reading-comprehension/logic game
+under time pressure, where the humor is emergent from absurd rules
+interacting with absurd monster attributes.
+
+
+################################################################################
+# STAGE 1: GAME DESIGN
+################################################################################
+
+
+## 1. Title & Hook
+
+BUREAUCROMANCER
+
+"Monsters are storming the kingdom — and only YOU can stop them, by
+correctly interpreting an ever-changing tangle of magical regulations.
+Read the rules. Read the monster. Stamp your decision. Don't misfile."
+
+
+## 2. Core Insight
+
+Central question: What if the real monster was the process?
+
+Why this matters: Everyone has had the experience of staring at a form and
+genuinely not knowing the right answer — not because they're stupid, but
+because the rules are contradictory, ambiguous, or absurd. Bureaucromancer
+turns that universal frustration into a game. You're not mindlessly sorting
+— you're actually THINKING, reading, cross-referencing, and making judgment
+calls. When you get one right under pressure, it feels clever. When you get
+one wrong and realize the rule said "EXCEPT on Tuesdays," you laugh. The
+comedy isn't scripted — it emerges from the collision of ridiculous rules
+and ridiculous monsters. And the creeping feeling that the system itself is
+the real enemy? That's the satire.
+
+
+## 3. Mechanic-Theme Integration
+
+Primary mechanic: The player reads a monster's case file (a few visible
+attributes like species, size, crime committed, and a personal item), then
+cross-references it against the current set of active regulations displayed
+on a bulletin board, and stamps the case APPROVE (banish monster),
+DENY (monster is harmless, let it pass), or REDIRECT (wrong department,
+send it away). Each decision must be made before the monster's patience
+timer runs out.
+
+How this embodies the theme: The mechanic doesn't just LOOK like
+bureaucracy — it IS bureaucracy. You're doing what every clerk does:
+reading the case, reading the rules, making a judgment. The fun comes from
+the exact same place real bureaucratic frustration does: rules that seem
+simple until edge cases appear. "All fire-breathing creatures are
+APPROVED for banishment" seems clear — until a monster shows up who
+breathes fire but is classified as "Mostly Harmless" under Regulation 4.
+Now you have a conflict. Which rule takes priority? The game teaches you
+through play: newer regulations override older ones. That's a RULE ABOUT
+RULES — bureaucracy as gameplay.
+
+
+## 4. Player Journey
+
+START (0:00 - 0:30):
+The title screen shows a desk with a towering stack of papers, a rubber
+stamp, and the game's name in ornate fantasy lettering. "Your Shift
+Begins" pulses below. The player clicks.
+
+The game opens on the Bureaucromancer's desk. A bulletin board on the left
+shows one simple regulation: "REGULATION 1: All Slimes are hereby APPROVED
+for banishment." A monster approaches the desk from the right — a green
+slime. Its case file slides onto the desk, showing:
+  Name: Gerald | Species: Slime | Crime: Oozing in a No-Ooze Zone
+The player reads the rule, reads the file, and clicks APPROVE. Correct.
+The slime is banished in a puff of sparkles. The stamp feels satisfying.
+A second slime arrives. Same rule. Easy.
+
+FIRST COMPLICATION (0:30 - 1:15):
+A new regulation appears: "REGULATION 2: Creatures smaller than 3ft are
+DENIED — too small to be a threat." A tiny slime arrives. It's a slime
+(Reg 1 says APPROVE) but it's 2ft tall (Reg 2 says DENY). Which rule
+wins? A small tooltip appears the first time this happens: "When rules
+conflict, the NEWEST regulation takes priority." The player learns the
+core system: regulations are numbered, higher numbers override lower ones.
+The correct answer is DENY.
+
+BUILDING COMPLEXITY (1:15 - 2:30):
+New monster types appear (ghosts, imps, wraiths). New regulations are
+added one at a time, each with a clear announcement. By the 2-minute
+mark, there are 4-5 active regulations. Some examples:
+
+  "REGULATION 3: All Ghost-type creatures are REDIRECTED to the
+   Department of Spectral Affairs."
+  "REGULATION 4: Any creature carrying a weapon is APPROVED regardless
+   of other status."
+  "REGULATION 5: Creatures with 'Good' alignment are DENIED."
+
+The case files now have more attributes to check: species, size, item
+held, alignment, and crime. The player must scan the regulations,
+identify which ones apply, resolve conflicts by priority, and stamp.
+Patience timers give about 12 seconds per monster — enough to think, not
+enough to dither. Correct stamps build a combo streak that earns bonus
+points.
+
+ESCALATION (2:30 - 3:45):
+The regulations start getting WEIRD. This is where the comedy peaks:
+
+  "REGULATION 6: Creatures whose name starts with a vowel are APPROVED
+   on odd-numbered cases only."
+  "REGULATION 7: EXCEPTION — Regulation 3 does not apply if the ghost
+   is carrying food."
+
+Now the player is doing real logical reasoning: "OK, this is a ghost
+(Reg 3 says REDIRECT), but it's carrying a sandwich (Reg 7 says the
+ghost exception applies), so Reg 3 doesn't count, but it also has Good
+alignment (Reg 5 says DENY), and Reg 5 is newer than Reg 7... so DENY."
+The humor emerges naturally — a ghost named "Aaaaron" carrying a haunted
+sandwich, classified as a threat due to a technicality.
+
+Meanwhile, the patience timers shorten to ~9 seconds. The bulletin board
+is getting crowded. Old regulations can be REPEALED (crossed out with a
+red line), which adds another layer — the player must track what's still
+active. Mistakes are now more likely, and the consequences more dramatic
+(screen shake, lost reputation points).
+
+CLIMAX (3:45 - 4:30):
+A horn sounds. "EMERGENCY SESSION: THE DRAGON FILING." A massive dragon
+case file lands on the desk. It has EVERY attribute filled out, and
+several are ambiguous or contradictory ("Species: Dragon/Lizard (disputed)"
+"Size: 40ft (estimated, unverified)"). All current regulations apply.
+The dragon has a 30-second patience timer.
+
+But here's the twist: a rapid succession of 3 new emergency regulations
+are posted, some of which directly conflict:
+
+  "EMERGENCY REG A: All dragons are APPROVED for immediate banishment."
+  "EMERGENCY REG B: Creatures over 30ft require REDIRECT to the
+   Department of Large Affairs."
+  "EMERGENCY REG C: Emergency Regulations do not override standard
+   regulations — they advise only."
+
+Wait — Emergency Reg C says the emergency regs are advisory only?
+So the standard regulations still apply? The player must trace the
+entire chain of logic. (The correct answer depends on the specific
+combination generated — see Rules & Systems.) This is the final exam
+of everything the player has learned about rule priority, exceptions,
+and careful reading.
+
+ENDING (4:30 - 5:00):
+If the player stamps the dragon correctly, a massive "APPROVED" (or
+"DENIED" or "REDIRECTED") stamp slams across the screen. Confetti
+explodes. The dragon is processed. The game transitions to a
+"Performance Review" end screen showing stats and a rank.
+
+If the player gets it wrong, the dragon eats the paperwork — but the
+game still ends and shows the review with a lower rank. The game is
+completable regardless, but the dragon decision determines the final
+rank tier.
+
+The player should feel: the satisfying click of a puzzle solved, the
+absurd humor of having navigated a Kafkaesque regulatory framework to
+defeat a dragon, and the creeping suspicion that the bureaucracy was
+harder than the monsters ever were.
+
+
+## 5. Game Elements
+
+THE DESK (play surface):
+- Fills the full screen. Warm wood-brown surface.
+- Left side (x 0-240): THE BULLETIN BOARD — a cork-brown rectangle
+  pinned with regulation cards. This is the "rules reference" the player
+  constantly checks.
+- Center (x 240-580): THE CASE FILE AREA — where the current monster's
+  file is displayed as a parchment card with readable text.
+- Right side (x 580-800): THE MONSTER WINDOW — a stone archway where
+  the current monster stands, visible and waiting. Shows the monster
+  sprite and a circular patience timer depleting around it.
+- Bottom strip (y 520-600): THE STAMP TRAY — three large stamp buttons
+  in a row: APPROVE (green), DENY (red), REDIRECT (yellow).
+
+THE BULLETIN BOARD:
+- Cork-colored rectangle with pinned "regulation cards."
+- Each regulation is a small card (~220x45px) with text in 11-12px font.
+- Active regulations have white backgrounds.
+- Repealed regulations have a red diagonal line through them and are
+  grayed out.
+- New regulations slide in from the top with a "pin" animation and a
+  brief glow to draw attention.
+- Maximum 8 regulation cards visible. The board scrolls subtly if
+  the player hovers over it, but in practice, old regulations get
+  repealed before the board overflows.
+
+THE CASE FILE:
+- A parchment-colored rectangle (~320x280px) centered on the desk.
+- Contains clearly labeled fields:
+    CASE #: [number]
+    NAME: [monster name]
+    SPECIES: [type]
+    SIZE: [Xft]
+    ALIGNMENT: [Good / Neutral / Evil]
+    ITEM: [what they're carrying]
+    CRIME: [alleged offense]
+- Text is in a clear serif-style font, 14px, dark brown.
+- When a new monster arrives, the case file slides up from the bottom
+  of the desk with a paper-shuffle animation.
+
+THE MONSTER WINDOW:
+- A stone archway frame on the right side.
+- The current monster stands inside it, with an idle animation (breathing,
+  bobbing).
+- A circular patience timer surrounds the archway — a colored ring that
+  depletes clockwise. Green when full, yellow at 50%, red at 25%.
+- When patience runs out, the monster roars (screen shake) and leaves.
+  This counts as a misfiling.
+
+Monster types (simple geometric sprites):
+  Slime: green blob, round, bounces gently
+  Ghost: blue-white translucent floaty shape, bobs up and down
+  Imp: small red figure with horns, fidgets impatiently
+  Wraith: tall purple hooded shape, sways slowly
+  Dragon: large orange-red head with horns, fills the window, breathes
+          small puffs of smoke (particle effect)
+
+STAMP BUTTONS (bottom tray):
+  APPROVE: green rectangle, white text "APPROVE", left position (x=300)
+  DENY: red rectangle, white text "DENY", center position (x=410)
+  REDIRECT: yellow rectangle, dark text "REDIRECT", right position (x=520)
+  Each is ~100x55px.
+  On hover: slight scale-up (1.05x) and brighter tint.
+  On click: press-down animation (scale to 0.9, 80ms, spring back).
+  Keyboard shortcuts shown as small labels: [A], [D], [R].
+
+STAMP RESULT FEEDBACK:
+  Correct: Large "✓ CORRECT" text in green with a satisfying thump
+  animation (scale from 2x to 1x, bounce ease). Monster plays a
+  banish/deny/redirect animation depending on decision. +Points.
+  Streak counter increments.
+
+  Incorrect: Large "✗ MISFILED" text in red, screen shakes. The correct
+  answer is briefly shown ("Should have been: DENY — Reg 5 overrides
+  Reg 1"). This is critical for teaching the player WHY they were wrong.
+  Streak resets. Reputation penalty.
+
+UI ELEMENTS:
+  Top-left: "REPUTATION: [bar]" — a horizontal bar that starts full
+    (green) and depletes with mistakes. If it empties, game over.
+    Reputation recovers slowly with correct decisions.
+  Top-center: "SHIFT: [M:SS]" — countdown from 5:00.
+  Top-right: "CASES: [processed]/[total] | STREAK: [n]" — tracks
+    correct filings and current combo.
+  Center-bottom: Case number badge "CASE #[n]" on the file.
+
+SCREENS:
+  1. Title Screen — game name, premise, controls, start prompt.
+  2. Game Screen — the desk with all interactive elements.
+  3. End Screen — "Performance Review" with stats and rank.
+
+
+## 6. Rules & Systems
+
+WHAT THE PLAYER CAN DO:
+- READ the bulletin board (always visible on the left).
+- READ the current case file (always visible in the center).
+- CLICK one of three stamp buttons: APPROVE, DENY, or REDIRECT.
+  Alternatively, press A, D, or R on the keyboard.
+- HOVER over a regulation card to see it enlarge slightly for easier
+  reading (quality-of-life feature).
+- That's it. The entire game is: read, think, decide, stamp.
+
+HOW THE GAME DETERMINES THE CORRECT ANSWER:
+Each monster has a set of attributes. Each regulation is a rule that maps
+certain attributes to a verdict. The game engine resolves the correct
+answer by:
+  1. Checking ALL active (non-repealed) regulations.
+  2. Finding all regulations whose conditions match the current monster.
+  3. If only one matches: that's the answer.
+  4. If multiple match with the same verdict: that's the answer.
+  5. If multiple match with DIFFERENT verdicts: the HIGHEST-numbered
+     regulation wins (newer overrides older).
+  6. If NO regulation matches: the default is DENY (innocent until
+     proven otherwise — a rule stated on the board from the start).
+  7. EXCEPTION regulations (e.g., "Reg 3 does not apply if...") are
+     checked first and can deactivate other regulations for this case.
+
+This system is deterministic — there is always exactly one correct answer.
+
+HOW THE GAME RESPONDS TO PLAYER ACTIONS:
+  Correct stamp: +10 points (base). Streak multiplier: x1 at streak 0,
+    x1.5 at streak 3, x2 at streak 6, x3 at streak 10. Reputation
+    recovers +5% of max. Monster plays exit animation. Next case arrives
+    after 1.5s.
+
+  Incorrect stamp: -15 reputation points (out of 100). Streak resets to 0.
+    Brief "MISFILED" feedback showing the correct answer and which
+    regulation determined it. Monster leaves angrily. Next case after 2s.
+
+  Patience expires (no stamp in time): Treated as incorrect. -10
+    reputation. "CASE EXPIRED" text. Counts as a misfiling.
+
+REPUTATION SYSTEM (replaces "lives"):
+  Starts at 100. Max 100.
+  Each mistake costs 15. Timeout costs 10.
+  Each correct answer recovers 3 (encourages sustained play, not just
+  avoiding mistakes).
+  If reputation hits 0: game over — "FIRED FOR GROSS INCOMPETENCE."
+  Reputation bar color: green (70-100), yellow (40-69), red (1-39).
+
+PROGRESSION — WAVE STRUCTURE:
+The game is divided into 5 waves. Between waves, there is a brief 4-second
+"New Regulations Posting" intermission where the bulletin board updates.
+
+  Wave 1 — "Orientation" (0:00 - 1:00):
+    Regulations: 1-2 (simple species-based rules)
+    Monster types: Slime only
+    Attributes checked: Species, Crime
+    Patience timer: 15 seconds
+    Cases: ~4-5
+    Purpose: Teach core loop. Read rule, match to monster, stamp.
+
+  Wave 2 — "Getting the Hang of It" (1:00 - 2:00):
+    Regulations: 3-4 added (size-based rule, alignment rule)
+    One regulation may be repealed
+    Monster types: Slime, Ghost
+    Attributes checked: Species, Size, Alignment
+    Patience timer: 13 seconds
+    Cases: ~5-6
+    Purpose: Introduce rule conflicts and priority system.
+
+  Wave 3 — "The Bureaucracy Thickens" (2:00 - 3:00):
+    Regulations: 5-6 added (item-based rules, exception rules)
+    Another regulation may be repealed
+    Monster types: Slime, Ghost, Imp
+    Attributes checked: All fields
+    Patience timer: 11 seconds
+    Cases: ~6-7
+    Purpose: Full attribute reading. Humor peaks — absurd exceptions.
+
+  Wave 4 — "Red Tape Labyrinth" (3:00 - 3:45):
+    Regulations: 7-8 active (conditional rules, meta-rules)
+    Monster types: All four
+    Patience timer: 9 seconds
+    Cases: ~5-6
+    Purpose: Maximum complexity. Multiple conflicting rules per case.
+
+  Wave 5 — "The Dragon Filing" (3:45 - 4:30):
+    3 emergency regulations posted rapidly
+    One dragon case with ALL attributes and ambiguities
+    Patience timer: 30 seconds
+    Cases: 1 (the dragon)
+    Purpose: Climactic logic puzzle using every system learned.
+
+  Ending (4:30 - 5:00): Results and performance review.
+
+REGULATION TEMPLATES:
+Regulations are generated from templates with randomized values to ensure
+replayability. Template categories:
+
+  SPECIES rules: "All [species] creatures are [VERDICT]."
+  SIZE rules: "Creatures [larger/smaller] than [N]ft are [VERDICT]."
+  ALIGNMENT rules: "Creatures with [alignment] alignment are [VERDICT]."
+  ITEM rules: "Any creature carrying a [item category] is [VERDICT]."
+  EXCEPTION rules: "Regulation [N] does not apply if [condition]."
+  CONDITIONAL rules: "If a creature's crime involves [keyword],
+    [VERDICT] regardless of species."
+  META rules (wave 4+): "Regulations posted during this wave do not
+    override regulations from Wave 2." (Rule about rules!)
+
+MONSTER NAME AND ATTRIBUTE GENERATION:
+Names are generated from silly fantasy name pools:
+  First names: Gerald, Brenda, Thok, Mildred, Xargroth, Susan, Blorp,
+    Kevin, Aaaaron, Dreadmaw, Patricia, Skullface, Trevor
+  Crimes are pulled from a pool of absurd offenses:
+    "Oozing in a No-Ooze Zone," "Unauthorized Haunting,"
+    "Loitering with Malicious Intent," "Possession of an Unlicensed Wand,"
+    "Disturbing the Arcane Peace," "Tax Evasion (Spectral Income),"
+    "Excessive Moaning After 10pm," "Identity Theft (Shapeshifting)"
+  Items: "a rusty sword," "a suspicious sandwich," "a library book
+    (overdue)," "nothing," "a small cat," "a signed confession,"
+    "a bouquet of flowers," "a counterfeit spell license"
+  Sizes: randomly generated integer between 1 and 12 (ft), or 30-50
+    for the dragon.
+  Alignments: Good, Neutral, Evil (weighted by monster type but with
+    exceptions — a "Good" imp or an "Evil" ghost keeps things interesting)
+
+
+################################################################################
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+################################################################################
+
+
+## 7. Technical Specification
+
+**DISPLAY**
+- Canvas: 800 x 600 pixels
+- Background color: #2a1a0a (dark wood brown)
+- Scale mode: Phaser.Scale.FIT, center both
+- No external assets — all graphics generated programmatically via
+  Phaser Graphics API
+
+**LAYOUT ZONES**
+
+  Bulletin Board:
+    x: 10, y: 45, width: 225, height: 470
+    Background: filled rounded rectangle, color #b8956a (cork brown),
+      border 2px #7a6040
+    Title bar: "ACTIVE REGULATIONS" text at top, 12px bold, #442200
+    Contains regulation cards stacked vertically with 6px gaps
+    Starting y for first card: 70
+
+  Case File Area:
+    x: 245, y: 55, width: 320, height: 395
+    Background: filled rounded rectangle, color #f5e6c8 (parchment),
+      border 2px #a08050, slight drop shadow
+    Contains text fields laid out vertically (see Case File below)
+
+  Monster Window:
+    x: 580, y: 55, width: 210, height: 340
+    Background: filled rectangle #4a4a5a (stone gray), border 3px #333344
+    Inner area for monster sprite: centered within window
+    Patience timer ring: drawn as an arc around the window border
+
+  Stamp Tray:
+    y: 520, spanning x: 245 to 575, height: 70
+    Three stamp buttons evenly spaced (see Stamp Buttons below)
+    Background: subtle darker wood strip, color #6a4a14
+
+  UI Bar:
+    y: 0 to 40, full width
+    Background: dark rectangle #1a1008, subtle bottom border #3a2a10
+
+**REGULATION CARDS**
+  Size: 215 x variable height (min 40px, grows with text)
+  Background: #fffef0 (off-white), border 1px #aa9060
+  Text: 11px Arial, color #332200, word-wrap width 200px
+  Left margin: 6px. Top/bottom padding: 4px.
+  Regulation number prefix in bold: "REG 1:" etc.
+  Repealed state: entire card gets alpha 0.4, red diagonal line drawn
+    from top-left to bottom-right (2px, #cc2222)
+  New card entrance: tween from y=-50 to target y, duration 400ms,
+    ease 'Back.easeOut', with a brief yellow glow (#ffff88) that fades
+    over 1 second
+  Hover behavior: on pointerover, card scales to 1.08x and depth
+    increases to DEPTHS.TOOLTIP. On pointerout, returns to normal.
+
+**CASE FILE FIELDS**
+  Layout within the parchment card, starting at y offset 15 from top:
+    Line 0: "CASE #[n]" — 18px bold, #442200, centered
+    Line 1: horizontal divider line, 1px #aa9060
+    Line 2: "NAME: [name]" — 15px, #332200
+    Line 3: "SPECIES: [species]" — 15px, #332200
+    Line 4: "SIZE: [n]ft" — 15px, #332200
+    Line 5: "ALIGNMENT: [alignment]" — 15px, #332200
+    Line 6: "ITEM: [item]" — 15px, #332200
+    Line 7: horizontal divider
+    Line 8: "ALLEGED CRIME:" — 13px bold, #332200
+    Line 9: "[crime text]" — 13px italic, #554422, word-wrap 290px
+  Each line has 28px vertical spacing.
+  Entrance animation: tween from y=620 to target y, duration 400ms,
+    ease 'Back.easeOut'
+  Exit animation: tween to y=620, duration 300ms
+
+**MONSTER SPRITES** (generated via Graphics API)
+  All drawn centered within a 60x80 bounding box:
+
+  Slime: 50x35 filled ellipse, color #44cc44, two 5px white eyes with
+    3px black pupils at upper third. Idle animation: scaleY oscillates
+    between 0.9 and 1.1 (squish bounce), 600ms period.
+
+  Ghost: 40x55 shape — upper half is a semicircle, lower half is a wavy
+    edge (3 sine bumps). Color #aaccff, alpha 0.7. Eyes: two 7px white
+    ovals. Idle: bobs y ±6px, 1200ms period, slight rotation ±3°.
+
+  Imp: 30x45 rectangle body, color #dd4444. Two small triangle horns
+    (6px tall) on top. Arms: two small rectangles on sides. Eyes: two 4px
+    yellow dots. Idle: shifts x ±3px rapidly, 400ms (fidgeting).
+
+  Wraith: 35x60 tall triangle (hood shape), color #9944cc. Two 5px
+    white horizontal slit eyes. Idle: sways rotation ±4°, 2000ms, and
+    alpha oscillates 0.6-0.9.
+
+  Dragon: 110x130 shape. Large triangular head #cc6600, two horn
+    triangles #884400, underbelly area #ffaa00, two 10px red eyes #ff2200.
+    Idle: scaleX/scaleY oscillate 1.0-1.03 (breathing), 1500ms. Small
+    particle emitter (2-3 gray circles per second rising from mouth area).
+
+**PATIENCE TIMER RING**
+  Drawn as an arc using Phaser Graphics, redrawn each frame.
+  Full circle = monster's max patience time.
+  Center: monster window center (x=685, y=225)
+  Radius: 100px, line width: 6px
+  Color: interpolated from #44cc44 (full) to #cccc22 (half) to #cc2222
+    (low), based on remaining fraction.
+  Depletes clockwise from 12 o'clock position.
+  When < 25% remaining: ring pulses alpha (0.5 to 1.0, 300ms loop)
+
+**STAMP BUTTONS**
+  APPROVE: x=310, y=548, size 95x48, color #338833, hover #44aa44
+    Text: "APPROVE" 14px bold white. Below text: "[A]" in 10px #aaffaa
+  DENY: x=415, y=548, size 95x48, color #883333, hover #aa4444
+    Text: "DENY" 14px bold white. Below text: "[D]" in 10px #ffaaaa
+  REDIRECT: x=520, y=548, size 95x48, color #888833, hover #aaaa44
+    Text: "REDIRECT" 13px bold #222200. Below text: "[R]" in 10px #aaaa66
+  All: rounded corners 6px. On hover: scale 1.05, 100ms tween.
+    On click: scale 0.92, 80ms, spring back 120ms.
+
+**RESULT FEEDBACK OVERLAY**
+  Correct:
+    "✓ CORRECT" text at center (x=400, y=300), 36px bold, color #44cc44,
+    stroke #224422 4px. Scale-in from 2.0 to 1.0, 350ms, Bounce ease.
+    Fades out over 400ms after holding 300ms.
+    Points text: "+[N] pts" below, 18px, #88ff88, same timing.
+
+  Incorrect:
+    "✗ MISFILED" text at center, 36px bold, color #cc4444, stroke
+    #442222 4px. Same scale-in animation.
+    Below: "Correct: [VERDICT] — [Regulation rationale]" at y=340,
+    14px, #ffaaaa, word-wrap 400px. Holds for 1.5 seconds then fades.
+    Screen shake: 200ms, intensity 0.008.
+
+  Timeout:
+    "⏱ CASE EXPIRED" text, 32px, color #ccaa22. Same animation.
+    Screen shake: 150ms, intensity 0.005.
+
+**UI BAR TEXT**
+  Reputation label: x=16, y=12, "REPUTATION:" 13px bold, #ccaa77
+  Reputation bar: x=120, y=8, width 150, height 18, background #332211,
+    fill color determined by value (green #44cc44 at 70-100%,
+    yellow #cccc22 at 40-69%, red #cc4444 at 1-39%). Border 1px #554422.
+    Fill width = (reputation / 100) * 148.
+  Timer: x=400, y=12, "SHIFT: [M:SS]" 16px, #ffffff, centered, stroke
+    #000000 2px.
+  Cases: x=570, y=6, "CASES: [n]" 12px, #ccaa77
+  Streak: x=570, y=22, "STREAK: [n]" 12px, color changes with streak
+    (white at 0, yellow at 3+, orange at 6+, red/gold at 10+)
+
+**INPUT MAPPING**
+  A key: stamp APPROVE
+  D key: stamp DENY
+  R key: stamp REDIRECT
+  Left-click on APPROVE button: stamp APPROVE
+  Left-click on DENY button: stamp DENY
+  Left-click on REDIRECT button: stamp REDIRECT
+  Mouse hover on regulation card: enlarge card for readability
+  No dragging, no right-click, no other keys during gameplay.
+
+**GAME STATE VARIABLES**
+  reputation: integer, starts at 100, max 100, min 0
+  score: integer, starts at 0
+  casesProcessed: integer, starts at 0
+  casesMisfiled: integer, starts at 0
+  streak: integer, starts at 0
+  bestStreak: integer, starts at 0
+  gameTime: float, starts at 300.0 (seconds), counts down
+  currentWave: integer, starts at 1
+  currentCaseNumber: integer, starts at 1
+  activeRegulations: array of regulation objects
+  currentMonster: object or null (the active case)
+  correctVerdict: string ('APPROVE'|'DENY'|'REDIRECT') — precomputed
+  waitingForNextCase: boolean, starts at false
+  bossPhase: boolean, starts at false
+  gameOver: boolean, starts at false
+  gameWon: boolean, starts at false
+
+**REGULATION OBJECT STRUCTURE**
+  {
+    id: integer (1, 2, 3...),
+    text: string (display text),
+    type: string ('species'|'size'|'alignment'|'item'|'exception'|
+                  'conditional'|'meta'),
+    condition: function(monster) -> boolean,
+    verdict: string ('APPROVE'|'DENY'|'REDIRECT') or null for exceptions,
+    exceptionTarget: integer or null (for exception type — which reg
+      it overrides),
+    active: boolean (false when repealed),
+    wave: integer (which wave it was introduced)
+  }
+
+**MONSTER OBJECT STRUCTURE**
+  {
+    name: string,
+    species: string ('Slime'|'Ghost'|'Imp'|'Wraith'|'Dragon'),
+    size: integer (feet),
+    alignment: string ('Good'|'Neutral'|'Evil'),
+    item: string,
+    crime: string,
+    caseNumber: integer,
+    patienceMax: float (seconds),
+    patienceRemaining: float (seconds),
+    sprite: Phaser sprite reference
+  }
+
+**TIMING VALUES**
+  Total game duration: 300 seconds
+  Wave transitions: at 60s, 120s, 180s, 225s elapsed (= 240, 180,
+    120, 75 remaining)
+  Wave intermission (regulation posting): 4000ms
+  Patience timers by wave: W1=15s, W2=13s, W3=11s, W4=9s, W5(boss)=30s
+  Delay between cases: 1500ms after correct, 2000ms after incorrect,
+    1500ms after timeout
+  Correct result display: 700ms (300ms hold + 400ms fade)
+  Incorrect result display: 2000ms (1500ms hold + 500ms fade)
+  Case file entrance/exit tween: 400ms / 300ms
+  Regulation card entrance tween: 400ms
+  Stamp button press animation: 80ms down, 120ms spring
+  Reputation bar tween (on change): 300ms smooth
+
+**INTERACTIONS — STAMP DECISION FLOW**
+  1. Player presses A/D/R or clicks a stamp button.
+  2. If waitingForNextCase or gameOver: ignore input.
+  3. If currentMonster is null: ignore input.
+  4. Set waitingForNextCase = true (prevent double-stamps).
+  5. Compare player's choice to correctVerdict.
+  6. If correct:
+     a. Show "✓ CORRECT" overlay.
+     b. score += 10 * streakMultiplier.
+     c. streak += 1. Update bestStreak if needed.
+     d. reputation = min(100, reputation + 3).
+     e. casesProcessed += 1.
+     f. Play monster exit animation based on verdict:
+        APPROVE → monster poofs into particles (banished)
+        DENY → monster waves and walks away happily
+        REDIRECT → monster slides off to the right quickly
+     g. After 1500ms: clear case, load next monster or next wave.
+  7. If incorrect:
+     a. Show "✗ MISFILED" overlay with explanation.
+     b. streak = 0.
+     c. reputation -= 15.
+     d. casesMisfiled += 1.
+     e. If reputation <= 0: trigger game over (loss).
+     f. Monster stomps away angrily (small shake).
+     g. After 2000ms: clear case, load next.
+  8. If patience expired (handled in update loop, not by stamp):
+     a. Show "⏱ CASE EXPIRED" overlay.
+     b. streak = 0.
+     c. reputation -= 10.
+     d. casesMisfiled += 1.
+     e. If reputation <= 0: trigger game over (loss).
+     f. Monster roars and leaves.
+     g. After 1500ms: clear case, load next.
+
+**VERDICT RESOLUTION ALGORITHM**
+  function resolveVerdict(monster, activeRegulations):
+    applicableRegs = []
+    // First pass: find exception rules that apply
+    exceptions = activeRegulations.filter(r =>
+      r.active && r.type == 'exception' && r.condition(monster))
+    disabledRegIds = exceptions.map(e => e.exceptionTarget)
+
+    // Second pass: find all non-exception active rules that apply
+    // and are not disabled by an exception
+    for reg in activeRegulations:
+      if not reg.active: continue
+      if reg.type == 'exception': continue
+      if reg.id in disabledRegIds: continue
+      if reg.type == 'meta': handle meta-rule logic (see below)
+      if reg.condition(monster): applicableRegs.push(reg)
+
+    // Resolve conflicts by highest ID
+    if applicableRegs.length == 0:
+      return 'DENY'  // default: no rule matches = deny
+    else:
+      sort applicableRegs by id descending
+      return applicableRegs[0].verdict
+
+  Meta-rule handling: meta rules modify the priority system itself.
+  Example: "Regulations from Wave 2 cannot be overridden by Wave 4
+  regulations." Implementation: when sorting applicable regs, if a
+  meta rule is active that protects a regulation's wave, that protected
+  regulation gets an effective id of 999 (always wins).
+
+**REGULATION TEMPLATES (predefined pool — selected per wave)**
+
+  Wave 1 pool:
+    "All [Slime] creatures are APPROVED for banishment."
+      condition: m => m.species == 'Slime', verdict: 'APPROVE'
+    "Creatures with Evil alignment are APPROVED."
+      condition: m => m.alignment == 'Evil', verdict: 'APPROVE'
+
+  Wave 2 pool:
+    "Creatures smaller than [4]ft are DENIED — too small to be a threat."
+      condition: m => m.size < 4, verdict: 'DENY'
+    "All Ghost-type creatures are REDIRECTED to Spectral Affairs."
+      condition: m => m.species == 'Ghost', verdict: 'REDIRECT'
+    "Creatures with Good alignment are DENIED."
+      condition: m => m.alignment == 'Good', verdict: 'DENY'
+    REPEAL: one Wave 1 regulation is repealed.
+
+  Wave 3 pool:
+    "Any creature carrying a weapon is APPROVED regardless."
+      condition: m => isWeapon(m.item), verdict: 'APPROVE'
+    "Regulation [N] does not apply if the creature is carrying food."
+      type: exception, condition: m => isFood(m.item),
+      exceptionTarget: [id of a REDIRECT rule]
+    "Creatures whose crime involves 'haunting' are REDIRECTED."
+      condition: m => m.crime.includes('Haunting'), verdict: 'REDIRECT'
+    REPEAL: one older regulation may be repealed.
+
+  Wave 4 pool:
+    "Neutral-aligned creatures larger than [6]ft are APPROVED."
+      condition: m => m.alignment == 'Neutral' && m.size > 6,
+      verdict: 'APPROVE'
+    "Regulation [N] does not apply on even-numbered cases."
+      type: exception, condition: m => m.caseNumber % 2 == 0,
+      exceptionTarget: [targeted reg id]
+    "Wave 2 regulations take priority over Wave 3 regulations."
+      type: meta (protects wave 2 regs from wave 3 overrides)
+    REPEAL: one regulation repealed.
+
+  Wave 5 (Dragon) pool — 3 emergency regulations added:
+    "EMERGENCY: All dragons are APPROVED for immediate banishment."
+      condition: m => m.species == 'Dragon', verdict: 'APPROVE'
+    "EMERGENCY: Creatures over 30ft require REDIRECT to Large Affairs."
+      condition: m => m.size > 30, verdict: 'REDIRECT'
+    "EMERGENCY: Emergency regulations are advisory only and do not
+      override standard regulations."
+      type: meta (gives emergency regs effective id of 0 — lowest
+      priority, so standard regs override them)
+
+  Note on dragon answer: the third emergency reg makes the first two
+  advisory-only. So the correct answer for the dragon depends entirely
+  on which STANDARD regulations still apply to its attributes. This
+  forces the player to re-read the full board and ignore the shiny new
+  emergency rules — a perfect bureaucratic trap.
+
+  The regulation selection per run uses randomized choices from each
+  wave's pool (with some fixed for tutorial clarity in Wave 1). This
+  ensures moderate replayability — the rules are different each game,
+  so the "correct" answers change.
+
+**PROGRESSION — CASES PER WAVE**
+  Wave 1: 4 cases
+  Wave 2: 5 cases
+  Wave 3: 6 cases
+  Wave 4: 6 cases
+  Wave 5: 1 case (dragon)
+  Total: 22 cases across ~5 minutes
+
+  If the player resolves all cases in a wave before the wave timer ends,
+  the next wave starts immediately. If the wave timer ends mid-case, the
+  current case finishes, then the wave transitions.
+
+
+## 8. Game Flow
+
+1. LOAD:
+   - Phaser initializes (800x600, arcade physics with gravity 0).
+   - BootScene: generate all textures (monster sprites, button shapes,
+     background panels, particle dot). Generate regulation and monster
+     data pools. Transition to TitleScene.
+
+2. TITLE SCREEN (TitleScene):
+   - Dark parchment background (#1a1008).
+   - "BUREAUCROMANCER" title text at y=100 (gold #ffcc44, 44px bold,
+     stroke #442200).
+   - "Department of Magical Monster Processing" subtitle at y=150
+     (cream #ccaa77, 16px).
+   - Premise text at y=230 (wrapped, 15px, #aa9977):
+     "Monsters threaten the realm. Each one arrives at your desk with a
+      case file. Read the regulations. Read the case. Stamp your verdict.
+      The rules WILL change. When they conflict, newer rules override
+      older ones — unless they don't. Good luck."
+   - Controls box at y=370 (light background panel):
+     "[A] APPROVE — Banish the creature"
+     "[D] DENY — Creature is harmless, let it go"
+     "[R] REDIRECT — Wrong department, send it away"
+   - "Press SPACE or Click to Begin Your Shift" at y=530, pulsing alpha.
+   - On SPACE or click: camera fadeOut 500ms, start GameScene.
+
+3. GAME START (GameScene create):
+   - Reset all state variables via init().
+   - Draw desk background, bulletin board, case file area, monster
+     window, stamp tray, UI bar.
+   - Post initial regulation(s) for Wave 1 onto bulletin board.
+   - Post default rule at top of board (always active, never repealed):
+     "DEFAULT: If no regulation applies, DENY the case."
+   - Brief intro text at center: "Your shift begins. Read the board."
+     Fades after 3 seconds.
+   - After 2000ms delay: load first monster case.
+
+4. LOADING A NEW CASE:
+   - Generate monster from pool appropriate to current wave.
+   - Compute correctVerdict using resolveVerdict().
+   - Set patience timer to wave's value.
+   - Animate monster sprite entering monster window (fade in, 400ms).
+   - Animate case file sliding up into case file area (400ms).
+   - Set waitingForNextCase = false (enable stamping).
+   - currentCaseNumber += 1.
+
+5. MAIN UPDATE LOOP (GameScene update):
+   - If gameOver: return.
+   - Decrement gameTime by delta. Update timer display.
+   - If gameTime <= 0: trigger game over (loss — "SHIFT OVER").
+   - If currentMonster is not null and not waitingForNextCase:
+     * Decrement currentMonster.patienceRemaining by delta.
+     * Redraw patience timer ring.
+     * If patienceRemaining <= 0: handle timeout (see Interactions).
+   - Update monster idle animations.
+   - Update reputation bar fill width (smooth tween toward target).
+   - Check for wave transitions based on elapsed time.
+
+6. WAVE TRANSITION:
+   - When elapsed time crosses a wave threshold:
+     * Set waitingForNextCase = true.
+     * Display "WAVE [N] — NEW REGULATIONS" banner (centered, 24px,
+       yellow, with dark panel behind it). Hold for 1500ms.
+     * Post new regulations one at a time with 800ms delays between.
+       Each slides in with pin animation and glow.
+     * If a regulation is repealed: red line draws across it, brief
+       "REPEALED" flash.
+     * After all regulations posted, 1000ms pause.
+     * Banner fades. Load next case. currentWave += 1.
+
+7. BOSS TRANSITION (Wave 5):
+   - Banner: "⚠ EMERGENCY SESSION: THE DRAGON FILING ⚠" (red text,
+     larger, 28px). Screen tint darkens briefly.
+   - Three emergency regulations post in rapid succession (600ms each).
+   - Dragon sprite enters monster window (large, dramatic entrance
+     tween — scales from 0.5 to 1.0, 800ms).
+   - Dragon case file slides in — all fields filled, some with
+     parenthetical notes like "(disputed)" or "(estimated)".
+   - 30-second patience timer begins.
+
+8. GAME END — WIN:
+   - Triggered when dragon case is stamped correctly.
+   - Massive stamp animation: verdict text slams to center at 3x scale,
+     bounces to 1x (500ms, Bounce ease).
+   - Dragon plays exit animation (if APPROVED: explodes into 40+
+     particles; if DENIED: sheepishly shuffles away; if REDIRECTED:
+     slides off with a confused expression).
+   - Confetti particle burst across screen (multi-color, 60 particles,
+     1500ms).
+   - "THE REALM IS SAFE." text fades in below (gold, 20px).
+   - Camera shake 300ms.
+   - After 2500ms: fadeOut, transition to EndScene with data.
+
+9. GAME END — LOSS:
+   - Triggered by reputation reaching 0 OR timer reaching 0.
+   - Red tint overlay (alpha 0.4).
+   - If reputation: "FIRED FOR GROSS INCOMPETENCE" (red, 28px bold).
+   - If timer: "SHIFT OVER — CASES REMAIN UNFILED" (red, 28px bold).
+   - Camera shake 300ms.
+   - After 2000ms: fadeOut, transition to EndScene with data.
+
+10. END SCREEN (EndScene):
+    - Dark parchment background.
+    - "PERFORMANCE REVIEW" title (gold, 36px bold).
+    - Status line:
+      If won + dragon correct: "STATUS: REALM SAVED ✓" (green)
+      If won + dragon wrong: "STATUS: REALM SAVED (WITH RESERVATIONS)" (yellow)
+      If lost: "STATUS: SEE MANAGEMENT" (red)
+    - Stats (each on its own line, 20px, cream):
+      "Cases Processed: [casesProcessed] / [total]"
+      "Misfilings: [casesMisfiled]"
+      "Best Streak: [bestStreak]"
+      "Final Score: [score]"
+    - Rank (24px bold, gold):
+      0-99 pts: "Intern (Probationary)"
+      100-199: "Junior Clerk"
+      200-349: "Senior Bureaucromancer"
+      350+: "⭐ Arcane Auditor General ⭐"
+    - "Press SPACE to Work Another Shift" at y=530, pulsing.
+    - SPACE or click: fadeOut, restart GameScene.
+
+
+## 9. Pseudocode
+
+### DATA POOLS (defined at top level)
+
+```
+NAMES = ["Gerald", "Brenda", "Thok", "Mildred", "Xargroth", "Susan",
+  "Blorp", "Kevin", "Aaaaron", "Dreadmaw", "Patricia", "Skullface",
+  "Trevor", "Griselda", "Bungus", "Morticia", "Chad"]
+
+CRIMES = [
+  "Oozing in a No-Ooze Zone",
+  "Unauthorized Haunting",
+  "Loitering with Malicious Intent",
+  "Possession of an Unlicensed Wand",
+  "Disturbing the Arcane Peace",
+  "Tax Evasion (Spectral Income)",
+  "Excessive Moaning After 10pm",
+  "Identity Theft (Shapeshifting)",
+  "Unlawful Combustion",
+  "Trespassing in the Royal Pantry",
+  "Public Intoxication (Mana Potions)",
+  "Resisting Banishment"
+]
+
+ITEMS_WEAPON = ["a rusty sword", "a cursed dagger", "a spiked club",
+  "a crossbow", "a suspiciously sharp stick"]
+ITEMS_FOOD = ["a suspicious sandwich", "a wheel of cheese",
+  "a bag of enchanted crisps", "a half-eaten pie"]
+ITEMS_OTHER = ["nothing", "a small cat", "a library book (overdue)",
+  "a signed confession", "a bouquet of flowers",
+  "a counterfeit spell license", "a family photo", "a rubber duck"]
+ALL_ITEMS = ITEMS_WEAPON + ITEMS_FOOD + ITEMS_OTHER
+
+function isWeapon(item): return item in ITEMS_WEAPON
+function isFood(item): return item in ITEMS_FOOD
+
+SPECIES_BY_WAVE = {
+  1: ['Slime'],
+  2: ['Slime', 'Ghost'],
+  3: ['Slime', 'Ghost', 'Imp'],
+  4: ['Slime', 'Ghost', 'Imp', 'Wraith'],
+  5: ['Dragon']
+}
+
+PATIENCE_BY_WAVE = { 1: 15, 2: 13, 3: 11, 4: 9, 5: 30 }
+CASES_PER_WAVE = { 1: 4, 2: 5, 3: 6, 4: 6, 5: 1 }
+
+STREAK_MULTIPLIER(streak):
+  if streak >= 10: return 3.0
+  if streak >= 6: return 2.0
+  if streak >= 3: return 1.5
+  return 1.0
+```
+
+### REGULATION GENERATION
+
+```
+function generateRegulationsForWave(waveNum, existingRegs):
+  newRegs = []
+  regIdCounter = existingRegs.length + 1  // +1 because default is reg 0
+
+  if waveNum == 1:
+    // Always start with one simple species rule
+    species = 'Slime'
+    newRegs.push({
+      id: regIdCounter++,
+      text: "All " + species + " creatures are APPROVED for banishment.",
+      type: 'species',
+      condition: (m) => m.species == species,
+      verdict: 'APPROVE',
+      exceptionTarget: null,
+      active: true,
+      wave: 1
+    })
+
+  elif waveNum == 2:
+    // Add size rule and/or alignment rule
+    sizeThreshold = randomChoice([3, 4, 5])
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Creatures smaller than " + sizeThreshold + "ft are DENIED — too small to be a threat.",
+      type: 'size',
+      condition: (m) => m.size < sizeThreshold,
+      verdict: 'DENY',
+      active: true, wave: 2
+    })
+    // Add a ghost redirect rule
+    newRegs.push({
+      id: regIdCounter++,
+      text: "All Ghost-type creatures are REDIRECTED to Spectral Affairs.",
+      type: 'species',
+      condition: (m) => m.species == 'Ghost',
+      verdict: 'REDIRECT',
+      active: true, wave: 2
+    })
+
+  elif waveNum == 3:
+    // Weapon rule
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Any creature carrying a weapon is APPROVED regardless of other status.",
+      type: 'item',
+      condition: (m) => isWeapon(m.item),
+      verdict: 'APPROVE',
+      active: true, wave: 3
+    })
+    // Exception rule targeting a redirect rule
+    redirectReg = find first active regulation with verdict 'REDIRECT'
+    if redirectReg:
+      newRegs.push({
+        id: regIdCounter++,
+        text: "EXCEPTION: Regulation " + redirectReg.id + " does not apply if the creature is carrying food.",
+        type: 'exception',
+        condition: (m) => isFood(m.item),
+        verdict: null,
+        exceptionTarget: redirectReg.id,
+        active: true, wave: 3
+      })
+    // Repeal one wave 1 regulation
+    wave1Regs = existingRegs.filter(r => r.wave == 1 && r.active)
+    if wave1Regs.length > 0:
+      randomChoice(wave1Regs).active = false  // repeal
+
+  elif waveNum == 4:
+    // Conditional compound rule
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Neutral-aligned creatures larger than 6ft are APPROVED.",
+      type: 'conditional',
+      condition: (m) => m.alignment == 'Neutral' && m.size > 6,
+      verdict: 'APPROVE',
+      active: true, wave: 4
+    })
+    // Even-case exception
+    targetReg = random active non-exception reg from wave 2 or 3
+    if targetReg:
+      newRegs.push({
+        id: regIdCounter++,
+        text: "EXCEPTION: Regulation " + targetReg.id + " does not apply on even-numbered cases.",
+        type: 'exception',
+        condition: (m) => m.caseNumber % 2 == 0,
+        exceptionTarget: targetReg.id,
+        active: true, wave: 4
+      })
+    // Alignment rule
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Creatures with Good alignment are DENIED — no threat detected.",
+      type: 'alignment',
+      condition: (m) => m.alignment == 'Good',
+      verdict: 'DENY',
+      active: true, wave: 4
+    })
+
+  elif waveNum == 5:
+    // Three emergency regulations
+    newRegs.push({
+      id: regIdCounter++,
+      text: "EMERGENCY: All Dragons are APPROVED for immediate banishment.",
+      type: 'species',
+      condition: (m) => m.species == 'Dragon',
+      verdict: 'APPROVE',
+      active: true, wave: 5,
+      isEmergency: true
+    })
+    newRegs.push({
+      id: regIdCounter++,
+      text: "EMERGENCY: Creatures over 30ft require REDIRECT to Dept. of Large Affairs.",
+      type: 'size',
+      condition: (m) => m.size > 30,
+      verdict: 'REDIRECT',
+      active: true, wave: 5,
+      isEmergency: true
+    })
+    newRegs.push({
+      id: regIdCounter++,
+      text: "EMERGENCY: Emergency Regulations are advisory only and DO NOT override standard regulations.",
+      type: 'meta',
+      condition: (m) => true,
+      verdict: null,
+      active: true, wave: 5,
+      isEmergency: true,
+      // This meta-rule means: when resolving, regs with isEmergency=true
+      // get effective priority 0 (lose all conflicts with standard regs)
+    })
+
+  return newRegs
+```
+
+### MONSTER GENERATION
+
+```
+function generateMonster(wave, caseNumber, activeRegulations):
+  if wave == 5:
+    return {
+      name: "Scorchthrax the Unburnable",
+      species: 'Dragon',
+      size: randomInt(35, 50),
+      alignment: randomChoice(['Neutral', 'Evil']),
+      item: randomChoice(ALL_ITEMS),
+      crime: "Grand Arson & Unlicensed Flight",
+      caseNumber: caseNumber,
+      patienceMax: 30,
+      patienceRemaining: 30
+    }
+
+  species = randomChoice(SPECIES_BY_WAVE[wave])
+
+  // Generate attributes with some controlled variation
+  size = randomInt(1, 12)
+  alignment = weightedChoice({
+    'Slime': {Good: 0.2, Neutral: 0.5, Evil: 0.3},
+    'Ghost': {Good: 0.3, Neutral: 0.4, Evil: 0.3},
+    'Imp': {Good: 0.1, Neutral: 0.3, Evil: 0.6},
+    'Wraith': {Good: 0.15, Neutral: 0.35, Evil: 0.5}
+  }[species])
+
+  // Ensure interesting cases: sometimes force attributes that create
+  // rule conflicts (30% of the time after wave 2)
+  if wave >= 3 and random() < 0.3:
+    monster = forceConflictingAttributes(species, size, alignment,
+      activeRegulations)
+  else:
+    monster = {
+      name: randomChoice(NAMES),
+      species: species,
+      size: size,
+      alignment: alignment,
+      item: randomChoice(ALL_ITEMS),
+      crime: randomChoice(CRIMES),
+      caseNumber: caseNumber,
+      patienceMax: PATIENCE_BY_WAVE[wave],
+      patienceRemaining: PATIENCE_BY_WAVE[wave]
+    }
+
+  return monster
+
+function forceConflictingAttributes(species, baseSize, baseAlign, regs):
+  // Find two active regs that give different verdicts
+  // Adjust monster attributes so both conditions match
+  // This guarantees the player faces a real decision, not a gimme
+  // Implementation: try random attribute combos (up to 20 attempts)
+  // until at least 2 regs with different verdicts apply
+  // Fall back to normal generation if no conflict found
+  ...
+  return monster
+```
+
+### VERDICT RESOLUTION
+
+```
+function resolveVerdict(monster, allRegulations):
+  activeRegs = allRegulations.filter(r => r.active)
+
+  // Step 1: Find active exception rules that apply to this monster
+  exceptions = activeRegs.filter(r =>
+    r.type == 'exception' && r.condition(monster))
+  disabledIds = new Set(exceptions.map(e => e.exceptionTarget))
+
+  // Step 2: Check for meta rules (emergency advisory rule)
+  hasEmergencyAdvisory = activeRegs.some(r =>
+    r.type == 'meta' && r.wave == 5 && r.active)
+
+  // Step 3: Collect applicable verdict rules
+  applicableRegs = []
+  for reg in activeRegs:
+    if reg.type == 'exception': continue
+    if reg.type == 'meta': continue
+    if reg.id in disabledIds: continue
+    if not reg.condition(monster): continue
+    // Determine effective priority
+    effectivePriority = reg.id
+    if hasEmergencyAdvisory and reg.isEmergency:
+      effectivePriority = 0  // emergency regs lose priority
+    applicableRegs.push({ reg, effectivePriority })
+
+  // Step 4: Resolve by highest effective priority
+  if applicableRegs.length == 0:
+    return { verdict: 'DENY', reason: 'Default rule: no regulation applies.' }
+
+  applicableRegs.sort((a, b) => b.effectivePriority - a.effectivePriority)
+  winner = applicableRegs[0]
+  return {
+    verdict: winner.reg.verdict,
+    reason: 'Regulation ' + winner.reg.id +
+      (applicableRegs.length > 1 ?
+        ' (overrides Reg ' + applicableRegs[1].reg.id + ')' : '')
+  }
+```
+
+### BOOT SCENE
+
+```
+class BootScene:
+  preload():
+    generateTextures()
+
+  generateTextures():
+    // Monster textures — see Technical Spec for shapes/colors
+    for each type in [slime, ghost, imp, wraith, dragon]:
+      g = make.graphics(0, 0, add=false)
+      draw type-specific shape per spec
+      g.generateTexture(type + 'Tex', width, height)
+      g.destroy()
+
+    // Particle texture (white dot)
+    g = make.graphics(0, 0, add=false)
+    g.fillStyle(0xffffff).fillCircle(4, 4, 4)
+    g.generateTexture('particle', 8, 8)
+    g.destroy()
+
+    // Stamp button textures (approve, deny, redirect)
+    for each btn in [{name:'approve', color:0x338833},
+                     {name:'deny', color:0x883333},
+                     {name:'redirect', color:0x888833}]:
+      g = make.graphics(0, 0, add=false)
+      g.fillStyle(btn.color).fillRoundedRect(0, 0, 95, 48, 6)
+      g.lineStyle(2, darken(btn.color)).strokeRoundedRect(0, 0, 95, 48, 6)
+      g.generateTexture(btn.name + 'Btn', 95, 48)
+      g.destroy()
+
+  create():
+    scene.start('TitleScene')
+```
+
+### TITLE SCENE
+
+```
+class TitleScene:
+  create():
+    cx = 400
+    add.rectangle(400, 300, 800, 600, 0x1a1008)  // background
+
+    add.text(cx, 100, "BUREAUCROMANCER", {
+      font: '44px Arial Black', color: '#ffcc44',
+      stroke: '#442200', strokeThickness: 8
+    }).setOrigin(0.5)
+
+    add.text(cx, 150, "Department of Magical Monster Processing", {
+      font: '16px Arial', color: '#ccaa77'
+    }).setOrigin(0.5)
+
+    // Premise text
+    add.text(cx, 245, premiseString, {
+      font: '15px Arial', color: '#aa9977', align: 'center',
+      wordWrap: { width: 550 }, lineSpacing: 4
+    }).setOrigin(0.5)
+
+    // Controls panel
+    add.rectangle(cx, 385, 400, 120, 0x2a2010).setStrokeStyle(1, 0x554422)
+    controlLines = [
+      "[A] APPROVE — Banish the creature",
+      "[D] DENY — Creature is harmless, let it go",
+      "[R] REDIRECT — Wrong department, send it away"
+    ]
+    for i, line in controlLines:
+      add.text(cx, 345 + i * 28, line, {
+        font: '14px Arial', color: '#88cc88'
+      }).setOrigin(0.5)
+
+    // Tip
+    add.text(cx, 460, "When rules conflict, the NEWEST regulation wins.", {
+      font: '13px Arial', color: '#ccaa44', fontStyle: 'italic'
+    }).setOrigin(0.5)
+
+    // Start prompt
+    startText = add.text(cx, 540, "Press SPACE or Click to Begin Your Shift", {
+      font: '20px Arial', color: '#ffffff'
+    }).setOrigin(0.5)
+    tweens.add(startText, alpha: 0.3, yoyo: true, repeat: -1, duration: 800)
+
+    input.keyboard.once('keydown-SPACE', startGame)
+    input.once('pointerdown', startGame)
+
+  startGame():
+    cameras.main.fadeOut(500)
+    cameras.main.once('camerafadeoutcomplete', () => scene.start('GameScene'))
+```
+
+### GAME SCENE
+
+```
+class GameScene:
+  init():
+    reputation = 100
+    score = 0
+    casesProcessed = 0
+    casesMisfiled = 0
+    streak = 0
+    bestStreak = 0
+    gameTime = 300.0
+    currentWave = 0  // will be set to 1 in create
+    currentCaseNumber = 0
+    allRegulations = []
+    currentMonster = null
+    correctVerdict = null
+    correctReason = ""
+    waitingForNextCase = true
+    bossPhase = false
+    gameOver = false
+    gameWon = false
+    casesThisWave = 0
+    waveTransitioning = false
+
+  create():
+    DEPTHS = { BG:0, BOARD:5, CARDS:10, CASEFILE:15, MONSTER:20,
+               BUTTONS:25, UI:30, OVERLAY:50, TOOLTIP:60 }
+
+    // --- BACKGROUND LAYERS ---
+    add.rectangle(400, 300, 800, 600, 0x2a1a0a).setDepth(DEPTHS.BG)
+    // Bulletin board background
+    boardBg = add.rectangle(122, 282, 225, 470, 0xb8956a)
+      .setStrokeStyle(2, 0x7a6040).setDepth(DEPTHS.BOARD)
+    add.text(122, 52, "ACTIVE REGULATIONS", {
+      font: '12px Arial', fontStyle: 'bold', color: '#442200'
+    }).setOrigin(0.5).setDepth(DEPTHS.CARDS)
+    // Case file area background
+    add.rectangle(405, 252, 320, 395, 0xf5e6c8)
+      .setStrokeStyle(2, 0xa08050).setDepth(DEPTHS.BG + 1)
+    // Monster window
+    monsterWindowBg = add.rectangle(685, 225, 210, 340, 0x4a4a5a)
+      .setStrokeStyle(3, 0x333344).setDepth(DEPTHS.BG + 1)
+    // Stamp tray
+    add.rectangle(415, 555, 340, 70, 0x6a4a14)
+      .setStrokeStyle(1, 0x443010).setDepth(DEPTHS.BG + 1)
+    // UI bar
+    add.rectangle(400, 20, 800, 40, 0x1a1008).setDepth(DEPTHS.UI - 1)
+
+    // --- STAMP BUTTONS ---
+    for each btn in [
+      {key:'approve', x:310, label:'APPROVE', shortcut:'[A]', labelColor:'#ffffff', scColor:'#aaffaa'},
+      {key:'deny', x:415, label:'DENY', shortcut:'[D]', labelColor:'#ffffff', scColor:'#ffaaaa'},
+      {key:'redirect', x:520, label:'REDIRECT', shortcut:'[R]', labelColor:'#222200', scColor:'#aaaa66'}
+    ]:
+      sprite = add.sprite(btn.x, 548, btn.key + 'Btn')
+        .setDepth(DEPTHS.BUTTONS).setInteractive({ useHandCursor: true })
+      add.text(btn.x, 543, btn.label, {
+        font: '14px Arial', fontStyle: 'bold', color: btn.labelColor
+      }).setOrigin(0.5).setDepth(DEPTHS.BUTTONS + 1)
+      add.text(btn.x, 563, btn.shortcut, {
+        font: '10px Arial', color: btn.scColor
+      }).setOrigin(0.5).setDepth(DEPTHS.BUTTONS + 1)
+      sprite.on('pointerover', () => tweens.add(sprite, scale:1.05, duration:100))
+      sprite.on('pointerout', () => tweens.add(sprite, scale:1.0, duration:100))
+      sprite.on('pointerdown', () => handleStamp(btn.key.toUpperCase()))
+
+    // --- KEYBOARD INPUT ---
+    input.keyboard.on('keydown-A', () => handleStamp('APPROVE'))
+    input.keyboard.on('keydown-D', () => handleStamp('DENY'))
+    input.keyboard.on('keydown-R', () => handleStamp('REDIRECT'))
+
+    // --- UI TEXTS ---
+    repLabel = add.text(16, 12, "REPUTATION:", {
+      font: '13px Arial', fontStyle: 'bold', color: '#ccaa77'
+    }).setDepth(DEPTHS.UI)
+    repBarBg = add.rectangle(195, 19, 150, 18, 0x332211)
+      .setStrokeStyle(1, 0x554422).setDepth(DEPTHS.UI)
+    repBarFill = add.rectangle(121, 11, 148, 16, 0x44cc44)
+      .setOrigin(0, 0).setDepth(DEPTHS.UI + 1)
+    timerText = add.text(400, 12, "SHIFT: 5:00", {
+      font: '16px Arial', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2
+    }).setOrigin(0.5, 0).setDepth(DEPTHS.UI)
+    casesText = add.text(570, 6, "CASES: 0", {
+      font: '12px Arial', color: '#ccaa77'
+    }).setDepth(DEPTHS.UI)
+    streakText = add.text(570, 22, "STREAK: 0", {
+      font: '12px Arial', color: '#ffffff'
+    }).setDepth(DEPTHS.UI)
+
+    // --- DEFAULT REGULATION ---
+    allRegulations.push({
+      id: 0,
+      text: "DEFAULT: If no regulation applies, the case is DENIED.",
+      type: 'default', condition: (m) => false, verdict: 'DENY',
+      active: true, wave: 0
+    })
+    renderRegulationCard(allRegulations[0])
+
+    // --- PATIENCE TIMER GRAPHICS ---
+    patienceGraphics = add.graphics().setDepth(DEPTHS.MONSTER + 1)
+
+    // --- REGULATION CARD DISPLAY TRACKING ---
+    regulationCards = []  // array of { reg, cardSprite, textObj }
+
+    // --- START WAVE 1 ---
+    startWave(1)
+
+  startWave(waveNum):
+    currentWave = waveNum
+    casesThisWave = 0
+    waveTransitioning = true
+    waitingForNextCase = true
+
+    // Show wave banner
+    if waveNum == 5:
+      bannerText = "⚠ EMERGENCY SESSION: THE DRAGON FILING ⚠"
+      bannerColor = '#ff4444'
+    else:
+      bannerText = "WAVE " + waveNum
+      bannerColor = '#ffdd44'
+
+    banner = add.text(400, 250, bannerText, {
+      font: (waveNum==5 ? '26px' : '22px') + ' Arial',
+      fontStyle: 'bold', color: bannerColor,
+      stroke: '#000000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(DEPTHS.OVERLAY)
+    bannerBg = add.rectangle(400, 250, 500, 50, 0x000000, 0.6)
+      .setDepth(DEPTHS.OVERLAY - 1)
+
+    // Generate new regulations for this wave
+    newRegs = generateRegulationsForWave(waveNum, allRegulations)
+
+    // Animate posting new regulations with delays
+    totalDelay = 1500  // initial delay for banner
+    for i, reg in newRegs:
+      time.delayedCall(totalDelay + i * 800, () => {
+        allRegulations.push(reg)
+        renderRegulationCard(reg)
+        // If any regs were repealed, animate the repeal
+      })
+    totalDelay += newRegs.length * 800 + 1000
+
+    // Animate any repeals
+    repealed = allRegulations.filter(r => !r.active && !r.visuallyRepealed)
+    for rep in repealed:
+      rep.visuallyRepealed = true
+      // draw red line across card, set alpha 0.4
+
+    // After posting, remove banner, load first case
+    time.delayedCall(totalDelay, () => {
+      tweens.add(banner, { alpha: 0, duration: 300, onComplete: () => {
+        banner.destroy(); bannerBg.destroy()
+      }})
+      waveTransitioning = false
+      loadNextCase()
+    })
+
+  loadNextCase():
+    if gameOver: return
+
+    // Check if wave is complete
+    if casesThisWave >= CASES_PER_WAVE[currentWave]:
+      if currentWave < 5:
+        startWave(currentWave + 1)
+      else:
+        // All cases done (shouldn't normally reach here for wave 5)
+        return
+      return
+
+    currentCaseNumber += 1
+    casesThisWave += 1
+
+    // Generate monster
+    currentMonster = generateMonster(currentWave, currentCaseNumber,
+      allRegulations)
+
+    // Resolve correct verdict
+    result = resolveVerdict(currentMonster, allRegulations)
+    correctVerdict = result.verdict
+    correctReason = result.reason
+
+    // Display monster sprite in window
+    monsterSprite = add.sprite(685, 225,
+      currentMonster.species.toLowerCase() + 'Tex')
+      .setDepth(DEPTHS.MONSTER)
+    monsterSprite.setAlpha(0)
+    tweens.add(monsterSprite, { alpha: 1, duration: 400 })
+    currentMonster.sprite = monsterSprite
+    startMonsterIdleAnimation(monsterSprite, currentMonster.species)
+
+    // Display case file
+    displayCaseFile(currentMonster)
+
+    // Reset patience
+    currentMonster.patienceRemaining = currentMonster.patienceMax
+
+    // Enable input
+    waitingForNextCase = false
+
+  displayCaseFile(monster):
+    // Clear previous case file texts
+    if caseFileTexts: for t in caseFileTexts: t.destroy()
+    caseFileTexts = []
+
+    baseX = 260
+    baseY = 70
+    lineH = 28
+    style = { font: '14px Arial', color: '#332200' }
+    boldStyle = { ...style, fontStyle: 'bold' }
+
+    lines = [
+      { text: "CASE #" + monster.caseNumber, style: { font: '17px Arial', fontStyle: 'bold', color: '#442200' }, centered: true },
+      { text: "————————————————", style: { font: '12px Arial', color: '#aa9060' } },
+      { text: "NAME: " + monster.name, style: style },
+      { text: "SPECIES: " + monster.species, style: style },
+      { text: "SIZE: " + monster.size + "ft", style: style },
+      { text: "ALIGNMENT: " + monster.alignment, style: style },
+      { text: "ITEM: " + monster.item, style: style },
+      { text: "————————————————", style: { font: '12px Arial', color: '#aa9060' } },
+      { text: "ALLEGED CRIME:", style: { font: '13px Arial', fontStyle: 'bold', color: '#332200' } },
+      { text: monster.crime, style: { font: '13px Arial', fontStyle: 'italic', color: '#554422', wordWrap: { width: 290 } } }
+    ]
+
+    startY = 620  // start offscreen for entrance tween
+    for i, line in lines:
+      targetY = baseY + i * lineH
+      x = line.centered ? 405 : baseX
+      origin = line.centered ? 0.5 : 0
+      t = add.text(x, startY + i * lineH, line.text, line.style)
+        .setOrigin(origin, 0).setDepth(DEPTHS.CASEFILE)
+      caseFileTexts.push(t)
+      // Tween each line to target position
+      tweens.add(t, { y: targetY, duration: 400, ease: 'Back.easeOut',
+        delay: i * 30 })  // slight stagger for paper-shuffle feel
+
+  handleStamp(verdict):
+    // verdict is 'APPROVE', 'DENY', or 'REDIRECT'
+    if waitingForNextCase or gameOver or currentMonster == null: return
+    waitingForNextCase = true
+
+    // Animate stamp press
+    // (find the matching button sprite and tween it)
+
+    if verdict == correctVerdict:
+      handleCorrect(verdict)
+    else:
+      handleIncorrect(verdict)
+
+  handleCorrect(verdict):
+    // Points
+    multiplier = STREAK_MULTIPLIER(streak)
+    earned = floor(10 * multiplier)
+    score += earned
+    streak += 1
+    if streak > bestStreak: bestStreak = streak
+    reputation = min(100, reputation + 3)
+    casesProcessed += 1
+
+    // Visual feedback
+    showResultOverlay("✓ CORRECT", '#44cc44', "+" + earned + " pts", '#88ff88')
+
+    // Monster exit animation
+    if verdict == 'APPROVE':
+      // Poof into particles
+      emitParticles(685, 225, monsterColorHex(currentMonster.species), 20)
+      tweens.add(currentMonster.sprite, { alpha: 0, scaleX: 1.5,
+        scaleY: 1.5, duration: 300, onComplete: destroy })
+    elif verdict == 'DENY':
+      // Walk away happily
+      tweens.add(currentMonster.sprite, { x: 850, duration: 600,
+        ease: 'Sine.easeIn', onComplete: destroy })
+    elif verdict == 'REDIRECT':
+      // Slide off quickly to the right
+      tweens.add(currentMonster.sprite, { x: 900, alpha: 0,
+        duration: 400, onComplete: destroy })
+
+    // Update UI
+    updateUI()
+
+    // Next case after delay
+    time.delayedCall(1500, () => {
+      clearCaseFile()
+      currentMonster = null
+      loadNextCase()
+    })
+
+  handleIncorrect(verdict):
+    streak = 0
+    reputation -= 15
+    casesMisfiled += 1
+
+    // Visual feedback with explanation
+    explanation = "Correct: " + correctVerdict + " — " + correctReason
+    showResultOverlay("✗ MISFILED", '#cc4444', explanation, '#ffaaaa')
+    cameras.main.shake(200, 0.008)
+
+    // Monster leaves angrily
+    tweens.add(currentMonster.sprite, { x: 850, angle: -10,
+      duration: 500, onComplete: destroy })
+
+    updateUI()
+
+    // Check loss
+    if reputation <= 0:
+      time.delayedCall(1500, () => triggerLoss("FIRED FOR GROSS INCOMPETENCE"))
+      return
+
+    time.delayedCall(2000, () => {
+      clearCaseFile()
+      currentMonster = null
+      loadNextCase()
+    })
+
+  handleTimeout():
+    if waitingForNextCase or gameOver: return
+    waitingForNextCase = true
+    streak = 0
+    reputation -= 10
+    casesMisfiled += 1
+
+    showResultOverlay("⏱ CASE EXPIRED", '#ccaa22', "", "")
+    cameras.main.shake(150, 0.005)
+
+    tweens.add(currentMonster.sprite, { x: 850, duration: 500,
+      onComplete: destroy })
+
+    updateUI()
+
+    if reputation <= 0:
+      time.delayedCall(1500, () => triggerLoss("FIRED FOR GROSS INCOMPETENCE"))
+      return
+
+    time.delayedCall(1500, () => {
+      clearCaseFile()
+      currentMonster = null
+      loadNextCase()
+    })
+
+  showResultOverlay(mainText, mainColor, subText, subColor):
+    bg = add.rectangle(400, 300, 450, 100, 0x000000, 0.5)
+      .setDepth(DEPTHS.OVERLAY - 1)
+    main = add.text(400, 290, mainText, {
+      font: '34px Arial', fontStyle: 'bold', color: mainColor,
+      stroke: darken(mainColor), strokeThickness: 4
+    }).setOrigin(0.5).setDepth(DEPTHS.OVERLAY).setScale(2)
+    tweens.add(main, { scaleX: 1, scaleY: 1, duration: 350,
+      ease: 'Bounce.easeOut' })
+
+    sub = null
+    if subText != "":
+      sub = add.text(400, 330, subText, {
+        font: '14px Arial', color: subColor,
+        wordWrap: { width: 400 }, align: 'center'
+      }).setOrigin(0.5).setDepth(DEPTHS.OVERLAY)
+
+    holdTime = mainColor.includes('44cc') ? 700 : 1800  // shorter for correct
+    time.delayedCall(holdTime, () => {
+      tweens.add(main, { alpha: 0, duration: 400, onComplete: destroy })
+      tweens.add(bg, { alpha: 0, duration: 400, onComplete: destroy })
+      if sub: tweens.add(sub, { alpha: 0, duration: 400, onComplete: destroy })
+    })
+
+  update(time, delta):
+    if gameOver: return
+    if waveTransitioning: return
+
+    // Timer countdown
+    gameTime -= delta / 1000
+    if gameTime <= 0:
+      gameTime = 0
+      triggerLoss("SHIFT OVER — CASES REMAIN UNFILED")
+      return
+    minutes = floor(gameTime / 60)
+    seconds = floor(gameTime % 60)
+    timerText.setText("SHIFT: " + minutes + ":" + padStart(seconds, 2, '0'))
+
+    // Patience timer
+    if currentMonster != null and not waitingForNextCase:
+      currentMonster.patienceRemaining -= delta / 1000
+      drawPatienceRing(currentMonster.patienceRemaining,
+        currentMonster.patienceMax)
+      if currentMonster.patienceRemaining <= 0:
+        handleTimeout()
+
+    // Animate idle monsters
+    if currentMonster != null and currentMonster.sprite:
+      updateMonsterIdle(currentMonster, time)
+
+  drawPatienceRing(remaining, max):
+    patienceGraphics.clear()
+    fraction = max(0, remaining / max)
+    // Color interpolation
+    if fraction > 0.5: color = 0x44cc44
+    elif fraction > 0.25: color = 0xcccc22
+    else: color = 0xcc2222
+    // Pulse at low patience
+    alpha = 1.0
+    if fraction < 0.25:
+      alpha = 0.5 + 0.5 * abs(sin(time.now / 150))
+    patienceGraphics.lineStyle(6, color, alpha)
+    startAngle = -PI/2  // 12 o'clock
+    endAngle = startAngle + (1 - fraction) * 2 * PI
+    // Draw background ring (dark)
+    patienceGraphics.lineStyle(6, 0x333333, 0.3)
+    patienceGraphics.arc(685, 225, 100, 0, 2*PI)
+    patienceGraphics.stroke()
+    // Draw remaining ring
+    patienceGraphics.lineStyle(6, color, alpha)
+    patienceGraphics.beginPath()
+    patienceGraphics.arc(685, 225, 100, startAngle, startAngle + fraction * 2 * PI)
+    patienceGraphics.stroke()
+
+  updateUI():
+    // Reputation bar
+    repFraction = reputation / 100
+    targetWidth = repFraction * 148
+    tweens.add(repBarFill, { displayWidth: targetWidth, duration: 300 })
+    if reputation >= 70: repBarFill.setFillStyle(0x44cc44)
+    elif reputation >= 40: repBarFill.setFillStyle(0xcccc22)
+    else: repBarFill.setFillStyle(0xcc4444)
+    // Texts
+    casesText.setText("CASES: " + casesProcessed)
+    streakText.setText("STREAK: " + streak)
+    if streak >= 10: streakText.setColor('#ff4444')
+    elif streak >= 6: streakText.setColor('#ffaa44')
+    elif streak >= 3: streakText.setColor('#ffdd44')
+    else: streakText.setColor('#ffffff')
+
+  triggerWin():
+    gameOver = true
+    gameWon = true
+    // Massive stamp
+    stampResult = add.text(400, 280, correctVerdict, {
+      font: '60px Arial Black', color: '#ff2222',
+      stroke: '#440000', strokeThickness: 8
+    }).setOrigin(0.5).setDepth(DEPTHS.OVERLAY).setScale(3)
+    tweens.add(stampResult, { scaleX:1, scaleY:1, duration:500,
+      ease:'Bounce.easeOut' })
+    // Dragon exit
+    if correctVerdict == 'APPROVE':
+      emitParticles(685, 225, 0xffaa00, 50)
+      tweens.add(currentMonster.sprite, { alpha:0, scaleX:1.5, scaleY:1.5,
+        duration:500, onComplete:destroy })
+    else:
+      tweens.add(currentMonster.sprite, { x:900, duration:800,
+        onComplete:destroy })
+    // Confetti
+    for i in 0..60:
+      p = add.circle(400+random(-300,300), 300+random(-200,200),
+        random(3,6), randomChoice([0xff4444,0x44ff44,0x4444ff,0xffdd44]))
+        .setDepth(DEPTHS.OVERLAY)
+      tweens.add(p, { y: p.y - random(100,300), alpha:0,
+        duration: random(800,1500), onComplete: destroy })
+    // Realm saved text
+    time.delayedCall(800, () => {
+      add.text(400, 380, "THE REALM IS SAFE.", {
+        font: '20px Arial', color: '#ffcc44',
+        stroke: '#000000', strokeThickness: 3
+      }).setOrigin(0.5).setDepth(DEPTHS.OVERLAY)
+    })
+    cameras.main.shake(300, 0.02)
+    time.delayedCall(3000, () => {
+      cameras.main.fadeOut(500)
+      cameras.main.once('camerafadeoutcomplete', () =>
+        scene.start('EndScene', {
+          won: true, score, casesProcessed, casesMisfiled, bestStreak,
+          dragonCorrect: true
+        })
+      )
+    })
+
+  triggerLoss(message):
+    gameOver = true
+    add.rectangle(400, 300, 800, 600, 0xff0000, 0.35).setDepth(DEPTHS.OVERLAY-1)
+    add.text(400, 300, message, {
+      font: '26px Arial', fontStyle: 'bold', color: '#ff4444',
+      stroke: '#000000', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(DEPTHS.OVERLAY)
+    cameras.main.shake(300, 0.015)
+    time.delayedCall(2500, () => {
+      cameras.main.fadeOut(500)
+      cameras.main.once('camerafadeoutcomplete', () =>
+        scene.start('EndScene', {
+          won: false, score, casesProcessed, casesMisfiled, bestStreak,
+          dragonCorrect: false
+        })
+      )
+    })
+
+  renderRegulationCard(reg):
+    // Find next available y position on the board
+    yPos = 70 + regulationCards.filter(c => c.reg.active).length * 52
+    // Card background
+    card = add.rectangle(122, yPos + 20, 215, 44, 0xfffef0)
+      .setStrokeStyle(1, 0xaa9060).setDepth(DEPTHS.CARDS)
+    // Card text
+    displayText = "REG " + reg.id + ": " + reg.text
+    if reg.id == 0: displayText = reg.text  // default rule
+    t = add.text(20, yPos + 5, displayText, {
+      font: '11px Arial', color: '#332200',
+      wordWrap: { width: 205 }
+    }).setDepth(DEPTHS.CARDS + 1)
+    // Entrance animation
+    card.setAlpha(0); t.setAlpha(0)
+    tweens.add(card, { alpha: 1, y: card.y, duration: 400,
+      ease: 'Back.easeOut' })
+    tweens.add(t, { alpha: 1, duration: 400 })
+    // Brief glow
+    glow = add.rectangle(122, yPos + 20, 219, 48, 0xffff88, 0.4)
+      .setDepth(DEPTHS.CARDS - 1)
+    tweens.add(glow, { alpha: 0, duration: 1000, onComplete: destroy })
+    // Hover to enlarge
+    card.setInteractive()
+    card.on('pointerover', () => {
+      card.setScale(1.08); t.setScale(1.08)
+      card.setDepth(DEPTHS.TOOLTIP); t.setDepth(DEPTHS.TOOLTIP + 1)
+    })
+    card.on('pointerout', () => {
+      card.setScale(1.0); t.setScale(1.0)
+      card.setDepth(DEPTHS.CARDS); t.setDepth(DEPTHS.CARDS + 1)
+    })
+    regulationCards.push({ reg, card, text: t })
+
+  clearCaseFile():
+    if caseFileTexts:
+      for t in caseFileTexts:
+        tweens.add(t, { y: 620, duration: 300, onComplete: destroy })
+      caseFileTexts = []
+    patienceGraphics.clear()
+
+  // Utility
+  emitParticles(x, y, color, count):
+    for i in 0..count:
+      p = add.circle(x + random(-10,10), y + random(-10,10),
+        random(2,5), color).setDepth(DEPTHS.OVERLAY)
+      tweens.add(p, { x: p.x + random(-100,100),
+        y: p.y + random(-100,80), alpha: 0,
+        duration: random(500, 1200), onComplete: destroy })
+```
+
+### END SCENE
+
+```
+class EndScene:
+  init(data):
+    won = data.won
+    score = data.score
+    casesProcessed = data.casesProcessed
+    casesMisfiled = data.casesMisfiled
+    bestStreak = data.bestStreak
+    dragonCorrect = data.dragonCorrect
+
+  create():
+    cx = 400
+    add.rectangle(400, 300, 800, 600, 0x1a1008)
+
+    add.text(cx, 70, "PERFORMANCE REVIEW", {
+      font: '34px Arial Black', color: '#ffcc44',
+      stroke: '#442200', strokeThickness: 6
+    }).setOrigin(0.5)
+
+    // Status
+    if won and dragonCorrect:
+      statusText = "STATUS: REALM SAVED ✓"
+      statusColor = '#44ff44'
+    elif won:
+      statusText = "STATUS: REALM SAVED (WITH RESERVATIONS)"
+      statusColor = '#cccc44'
+    else:
+      statusText = "STATUS: SEE MANAGEMENT"
+      statusColor = '#ff4444'
+    add.text(cx, 130, statusText, {
+      font: '22px Arial', fontStyle: 'bold', color: statusColor,
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5)
+
+    // Stats
+    stats = [
+      "Cases Processed: " + casesProcessed,
+      "Misfilings: " + casesMisfiled,
+      "Best Streak: " + bestStreak,
+      "Final Score: " + score
+    ]
+    for i, stat in stats:
+      add.text(cx, 200 + i * 38, stat, {
+        font: '20px Arial', color: '#ccaa77',
+        stroke: '#000000', strokeThickness: 2
+      }).setOrigin(0.5)
+
+    // Rank
+    rank = calculateRank(score)
+    add.text(cx, 390, rank, {
+      font: '26px Arial', fontStyle: 'bold', color: '#ffdd00',
+      stroke: '#443300', strokeThickness: 4
+    }).setOrigin(0.5)
+
+    // Restart
+    restartText = add.text(cx, 520, "Press SPACE to Work Another Shift", {
+      font: '20px Arial', color: '#ffffff'
+    }).setOrigin(0.5)
+    tweens.add(restartText, { alpha: 0.3, yoyo: true, repeat: -1, duration: 800 })
+
+    input.keyboard.once('keydown-SPACE', restart)
+    input.once('pointerdown', restart)
+
+  restart():
+    cameras.main.fadeOut(500)
+    cameras.main.once('camerafadeoutcomplete', () => scene.start('GameScene'))
+
+  calculateRank(score):
+    if score >= 350: return "⭐ Arcane Auditor General ⭐"
+    if score >= 200: return "Senior Bureaucromancer"
+    if score >= 100: return "Junior Clerk"
+    return "Intern (Probationary)"
+```
+
+### PHASER CONFIG
+
+```
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  parent: 'game-container',
+  backgroundColor: '#2a1a0a',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false }
+  },
+  scene: [BootScene, TitleScene, GameScene, EndScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  }
+};
+
+const game = new Phaser.Game(config);
+```
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================

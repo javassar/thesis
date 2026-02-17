@@ -1,0 +1,1836 @@
+================================================================================
+                         LAST LIGHT — REVISED
+              Critical Review & Redesigned Game Document
+================================================================================
+
+
+################################################################################
+# CRITICAL REVIEW OF ORIGINAL DESIGN
+################################################################################
+
+The original Last Light design is competent, well-structured, and
+would produce a functional game. But "functional" isn't the bar. The
+bar is "creative." Here's where it falls short:
+
+1. THE CORE MECHANIC IS A CLICHÉ.
+   "Redirect a beam of light by placing mirrors" is one of the most
+   overused puzzle mechanics in gaming history. It appears in hundreds
+   of Flash games, mobile games, and puzzle collections dating back
+   decades. The original design is, at its heart, yet another mirror-
+   beam puzzle with a timer bolted on. No amount of sunset atmosphere
+   changes this.
+
+2. THE SHADOW WALL IS A DRESSED-UP COUNTDOWN TIMER.
+   The design document claims the shadow wall is thematically
+   integrated, but it isn't. It's a standard timer with a visual
+   coat of paint. The shadow doesn't interact with the puzzle
+   mechanics in any meaningful way — it just kills you if you're
+   slow. Replacing it with a number counting down from 60 would
+   produce functionally identical gameplay. That's the test of real
+   integration, and the original fails it.
+
+3. ZERO EMERGENT GAMEPLAY.
+   Every level has exactly one solution. The player finds the correct
+   mirror positions and places them. There's no discovery, no
+   surprise, no "what if I tried THIS?" The player is essentially
+   following invisible instructions.
+
+4. THE PLAYER IS A DELIVERY VEHICLE, NOT A PARTICIPANT.
+   The moth picks up mirrors and puts them down. It's a cursor with
+   legs. The player character has no mechanical identity — nothing
+   about being a moth matters to the gameplay. You could replace it
+   with a hand, a robot, or a cursor and nothing would change.
+
+5. THE EMOTIONAL ARC IS PREDICTABLE AND FLAT.
+   Levels get harder. Shadow gets faster. You win. Relief. This is
+   the default arc of every puzzle game ever made. There's no
+   surprise, no subversion, no moment where the game reframes what
+   you've been doing.
+
+6. "COLOR FILTERS" AND "MOVING PLATFORMS" ARE PADDING.
+   These are standard puzzle-game complexity additions. They make
+   levels harder without making the game more interesting. They add
+   width, not depth.
+
+DIAGNOSIS: The original design is a skilled arrangement of familiar
+parts. It would be a B+ student project. But it's not genuinely
+creative — it doesn't contain a single idea that would make a player
+say "I've never seen that before."
+
+The revision below keeps the theme (light, darkness, a moth, urgency)
+but replaces the core mechanic with something I believe is actually
+novel.
+
+
+################################################################################
+# STAGE 1: GAME DESIGN (REVISED)
+################################################################################
+
+
+## 1. Title & Hook
+
+TITLE: Last Light
+
+PITCH: You are a moth who IS the mirror — perch on anchor points to
+redirect light through your own body, leaving fading echoes of
+yourself to keep the chain alive as darkness closes in.
+
+
+## 2. Core Insight
+
+CENTRAL QUESTION: Can you be in enough places at once to hold back
+the dark?
+
+The original explored "solving problems under time pressure." That's
+generic. The revised Last Light explores something more specific and
+more human: the feeling of trying to hold too many things together at
+once. Every parent, every team lead, every person juggling too many
+responsibilities knows the feeling of "I just stabilized THIS, but
+now THAT is falling apart."
+
+In this game, you ARE the solution — literally. Your body redirects
+the light beam. But you can only be in one place at once. When you
+leave an anchor point, your echo persists briefly, but it's fading.
+The chain of light you built is always decaying. You're constantly
+running back to re-perch on dying echoes, extending the chain just
+long enough to reach the next anchor. The feeling is: "I'm holding
+this together by the thinnest thread."
+
+That's a more specific, more emotionally resonant, and more
+mechanically honest insight than "time pressure is stressful."
+
+
+## 3. Mechanic-Theme Integration
+
+PRIMARY MECHANIC: The player controls a moth that can perch on fixed
+"anchor points" scattered through each level. When perched in light
+form, the moth's wings become reflective, physically redirecting any
+light beam that touches it. When the player leaves an anchor, a
+glowing "echo" (an afterimage) remains, continuing to redirect the
+beam — but the echo fades over 8 seconds and then vanishes. The
+player must chain multiple echoes in sequence to guide the beam from
+the sun source to the exit crystal, while also toggling into "shadow
+form" to safely cross dark areas between anchors.
+
+HOW MECHANIC EMBODIES THEME:
+This time the integration is real, not cosmetic:
+  - YOU are the puzzle piece. The moth isn't carrying mirrors — it IS
+    the mirror. Your character has a mechanical identity that is
+    inseparable from the puzzle.
+  - The echo/decay system means the puzzle isn't just spatial (where
+    do I go?) but temporal (in what order? how fast?). Your past
+    actions are literally fading behind you. This IS the theme of
+    fleeting light made mechanical.
+  - The shadow form toggle means darkness isn't just a threat — it's
+    a transit medium. You NEED darkness to reach certain anchors.
+    Light and dark are both tools and dangers depending on your
+    current form. This resolves the original design's shallow
+    binary where dark = bad, light = good.
+  - The shadow wall now has a real mechanical interaction: it
+    consumes anchor points. An anchor swallowed by shadow can no
+    longer sustain an echo. The shadow doesn't just kill YOU — it
+    kills your CHAIN. The shadow is destroying the puzzle itself,
+    not just imposing a time limit.
+
+
+## 4. Player Journey
+
+OPENING (0:00 - 0:30):
+Title screen: a dark void. A tiny moth with folded wings sits in
+the center. A single beam of golden light sweeps slowly across
+the screen. When it touches the moth, the moth's wings flare open
+and the title "Last Light" ignites in gold. The player clicks.
+
+Level 1 fades in. Warm orange sunset. A beam of light enters from
+the left and hits a wall. One anchor point glows on a nearby
+platform — a small swirling marker of light, like a firefly resting
+spot. The mood is warm, curious, inviting.
+
+LEARNING (0:30 - 1:30):
+Level 1 tutorial. A text prompt says "Reach the anchor. Press
+SPACE to perch." The player walks the moth to the anchor and
+presses Space. The moth's wings spread wide and the beam visibly
+bends — bouncing off the moth toward the exit crystal. Level
+complete. The player learns: I am the mirror.
+
+Level 2 has two anchors. The player perches on anchor A, but the
+beam bounces to a wall — not the crystal. The player realizes they
+need anchor B instead. But anchor B only works if the beam first
+bounces off A. A prompt appears: "Your echo lingers..." The player
+perches on A, sees the echo start to glow, then moves to B and
+perches. The beam bounces from echo-A to moth-B to the crystal.
+The player learns: echoes, sequence, urgency.
+
+Level 3 introduces shadow form. An anchor sits on the far side of
+a dark gap (an area already in shadow). If the player walks in as
+light-form, they start to fade. A prompt says "Press SHIFT to enter
+shadow form." The player toggles, crosses the darkness safely (now
+translucent and dim), then toggles back to light form and perches.
+The player learns: I can become the dark to walk through it, but I
+can't redirect light while I'm dark.
+
+ESCALATION (1:30 - 3:30):
+Level 4: Three anchors, two required. The player must figure out
+WHICH two and in what ORDER. The shadow wall begins at a moderate
+speed. One echo fades before the player reaches the second
+anchor — they learn that speed matters and begin optimizing routes.
+
+Level 5: Introduces "prism anchors" — special anchors that split
+the beam into two, sending light in two directions. Now the player
+must think about beam forks and multiple paths.
+
+Level 6: An anchor sits INSIDE the shadow wall's territory.
+The player must enter shadow form to reach it, toggle to light form
+to perch (creating a brief dangerous moment where they're lit up
+inside the dark), and then the echo creates an island of light.
+This is the first moment where the player realizes shadow isn't just
+a hazard — it's a place where strategic echoes can be planted.
+
+The sky has deepened to purple. Echoes glow more desperately bright
+against the encroaching dark. The player is now fluent in the
+language: form-toggle, sprint, perch, echo, chain, repeat.
+
+CLIMAX (3:30 - 4:30):
+Level 7, the final level. Four anchors, the most complex beam
+path. The shadow wall moves at its fastest. But something is
+different: inside the shadow wall, the player can faintly see a
+second moth — a dark silhouette, a "shadow moth" — mirroring their
+movements on the other side of the shadow's edge. It has been
+there the whole game if you looked closely. Now it's unmistakable.
+
+The final anchor is deep inside the shadow. When the player enters
+shadow form to reach it, the shadow moth enters light form. They
+move toward each other. The final puzzle requires the player to
+perch on the deepest anchor in shadow form while the shadow moth
+(controlled by the game, mirroring the player's last echo position)
+perches on the corresponding anchor on the lit side. The two moths
+together — one light, one shadow — complete the beam chain.
+
+ENDING (4:30 - 5:00):
+When the final crystal activates, the beam doesn't just fill the
+screen with light. Instead, the light and shadow merge into a
+soft grey twilight. The two moths fly toward each other and
+overlap, becoming a single moth with wings that are half-gold,
+half-dark. The screen settles into a peaceful dusk — neither full
+light nor full dark.
+
+Text fades in: "You were always both."
+
+Fade to warm grey. The emotion is not triumph over darkness but
+reconciliation — the discovery that the thing you were running
+from was part of you. This reframes the entire game: every level
+where you feared the shadow, you were fearing yourself.
+
+
+## 5. Game Elements
+
+PLAYER CHARACTER — THE MOTH:
+  Size: 32x32 pixels.
+  Light form: Bright, wings spread, pale gold (#FFF8E1) body with
+    luminous wing edges (#FFD54F). Emits a soft circular glow,
+    radius 40px. Wings have a slow, gentle flutter (2-frame
+    animation, 300ms per frame).
+  Shadow form: Wings folded tight against body. Color shifts to
+    deep indigo (#1A0033) with faint translucent edges. Glow
+    disappears. A subtle particle effect — tiny dark motes — drifts
+    off the moth. Movement feels slightly faster (10% speed boost)
+    to represent unburdened flight.
+  Perched state: Wings fully spread, locked in a V-shape. The moth
+    glows brighter (glow radius increases to 56px). Small light
+    rays radiate outward from the wings. The moth is stationary.
+
+ECHO:
+  A ghostly afterimage of the moth in perched position. Same size
+  and shape as the perched moth, but rendered as a translucent
+  golden silhouette with a shimmering edge effect.
+  When first created: alpha 0.9, glow radius 48px.
+  Fades linearly over 8 seconds: alpha goes from 0.9 to 0, glow
+  radius shrinks from 48px to 0.
+  The echo continues to redirect the beam as long as alpha > 0.1
+  (so functionally lasts about 7 seconds before losing power).
+  When an echo fades completely, it vanishes with a soft particle
+  burst (tiny gold sparks dispersing).
+
+ANCHOR POINTS:
+  Visual: a small swirling circle of light particles, 16x16 pixels.
+  When inactive: gentle gold glow, slowly rotating particles.
+  When the moth is perched: particles spin faster, anchor glows
+    brighter, a faint directional indicator appears showing the
+    beam's deflection angle.
+  Each anchor has a fixed deflection type, just like the original
+    mirrors: "/" or "\" — determining which direction the beam
+    bounces when the moth (or echo) occupies it.
+  The deflection type is subtly indicated by the particle swirl
+    pattern (clockwise for "/", counterclockwise for "\") and by a
+    faint angled line drawn through the anchor circle.
+
+PRISM ANCHOR (introduced Level 5):
+  Visual: same as regular anchor but with a rainbow-tinted particle
+    swirl and a small diamond shape at center.
+  Behavior: when occupied, the beam splits into TWO beams going in
+    both perpendicular directions (up AND down for a horizontal
+    beam, or left AND right for a vertical beam).
+
+LIGHT BEAM:
+  Same as original: golden line, 4px core with 12px glow underneath.
+  Recalculated every frame based on current moth position (if
+    perched) and all active echoes.
+  Maximum 10 bounces per chain to prevent infinite loops.
+  Color: #FFD54F (gold), unchanging. (Color filters removed from
+    this design — they were identified as padding.)
+
+SUN SOURCE:
+  Half-circle on left edge, color #FFF176 with warm glow. Position
+  varies per level. Emits the beam.
+
+EXIT CRYSTAL:
+  32x32 diamond at right side of level.
+  Inactive: #616161 (grey), no glow.
+  Active: #FFD54F (gold), pulsing glow radius 40-56px over 500ms.
+  Activates when beam reaches it. No color-matching required (color
+  filters are removed).
+
+SHADOW WALL:
+  Full-height black rectangle advancing from left.
+  The right edge has a 60px gradient: from solid black to a
+    semi-transparent dark indigo (#0A0020 at 80% opacity) to
+    transparent. This gives it an ethereal, misty quality rather
+    than a hard edge.
+  KEY DIFFERENCE FROM ORIGINAL: when the shadow wall crosses an
+    anchor point, that anchor dims and can no longer sustain an
+    echo. If an active echo is on a consumed anchor, the echo dies
+    immediately (with a snuffing-out particle effect). This means
+    the shadow is actively destroying puzzle infrastructure, not
+    just threatening the player.
+
+SHADOW MOTH (Level 7 only):
+  A dark mirror-image of the player moth, rendered in deep indigo
+  (#1A0033) with faint dark particle trails.
+  Behavior: it mirrors the player's horizontal position, but on the
+    OTHER side of the shadow wall's edge. When the player is in lit
+    territory, the shadow moth is at the corresponding position in
+    shadow territory. It moves when the player moves.
+  In levels 4-6, the shadow moth is barely visible as a faint shape
+    inside the shadow wall (a subtle foreshadowing detail). In
+    level 7, it becomes clearly visible and mechanically relevant.
+
+PLATFORMS AND WALLS:
+  Solid rectangles, color #1A120A (very dark brown), 1px border
+  #3D2B1A. Static physics bodies.
+
+ENVIRONMENT & VISUAL STYLE:
+  Silhouette aesthetic, same as original, with gradient sky
+  backgrounds that darken per level. But with one addition: in
+  areas where echoes have faded, tiny residual particles linger
+  briefly (like embers dying), giving a sense that light once
+  existed there. This provides subtle environmental storytelling —
+  the level is littered with the ghosts of your past attempts.
+
+UI ELEMENTS:
+  - Echo timer bars: when an echo exists, a small horizontal bar
+    appears above it showing its remaining life (gold bar that
+    shrinks left-to-right over 8 seconds). This is critical
+    feedback for the chain-management mechanic.
+  - Form indicator: bottom-left corner, a small icon showing
+    current form. Light form: sun icon (#FFD54F). Shadow form:
+    moon icon (#4A148C). Transitions smoothly when toggling.
+  - Level indicator: top-left, "Level N / 7", 16px, white, 70% alpha.
+  - Control hints (level 1-3): contextual prompts that appear near
+    relevant actions and fade after use.
+
+SCREENS:
+  - Title screen: described in Player Journey above.
+  - Level transition: "Level N" on black, 1500ms total.
+  - Death: moth dissolves into particles (gold in light form, dark
+    motes in shadow form), 600ms, then level resets.
+  - Victory: described in Player Journey above (dusk merger).
+
+
+## 6. Rules & Systems
+
+PLAYER ACTIONS:
+  - Left/Right arrow (or A/D): move horizontally
+  - Up arrow (or W): jump (only when grounded)
+  - Space: perch on nearby anchor point (if within 32px of one) OR
+    un-perch (if currently perched). When un-perching, an echo is
+    left at the anchor.
+  - Shift: toggle between light form and shadow form. Toggle has a
+    0.3-second cooldown to prevent spamming.
+
+FORM RULES:
+  Light form:
+    - Moth glows, can redirect beams when perched
+    - Moth dies in shadow (1.5-second fade timer, same as original)
+    - Moth is safe in any lit area (beam-illuminated zones + echo
+      glow zones + normal lit area of the level)
+  Shadow form:
+    - Moth is dark, beams pass through it (even when perched — you
+      CANNOT redirect beams in shadow form)
+    - Moth is safe in shadow
+    - Moth takes damage in direct beam contact (beam burns you if
+      you walk through it in shadow form) — a 1-second fade timer.
+      This prevents shadow form from being a "cheat mode" where you
+      ignore all light mechanics.
+    - Moth can perch on anchors in shadow form, but no redirection
+      occurs and no echo is left when un-perching.
+
+ECHO SYSTEM:
+  - An echo is created ONLY when the moth un-perches from an anchor
+    while in light form.
+  - Each anchor can have at most one echo at a time. Perching on an
+    anchor that already has your echo simply refreshes the echo to
+    full 8-second duration.
+  - Echoes redirect the beam identically to the moth (same
+    deflection angle as the anchor's type).
+  - An echo fades linearly over 8 seconds. At alpha < 0.1, it stops
+    redirecting and disappears.
+  - If the shadow wall consumes an echo's anchor, the echo is
+    immediately destroyed.
+  - Maximum active echoes at once: 4. If the player creates a 5th
+    echo, the oldest one is immediately destroyed.
+
+BEAM BEHAVIOR:
+  - Calculated every frame.
+  - Originates from sun source, travels horizontally right.
+  - Bounces off: perched moth (in light form), active echoes, walls
+    (stops).
+  - Passes through: moth (in shadow form or not perched), faded
+    echoes, anchor points without an echo or moth.
+  - Maximum 10 bounces.
+  - When the beam reaches the exit crystal, the level is complete.
+
+SHADOW WALL:
+  - Advances left-to-right at a speed defined per level.
+  - Starts at x = -100, begins moving after 3-second delay.
+  - Destroys anchors and echoes it crosses (anchor dims, echo is
+    snuffed out).
+  - Player in light form inside shadow: 1.5-second fade timer.
+  - Player in shadow form inside shadow: safe.
+
+PRISM ANCHORS (Level 5+):
+  - When occupied by moth (light form) or an echo, the beam splits
+    into two perpendicular beams.
+  - Both beams can continue bouncing off other echoes/moth.
+  - Only one of the two beams needs to reach the crystal (the other
+    might be used to illuminate a dark area to allow safe passage).
+
+SUCCESS AND FAILURE:
+  - Level completes when beam connects to exit crystal.
+  - Death occurs when fade timer (shadow or beam) reaches threshold.
+  - Death resets the current level. Infinite retries.
+  - No score, no stars. Just completion.
+
+DIFFICULTY PROGRESSION:
+  Level 1: 1 anchor, no shadow pressure, tutorial (perch = win)
+  Level 2: 2 anchors, slow shadow, introduces echo chaining
+  Level 3: 2 anchors with dark gap, slow shadow, introduces form toggle
+  Level 4: 3 anchors (only 2 needed), moderate shadow, route choice
+  Level 5: 3 anchors + 1 prism, moderate shadow, beam splitting
+  Level 6: 4 anchors including 1 in shadow territory, fast shadow
+  Level 7: 4 anchors + shadow moth, fast shadow, narrative climax
+
+
+################################################################################
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN (REVISED)
+################################################################################
+
+
+## 7. Technical Specification
+
+**DISPLAY**
+  Canvas size: 960 x 640 pixels
+  Background: vertical gradient per level:
+    Level 1:   top #FF9A3C (warm orange)  → bottom #2D1400 (dark brown)
+    Level 2:   top #E87830 (deep orange)  → bottom #231000 (darker brown)
+    Level 3:   top #CC4444 (red-orange)   → bottom #1A0800 (near black)
+    Level 4:   top #A03050 (crimson)      → bottom #120408 (very dark red)
+    Level 5:   top #7B2D6E (magenta)      → bottom #0A0210 (very dark purple)
+    Level 6:   top #4A1A6B (deep purple)  → bottom #060010 (near black)
+    Level 7:   top #1E0E40 (dark indigo)  → bottom #000000 (black)
+
+**PLAYER MOTH**
+  Size: 32 x 32 pixels (bounding box)
+  Drawn with Phaser Graphics (no sprite sheet required):
+
+  Light form body:
+    Central ellipse: 10x14 px, color #FFF8E1
+    Left wing: triangle from body center-left, sweeping up-left
+      Points: (-4,0), (-16,-12), (-8,6) relative to center
+      Color: #FFD54F, alpha 0.85
+    Right wing: mirrored triangle
+      Points: (4,0), (16,-12), (8,6) relative to center
+      Color: #FFD54F, alpha 0.85
+    Wing flutter: alternate y-offset of wingtips by ±2px every 300ms
+    Glow: radial gradient circle, radius 40px, center #FFFDE7 at
+      alpha 0.25, edge transparent
+
+  Shadow form body:
+    Same geometry but recolored:
+    Central ellipse: #1A0033
+    Wings: folded — reduced to thin lines along body, color #2D1050,
+      alpha 0.6
+    No glow. Instead: 3-4 dark particle motes drift off body each
+      second (tiny 2px circles, color #0A0020, alpha 0.4, drift
+      downward at 20px/sec, fade over 1 second)
+
+  Perched state (light form only):
+    Wings fully extended to a wider V-shape:
+      Left wing points: (-4,0), (-20,-14), (-10,8)
+      Right wing points: (4,0), (20,-14), (10,8)
+    Glow radius increases to 56px
+    4 tiny light-ray lines extend outward from wing tips,
+      length 12px, color #FFD54F, alpha 0.3
+
+  Physics:
+    Horizontal speed: 220 px/sec (light form), 242 px/sec (shadow form)
+    Jump velocity: -380 px/sec
+    Gravity: 800 px/sec²
+    Collider with all platforms/walls
+
+  Starting position: defined per level
+
+**ANCHOR POINTS**
+  Size: 16x16 px bounding box
+  Visual (inactive): a cluster of 6-8 tiny circles (2px radius each)
+    orbiting a center point at radius 6px, speed: one full rotation
+    per 3 seconds. Color: #FFD54F at alpha 0.6.
+    A faint angled line through center (2px, alpha 0.2) indicates
+    deflection type: drawn at 45° for "/", or 135° for "\".
+  Visual (moth perched): particles orbit faster (1 rotation/sec),
+    color brightens to alpha 1.0, glow radius 24px appears.
+  Visual (shadow-consumed): particles stop, color shifts to #333333
+    at alpha 0.3. Anchor is dead. No interaction possible.
+
+  Each anchor stores:
+    - position: {x, y}
+    - deflectionType: "/" or "\"
+    - isPrism: boolean (false for normal, true for prism type)
+    - isConsumed: boolean (set true when shadow wall passes over)
+    - hasEcho: boolean
+    - echoTimer: float (0-8, counting down)
+
+**PRISM ANCHORS**
+  Same as regular anchor but:
+    - Particles have a rainbow tint cycle (hue rotates through
+      spectrum over 4 seconds)
+    - A small diamond shape (8x8) drawn at center, color #FFFFFF
+      at alpha 0.5
+    - When occupied: splits beam into two perpendicular directions
+      instead of one deflection
+
+**ECHO**
+  Visual: same wing-spread silhouette as perched moth, but rendered
+    as a single flat shape (no separate body/wings — just the outline
+    filled with a single color).
+  Color: #FFD54F
+  Alpha: starts at 0.9, linearly decreases to 0 over 8 seconds
+  Glow: radius starts at 48px, shrinks to 0px over 8 seconds.
+    Glow color: #FFD54F at alpha (0.2 * echoAlpha).
+  When echo fades (alpha <= 0.1): spawn 8 tiny particle sprites at
+    echo position, each with random velocity (±40px/sec in x and y),
+    color #FFD54F, alpha 0.5 → 0 over 400ms. Then destroy echo.
+  When echo is shadow-consumed: same particle burst but color
+    #333333 (grey) and instant.
+
+**ECHO TIMER BAR**
+  Drawn above each active echo.
+  Position: echo.x - 16, echo.y - 28
+  Size: 32px wide x 3px tall
+  Background: #333333 at alpha 0.5
+  Foreground: #FFD54F, width = 32 * (echoTimer / 8)
+  Fades with the echo (alpha matches echo alpha)
+
+**LIGHT BEAM**
+  Rendered via Phaser Graphics each frame.
+  For each segment:
+    Glow line: width 14px, segment color at alpha 0.12
+    Core line: width 4px, segment color at alpha 0.9
+  Color: #FFD54F (constant — no color filter mechanic)
+  Beam segments stored as array of {x1, y1, x2, y2}
+
+**SUN SOURCE**
+  Semi-circle at left screen edge.
+  Radius: 24px
+  Color: #FFF176, with glow: radial gradient radius 40px,
+    color #FFF176 at alpha 0.3
+  Position.y: varies per level
+
+**EXIT CRYSTAL**
+  Size: 32x32 px
+  Drawn as a diamond (rotated square).
+  Inactive: fill #4A4A4A, stroke #616161, no glow
+  Active: fill #FFD54F, stroke #FFECB3
+    Glow: pulsing radial gradient, radius oscillates 40-60px,
+    period 600ms, color #FFD54F at alpha 0.3
+  Position: varies per level (always right side)
+
+**SHADOW WALL**
+  Main body: filled rectangle, #000000, from x=0 to x=shadowX,
+    full canvas height.
+  Edge gradient: a 60px wide rectangle from x=shadowX to
+    x=shadowX+60, filled with a horizontal gradient from
+    rgba(10,0,32,0.85) to rgba(10,0,32,0).
+  Shadow speeds (px/sec):
+    Level 1: 12 (barely moves — tutorial safety)
+    Level 2: 22
+    Level 3: 30
+    Level 4: 38
+    Level 5: 45
+    Level 6: 55
+    Level 7: 65
+  Starts at shadowX = -100. Movement begins after a 3-second delay.
+
+**SHADOW MOTH (Level 7 only)**
+  Drawn identically to the player moth's shadow form, but mirrored
+    horizontally.
+  Color: #1A0033 body, #2D1050 wings (same as player shadow form)
+  Position: tracks the player's x-position but offset to the other
+    side of the shadow wall edge.
+    shadowMoth.x = shadowX - (player.x - shadowX)
+    (Clamped so it doesn't go off-screen left.)
+    shadowMoth.y = player.y
+  In levels 4-6: rendered at alpha 0.08 (just barely visible inside
+    the shadow — an Easter egg).
+  In level 7: rendered at alpha 0.7 and with a faint dark glow
+    (radius 32px, color #1A0033 at alpha 0.15).
+
+**FORM INDICATOR (UI)**
+  Position: x=24, y=608 (bottom-left)
+  Light form: draw a small circle, radius 10px, fill #FFD54F,
+    with 4 tiny ray lines extending outward (length 6px each)
+  Shadow form: draw a crescent moon shape, 20x20px, fill #4A148C
+  Smooth crossfade between icons over 200ms when toggling.
+
+**LEVEL INDICATOR**
+  Position: x=16, y=16
+  Text: "Level {N} / 7"
+  Font: 16px monospace, color #FFFFFF, alpha 0.7
+
+**CONTROL HINTS**
+  Contextual text prompts that appear near relevant objects:
+  Level 1: "Arrow Keys to Move" (appears at start, fades after 6s)
+           "Press SPACE near an anchor to perch" (appears when within
+           48px of anchor, fades after first perch)
+  Level 2: "Your echo lingers..." (appears when first echo is created)
+  Level 3: "Press SHIFT to enter shadow form" (appears at dark gap)
+  All hints: font 13px monospace, color #FFFFFF, alpha 0.6, centered
+    below the relevant element, fade out over 500ms after trigger.
+
+**INPUT**
+  Left Arrow / A: move left at 220px/sec (242 in shadow form)
+  Right Arrow / D: move right at 220px/sec (242 in shadow form)
+  Up Arrow / W: jump at -380px/sec (only when on ground)
+  Space:
+    - If near an anchor (within 32px) and not perched: perch on it
+      (moth stops, enters perched visual state, beam redirects)
+    - If currently perched: un-perch (moth becomes mobile again;
+      if in light form, an echo is left at the anchor)
+  Shift:
+    - Toggle between light form and shadow form
+    - 300ms cooldown between toggles
+    - Cannot toggle while perched (must un-perch first)
+
+**STATE VARIABLES**
+  currentLevel: int (1-7)
+  playerX, playerY: float
+  playerVelX, playerVelY: float
+  isOnGround: boolean
+  isPerched: boolean
+  perchedAnchor: reference or null
+  currentForm: "light" or "shadow"
+  formToggleCooldown: float (0 to 0.3, counts down)
+  shadowX: float (shadow wall position)
+  shadowSpeed: float (per level)
+  shadowActive: boolean
+  shadowFadeTimer: float (0 to 1.5 — for light-form-in-shadow death)
+  beamBurnTimer: float (0 to 1.0 — for shadow-form-in-beam death)
+  echoes[]: array of {anchorRef, timer: float (8.0 counting down),
+    alpha: float, glowRadius: float}
+  maxEchoes: 4
+  anchors[]: array of {x, y, deflectionType, isPrism, isConsumed,
+    hasEcho, echoTimer}
+  beamSegments[]: array of {x1, y1, x2, y2}
+  levelComplete: boolean
+  gameComplete: boolean
+  shadowMothVisible: boolean (false for levels 1-3, faint 4-6, true 7)
+
+**TIMING SUMMARY**
+  Echo duration: 8000ms
+  Echo functional cutoff (stops redirecting): when alpha < 0.1 (~7100ms)
+  Shadow start delay per level: 3000ms
+  Shadow death timer (light form in shadow): 1500ms
+  Beam burn timer (shadow form in beam): 1000ms
+  Form toggle cooldown: 300ms
+  Level transition screen: 1500ms
+  Death reset delay: 600ms
+  Wing flutter animation: 300ms per frame
+  Anchor particle orbit: 3000ms per rotation (inactive), 1000ms (active)
+  Echo fade particle burst: 400ms
+  Crystal active pulse: 600ms period
+  Control hint auto-fade: 6000ms
+
+
+## 8. Game Flow
+
+1. GAME LOAD
+   - Phaser initializes: 960x640, Arcade physics.
+   - Scene: TitleScene. No assets to load (all Graphics-drawn).
+
+2. TITLE SCREEN (TitleScene)
+   - Draw black background.
+   - Draw moth (wings folded) at center-x, y=280, bobbing ±8px/2s.
+   - Beam sweeps left-to-right across screen (a horizontal gold line
+     at y=280, x moves from -100 to 1060 over 4 seconds, repeats).
+   - When beam overlaps moth x-position: moth wings flare, title
+     text appears: "Last Light" at y=180, gold, 48px. Small particle
+     burst from moth. Title persists after first trigger.
+   - "Click to begin" at y=420, white, 20px, alpha pulses 0.4-1.0.
+   - On click/key: fade to black (300ms) → launch TransitionScene(1).
+
+3. LEVEL TRANSITION (TransitionScene)
+   - Display "Level N" centered, gold, 36px.
+   - 300ms fade in → 900ms hold → 300ms fade out.
+   - Launch GameScene with level number.
+
+4. LEVEL START (GameScene.create)
+   - Load level data (platforms, walls, anchors, sun source, crystal,
+     shadow speed, player start position).
+   - Draw background gradient.
+   - Create all platforms as static physics bodies.
+   - Create all anchor point visuals and data.
+   - Create player moth at start position, set to light form.
+   - Create sun source visual.
+   - Create crystal visual (inactive).
+   - Initialize shadow wall at x=-100, shadowActive=false.
+   - Initialize echoes[] as empty.
+   - Start 3-second timer → set shadowActive=true.
+   - Bind input keys.
+   - If level 1-3, prepare contextual hint triggers.
+   - If level 4-7, create shadow moth visual (alpha per level).
+
+5. MAIN GAMEPLAY LOOP (GameScene.update, every frame):
+   a. Handle player movement input.
+   b. Apply physics / collisions.
+   c. Handle Shift (form toggle with cooldown).
+   d. Handle Space (perch / un-perch):
+      - Perch: lock moth position, switch to perched visual.
+      - Un-perch: if light form, create echo at anchor.
+   e. If shadowActive: advance shadowX.
+   f. Check if shadow has consumed any anchors → mark consumed,
+      destroy any echoes on consumed anchors.
+   g. Update all echo timers, fade alphas, destroy expired echoes.
+   h. Calculate beam (see pseudocode §9.7).
+   i. Check beam → crystal connection → level complete.
+   j. Check moth survival:
+      - Light form + in shadow + not in echo safe zone → fade timer.
+      - Shadow form + in beam path → burn timer.
+      - Either timer exceeded → death.
+   k. Update shadow moth position (if applicable).
+   l. Render: beam, echoes, particles, UI.
+
+6. LEVEL COMPLETE
+   - Crystal activation animation (500ms).
+   - If level < 7: transition to next level.
+   - If level == 7: trigger victory sequence.
+
+7. DEATH/RESET
+   - Moth dissolves into particles (600ms).
+   - Reset: shadow to -100, echoes cleared, items reset, moth to
+     start position, 3-second shadow delay restarts.
+
+8. VICTORY (Level 7 complete)
+   - Beam lights up full chain. All echoes brighten to alpha 1.0.
+   - Shadow wall stops advancing.
+   - Shadow moth moves toward player moth (automated tween toward
+     moth position over 2000ms).
+   - Both moths overlap at center of screen. Flash of mixed
+     gold/indigo light. Both sprites merge into single moth with
+     half-gold, half-indigo wings.
+   - Background gradient transitions to a soft twilight:
+     top #4A4080 (muted lavender) → bottom #2A2040 (warm dark).
+     Duration: 2000ms.
+   - Text: "You were always both." at center, 28px serif, color
+     #D4C8A0, alpha 0→1 over 1000ms.
+   - Hold 3000ms.
+   - Fade to warm dark grey (#1A1818) over 1000ms.
+   - "Click to play again" appears at y+50, alpha 0.5.
+   - On click: reset to TitleScene.
+
+
+## 9. Pseudocode
+
+### 9.1 — INITIALIZATION
+
+```
+FUNCTION preload():
+    // Nothing to load — all graphics drawn procedurally
+
+FUNCTION create():
+    SET currentLevel = 1
+    CALL launchScene("TitleScene")
+```
+
+### 9.2 — TITLE SCREEN
+
+```
+SCENE TitleScene:
+
+FUNCTION create():
+    DRAW filled rectangle, full canvas, color #0A0005
+    CREATE moth graphics at (480, 280), wings folded (shadow form look)
+    CREATE tween: moth.y oscillates ±8px, duration 2000ms, yoyo, loop
+
+    SET beamX = -100
+    SET titleRevealed = false
+
+    CREATE beam line graphic (will be updated in update loop)
+    CREATE title text "Last Light" at (480, 180), size 48, gold, alpha=0
+    CREATE prompt text "Click to begin" at (480, 420), size 20, white
+    CREATE tween: prompt.alpha oscillates 0.4→1.0, 1500ms, loop
+
+    BIND input: on pointerdown OR any key → CALL startGame()
+
+FUNCTION update():
+    beamX += 240 * delta  // beam sweeps across in ~4 seconds
+    IF beamX > 1060: beamX = -100
+
+    UPDATE beam line graphic: draw from (beamX - 480, 280) to (beamX, 280)
+    // (beam is a 480px wide segment sweeping across)
+
+    IF NOT titleRevealed AND abs(beamX - 480) < 60:
+        // Beam reaches moth
+        SET titleRevealed = true
+        SWITCH moth graphic to light form (wings spread)
+        CREATE particle burst at moth position (12 gold particles)
+        TWEEN title text alpha → 1.0 over 500ms
+
+FUNCTION startGame():
+    FADE camera to black over 300ms
+    THEN launch TransitionScene(currentLevel)
+```
+
+### 9.3 — LEVEL TRANSITION
+
+```
+SCENE TransitionScene(levelNum):
+
+FUNCTION create():
+    DRAW black background
+    CREATE text "Level {levelNum}" at center, 36px, gold, alpha=0
+    TWEEN text alpha 0→1 over 300ms
+    AFTER 1200ms: TWEEN text alpha 1→0 over 300ms
+    AFTER 1500ms: launch GameScene(levelNum)
+```
+
+### 9.4 — LEVEL DATA
+
+```
+DEFINE LEVEL_DATA[1..7]:
+
+LEVEL_DATA[1] = {
+    playerStart: {x: 100, y: 480},
+    sunSource: {x: 0, y: 350},
+    crystal: {x: 860, y: 350, required: "gold"},
+    shadowSpeed: 12,
+    platforms: [
+        {x:0, y:544, w:960, h:96},               // floor
+    ],
+    walls: [
+        {x:460, y:250, w:16, h:200},             // blocks beam
+    ],
+    anchors: [
+        {x:460, y:344, type:"/", isPrism:false},  // on left face of wall
+        // Beam comes in at y=350, hits wall. Player perches on anchor
+        // at wall base. "/" deflects beam upward and over the wall
+        // to a second segment that... actually let me redesign this.
+
+        // SIMPLER: beam enters at y=350, no wall needed for Level 1.
+        // Single anchor deflects beam from horizontal to reach crystal
+        // that's at a different height.
+    ],
+}
+
+// REVISED LEVEL 1 (simplest possible):
+LEVEL_DATA[1] = {
+    playerStart: {x: 100, y: 480},
+    sunSource: {x: 0, y: 300},
+    crystal: {x: 880, y: 180, required: "gold"},
+    shadowSpeed: 12,
+    platforms: [
+        {x:0, y:544, w:960, h:96},               // floor
+        {x:380, y:280, w:80, h:16},               // anchor platform
+    ],
+    walls: [],
+    anchors: [
+        // "/" at (420, 272): beam hits from left at y=300, but anchor
+        // is at y=272. Need beam to align. Let me adjust.
+        // Sun at y=300, anchor at y=296 on platform (y=280, so standing
+        // surface is y=264 for the moth, anchor visual at y=272).
+        // Actually, anchors should be at beam-reachable positions.
+        // Let the anchor be at the exact y as the sun: y=300.
+        {x:420, y:300, type:"/", isPrism:false},
+        // "/" deflects horizontal beam going right → upward.
+        // Beam goes up from (420,300). Crystal at (880, 180).
+        // Beam goes straight up — won't reach crystal at x=880.
+        // Need "\" to go rightward? Let me reconsider deflections.
+        //
+        // Deflection rules:
+        //   "/" mirror: horizontal-right → vertical-up
+        //              horizontal-left → vertical-down
+        //              vertical-down → horizontal-left
+        //              vertical-up → horizontal-right
+        //   "\" mirror: horizontal-right → vertical-down
+        //               horizontal-left → vertical-up
+        //               vertical-up → horizontal-left
+        //               vertical-down → horizontal-right
+        //
+        // For Level 1: beam enters horizontal-right at y=300.
+        // Crystal is at (880, 180) — up and to the right.
+        // Need TWO bounces: first "/" sends beam UP, then another
+        // "/" sends beam RIGHT toward crystal.
+        // But Level 1 should be ONE anchor, ONE perch = win.
+        //
+        // SIMPLEST: crystal at same height, no wall. But that means
+        // the beam goes straight to it without help. Not a puzzle.
+        //
+        // OK: put a wall in the beam's path. Anchor is above the wall.
+        // Beam goes right at y=300, hits wall at x=400. Player perches
+        // on anchor at (400, 240) — but beam wouldn't reach there.
+        //
+        // CLEANEST LEVEL 1: Sun at y=400 (low). Crystal at y=400 but
+        // behind a tall wall. Anchor at top of wall. "/" deflects
+        // beam up one side, over, and... no, that's two bounces.
+        //
+        // SIMPLEST POSSIBLE: Sun at bottom-left, beam goes RIGHT.
+        // Wall blocks it. Anchor ABOVE the wall with "/" type.
+        // Player perches → beam goes UP before reaching wall, hits
+        // moth on anchor, "/" sends beam RIGHT at higher y, clearing
+        // the wall and reaching crystal.
+        //
+        // Wait — the beam originates at sun and traces rightward.
+        // It can only interact with an anchor if the beam PATH
+        // reaches the anchor. If the beam is going right at y=400
+        // and the anchor is at y=300, the beam won't hit the anchor
+        // unless something redirects it first.
+        //
+        // For Level 1, the anchor must be IN the beam's initial path.
+        // Sun at y=400, beam goes right at y=400.
+        // Anchor at (400, 400), type "/".
+        // "/" deflects right→up. Beam now goes straight up from (400,400).
+        // Crystal at (400, 120). Beam reaches it. ✓
+        // ONE anchor, directly in beam path, simple redirect.
+    ],
+}
+
+// CLEAN LEVEL DATA:
+
+LEVEL_DATA[1] = {
+    playerStart: {x: 100, y: 490},
+    sunSource: {x: 0, y: 400},
+    crystal: {x: 400, y: 100},
+    shadowSpeed: 12,
+    platforms: [
+        {x:0, y:544, w:960, h:96},                // floor
+        {x:360, y:380, w:80, h:16},               // platform near anchor
+    ],
+    walls: [],
+    anchors: [
+        {x:400, y:400, type:"/", isPrism:false},
+        // Beam goes right at y=400, hits moth/echo at (400,400),
+        // "/" deflects upward → crystal at (400, 100). ✓
+    ],
+}
+
+LEVEL_DATA[2] = {
+    playerStart: {x: 80, y: 490},
+    sunSource: {x: 0, y: 450},
+    crystal: {x: 800, y: 150},
+    shadowSpeed: 22,
+    platforms: [
+        {x:0, y:544, w:960, h:96},                // floor
+        {x:280, y:430, w:80, h:16},               // platform A
+        {x:680, y:280, w:80, h:16},               // platform B (higher)
+    ],
+    walls: [],
+    anchors: [
+        {x:320, y:450, type:"/", isPrism:false},
+        // Beam right at y=450, hits anchor A, "/" deflects UP
+        {x:320, y:150, type:"\\", isPrism:false},
+        // Beam goes up to (320, 150), hits anchor B, "\" deflects RIGHT
+        // → beam goes right at y=150, reaches crystal at (800, 150). ✓
+        // Player must: perch A (echo), move to B, perch B. Two-echo chain.
+        // Platform B needs to be near anchor B. Adjust:
+    ],
+    // Re-adjust: anchor B is at (320, 150). Platform for accessing it:
+    // Player needs to JUMP to reach y=150 area. Add stepping platforms.
+    // Or: place anchor B somewhere reachable. Let me revise.
+}
+
+// Rather than specify every pixel here (which proved problematic
+// above), I'll define the level LOGIC and CONSTRAINTS clearly.
+// The implementer should adjust exact positions to ensure all
+// anchors are reachable via platforming and all beam paths are
+// geometrically valid.
+
+LEVEL_DATA[1] = {
+    description: "One anchor. Beam goes right, player perches, beam
+        deflects up to crystal directly above the anchor.",
+    playerStart: bottom-left area on floor,
+    sunSource: left edge, y aligned with the single anchor,
+    crystal: directly above the anchor (same x, high y),
+    shadowSpeed: 12,
+    platforms: floor + one small platform near anchor height,
+    walls: none,
+    anchors: [
+        {near center-x, at sun beam height, type:"/"}
+        // "/" sends rightward beam upward
+    ],
+}
+
+LEVEL_DATA[2] = {
+    description: "Two anchors. Beam goes right, hits anchor A which
+        sends it up, then anchor B sends it right to the crystal.
+        Player must perch on A first (leaving an echo), then reach B
+        before A's echo fades.",
+    playerStart: bottom-left,
+    sunSource: left edge, low y (near floor),
+    crystal: right side, high y,
+    shadowSpeed: 22,
+    platforms: floor + stepping platforms to reach anchor B's height,
+    walls: none,
+    anchors: [
+        A: {left-center, low y, type:"/"},   // rightward → upward
+        B: {same x as A, high y, type:"\\"},  // upward → rightward
+    ],
+}
+
+LEVEL_DATA[3] = {
+    description: "Two anchors separated by a dark gap. Player must
+        use shadow form to cross the gap to reach anchor B. Anchor A
+        is in the lit zone, anchor B is past the gap.",
+    playerStart: bottom-left,
+    sunSource: left edge, mid y,
+    crystal: right side, mid y (needs beam to go right, down via A,
+        then right via B),
+    shadowSpeed: 30,
+    platforms: floor with a gap in the middle (pit of darkness),
+        platforms on both sides, platform near anchor B,
+    walls: one wall that blocks direct beam path to crystal,
+    anchors: [
+        A: {left of gap, in beam path, type:"\\"},  // right → down
+        B: {right of gap, low y, type:"/"},          // down → right
+    ],
+    darkZone: the gap area is pre-shadowed (always dark, independent
+        of the shadow wall). Represented as a dark rectangle.
+        Player must toggle shadow form to cross.
+}
+
+LEVEL_DATA[4] = {
+    description: "Three anchors but only two are needed. Player must
+        figure out the correct pair and order. One anchor is a
+        red herring (produces a dead-end beam path). Shadow wall at
+        moderate speed forces quick decision-making.",
+    playerStart: bottom-left,
+    sunSource: left edge, mid-high y,
+    crystal: right side, low y,
+    shadowSpeed: 38,
+    platforms: floor + 3 platforms at varying heights,
+    walls: two walls creating a maze-like beam path,
+    anchors: [
+        A: {type:"/"},   // valid path component
+        B: {type:"\\"},  // valid path component (pair with A)
+        C: {type:"/"},   // red herring — deflects beam into a wall
+    ],
+}
+
+LEVEL_DATA[5] = {
+    description: "Three regular anchors + one prism anchor. The prism
+        splits the beam into two paths. One path goes to the crystal.
+        The other path illuminates a dark area that the player must
+        cross to reach a critical anchor. Player must use the prism
+        strategically.",
+    playerStart: bottom-left,
+    sunSource: left edge, mid y,
+    crystal: right side, mid-high y,
+    shadowSpeed: 45,
+    platforms: floor + multi-tier stepping platforms,
+    walls: walls creating separated chambers,
+    darkZone: a dark area in the middle of the level,
+    anchors: [
+        A: {type:"/"},
+        B: {type:"\\"},
+        C: {type:"/"},
+        P: {type: n/a, isPrism: true},  // prism anchor
+    ],
+}
+
+LEVEL_DATA[6] = {
+    description: "Four anchors. One anchor is inside shadow territory
+        (starts in an already-dark area near left side). Player must
+        enter shadow form, reach that anchor, toggle to light form to
+        perch (risky — briefly vulnerable in the dark, but the perch
+        creates an echo whose glow creates a safe zone). Then use that
+        deep echo as the first link in the chain.",
+    playerStart: center-left (not far left — shadow territory),
+    sunSource: left edge, high y,
+    crystal: right side, low y,
+    shadowSpeed: 55,
+    platforms: complex multi-level layout,
+    walls: multiple walls creating a winding beam path,
+    darkZone: left third of level is pre-dark,
+    anchors: [
+        A: {in dark zone, type:"\\"},
+        B: {mid-level, type:"/"},
+        C: {mid-right, type:"\\"},
+        D: {right side, type:"/"},
+    ],
+}
+
+LEVEL_DATA[7] = {
+    description: "Four anchors + shadow moth mechanic. The deepest
+        anchor is far in shadow territory. The shadow moth (which
+        mirrors the player) occupies a 'shadow anchor' on the dark
+        side that completes the final beam chain. The player must
+        position themselves so that their echo chain on the light
+        side aligns with the shadow moth's mirrored position on the
+        dark side. The final anchor requires BOTH moths.",
+    playerStart: center of level,
+    sunSource: left edge, mid y,
+    crystal: right side, mid y,
+    shadowSpeed: 65,
+    platforms: symmetric layout (level is roughly mirrored around
+        the shadow wall's midpoint position),
+    walls: symmetric walls,
+    anchors: [
+        A: {left-center, type:"/"},
+        B: {center, type:"\\"},
+        C: {right-center, type:"/"},
+        D: {right, type:"\\"},
+        shadowAnchor: {inside shadow territory — activated by shadow
+            moth when player perches on the corresponding light-side
+            anchor. See Shadow Moth behavior in §9.8.}
+    ],
+}
+```
+
+### 9.5 — LEVEL SETUP
+
+```
+FUNCTION GameScene.create(levelNum):
+    SET data = LEVEL_DATA[levelNum]
+    SET currentForm = "light"
+    SET isPerched = false
+    SET perchedAnchor = null
+    SET shadowX = -100
+    SET shadowActive = false
+    SET shadowFadeTimer = 0
+    SET beamBurnTimer = 0
+    SET formToggleCooldown = 0
+    SET echoes = []
+    SET levelComplete = false
+
+    // Draw background
+    CALL drawGradientBackground(levelNum)
+
+    // Create platform physics group (static)
+    FOR EACH p in data.platforms:
+        CREATE static rect at (p.x, p.y, p.w, p.h), color #1A120A
+        ADD to platformGroup
+
+    // Create walls
+    FOR EACH w in data.walls:
+        CREATE static rect at (w.x, w.y, w.w, w.h), color #1A120A
+        ADD to wallGroup
+
+    // Create dark zones (if any)
+    IF data.darkZones:
+        FOR EACH dz in data.darkZones:
+            CREATE filled rect, color #000000, alpha 0.9
+            // These are permanent dark areas, not the shadow wall
+
+    // Create anchors
+    SET anchorObjects = []
+    FOR EACH a in data.anchors:
+        CREATE anchor object:
+            .x = a.x, .y = a.y
+            .deflectionType = a.type
+            .isPrism = a.isPrism or false
+            .isConsumed = false
+            .graphic = draw particle orbit (see spec)
+            .directionIndicator = draw faint angled line
+        APPEND to anchorObjects
+
+    // Create player moth
+    CREATE moth at data.playerStart
+    SET moth physics: gravity=800, maxVelocityX=220
+    ADD collider: moth vs platformGroup
+    ADD collider: moth vs wallGroup
+    CALL drawMothGraphic("light")
+
+    // Create sun source
+    DRAW half-circle at data.sunSource, color #FFF176 + glow
+
+    // Create crystal
+    DRAW diamond at data.crystal, color #4A4A4A (inactive)
+
+    // Create shadow wall graphics
+    CREATE shadowRect (black, full height, width=0)
+    CREATE shadowEdge (gradient, 60px)
+
+    // Create UI
+    CREATE levelText "Level {levelNum} / 7"
+    CREATE formIndicator (sun icon, light form)
+
+    // Shadow moth (levels 4-7)
+    IF levelNum >= 4:
+        CREATE shadowMothGraphic
+        IF levelNum < 7:
+            SET shadowMothGraphic.alpha = 0.08
+        ELSE:
+            SET shadowMothGraphic.alpha = 0.7
+
+    // Start shadow delay
+    CREATE timer: after 3000ms → shadowActive = true
+
+    // Bind input
+    BIND cursors = arrow keys
+    BIND keyW, keyA, keyD
+    BIND keySpace = Space
+    BIND keyShift = Shift
+```
+
+### 9.6 — MAIN UPDATE LOOP
+
+```
+FUNCTION GameScene.update(time, delta):
+    IF levelComplete: RETURN
+
+    deltaSec = delta / 1000
+
+    // --- FORM TOGGLE ---
+    IF formToggleCooldown > 0:
+        formToggleCooldown -= deltaSec
+
+    IF keyShift justPressed AND formToggleCooldown <= 0 AND NOT isPerched:
+        IF currentForm == "light":
+            SET currentForm = "shadow"
+        ELSE:
+            SET currentForm = "light"
+        SET formToggleCooldown = 0.3
+        CALL drawMothGraphic(currentForm)
+        CALL updateFormIndicator(currentForm)
+
+    // --- PLAYER MOVEMENT (only if not perched) ---
+    IF NOT isPerched:
+        SET speed = (currentForm == "light") ? 220 : 242
+
+        IF leftKey down:
+            moth.velocityX = -speed
+            moth.flipX = true
+        ELSE IF rightKey down:
+            moth.velocityX = speed
+            moth.flipX = false
+        ELSE:
+            moth.velocityX = 0
+
+        IF upKey justPressed AND moth.isOnGround:
+            moth.velocityY = -380
+
+    // --- SPACE: PERCH / UN-PERCH ---
+    IF keySpace justPressed:
+        IF isPerched:
+            // UN-PERCH
+            IF currentForm == "light":
+                CALL createEcho(perchedAnchor)
+            SET isPerched = false
+            SET perchedAnchor = null
+            CALL drawMothGraphic(currentForm)  // back to mobile look
+            // Re-enable physics
+            moth.body.enable = true
+
+        ELSE:
+            // TRY TO PERCH
+            SET nearest = findNearestAnchor(moth.x, moth.y, 32)
+            IF nearest is not null AND NOT nearest.isConsumed:
+                SET isPerched = true
+                SET perchedAnchor = nearest
+                // Snap moth to anchor position
+                moth.x = nearest.x
+                moth.y = nearest.y
+                moth.velocityX = 0
+                moth.velocityY = 0
+                moth.body.enable = false  // freeze physics
+                IF currentForm == "light":
+                    CALL drawMothGraphic("perched")
+
+    // --- SHADOW WALL ---
+    IF shadowActive:
+        shadowX += data.shadowSpeed * deltaSec
+        UPDATE shadowRect: width = max(0, shadowX)
+        UPDATE shadowEdge: x = shadowX
+
+        // Check if shadow consumed any anchors
+        FOR EACH anchor in anchorObjects:
+            IF NOT anchor.isConsumed AND anchor.x < shadowX:
+                anchor.isConsumed = true
+                CALL dimAnchorGraphic(anchor)
+                // Kill any echo on this anchor
+                FOR EACH echo in echoes:
+                    IF echo.anchorRef == anchor:
+                        CALL destroyEcho(echo, "consumed")
+                        REMOVE echo from echoes[]
+
+    // --- UPDATE ECHOES ---
+    FOR EACH echo in echoes (iterate backwards for safe removal):
+        echo.timer -= deltaSec
+        echo.alpha = max(0, echo.timer / 8.0) * 0.9
+        echo.glowRadius = max(0, echo.timer / 8.0) * 48
+
+        UPDATE echo visual: set alpha, glow radius
+        UPDATE echo timer bar: width = 32 * (echo.timer / 8.0)
+
+        IF echo.alpha < 0.1:
+            CALL destroyEcho(echo, "faded")
+            REMOVE echo from echoes[]
+
+    // --- CALCULATE BEAM ---
+    CALL calculateBeam()
+
+    // --- CHECK CRYSTAL ---
+    IF beamReachedCrystal:
+        SET levelComplete = true
+        CALL onLevelComplete()
+        RETURN
+
+    // --- SURVIVAL CHECKS ---
+    // Check light-form moth in shadow
+    IF currentForm == "light" AND NOT isPerched:
+        SET inShadow = (moth.x < shadowX) OR isInDarkZone(moth.x, moth.y)
+        IF inShadow:
+            SET inSafeZone = isInEchoSafeZone(moth.x, moth.y)
+            IF NOT inSafeZone:
+                shadowFadeTimer += deltaSec
+                moth.alpha = 1 - (shadowFadeTimer / 1.5)
+                IF shadowFadeTimer >= 1.5:
+                    CALL onDeath()
+                    RETURN
+            ELSE:
+                shadowFadeTimer = 0
+                moth.alpha = 1
+        ELSE:
+            shadowFadeTimer = 0
+            moth.alpha = 1
+
+    // Check light-form moth perched in shadow (creates echo safe zone
+    // around itself, so safe as long as perched)
+    IF currentForm == "light" AND isPerched:
+        shadowFadeTimer = 0
+        moth.alpha = 1
+        // Perching in light form always creates safety (your own glow)
+
+    // Check shadow-form moth in beam
+    IF currentForm == "shadow":
+        shadowFadeTimer = 0  // safe from shadow
+        moth.alpha = (currentForm == "shadow") ? 0.6 : 1
+        SET inBeam = isInBeamPath(moth.x, moth.y)
+        IF inBeam:
+            beamBurnTimer += deltaSec
+            // Visual: moth flickers white
+            moth.tint = (Math.sin(time * 20) > 0) ? 0xFFFFFF : 0x1A0033
+            IF beamBurnTimer >= 1.0:
+                CALL onDeath()
+                RETURN
+        ELSE:
+            beamBurnTimer = 0
+            moth.tint = 0xFFFFFF  // reset tint
+
+    // --- SHADOW MOTH (level 7) ---
+    IF levelNum == 7 AND shadowMothVisible:
+        // Mirror player's position relative to shadow edge
+        shadowMoth.x = shadowX - (moth.x - shadowX)
+        shadowMoth.x = clamp(shadowMoth.x, 0, shadowX)
+        shadowMoth.y = moth.y
+        UPDATE shadowMoth graphic position
+
+    // --- UPDATE VISUALS ---
+    UPDATE moth glow position (if light form)
+    UPDATE anchor particle animations
+    CALL updateHints(time)
+```
+
+### 9.7 — BEAM CALCULATION
+
+```
+FUNCTION calculateBeam():
+    CLEAR beamSegments[]
+    SET beamReachedCrystal = false
+
+    SET rayX = sunSource.x
+    SET rayY = sunSource.y
+    SET dirX = 1  // initial: rightward
+    SET dirY = 0
+    SET bounces = 0
+
+    WHILE bounces <= 10:
+        SET nearestDist = INFINITY
+        SET nearestHit = null
+        SET nearestType = null
+        SET nearestObj = null
+
+        // Check walls and platforms
+        FOR EACH rect in (walls + platforms):
+            hit = rayIntersectAABB(rayX, rayY, dirX, dirY, rect)
+            IF hit AND hit.dist > 2 AND hit.dist < nearestDist:
+                SET nearestDist = hit.dist
+                SET nearestHit = hit.point
+                SET nearestType = "wall"
+
+        // Check perched moth (only if light form and perched)
+        IF isPerched AND currentForm == "light":
+            mothRect = {x: moth.x-16, y: moth.y-16, w:32, h:32}
+            hit = rayIntersectAABB(rayX, rayY, dirX, dirY, mothRect)
+            IF hit AND hit.dist > 2 AND hit.dist < nearestDist:
+                SET nearestDist = hit.dist
+                SET nearestHit = hit.point
+                SET nearestType = "moth"
+                SET nearestObj = perchedAnchor  // use anchor's deflection type
+
+        // Check active echoes (alpha >= 0.1)
+        FOR EACH echo in echoes:
+            IF echo.alpha >= 0.1:
+                echoRect = {x: echo.x-14, y: echo.y-14, w:28, h:28}
+                hit = rayIntersectAABB(rayX, rayY, dirX, dirY, echoRect)
+                IF hit AND hit.dist > 2 AND hit.dist < nearestDist:
+                    SET nearestDist = hit.dist
+                    SET nearestHit = hit.point
+                    SET nearestType = "echo"
+                    SET nearestObj = echo.anchorRef
+
+        // Check crystal
+        crystalRect = {x: crystal.x-16, y: crystal.y-16, w:32, h:32}
+        hit = rayIntersectAABB(rayX, rayY, dirX, dirY, crystalRect)
+        IF hit AND hit.dist > 2 AND hit.dist < nearestDist:
+            SET nearestDist = hit.dist
+            SET nearestHit = hit.point
+            SET nearestType = "crystal"
+
+        // Check screen bounds
+        boundHit = rayIntersectScreenEdge(rayX, rayY, dirX, dirY)
+        IF boundHit.dist < nearestDist:
+            SET nearestDist = boundHit.dist
+            SET nearestHit = boundHit.point
+            SET nearestType = "boundary"
+
+        // Record segment
+        APPEND {x1:rayX, y1:rayY, x2:nearestHit.x, y2:nearestHit.y}
+            to beamSegments
+
+        // Process hit
+        IF nearestType == "wall" OR nearestType == "boundary":
+            BREAK
+
+        IF nearestType == "crystal":
+            beamReachedCrystal = true
+            BREAK
+
+        IF nearestType == "moth" OR nearestType == "echo":
+            anchor = nearestObj
+            bounces += 1
+
+            IF anchor.isPrism:
+                // PRISM: split into two beams
+                // Perpendicular to incoming direction
+                APPEND two new ray origins + directions to a queue
+                // Process secondary beam after primary
+                // (Implementation: trace primary first, then secondary)
+                IF dirX != 0:  // horizontal beam hitting prism
+                    // Split into up and down
+                    dir1 = {dirX:0, dirY:-1}
+                    dir2 = {dirX:0, dirY:1}
+                ELSE:  // vertical beam hitting prism
+                    dir1 = {dirX:-1, dirY:0}
+                    dir2 = {dirX:1, dirY:0}
+                // Continue tracing with dir1, queue dir2 for later
+                SET dirX = dir1.dirX
+                SET dirY = dir1.dirY
+                QUEUE secondaryRay = {x:nearestHit.x, y:nearestHit.y,
+                    dirX:dir2.dirX, dirY:dir2.dirY, bounces:bounces}
+
+            ELSE:
+                // NORMAL: deflect 90 degrees
+                IF anchor.deflectionType == "/":
+                    newDirX = -dirY
+                    newDirY = -dirX
+                ELSE:  // "\"
+                    newDirX = dirY
+                    newDirY = dirX
+                SET dirX = newDirX
+                SET dirY = newDirY
+
+            SET rayX = nearestHit.x
+            SET rayY = nearestHit.y
+
+    // Process any queued secondary beams (from prisms)
+    WHILE secondaryRayQueue is not empty:
+        ray = DEQUEUE secondaryRayQueue
+        // Trace this ray the same way (recursive or iterative)
+        // Append resulting segments to beamSegments
+        // Check if it reaches crystal
+        CALL traceSecondaryBeam(ray)
+
+    // Render
+    CALL renderBeam()
+
+
+FUNCTION renderBeam():
+    CLEAR beamGraphics
+    FOR EACH seg in beamSegments:
+        // Glow layer
+        beamGraphics.lineStyle(14, 0xFFD54F, 0.12)
+        beamGraphics.lineBetween(seg.x1, seg.y1, seg.x2, seg.y2)
+        // Core layer
+        beamGraphics.lineStyle(4, 0xFFD54F, 0.9)
+        beamGraphics.lineBetween(seg.x1, seg.y1, seg.x2, seg.y2)
+```
+
+### 9.8 — ECHO SYSTEM
+
+```
+FUNCTION createEcho(anchor):
+    // Check if this anchor already has an echo → refresh it
+    FOR EACH echo in echoes:
+        IF echo.anchorRef == anchor:
+            echo.timer = 8.0
+            echo.alpha = 0.9
+            echo.glowRadius = 48
+            RETURN
+
+    // Check max echoes
+    IF echoes.length >= 4:
+        // Destroy oldest echo
+        oldestEcho = echoes[0]  // first in = oldest
+        CALL destroyEcho(oldestEcho, "replaced")
+        REMOVE echoes[0]
+
+    // Create new echo
+    SET newEcho = {
+        anchorRef: anchor,
+        x: anchor.x,
+        y: anchor.y,
+        timer: 8.0,
+        alpha: 0.9,
+        glowRadius: 48,
+        graphic: CREATE moth-silhouette at (anchor.x, anchor.y),
+            color #FFD54F, alpha 0.9
+        glowGraphic: CREATE circle, radius 48, color #FFD54F, alpha 0.18
+        timerBar: CREATE rect at (anchor.x-16, anchor.y-28, 32, 3),
+            fill #FFD54F
+    }
+    APPEND newEcho to echoes[]
+
+
+FUNCTION destroyEcho(echo, reason):
+    IF reason == "faded":
+        // Gold particle burst
+        FOR i = 0 TO 7:
+            CREATE particle at echo position
+            SET velocity: random(-40..40, -40..40) px/sec
+            SET color: #FFD54F, alpha 0.5
+            TWEEN alpha → 0 over 400ms, then destroy
+    ELSE IF reason == "consumed":
+        // Dark particle burst
+        FOR i = 0 TO 7:
+            CREATE particle at echo position
+            SET velocity: random(-30..30, -30..30)
+            SET color: #333333, alpha 0.6
+            TWEEN alpha → 0 over 300ms, then destroy
+    ELSE IF reason == "replaced":
+        // Quick fade, no particles
+        // (already being replaced, keep it clean)
+
+    DESTROY echo.graphic
+    DESTROY echo.glowGraphic
+    DESTROY echo.timerBar
+
+
+FUNCTION isInEchoSafeZone(px, py):
+    FOR EACH echo in echoes:
+        IF echo.alpha >= 0.1:
+            dist = sqrt((px - echo.x)² + (py - echo.y)²)
+            IF dist < echo.glowRadius:
+                RETURN true
+    // Also: if perched moth is in light form, its own glow is a safe zone
+    IF isPerched AND currentForm == "light":
+        dist = sqrt((px - moth.x)² + (py - moth.y)²)
+        IF dist < 56: RETURN true
+    RETURN false
+
+
+FUNCTION isInBeamPath(px, py):
+    // Check if point (px, py) is within 8px of any beam segment
+    FOR EACH seg in beamSegments:
+        dist = pointToSegmentDistance(px, py, seg.x1, seg.y1, seg.x2, seg.y2)
+        IF dist < 8:
+            RETURN true
+    RETURN false
+```
+
+### 9.9 — SHADOW MOTH (Level 7)
+
+```
+// The shadow moth is a visual element in levels 4-6 (easter egg)
+// and becomes mechanically relevant in level 7.
+
+// In level 7, there is one special "shadow anchor" that exists
+// in shadow territory. This anchor can only be activated by the
+// shadow moth. The shadow moth activates it automatically when
+// the player perches on the CORRESPONDING light-side anchor
+// (the anchor closest to the shadow wall on the lit side).
+
+// Implementation:
+
+LEVEL 7 SPECIAL RULE:
+    SET shadowAnchor = the leftmost anchor (deepest in shadow)
+    SET linkedAnchor = the second-leftmost anchor (just on lit side)
+
+    In the update loop, after handling perch:
+        IF isPerched AND perchedAnchor == linkedAnchor AND currentForm == "light":
+            // Shadow moth "perches" on shadowAnchor
+            SET shadowAnchorActive = true
+            // The shadow moth visually snaps to shadowAnchor position
+            // and spreads dark wings (mirroring the player's perch pose)
+            // The shadow anchor now acts as an echo for beam calculation
+            // (it deflects the beam according to shadowAnchor.deflectionType)
+        ELSE:
+            SET shadowAnchorActive = false
+
+    In calculateBeam():
+        IF level == 7 AND shadowAnchorActive:
+            // Treat shadowAnchor as an active echo for beam bouncing
+            // (add it to the collision checks with same logic)
+
+// Victory trigger for level 7:
+// The beam chain must go: sun → echo(es) → moth → shadow anchor → crystal
+// When beam reaches crystal with shadowAnchorActive == true:
+//     Trigger victory sequence instead of normal level complete.
+```
+
+### 9.10 — LEVEL COMPLETE, DEATH, VICTORY
+
+```
+FUNCTION onLevelComplete():
+    // Freeze game
+    SET levelComplete = true
+    shadowActive = false
+
+    // Crystal activation
+    TWEEN crystal color → #FFD54F over 300ms
+    TWEEN crystal glow radius: pulse 40→60→40 over 600ms
+
+    AFTER 600ms:
+        IF currentLevel < 7:
+            currentLevel += 1
+            LAUNCH TransitionScene(currentLevel)
+        ELSE:
+            CALL victorySequence()
+
+
+FUNCTION onDeath():
+    SET levelComplete = true  // prevent further updates
+
+    // Moth dissolves
+    IF currentForm == "light":
+        // Gold particles scatter
+        FOR i = 0 TO 11:
+            CREATE particle at moth position
+            SET velocity: random(-60..60, -80..20)
+            SET color: #FFD54F, alpha 0.8
+            TWEEN alpha → 0 over 600ms, then destroy
+    ELSE:
+        // Dark motes scatter
+        FOR i = 0 TO 11:
+            CREATE particle at moth position
+            SET velocity: random(-50..50, -70..10)
+            SET color: #0A0020, alpha 0.6
+            TWEEN alpha → 0 over 600ms, then destroy
+
+    HIDE moth immediately
+
+    AFTER 600ms:
+        // Reset level
+        CALL GameScene.create(currentLevel)  // full restart
+
+
+FUNCTION victorySequence():
+    // Phase 1: Beam brightens (0 - 800ms)
+    FOR EACH seg in beamSegments:
+        TWEEN segment glow width 14→30, alpha 0.12→0.4 over 800ms
+        TWEEN segment core color #FFD54F → #FFFFFF over 800ms
+    FOR EACH echo in echoes:
+        TWEEN echo.alpha → 1.0 over 800ms
+        TWEEN echo.glowRadius → 80 over 800ms
+
+    // Phase 2: Shadow moth approaches (800ms - 2800ms)
+    TWEEN shadowMoth position → moth position over 2000ms, ease InOut
+    // Shadow moth alpha increases to 1.0
+    TWEEN shadowMoth.alpha → 1.0 over 1000ms
+
+    // Phase 3: Merge (2800ms - 3500ms)
+    // Both moths at same position. Flash.
+    AT 2800ms:
+        CREATE white circle at moth position, radius 0
+        TWEEN circle radius 0 → 200 over 400ms, alpha 0.8 → 0 over 700ms
+        HIDE original moth graphic
+        HIDE shadowMoth graphic
+        CREATE merged moth graphic: half gold wings (right), half indigo wings (left)
+        SET merged moth alpha = 0
+        TWEEN merged moth alpha 0 → 1 over 500ms
+
+    // Phase 4: World transitions to twilight (3500ms - 5500ms)
+    TWEEN background gradient:
+        top: current → #4A4080 (muted lavender) over 2000ms
+        bottom: current → #2A2040 (warm dark) over 2000ms
+    TWEEN all beam segments alpha → 0 over 2000ms (beam fades peacefully)
+    TWEEN all echoes alpha → 0 over 2000ms
+    TWEEN shadow wall alpha → 0 over 2000ms (shadow dissolves)
+
+    // Phase 5: Text (5500ms - 8500ms)
+    AT 5500ms:
+        CREATE text "You were always both." at (480, 380), 28px serif
+        SET color #D4C8A0, alpha 0
+        TWEEN alpha 0 → 1 over 1000ms
+
+    // Phase 6: Fade out (8500ms - 9500ms)
+    AT 8500ms:
+        CREATE fullscreen overlay, color #1A1818, alpha 0
+        TWEEN overlay alpha 0 → 1 over 1000ms
+        TWEEN merged moth alpha → 0 over 1000ms
+
+    // Phase 7: Replay prompt (9500ms+)
+    AT 9500ms:
+        CREATE text "Click to play again" at (480, 440), 18px mono
+        SET color #D4C8A0, alpha 0.5
+        ON pointerdown:
+            SET currentLevel = 1
+            LAUNCH TitleScene
+```
+
+### 9.11 — UTILITY FUNCTIONS
+
+```
+FUNCTION rayIntersectAABB(rayX, rayY, dirX, dirY, rect):
+    // Standard ray vs axis-aligned bounding box (slab method)
+    // rect = {x, y, w, h} where (x,y) is top-left
+    //
+    // Returns {point: {x,y}, dist: float} or null
+    //
+    // Handle direction components being 0 (parallel to axis)
+    // Only return intersections in positive ray direction (dist > 0)
+
+    IF dirX == 0 AND dirY == 0: RETURN null
+
+    SET tmin = -INFINITY
+    SET tmax = INFINITY
+
+    IF dirX != 0:
+        t1 = (rect.x - rayX) / dirX
+        t2 = (rect.x + rect.w - rayX) / dirX
+        tmin = max(tmin, min(t1, t2))
+        tmax = min(tmax, max(t1, t2))
+    ELSE:
+        IF rayX < rect.x OR rayX > rect.x + rect.w: RETURN null
+
+    IF dirY != 0:
+        t1 = (rect.y - rayY) / dirY
+        t2 = (rect.y + rect.h - rayY) / dirY
+        tmin = max(tmin, min(t1, t2))
+        tmax = min(tmax, max(t1, t2))
+    ELSE:
+        IF rayY < rect.y OR rayY > rect.y + rect.h: RETURN null
+
+    IF tmin > tmax OR tmax < 0: RETURN null
+    SET t = (tmin > 0) ? tmin : tmax
+    IF t < 0: RETURN null
+
+    RETURN {
+        point: {x: rayX + dirX * t, y: rayY + dirY * t},
+        dist: t
+    }
+
+
+FUNCTION rayIntersectScreenEdge(rayX, rayY, dirX, dirY):
+    // Find where ray exits the 960x640 canvas
+    SET minT = INFINITY
+
+    IF dirX > 0: minT = min(minT, (960 - rayX) / dirX)
+    IF dirX < 0: minT = min(minT, (0 - rayX) / dirX)
+    IF dirY > 0: minT = min(minT, (640 - rayY) / dirY)
+    IF dirY < 0: minT = min(minT, (0 - rayY) / dirY)
+
+    RETURN {
+        point: {x: rayX + dirX * minT, y: rayY + dirY * minT},
+        dist: minT
+    }
+
+
+FUNCTION findNearestAnchor(px, py, maxDist):
+    SET best = null
+    SET bestDist = maxDist + 1
+    FOR EACH anchor in anchorObjects:
+        IF anchor.isConsumed: CONTINUE
+        dist = sqrt((px - anchor.x)² + (py - anchor.y)²)
+        IF dist < bestDist:
+            bestDist = dist
+            best = anchor
+    RETURN (bestDist <= maxDist) ? best : null
+
+
+FUNCTION pointToSegmentDistance(px, py, x1, y1, x2, y2):
+    // Distance from point (px,py) to line segment (x1,y1)-(x2,y2)
+    SET dx = x2 - x1
+    SET dy = y2 - y1
+    SET lenSq = dx*dx + dy*dy
+    IF lenSq == 0: RETURN sqrt((px-x1)² + (py-y1)²)
+    SET t = clamp(((px-x1)*dx + (py-y1)*dy) / lenSq, 0, 1)
+    SET projX = x1 + t * dx
+    SET projY = y1 + t * dy
+    RETURN sqrt((px-projX)² + (py-projY)²)
+
+
+FUNCTION isInDarkZone(px, py):
+    IF no darkZones in current level: RETURN false
+    FOR EACH dz in darkZones:
+        IF px >= dz.x AND px <= dz.x+dz.w AND py >= dz.y AND py <= dz.y+dz.h:
+            RETURN true
+    RETURN false
+
+
+FUNCTION drawGradientBackground(levelNum):
+    topColor = LEVEL_COLORS[levelNum].top
+    bottomColor = LEVEL_COLORS[levelNum].bottom
+    CREATE graphics object
+    FOR y FROM 0 TO 639:
+        ratio = y / 639
+        color = lerpColor(topColor, bottomColor, ratio)
+        graphics.lineStyle(1, color, 1)
+        graphics.lineBetween(0, y, 960, y)
+
+
+FUNCTION lerpColor(colorA, colorB, t):
+    // Linear interpolate between two hex colors
+    rA = (colorA >> 16) & 0xFF
+    gA = (colorA >> 8) & 0xFF
+    bA = colorA & 0xFF
+    rB = (colorB >> 16) & 0xFF
+    gB = (colorB >> 8) & 0xFF
+    bB = colorB & 0xFF
+    r = Math.round(rA + (rB - rA) * t)
+    g = Math.round(gA + (gB - gA) * t)
+    b = Math.round(bA + (bB - bA) * t)
+    RETURN (r << 16) | (g << 8) | b
+```
+
+
+================================================================================
+                            END OF DOCUMENT
+================================================================================

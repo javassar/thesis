@@ -1,0 +1,433 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Title: Tidepainter
+Hook: Carve sand channels and place stones to guide colorful tidal pulses, mixing paints to match seashells before the final wave washes the beach clean.
+
+## 2. Core Insight
+- Central question: Can simple, well-timed changes shape the flow of a larger force into something beautiful?
+- Why it matters: Players feel the satisfaction of small, deliberate actions rippling into meaningful outcomes, blending planning and improvisation against a gentle, steady clock.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Draw grooves in the sand and place stones to route periodic waves of paint along channels into target shells; mixes happen naturally when streams meet.
+- Embodiment: The theme of tides and impermanence is captured by discrete wave pulses that briefly animate the world, then recede, giving the player short, contemplative windows to adjust the beach before the next inevitable surge.
+
+## 4. Player Journey
+- Start: A serene beach scene with a few shells showing target colors (e.g., green, purple), paint sources at the shoreline (red, blue, yellow), and an on-screen “Wave in 3…2…1” countdown. The player feels calm curiosity.
+- First minute learning: They try carving a small channel to a shell. The first wave arrives, colorful droplets ride the groove, mixing at a T-junction into a new color. They see a fill ring around the shell grow if the color matches closely. They learn by quick iteration between pulses.
+- Evolution: New shells and a splitter appears further inland. The player must branch channels, refine mixes (e.g., balancing red/blue to hit purple), and use limited stones to block leaks. Waves speed up slightly mid-run, forcing snappier edits.
+- Climax: With one or two waves left, one shell remains incomplete. The player must re-route a main line or create a last-minute merge to nail the hue within tolerance.
+- Ending: After a fixed number of waves (e.g., 8), the tide fully washes over the beach. If all shells are filled, a calm sunrise and a “Completed” message; otherwise, a wistful fade with “The tide carries your patterns away.” Emotion: peaceful closure, either pride or gentle “try again” motivation.
+
+## 5. Game Elements
+- Player cursor: Standard pointer; switches to tool icons (Shovel for carve, Rock for place, Brush for erase).
+- Paint sources: Small buoys at shoreline colored Red, Blue, Yellow. Each emits a fixed volume of paint every wave.
+- Channels (grooves): Sand tiles the player carves; slightly darker and lower with water sheen during waves.
+- Stones: Placeable blockers on tiles; split incoming streams by shaping paths around them.
+- Shells (targets): Large shells inland with a color swatch and a circular progress ring that fills only when receiving close-matching paint. When complete, the shell glows and locks.
+- Environment/visuals: Hand-drawn 2D beach; sea edge on the left, beach grid to the right, soft palette, gentle animation of water during pulses.
+- UI elements: Top bar with timer (Waves Remaining), tool buttons (Carve, Stone, Erase), Stones remaining, an info panel showing the currently hovered shell’s target color and current delivered color. Start and End screens with short instructions and results.
+- Screens:
+  - Title: “Tidepainter” with Play and simple one-line how-to.
+  - Game: Main play scene.
+  - Ending: Completion status, shells completed count, option to Retry.
+
+## 6. Rules & Systems
+- Player actions:
+  - Carve: Click-drag to toggle sand tiles into grooves (walkable channels). Grooves can be overwritten back to sand with the Erase tool.
+  - Place Stone: Click to place a rock on a sand or groove tile (cannot place on sources, shells, or sea). Limited count. Erase to remove a placed stone and refund it.
+  - Erase: Click-drag to remove grooves or stones.
+- Waves:
+  - The game alternates between Calm (editing) and Wave (flowing) phases. Calm lasts ~2 seconds early, ~1.5 seconds late. Wave lasts ~1 second.
+  - At the start of each Wave, each source injects a fixed “volume” of primary-colored paint into adjacent groove tiles. Paint travels tile-by-tile along grooves, splitting evenly at forks, blocked by stones, and diffusing to sand edges minimally (ignored for simplicity).
+- Mixing:
+  - Paint color is represented as an RGB vector (each 0–1). When two streams merge, the new color is the volume-weighted average. Volume is conserved across splits and merges (minus a small friction loss).
+- Shells and matching:
+  - Each shell has a target RGB color and a required fill volume.
+  - If paint contacting the shell’s intake matches within a tolerance (Euclidean RGB distance <= 0.18), the shell’s progress increases by the received volume. If not, the paint is visually absorbed by the sand with no penalty to progress.
+  - Completed shells lock, rejecting further paint.
+- Progress and ending:
+  - The session has a fixed number of Waves (e.g., 8). Finish early if all shells are complete; otherwise end after the 8th Wave.
+  - Success is measured by completing all shells. Partial completion is shown if not all are done.
+- Difficulty ramp:
+  - Early waves have longer Calm windows and closer shells.
+  - Later waves shorten Calm by ~0.5 seconds and introduce a farther shell and a wider beach, pushing routing precision and timing.
+- Constraints/clarity:
+  - Editing is disabled during Wave pulses to keep the rhythm readable.
+  - Visual feedback: color trails, shell ring fill, and a small HUD swatch showing current mix at the shell during contact.
+
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Canvas size: 960 x 600 px
+- Background color: #87C6D8 (sky gradient top) blending to #F2E2B8 (sand) for beach area; sea left area #63A6C3
+- Grid:
+  - Origin of grid top-left at (240, 48) px
+  - Tile size: 32 x 32 px
+  - Grid dimensions: 24 columns x 15 rows (covering 768 x 480 px)
+  - Sea occupies a 1-tile-wide vertical strip left of the beach grid (visual only); paint sources spawn at grid column 0 adjacent to column 1 grooves.
+
+Elements:
+- Tiles:
+  - Sand tile: base state; color #F2E2B8
+  - Groove tile: darker sand #E0CFA3 with inset shading; boolean flag isGroove = true
+  - Rock tile: sprite drawn on top; blocks flow; isRock = true
+  - Source: 3 fixed positions along the left edge (row 4, 8, 12) at virtual column -1 feeding into column 0; colors: Red (1,0,0), Blue (0,0,1), Yellow (1,1,0)
+  - Shells: 3 targets positioned at (col,row): (18,5), (20,9), (22,12), each with target colors Green (0,1,0), Purple (0.6,0,0.8), Orange (1,0.5,0)
+- Paint packets:
+  - Represented as circles of radius 6 px moving along tile centers and edges; color tinted per RGB; alpha 0.9
+  - Movement speed: 256 px/s along groove paths during Wave phase
+- UI:
+  - Top HUD bar at y=8 px
+  - Text elements:
+    - Title scene: “Tidepainter” font: 48 px bold, color #1B3A4B centered
+    - In-game:
+      - Waves Remaining: top-left at (16, 12) text “Waves: X/Y” font 20 px, color #1B3A4B
+      - Phase countdown: top-center at (480, 12), content “Wave in: 1.8s” or “Wave!” font 20 px, color #1B3A4B
+      - Stones remaining: top-right at (840, 12), content “Stones: N” font 20 px
+    - Tool buttons:
+      - Three buttons at bottom-left starting (16, 544): Carve, Stone, Erase; 120 x 40 px each; selected tool highlighted with border #1B3A4B 2 px
+  - Shell HUD (on hover): small panel near cursor showing target color swatch and current delivered color during Wave
+
+Text (static strings):
+- Title screen: “Carve sand channels to guide tidal paint into shells. Mix colors to match!”
+- Start button: “Play”
+- End screen:
+  - If all complete: “You shaped the tide.” and “All shells filled in X waves.” plus “Retry”
+  - Else: “The tide carries your patterns away.” and “Shells completed: N/3” plus “Retry”
+
+Input:
+- Mouse/touch:
+  - Left-click/drag with Carve: convert hovered sand tile to groove (if not Rock or Shell/Source)
+  - Left-click with Stone: place Rock on current tile (if not occupied; decrement stones)
+  - Left-click/drag with Erase: remove Groove or Rock (refund stone if rock removed)
+  - Number keys 1/2/3 to switch tools (Carve/Stone/Erase)
+  - R to restart from pause prompt on end screen
+- Editing is ignored during Wave phase (cursor shows “locked” icon)
+
+State:
+- Phase: “Calm” or “Wave”
+- WaveIndex: integer starting at 1; MaxWaves = 8
+- PhaseTimer: countdown in seconds
+- Grid arrays:
+  - tileType[col][row]: enum {Sand, Groove, Shell, Source}
+  - hasRock[col][row]: boolean
+- Sources: array of {col=-1, row, colorRGB, volumePerWave}
+  - volumePerWave: 60 units per wave (per source)
+- Shells: array of {
+  col,row,
+  targetRGB, requiredVolume=100,
+  currentVolume=0,
+  isComplete=false
+}
+- Paint system:
+  - ActivePackets: array of packets active during Wave
+  - Packet: {
+      x,y (in px), colorRGB (float[3]), volume (float),
+      path: array of waypoints (tile centers), pathIndex
+    }
+- Mixing tolerance: match if distanceRGB <= 0.18
+- Friction loss per tile step: 2% volume loss (0.98 multiplier)
+- StonesRemaining: starts at 8
+- EditingLock: boolean (true during Wave)
+- Level geometry seed: initial grooves near sources off
+
+Timing:
+- Calm phase duration:
+  - Waves 1–4: 2.0 s
+  - Waves 5–8: 1.5 s
+- Wave phase duration cap: 1.2 s or until all packets’ volumes < 1 unit or out of grooves
+- Packet movement:
+  - Speed 256 px/s; position updated each frame
+  - Split rule at forks resolved immediately by pathfinding (see Interactions)
+- Countdown updates at 10 Hz for smoother display
+
+Interactions:
+- Flow graph:
+  - During Wave start, build a directed graph from groove tiles by scanning neighbors (up/down/left/right) that are groove and not blocked by rocks.
+  - Preferred flow direction: from left to right; if multiple neighbors available from a tile, packets split evenly among available exits.
+- Spawning:
+  - Each source emits N packets so that sum(volume) = volumePerWave. For simplicity, spawn 6 packets of 10 units each at the edge of the first reachable groove; if none reachable, packets dissipate.
+- Movement and merging:
+  - Packets follow their assigned path along tile centers; when two packets occupy the same tile within the same frame and are moving in the same direction, merge into one: new volume=v1+v2; color=(c1*v1 + c2*v2)/(v1+v2)
+  - On each tile transition, apply friction: volume *= 0.98
+- Shell intake:
+  - If a packet enters a shell’s tile (or an adjacent designated intake tile connected by groove), check color match. If match, add min(packet.volume, capacityRemaining) to shell.currentVolume; deduct from packet.volume proportionally. Excess volume (if any) continues onward if path continues; otherwise dissipates.
+  - When shell.currentVolume >= requiredVolume, set isComplete=true; show glow and stop accepting further paint.
+- Dissipation:
+  - If a packet reaches a sand tile, rock, dead end, or leaves grid, it disappears.
+
+Progression:
+- At Wave end, if all shells complete, immediately end with success.
+- Else if WaveIndex == MaxWaves and not all complete, end with failure.
+- Otherwise, increment WaveIndex, switch to Calm with updated Calm duration.
+
+## 8. Game Flow
+- Load:
+  - Show Title screen with Play button and one-line instructions.
+- Start:
+  - On Play, initialize grid (all Sand), place three Sources at rows 4,8,12 feeding into column 0, place three Shells at (18,5), (20,9), (22,12) with targets Green, Purple, Orange. StonesRemaining = 8. WaveIndex = 1. Phase = Calm. PhaseTimer = 2.0.
+- During play:
+  - Calm phase:
+    - Player edits grooves and stones. Countdown shows “Wave in: Xs”.
+    - When PhaseTimer <= 0, lock editing and switch to Wave.
+  - Wave phase:
+    - Spawn packets from sources; compute flow graph; simulate packet movement, merging, shell intake until PhaseTimer hits 0 or all packets exhausted.
+    - Show subtle water shimmer and moving droplets along grooves.
+    - When Wave ends, unlock editing, increment WaveIndex if not just finished the last wave.
+- End:
+  - If all shells complete at any time after a Wave, transition to End screen with success text and waves used.
+  - If WaveIndex > MaxWaves, transition to End screen with failure text and shells completed count.
+- Post-game:
+  - End screen offers Retry, which resets state and returns to Calm phase of Wave 1.
+
+## 9. Pseudocode
+
+Initialization (setup):
+- define constants:
+  TILE_SIZE = 32
+  GRID_COLS = 24
+  GRID_ROWS = 15
+  GRID_ORIGIN = (240, 48)
+  MAX_WAVES = 8
+  CALM_DURATIONS = {1:2.0,2:2.0,3:2.0,4:2.0,5:1.5,6:1.5,7:1.5,8:1.5}
+  WAVE_MAX_DURATION = 1.2
+  PACKET_SPEED = 256 // px per second
+  PACKETS_PER_SOURCE = 6
+  SOURCE_VOLUME_PER_WAVE = 60
+  FRICTION_PER_TILE = 0.98
+  MATCH_TOLERANCE = 0.18
+  REQUIRED_VOLUME = 100
+  STARTING_STONES = 8
+
+- create game state:
+  phase = "Calm"
+  waveIndex = 1
+  phaseTimer = CALM_DURATIONS[1]
+  stonesRemaining = STARTING_STONES
+  tileType[GRID_COLS][GRID_ROWS] = Sand
+  hasRock[GRID_COLS][GRID_ROWS] = false
+
+- place sources:
+  sources = [
+    {col:-1,row:4,color:[1,0,0]},
+    {col:-1,row:8,color:[0,0,1]},
+    {col:-1,row:12,color:[1,1,0]}
+  ]
+
+- place shells:
+  shells = [
+    {col:18,row:5,target:[0,1,0],required:REQUIRED_VOLUME,current:0,complete:false},
+    {col:20,row:9,target:[0.6,0,0.8],required:REQUIRED_VOLUME,current:0,complete:false},
+    {col:22,row:12,target:[1,0.5,0],required:REQUIRED_VOLUME,current:0,complete:false}
+  ]
+
+- UI setup: toolButtons, text fields, handlers
+- input handlers: onMouseDown, onMouseMove, onMouseUp for editing (respect EditingLock)
+- render beach, grid lines optional subtle
+
+Main loop/update(dt):
+- if on Title or End screen, handle button clicks only
+- if phase == "Calm":
+    phaseTimer -= dt
+    updateCountdownUI(phaseTimer)
+    handleEditingInput() // carve, place, erase if mouse held; ignore shells/sources
+    if phaseTimer <= 0:
+        startWavePhase()
+- else if phase == "Wave":
+    simulatePackets(dt)
+    phaseTimer -= dt
+    updateCountdownUI(phaseTimer) // shows "Wave!"
+    if phaseTimer <= 0 or ActivePackets is empty:
+        endWavePhase()
+
+startWavePhase():
+- phase = "Wave"
+- EditingLock = true
+- phaseTimer = WAVE_MAX_DURATION
+- ActivePackets = []
+- flowGraph = buildFlowGraph() // adjacency from groove tiles ignoring rocks
+- for each source in sources:
+    // find nearest groove tile adjacent to (col:0,row:source.row)
+    entry = getEntryTileForSource(source)
+    if entry == null: continue
+    volumePerPacket = SOURCE_VOLUME_PER_WAVE / PACKETS_PER_SOURCE
+    for i in 1..PACKETS_PER_SOURCE:
+        path = computePathFrom(entry, flowGraph) // path planning chooses exits by split rules on the fly; alternatively store just current tile and let movement decide
+        packet = {
+          x: tileCenterX(entry.col), y: tileCenterY(entry.row),
+          color: source.color,
+          volume: volumePerPacket,
+          tileCol: entry.col, tileRow: entry.row,
+          nextStep: null
+        }
+        ActivePackets.add(packet)
+
+simulatePackets(dt):
+- distanceToTravel = PACKET_SPEED * dt
+- for each packet in ActivePackets:
+    while distanceToTravel > 0 and packet.volume > 0:
+        if packet.nextStep is null:
+            exits = getAvailableExits(packet.tileCol, packet.tileRow, flowGraph)
+            if exits.length == 0:
+                // dead end, dissipate
+                packet.volume = 0
+                break
+            if exits.length == 1:
+                packet.nextStep = exits[0]
+                // full volume goes this way
+            else:
+                // split: create sibling packets for each extra exit
+                splitVolume = packet.volume / exits.length
+                for idx, exit in enumerate(exits):
+                    if idx == 0:
+                        packet.nextStep = exit
+                        packet.volume = splitVolume
+                    else:
+                        newPacket = clone(packet)
+                        newPacket.nextStep = exit
+                        newPacket.volume = splitVolume
+                        ActivePackets.add(newPacket)
+        // move towards center of nextStep tile
+        targetX = tileCenterX(packet.nextStep.col)
+        targetY = tileCenterY(packet.nextStep.row)
+        dx = targetX - packet.x
+        dy = targetY - packet.y
+        dist = sqrt(dx*dx + dy*dy)
+        if dist <= distanceToTravel:
+            // reach next tile center
+            packet.x = targetX
+            packet.y = targetY
+            distanceToTravel -= dist
+            // apply friction once per tile transition
+            packet.volume *= FRICTION_PER_TILE
+            // advance tile
+            packet.tileCol = packet.nextStep.col
+            packet.tileRow = packet.nextStep.row
+            packet.nextStep = null
+            // check shell intake
+            shell = shellAt(packet.tileCol, packet.tileRow)
+            if shell != null and !shell.complete and packet.volume > 0:
+                delivered = deliverToShell(packet, shell) // returns volume delivered, may reduce packet.volume
+        else:
+            // partial move within tile
+            moveRatio = distanceToTravel / dist
+            packet.x += dx * moveRatio
+            packet.y += dy * moveRatio
+            distanceToTravel = 0
+- merge step:
+  - spatial hash packets by (tileCol,tileRow) and direction if tracked
+  - for each cell with >1 packets:
+      merge all into one:
+        totalVol = sum(vol)
+        if totalVol > 0:
+          mergedColor = sum(color_i * vol_i) / totalVol
+        replace with single packet
+
+deliverToShell(packet, shell):
+- // compute color distance
+- d = rgbDistance(packet.color, shell.target)
+- if d <= MATCH_TOLERANCE:
+    needed = shell.required - shell.current
+    v = min(packet.volume, needed)
+    shell.current += v
+    if shell.current >= shell.required:
+        shell.complete = true
+        showShellCompleteFX(shell)
+    packet.volume -= v
+    return v
+- else:
+    // no effect; packet continues if it has a path
+    return 0
+
+endWavePhase():
+- // cleanup dead packets
+- remove packets with volume <= 0
+- if all shells complete:
+    goToEndScreen(success=true, wavesUsed=waveIndex)
+    return
+- if waveIndex >= MAX_WAVES:
+    goToEndScreen(success=false, shellsComplete=countCompleteShells())
+    return
+- waveIndex += 1
+- phase = "Calm"
+- phaseTimer = CALM_DURATIONS[waveIndex]
+- EditingLock = false
+
+buildFlowGraph():
+- graph = empty map keyed by (col,row) for tiles where tileType==Groove and hasRock==false
+- for each groove tile t:
+    neighbors = []
+    for each dir in [up,down,left,right]:
+        n = neighbor tile in dir
+        if inBounds(n) and tileType[n]==Groove and hasRock[n]==false:
+            neighbors.add(n)
+    graph[t] = neighbors
+- return graph
+
+getEntryTileForSource(source):
+- candidate = (col:0,row:source.row)
+- if inBounds(candidate) and tileType[candidate]==Groove and hasRock[candidate]==false:
+    return candidate
+- else:
+    // search small vertical window near source row for nearest groove on column 0
+    for offset in [-1,1,-2,2]:
+        r = source.row + offset
+        if inBounds(0,r) and tileType[0][r]==Groove and !hasRock[0][r]:
+            return (0,r)
+- return null
+
+handleEditingInput():
+- if EditingLock: return
+- if tool == Carve and leftMouseDragging:
+    tile = tileFromCursor()
+    if tile valid and tileType[tile] == Sand and not hasRock[tile] and not isShellOrSource(tile):
+        tileType[tile] = Groove
+        drawGrooveTile(tile)
+- if tool == Stone and leftMouseJustPressed:
+    tile = tileFromCursor()
+    if tile valid and tileType[tile] in {Sand,Groove} and not hasRock[tile] and not isShellOrSource(tile) and stonesRemaining > 0:
+        hasRock[tile] = true
+        stonesRemaining -= 1
+        drawRock(tile)
+- if tool == Erase and leftMouseDragging:
+    tile = tileFromCursor()
+    if tile valid:
+        if hasRock[tile]:
+            hasRock[tile] = false
+            stonesRemaining += 1
+            clearRockSprite(tile)
+        else if tileType[tile] == Groove and not isShellOrSource(tile):
+            tileType[tile] = Sand
+            drawSandTile(tile)
+
+rgbDistance(a,b):
+- return sqrt( (a.r-b.r)^2 + (a.g-b.g)^2 + (a.b-b.b)^2 )
+
+tileFromCursor():
+- mx,my = input pointer position
+- col = floor((mx - GRID_ORIGIN.x) / TILE_SIZE)
+- row = floor((my - GRID_ORIGIN.y) / TILE_SIZE)
+- if col,row in bounds: return (col,row) else return null
+
+tileCenterX(col): return GRID_ORIGIN.x + col*TILE_SIZE + TILE_SIZE/2
+tileCenterY(row): return GRID_ORIGIN.y + row*TILE_SIZE + TILE_SIZE/2
+
+shellAt(col,row):
+- for s in shells: if s.col==col and s.row==row: return s
+- return null
+
+goToEndScreen(success, info):
+- phase = "End"
+- show end UI with message based on success and info
+- disable input except Retry button / R
+
+Note to programmer:
+- Use Phaser Scenes: TitleScene, GameScene, EndScene.
+- GameScene uses Arcade no-collision physics just for timing; paint packets can be lightweight sprites or graphics objects; spatial merging can be implemented by bucketing packets per tile using a Map keyed by "col,row".
+- Visual polish like water shimmer and glow can be simple tween alpha/pulse effects; not required for core logic.

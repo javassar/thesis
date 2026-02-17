@@ -1,0 +1,152 @@
+STAGE 1: GAME DESIGN
+1. Title & Hook
+The Redact "You are a sentient ink blot inside a classified government document; rearrange the words of your own story to turn a legal prison into a physical escape."
+
+2. Core Insight
+This game explores the malleability of truth. It suggests that we are not just victims of the narratives written about us—if we can find the right "words," we can redefine the physics of our own reality.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: "Semantic Drag-and-Drop." The player moves with WASD, but uses the mouse to click and drag specific adjectives from the background text and "drop" them onto physical objects in the world.
+
+Integration: The theme is about subverting authority. By physically moving the word "BOUNCY" from a sentence about a ball onto a "REDACTED" black bar, the player literally changes the law of the world to facilitate their escape.
+
+4. Player Journey
+0:00-1:00 (The Prison): The player starts as a small, dripping ink blot on a white page. They are trapped by thick, black "Redaction Bars." The background text reads: "The specimen is heavy and static." The player feels slow. By dragging the word "static" out of the sentence, the player becomes mobile.
+
+1:00-3:00 (The Edit): The player encounters a wide gap. The text nearby describes a "cold, fragile glass." The player drags "fragile" onto a Redaction Bar, which then shatters when touched, clearing a path.
+
+3:00-4:30 (The Narrative Conflict): A "Pen" (the antagonist) begins writing new lines in real-time, trying to trap the player. It writes: "The floor is lava." The player must quickly find the word "water" from a previous paragraph to drop onto the floor before the ink turns red and deadly.
+
+4:30-5:00 (The Ending): The player reaches the edge of the paper. The final sentence is: "The story ends here." The player drags the word "here" to the very top corner of the screen, creating a literal exit out of the game window's "paper."
+
+Emotion: Empowerment, cleverness, and a touch of rebellious mischief.
+
+5. Game Elements
+The Blot (Player): A physics-based liquid sprite that leaves a faint trail.
+
+The Text: Standard typewriter font (Courier). Most text is "background," but Bold Keywords are grabbable objects.
+
+Redaction Bars: Solid black rectangles that act as walls/floors.
+
+The Pen: A large, hovering nib that "writes" new platforms or hazards into existence during the climax.
+
+UI: A "File Folder" border around the game screen.
+
+6. Rules & Systems
+Adjective Mapping: Each "Keyword" has a property. "Heavy" increases gravity; "Bouncy" adds a high restitution coefficient; "Invisible" sets alpha to 0 and disables collision.
+
+The "Sentence" Rule: Keywords only work if they are attached to an object. If a word is dropped in empty space, it slowly fades and returns to its original sentence.
+
+Movement: Standard 2D platforming physics for the Blot.
+
+STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+7. Technical Specification
+Display
+
+Canvas: 800x600.
+
+Background: #E6E2D3 (Aged paper texture).
+
+Style: High-contrast Noir (Black ink on off-white).
+
+Elements
+
+Player: Phaser.Physics.Arcade.Sprite. Size: 16x16px.
+
+Keywords: Phaser.GameObjects.Text with Arcade Physics enabled.
+
+Redaction Bars: Phaser.Physics.Arcade.StaticGroup.
+
+Input
+
+WASD/Arrows: Movement (Speed: 160).
+
+Space: Jump (Velocity: -300).
+
+Mouse Left-Click & Drag: To move Keyword objects.
+
+State Variables
+
+activeProperties: A Map/Dictionary linking an Object ID to its current Keyword (e.g., RedactBar_1: "Fragile").
+
+isCaught: Boolean (if the Pen writes over the player).
+
+Timing
+
+Pen Writing Speed: 1 character every 50ms.
+
+Word Return: 3 seconds (Time it takes for a dropped word to fly back to its source if not applied to an object).
+
+Interactions
+
+Word-on-Object: On pointerup, check for overlap between Keyword and RedactionBar. If true, Object.property = Keyword.text.
+
+Property Effects: - Fragile: onCollision -> object.destroy().
+
+Bouncy: object.setBounce(1.2).
+
+Lava: onCollision -> game.restart().
+
+8. Game Flow
+Launch: The game looks like a static document. The player "wakes up" when they move the mouse.
+
+Interactive Tutorial: A sentence says "Click here to move." The player must drag "here" to the Blot to unlock movement.
+
+Level Progression: Scrolling is vertical (descending the page).
+
+The "Draft" Phase: The Pen appears and begins creating obstacles.
+
+The Ending: The Blot reaches the "Exit" word, and the game window fades to a "Case Closed" stamp.
+
+9. Pseudocode
+JavaScript
+// Keyword System
+class Keyword extends Phaser.GameObjects.Text {
+    constructor(scene, x, y, word, property) {
+        super(scene, x, y, word, { font: '20px Courier', fill: '#000' });
+        this.setInteractive();
+        scene.input.setDraggable(this);
+        this.property = property;
+    }
+}
+
+function create() {
+    this.player = this.physics.add.sprite(100, 100, 'blot');
+    this.words = this.add.group();
+    this.obstacles = this.physics.add.staticGroup();
+
+    // Drag Logic
+    this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
+        gameObject.x = dragX;
+        gameObject.y = dragY;
+    });
+
+    this.input.on('dragend', (pointer, gameObject) => {
+        let target = getOverlappingObstacle(gameObject);
+        if (target) {
+            applyProperty(target, gameObject.property);
+        } else {
+            returnToOriginalPos(gameObject);
+        }
+    });
+}
+
+function applyProperty(target, property) {
+    switch(property) {
+        case 'fragile':
+            target.setAlpha(0.5);
+            this.physics.add.collider(player, target, () => target.destroy());
+            break;
+        case 'bouncy':
+            target.setTint(0x00ff00);
+            player.body.setBounce(1.5); // Apply bounce logic
+            break;
+    }
+}
+
+function update() {
+    // Check if player falls off the "paper" (bottom of canvas)
+    if (this.player.y > 600) {
+        moveToNextPage();
+    }
+}

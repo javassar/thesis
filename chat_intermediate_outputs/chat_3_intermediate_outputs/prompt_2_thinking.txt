@@ -1,0 +1,5 @@
+**Designing game specifications**
+
+I'm integrating themes and will design precise specifications for the game using Phaser. I need to determine the canvas size, asset shapes, tile sizes, player speed, ping radius, cooldowns, and enemy hearing capabilities. 
+
+For level design, I'll likely create a one-level setup where players must deliver three packages before exiting, keeping a five-minute limit. The compact map will include three delivery beacons to reach in any order, leading to the exit when time runs out or all tasks are complete. I’ll provide thorough rules and a technical plan for all aspects of the game.

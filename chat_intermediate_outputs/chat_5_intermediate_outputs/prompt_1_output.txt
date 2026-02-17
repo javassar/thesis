@@ -1,0 +1,49 @@
+1) Title: Shadow Courier
+- Description: A stealth-puzzle game where you deliver secret letters across clockwork city rooftops. Street lamps sweep like clock hands and windows flicker unpredictably, creating moving safe zones. Speed matters, but patience saves you from watchful automata.
+- Core mechanic: Time your dashes and hides based on rotating light cones and shifting shadows; you can also rotate a few environmental elements to re-aim light sources momentarily.
+- Unique hook: The “clockwork light” system creates living stealth puzzles—levels feel like rhythm charts made of light and darkness.
+
+2) Title: Loopsmith
+- Description: Build tiny one-screen factories that solve looping tasks in 10 seconds or less. Place belts, splitters, stampers, and bots, then hit go and watch a loop repeat; iterate until the output matches the target pattern. Compact, clever engineering with bite-sized goals.
+- Core mechanic: Arrange components on a grid to transform resources over a repeating time loop; small changes cascade through the loop’s cycles.
+- Unique hook: You’re optimizing a cyclical timeline, not just spatial layout—tweaks at second 2 affect outcomes at second 9 on each repeat.
+
+3) Title: Pocket Typhoon
+- Description: A physics-driven action-platformer where you don’t move the character—you control the wind. Puff, gust, and whirl to sling a paper glider through caves, factories, and storm fronts. Navigate hazards by sculpting air currents in real time.
+- Core mechanic: Click-and-drag to create directional gusts that apply force to all physics objects; chain gusts to maintain momentum.
+- Unique hook: Movement by environment manipulation; the same wind pushes foes, spins fans, tips platforms, and ignites wind-powered contraptions.
+
+4) Title: Beat the Street
+- Description: A rhythm-arcade hybrid: cross a chaotic city where traffic, pedestrians, and hazards sync to the soundtrack. Lanes swap, lights change, and platforms appear on downbeats. Survive the song to reach the subway on time.
+- Core mechanic: Move and dash only on beats; pattern recognition and timing are essential as the environment animates musically.
+- Unique hook: The level itself is the metronome—visuals “conduct” you, blending Frogger-like planning with rhythm precision.
+
+5) Title: Word Tectonics
+- Description: Letters fall like tetrominoes, but they have weight and bounce. Build stable structures that also spell target words for bonus points. Balance literal structure and linguistic structure under gravity.
+- Core mechanic: Drag, rotate, and drop letter-blocks; physics determines stability, and valid adjacent words score and strengthen supports.
+- Unique hook: Wordplay fused with physics—forming words reinforces your tower, while nonsense piles wobble and collapse.
+
+6) Title: Cozy Cryptids
+- Description: A gentle hidden-object adventure set in twilight forests and misty lakes. You’re a new park ranger documenting friendly cryptids with a trusty camera. Observe habits, earn trust, and snap photos without startling them.
+- Core mechanic: Click-to-explore scenes, track subtle visual cues, and time photos as creatures emerge from cover; unlock lures and soft tools to stage better shots.
+- Unique hook: Non-intrusive “stealth” where patience and empathy reveal secrets; your photo album becomes the upgrade path.
+
+7) Title: Paintquake
+- Description: A top-down arena splatter-shooter where bullets don’t just hit—they create expanding paint ripples that shove, stain, and combo. Color the map to claim ground while surfing shockwaves. Enemies and hazards react dramatically to overlapping waves.
+- Core mechanic: Fire shots to spawn propagating paint rings; chain overlapping waves for combos and mobility boosts.
+- Unique hook: You control the battlefield by painting kinetic fields, turning defense, offense, and movement into one ripple system.
+
+8) Title: Moss & Machine
+- Description: A tranquil puzzle-builder about coaxing living vines to power ancient devices. Lay copper traces, place spores, and route growth around obstacles to light distant glyphs. The garden remembers each attempt, growing denser with every try.
+- Core mechanic: Draw conductive paths and place growth catalysts; vines follow gradients, split at nodes, and short if they touch hazards.
+- Unique hook: Organic circuit design—biological “wires” with personality create puzzles that evolve visually as you iterate.
+
+9) Title: Flip Fate Fighters
+- Description: A quick, 2D duel where combat happens on a single screen but gravity keeps flipping. Play action inputs while also queuing “fate cards” that trigger arena flips, hazards, or buffs after a short countdown. Outsmart your rival by planting future chaos.
+- Core mechanic: Real-time light combat with a timeline of delayed card effects; position for flips and bait opponents into bad spots.
+- Unique hook: Predictive play—controlling tomorrow’s arena matters as much as landing today’s hit.
+
+10) Title: Mailbox Manager
+- Description: A comedic, one-screen logistics puzzler set in a chaotic post office. Sort bizarre letters with moving belts, stampers, and chutes while deciphering riddly addresses. Efficiency meets absurdity as you juggle VIP pigeons and cursed packages.
+- Core mechanic: Place and time conveyors and toggles to route items to the right bins; dynamic rules force quick reconfiguration mid-shift.
+- Unique hook: Word-based address logic alters machine behavior—“Deliver before noon,” “Fragile if upside-down,” and “Only passes purple belts” become real routing constraints.

@@ -1,0 +1,45 @@
+STAGE 1: GAME DESIGN1. Title & HookTitle: Rename.exeHook: A puzzle-platformer where you don't change how you move—you change what things are by editing their filenames.2. Core InsightThe Central Question: If we change the label of a thing, does its essence change?Human Connection: It explores the power of language and the "hacker" fantasy of breaking a system from the inside to find a way out.3. Mechanic-Theme IntegrationPrimary Mechanic: "The Rename." The player clicks on any object in the world to open a small text box. By changing the file extension (e.g., .solid to .ghost), the object’s physical properties instantly update.Integration: The game is set inside a corrupted file directory. The theme of "identity as a variable" is baked into every jump. You aren't just moving; you are rewriting the world's dictionary.4. Player JourneyStart (0-1 min): The player is a blocky character named User.png. They face a tall wall named Wall.zip. The player clicks the wall, deletes .zip, and types .door. The wall slides open.The Learning Curve (1-2 min): The player encounters Hazard.fire. They can't jump over it. They rename it to Hazard.ice, making it slippery but safe. They learn that the "suffix" dictates behavior.The Evolution (2-4 min): Complexity increases. The player must rename themselves. Renaming User.png to User.gravity_0 allows them to float across a massive gap, but they must rename back to User.png to land on a button.The Climax (4-5 min): The "Final Boss" is a giant System_Error.delete zone that is slowly expanding. The player can't rename the error—it's read-only. They must quickly rename surrounding objects to create a "path" out of the directory.The End: The player reaches a file named Exit.shortcut. Upon clicking it, the game window "closes" (visual effect), and the final screen shows a beautiful, high-res desktop wallpaper where User.png is finally "pasted."5. Game ElementsThe Player: A simple, 2D white square with the text User.png hovering above it.The Cursor: A standard OS arrow that turns into a "text I-beam" when hovering over editable objects.Objects: Various 2D shapes (rectangles, circles) with text labels centered on them.Environment: A dark, minimalist background reminiscent of a command line or a folder structure (dark greys and blues).UI: A "File Properties" window that pops up when an object is clicked.6. Rules & SystemsThe Extension Logic: * .static: Object stays still..falling: Object is affected by gravity..bouncy: Object acts as a trampoline ($v_{out} = -1.5 \cdot v_{in}$)..ghost: Object has no collision.Input Limit: The player can only change the extension, not the name itself (to prevent the player from getting stuck or breaking the game logic entirely).Success: Reach the "Exit" file at the end of the folder string.STAGE 2: TECHNICAL IMPLEMENTATION PLAN7. Technical SpecificationDisplayCanvas: 800 x 600.Background: #121212 (Deep Charcoal).Visuals: Vector-style boxes with glowing outlines.ElementsPlayer: 32x32 square. Logic: Phaser.Physics.Arcade.Sprite.Interactable Objects: Phaser.GameObjects.Container (contains a Sprite and a Text object).InputWASD/Arrows: Move User.png.Mouse Click: Selects an object to "Rename."Keyboard Typing: Modifies the string variable of the selected object.State VariablesactiveObject: The object currently being edited.inventory: (Optional) Strings the player has "cut" and can "paste."isTyping: Boolean (disables player movement while editing).Physics ConstantsGravity: $g = 800 \text{ px/s}^2$.Jump Velocity: $v_j = -400 \text{ px/s}$.Speed: $160 \text{ px/s}$.InteractionsCollision Logic: ```javascriptif (object.extension === ".ghost") {this.physics.world.disable(object);} else if (object.extension === ".bouncy") {this.physics.add.collider(player, object, (p, o) => { p.body.setVelocityY(-600); });}
+8. Game FlowBoot: "Booting system..." text crawl.Init: Spawn User.png in Folder_01.Loop: Check for collisions. If an object is clicked, pause physics, show the text input field over the object.Transition: When User.png touches the right edge, "load" the next folder (screen clear and reposition).Ending: Trigger a "Delete" animation of the background, revealing the "Desktop" image.9. PseudocodeJavaScript// OBJECT CLASS
+class FileObject extends Phaser.GameObjects.Container {
+    constructor(name, extension) {
+        this.fileName = name;
+        this.extension = extension; // e.g., ".static"
+        this.updatePhysics();
+    }
+
+    updatePhysics() {
+        switch(this.extension) {
+            case ".falling":
+                this.body.setAllowGravity(true);
+                this.body.setImmovable(false);
+                break;
+            case ".static":
+                this.body.setAllowGravity(false);
+                this.body.setImmovable(true);
+                break;
+            // ... other cases
+        }
+    }
+}
+
+// MAIN RENAME FUNCTION
+function renameSelected(object, newExt) {
+    const validExtensions = [".static", ".falling", ".bouncy", ".ghost", ".door"];
+    if (validExtensions.includes(newExt)) {
+        object.extension = newExt;
+        object.textLabel.setText(object.fileName + newExt);
+        object.updatePhysics();
+        playClickSound();
+    } else {
+        triggerErrorEffect(object); // Flash red if extension is invalid
+    }
+}
+
+// UPDATE LOOP
+function update() {
+    if (!isTyping) {
+        handlePlayerMovement();
+    }
+    // Check if player fell off the "directory"
+    if (player.y > 600) restartLevel();
+}

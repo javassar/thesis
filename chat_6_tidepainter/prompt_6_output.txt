@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tidepainter: Songs of the Shore</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #f2e2b8;
+      color: #1b3a4b;
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      overflow: hidden;
+    }
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script>
+    const WIDTH = 960;
+    const HEIGHT = 600;
+    const TILE_SIZE = 32;
+    const GRID_COLS = 23;
+    const GRID_ROWS = 15;
+    const GRID_ORIGIN_X = 224;
+    const GRID_ORIGIN_Y = 48;
+    const GRID_WIDTH = GRID_COLS * TILE_SIZE;
+    const GRID_HEIGHT = GRID_ROWS * TILE_SIZE;
+    const SEA_BAND_WIDTH = 200;
+
+    const MAX_WAVES = 9;
+    const CALM_DUR = {
+      1: 2.2,
+      2: 2.2,
+      3: 2.2,
+      4: 1.8,
+      5: 1.8,
+      6: 1.8,
+      7: 1.4,
+      8: 1.4,
+      9: 1.4
+    };
+    const WAVE_MAX = 1.2;
+    const PACKETS_PER_SOURCE = 6;
+    const SOURCE_VOL = 60;
+    const SPEED = 256;
+    const MATCH_TOL = 0.18;
+    const REQUIRED_VOL = 100;
+    const EROSION_THRESHOLD = 10;
+    const FILTER_TOKENS = 3;
+    const MIXER_TOKENS = 2;
+    const RIDGE_TOKENS = 5;
+    const MIXER_HOLD = 0.4;
+    const TIDE_PULSE_WIDTH = 160;
+    const RUNE_PULSE_TIME = 0.4;
+
+    const COLORS = {
+      skyTop: 0x87c6d8,
+      skyBottom: 0xcfe9f2,
+      sea: 0x63a6c3,
+      beach: 0xf2e2b8,
+      gridLine: 0xe3d3a5,
+      grooveDark: 0xc2ab77,
+      grooveMid: 0xd5bf8b,
+      grooveEdge: 0xb89966,
+      shellOutline: 0xcfb07f,
+      coral: 0xe28f7b,
+      coralOpen: 0xf2b7a5,
+      ridge: 0x9c7a4f,
+      filter: 0xf5f0e6,
+      mixer: 0x7fb6d6,
+      hud: 0x1b3a4b,
+      hudSoft: 0x4a6572,
+      tooltipBg: 0x1b3a4b
+    };
+
+    const TILE_TYPES = {
+      SAND: 'Sand',
+      GROOVE: 'Groove',
+      SHELL: 'Shell',
+      GATE: 'Gate',
+      FILTER: 'RuneFilter',
+      MIXER: 'RuneMixer',
+      RIDGE: 'OneWayRidge'
+    };
+
+    const DIRS = ['Up', 'Right', 'Down', 'Left'];
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function keyFor(col, row) {
+      return `${col},${row}`;
+    }
+
+    function inBounds(col, row) {
+      return col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS;
+    }
+
+    function tileCenter(col, row) {
+      return {
+        x: GRID_ORIGIN_X + col * TILE_SIZE + TILE_SIZE / 2,
+        y: GRID_ORIGIN_Y + row * TILE_SIZE + TILE_SIZE / 2
+      };
+    }
+
+    function colorDistance(a, b) {
+      const dr = a[0] - b[0];
+      const dg = a[1] - b[1];
+      const db = a[2] - b[2];
+      return Math.sqrt(dr * dr + dg * dg + db * db);
+    }
+
+    function mixColorsWeighted(c1, v1, c2, v2) {
+      const total = v1 + v2;
+      if (total <= 0) {
+        return [0, 0, 0];
+      }
+      return [
+        (c1[0] * v1 + c2[0] * v2) / total,
+        (c1[1] * v1 + c2[1] * v2) / total,
+        (c1[2] * v1 + c2[2] * v2) / total
+      ];
+    }
+
+    function rgbToHex(rgb) {
+      const r = clamp(Math.round(rgb[0] * 255), 0, 255);
+      const g = clamp(Math.round(rgb[1] * 255), 0, 255);
+      const b = clamp(Math.round(rgb[2] * 255), 0, 255);
+      return (r << 16) + (g << 8) + b;
+    }
+
+    function directionFrom(c1, r1, c2, r2) {
+      if (c2 > c1) return 'Right';
+      if (c2 < c1) return 'Left';
+      if (r2 > r1) return 'Down';
+      return 'Up';
+    }
+
+    function ensureSkyTexture(scene) {
+      if (scene.textures.exists('sky-grad')) return;
+      const canvas = scene.textures.createCanvas('sky-grad', WIDTH, Math.floor(HEIGHT / 3));
+      const ctx = canvas.context;
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#87C6D8');
+      grad.addColorStop(1, '#CFE9F2');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      canvas.refresh();
+    }
+
+    function ensureTidePulseTexture(scene) {
+      if (scene.textures.exists('tide-pulse')) return;
+      const canvas = scene.textures.createCanvas('tide-pulse', TIDE_PULSE_WIDTH, GRID_HEIGHT);
+      const ctx = canvas.context;
+      const grad = ctx.createLinearGradient(0, 0, TIDE_PULSE_WIDTH, 0);
+      grad.addColorStop(0, 'rgba(168, 208, 224, 0)');
+      grad.addColorStop(0.5, 'rgba(210, 240, 255, 0.55)');
+      grad.addColorStop(1, 'rgba(168, 208, 224, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      canvas.refresh();
+    }
+
+    function createStaticBackground(scene) {
+      ensureSkyTexture(scene);
+      scene.add.image(0, 0, 'sky-grad').setOrigin(0);
+      scene.add.rectangle(SEA_BAND_WIDTH / 2, HEIGHT / 2, SEA_BAND_WIDTH, HEIGHT, COLORS.sea).setOrigin(0.5);
+      scene.add.rectangle(SEA_BAND_WIDTH + (WIDTH - SEA_BAND_WIDTH) / 2, HEIGHT / 2 + HEIGHT / 6,
+        WIDTH - SEA_BAND_WIDTH, HEIGHT * 2 / 3, COLORS.beach).setOrigin(0.5);
+    }
+
+    class TitleScene extends Phaser.Scene {
+      constructor() {
+        super('TitleScene');
+      }
+
+      create() {
+        createStaticBackground(this);
+
+        this.add.text(WIDTH / 2, 160, 'Tidepainter: Songs of the Shore', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '48px',
+          color: '#1b3a4b'
+        }).setOrigin(0.5);
+
+        this.add.text(WIDTH / 2, 210, 'Carve, place runes, and tune the tide.', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '20px',
+          color: '#4a6572'
+        }).setOrigin(0.5);
+
+        const buttonBg = this.add.rectangle(WIDTH / 2, 300, 200, 56, 0xf7edd2, 1)
+          .setStrokeStyle(2, 0x1b3a4b)
+          .setInteractive({ useHandCursor: true });
+        const buttonText = this.add.text(WIDTH / 2, 300, 'Play', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '22px',
+          color: '#1b3a4b'
+        }).setOrigin(0.5);
+
+        this.add.text(WIDTH / 2, 360,
+          'Drag to carve channels. Waves carry color to shells.\nUse runes to mix and tune the coral gate.', {
+            fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+            fontSize: '16px',
+            color: '#4a6572',
+            align: 'center'
+          }).setOrigin(0.5);
+
+        buttonBg.on('pointerdown', () => {
+          this.scene.start('GameScene');
+        });
+      }
+    }
+
+    class EndScene extends Phaser.Scene {
+      constructor() {
+        super('EndScene');
+      }
+
+      init(data) {
+        this.success = data.success;
+        this.shellsFilled = data.shellsFilled || 0;
+        this.wavesUsed = data.wavesUsed || MAX_WAVES;
+      }
+
+      create() {
+        createStaticBackground(this);
+
+        const mainText = this.success ? 'The shore sings your song.' : 'The tide carries your patterns away.';
+        this.add.text(WIDTH / 2, 200, mainText, {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '36px',
+          color: '#1b3a4b'
+        }).setOrigin(0.5);
+
+        this.add.text(WIDTH / 2, 260, `Shells filled: ${this.shellsFilled}/4`, {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '20px',
+          color: '#4a6572'
+        }).setOrigin(0.5);
+
+        if (this.success) {
+          this.add.text(WIDTH / 2, 290, `Waves used: ${this.wavesUsed}/9`, {
+            fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+            fontSize: '18px',
+            color: '#4a6572'
+          }).setOrigin(0.5);
+        }
+
+        const buttonBg = this.add.rectangle(WIDTH / 2, 360, 200, 56, 0xf7edd2, 1)
+          .setStrokeStyle(2, 0x1b3a4b)
+          .setInteractive({ useHandCursor: true });
+        this.add.text(WIDTH / 2, 360, 'Replay', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '22px',
+          color: '#1b3a4b'
+        }).setOrigin(0.5);
+
+        this.add.text(WIDTH / 2, 410, 'Press R to restart', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '16px',
+          color: '#4a6572'
+        }).setOrigin(0.5);
+
+        buttonBg.on('pointerdown', () => {
+          this.scene.start('GameScene');
+        });
+
+        this.keyR = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+      }
+
+      update() {
+        if (Phaser.Input.Keyboard.JustDown(this.keyR)) {
+          this.scene.start('GameScene');
+        }
+      }
+    }
+
+    class GameScene extends Phaser.Scene {
+      constructor() {
+        super('GameScene');
+      }
+
+      create() {
+        createStaticBackground(this);
+
+        this.seaWaveGraphics = this.add.graphics();
+        this.gridGraphics = this.add.graphics();
+        ensureTidePulseTexture(this);
+        this.tidePulse = this.add.image(GRID_ORIGIN_X, GRID_ORIGIN_Y + GRID_HEIGHT / 2, 'tide-pulse')
+          .setOrigin(0, 0.5)
+          .setAlpha(0.55)
+          .setVisible(false);
+        this.packetGraphics = this.add.graphics();
+
+        this.selectedTool = 'Carve';
+        this.ridgeDirIndex = 1;
+        this.isPointerDown = false;
+        this.lastDragTile = null;
+
+        this.phase = 'Calm';
+        this.waveIndex = 1;
+        this.phaseTimer = CALM_DUR[this.waveIndex];
+
+        this.runeTokens = {
+          filters: FILTER_TOKENS,
+          mixers: MIXER_TOKENS,
+          ridges: RIDGE_TOKENS
+        };
+
+        this.sources = [
+          { row: 3, color: [1, 0, 0] },
+          { row: 8, color: [0, 0, 1] },
+          { row: 13, color: [1, 1, 0] }
+        ];
+
+        this.shells = [
+          { col: 16, row: 4, target: [0, 1, 0], current: 0, required: REQUIRED_VOL, complete: false, lastColor: null, lastTimer: 0 },
+          { col: 18, row: 8, target: [0.6, 0, 0.8], current: 0, required: REQUIRED_VOL, complete: false, lastColor: null, lastTimer: 0 },
+          { col: 20, row: 12, target: [1, 0.5, 0], current: 0, required: REQUIRED_VOL, complete: false, lastColor: null, lastTimer: 0 },
+          { col: 21, row: 2, target: [0, 0.7, 0.7], current: 0, required: REQUIRED_VOL, complete: false, lastColor: null, lastTimer: 0 }
+        ];
+
+        this.gate = {
+          tiles: [
+            { col: 19, row: 2 },
+            { col: 20, row: 2 }
+          ],
+          inlet: { col: 18, row: 2 },
+          required: [0.6, 0, 0.8],
+          openNextWave: false,
+          openThisWave: false,
+          flashTimer: 0,
+          inletPulse: 0
+        };
+
+        this.grid = [];
+        for (let c = 0; c < GRID_COLS; c++) {
+          const col = [];
+          for (let r = 0; r < GRID_ROWS; r++) {
+            col.push({
+              type: TILE_TYPES.SAND,
+              stability: 0,
+              ridgeDir: 'None',
+              pulse: 0
+            });
+          }
+          this.grid.push(col);
+        }
+
+        this.shells.forEach(shell => {
+          this.grid[shell.col][shell.row].type = TILE_TYPES.SHELL;
+        });
+
+        this.gate.tiles.forEach(tile => {
+          this.grid[tile.col][tile.row].type = TILE_TYPES.GATE;
+        });
+
+        this.packets = [];
+        this.mixerPools = {};
+        this.perTileFlow = this.createFlowArray();
+        this.flowGraph = {};
+
+        this.wavesText = this.add.text(16, 12, 'Waves: 1/9', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '20px',
+          color: '#1b3a4b'
+        });
+
+        this.phaseText = this.add.text(WIDTH / 2, 12, 'Phase: Calm', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '20px',
+          color: '#1b3a4b'
+        }).setOrigin(0.5, 0);
+
+        this.tokensText = this.add.text(640, 12, 'Filter: 3  Mixer: 2  Ridge: 5', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '20px',
+          color: '#1b3a4b'
+        });
+
+        this.instructionText = this.add.text(16, 512,
+          'Drag to carve/erase. 1-5 select tools. Q/E rotate ridge.\nGoal: fill all shells before wave 9.', {
+            fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+            fontSize: '14px',
+            color: '#4a6572'
+          });
+
+        this.tutorialText = this.add.text(WIDTH / 2, 500, '', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '16px',
+          color: '#1b3a4b'
+        }).setOrigin(0.5);
+
+        this.toolButtons = [];
+        const toolDefs = [
+          { tool: 'Carve', label: 'Carve [1]' },
+          { tool: 'Filter', label: 'Filter [2]' },
+          { tool: 'Mixer', label: 'Mixer [3]' },
+          { tool: 'Ridge', label: 'Ridge [4]' },
+          { tool: 'Erase', label: 'Erase [5]' }
+        ];
+        const startX = 16;
+        const y = 544;
+        toolDefs.forEach((def, index) => {
+          const x = startX + index * 128;
+          const rect = this.add.rectangle(x + 56, y + 20, 112, 40, 0xf7edd2, 1)
+            .setStrokeStyle(2, 0x1b3a4b)
+            .setInteractive({ useHandCursor: true });
+          const text = this.add.text(x + 56, y + 20, def.label, {
+            fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+            fontSize: '14px',
+            color: '#1b3a4b'
+          }).setOrigin(0.5);
+          rect.on('pointerdown', () => {
+            this.setTool(def.tool);
+          });
+          this.toolButtons.push({ tool: def.tool, rect, text });
+        });
+
+        this.gateTooltip = this.add.text(0, 0, 'Needs Purple (opens next wave)', {
+          fontFamily: 'Trebuchet MS, Verdana, sans-serif',
+          fontSize: '14px',
+          color: '#ffffff',
+          backgroundColor: '#1b3a4b',
+          padding: { x: 6, y: 4 }
+        }).setVisible(false);
+
+        this.keys = this.input.keyboard.addKeys({
+          one: Phaser.Input.Keyboard.KeyCodes.ONE,
+          two: Phaser.Input.Keyboard.KeyCodes.TWO,
+          three: Phaser.Input.Keyboard.KeyCodes.THREE,
+          four: Phaser.Input.Keyboard.KeyCodes.FOUR,
+          five: Phaser.Input.Keyboard.KeyCodes.FIVE,
+          q: Phaser.Input.Keyboard.KeyCodes.Q,
+          e: Phaser.Input.Keyboard.KeyCodes.E
+        });
+
+        this.input.on('pointerdown', pointer => {
+          if (this.phase !== 'Calm') return;
+          const tile = this.pointerToTile(pointer);
+          this.isPointerDown = !!tile;
+          this.lastDragTile = null;
+          if (tile) {
+            this.handlePointerAction(pointer, true);
+          }
+        });
+
+        this.input.on('pointerup', () => {
+          this.isPointerDown = false;
+          this.lastDragTile = null;
+        });
+
+        this.input.on('pointermove', pointer => {
+          if (this.phase !== 'Calm') return;
+          if (!this.isPointerDown) return;
+          this.handlePointerAction(pointer, false);
+        });
+
+        this.setTool('Carve');
+      }
+
+      createFlowArray() {
+        const flow = [];
+        for (let c = 0; c < GRID_COLS; c++) {
+          const col = [];
+          for (let r = 0; r < GRID_ROWS; r++) {
+            col.push(0);
+          }
+          flow.push(col);
+        }
+        return flow;
+      }
+
+      setTool(tool) {
+        this.selectedTool = tool;
+        this.toolButtons.forEach(btn => {
+          if (btn.tool === tool) {
+            btn.rect.setStrokeStyle(3, 0x1b3a4b);
+          } else {
+            btn.rect.setStrokeStyle(2, 0x1b3a4b);
+          }
+        });
+      }
+
+      handlePointerAction(pointer, isDown) {
+        const tile = this.pointerToTile(pointer);
+        if (!tile) return;
+        const key = keyFor(tile.col, tile.row);
+        if (!isDown && this.lastDragTile === key) {
+          return;
+        }
+        this.lastDragTile = key;
+
+        if (this.selectedTool === 'Carve') {
+          this.applyCarve(tile.col, tile.row);
+        } else if (this.selectedTool === 'Erase') {
+          this.applyErase(tile.col, tile.row);
+        } else if (isDown) {
+          if (this.selectedTool === 'Filter') {
+            this.placeRune(tile.col, tile.row, TILE_TYPES.FILTER);
+          } else if (this.selectedTool === 'Mixer') {
+            this.placeRune(tile.col, tile.row, TILE_TYPES.MIXER);
+          } else if (this.selectedTool === 'Ridge') {
+            this.placeRune(tile.col, tile.row, TILE_TYPES.RIDGE);
+          }
+        }
+      }
+
+      pointerToTile(pointer) {
+        const x = pointer.worldX;
+        const y = pointer.worldY;
+        if (x < GRID_ORIGIN_X || y < GRID_ORIGIN_Y) return null;
+        if (x >= GRID_ORIGIN_X + GRID_WIDTH || y >= GRID_ORIGIN_Y + GRID_HEIGHT) return null;
+        const col = Math.floor((x - GRID_ORIGIN_X) / TILE_SIZE);
+        const row = Math.floor((y - GRID_ORIGIN_Y) / TILE_SIZE);
+        if (!inBounds(col, row)) return null;
+        return { col, row };
+      }
+
+      isSourceEntry(col, row) {
+        if (col !== 0) return false;
+        return this.sources.some(source => source.row === row);
+      }
+
+      tileIsEditable(col, row) {
+        const t = this.grid[col][row];
+        if (t.type === TILE_TYPES.SHELL || t.type === TILE_TYPES.GATE) {
+          return false;
+        }
+        return true;
+      }
+
+      applyCarve(col, row) {
+        if (!this.tileIsEditable(col, row)) return;
+        const t = this.grid[col][row];
+        if (t.type === TILE_TYPES.SAND || t.type === TILE_TYPES.GROOVE) {
+          t.type = TILE_TYPES.GROOVE;
+          t.stability = 2;
+          t.pulse = 0;
+        }
+      }
+
+      applyErase(col, row) {
+        if (!this.tileIsEditable(col, row)) return;
+        const t = this.grid[col][row];
+        if (t.type === TILE_TYPES.GROOVE) {
+          t.type = TILE_TYPES.SAND;
+          t.stability = 0;
+        } else if (t.type === TILE_TYPES.FILTER) {
+          t.type = TILE_TYPES.SAND;
+          this.runeTokens.filters = clamp(this.runeTokens.filters + 1, 0, FILTER_TOKENS);
+        } else if (t.type === TILE_TYPES.MIXER) {
+          t.type = TILE_TYPES.SAND;
+          this.runeTokens.mixers = clamp(this.runeTokens.mixers + 1, 0, MIXER_TOKENS);
+        } else if (t.type === TILE_TYPES.RIDGE) {
+          t.type = TILE_TYPES.SAND;
+          t.ridgeDir = 'None';
+          this.runeTokens.ridges = clamp(this.runeTokens.ridges + 1, 0, RIDGE_TOKENS);
+        }
+        t.pulse = 0;
+      }
+
+      placeRune(col, row, type) {
+        if (!this.tileIsEditable(col, row)) return;
+        const t = this.grid[col][row];
+        if (t.type !== TILE_TYPES.SAND && t.type !== TILE_TYPES.GROOVE) return;
+
+        if (type === TILE_TYPES.FILTER) {
+          if (this.runeTokens.filters <= 0) return;
+          this.runeTokens.filters -= 1;
+          t.type = TILE_TYPES.FILTER;
+          t.stability = 0;
+          t.pulse = 0;
+        } else if (type === TILE_TYPES.MIXER) {
+          if (this.runeTokens.mixers <= 0) return;
+          this.runeTokens.mixers -= 1;
+          t.type = TILE_TYPES.MIXER;
+          t.stability = 0;
+          t.pulse = 0;
+        } else if (type === TILE_TYPES.RIDGE) {
+          if (this.runeTokens.ridges <= 0) return;
+          this.runeTokens.ridges -= 1;
+          t.type = TILE_TYPES.RIDGE;
+          t.ridgeDir = DIRS[this.ridgeDirIndex];
+          t.stability = 0;
+          t.pulse = 0;
+        }
+      }
+
+      isPassableForFlow(col, row) {
+        const t = this.grid[col][row];
+        if (t.type === TILE_TYPES.GROOVE || t.type === TILE_TYPES.FILTER || t.type === TILE_TYPES.MIXER || t.type === TILE_TYPES.SHELL || t.type === TILE_TYPES.RIDGE) {
+          return true;
+        }
+        if (t.type === TILE_TYPES.GATE) {
+          return this.gate.openThisWave;
+        }
+        return false;
+      }
+
+      oneWayBlocks(c1, r1, c2, r2) {
+        const dir = directionFrom(c1, r1, c2, r2);
+        const t1 = this.grid[c1][r1];
+        const t2 = this.grid[c2][r2];
+        if (t1.type === TILE_TYPES.RIDGE && t1.ridgeDir !== dir) {
+          return true;
+        }
+        if (t2.type === TILE_TYPES.RIDGE && t2.ridgeDir !== dir) {
+          return true;
+        }
+        return false;
+      }
+
+      edgeAllows(c1, r1, c2, r2) {
+        return !this.oneWayBlocks(c1, r1, c2, r2);
+      }
+
+      buildFlowGraph() {
+        const graph = {};
+        for (let c = 0; c < GRID_COLS; c++) {
+          for (let r = 0; r < GRID_ROWS; r++) {
+            if (!this.isPassableForFlow(c, r)) continue;
+            const exits = [];
+            const neighbors = [
+              { col: c + 1, row: r },
+              { col: c - 1, row: r },
+              { col: c, row: r + 1 },
+              { col: c, row: r - 1 }
+            ];
+            neighbors.forEach(n => {
+              if (!inBounds(n.col, n.row)) return;
+              if (!this.isPassableForFlow(n.col, n.row)) return;
+              if (!this.edgeAllows(c, r, n.col, n.row)) return;
+              exits.push({ col: n.col, row: n.row });
+            });
+            graph[keyFor(c, r)] = exits;
+          }
+        }
+        return graph;
+      }
+
+      startWave() {
+        this.phase = 'Wave';
+        this.phaseTimer = WAVE_MAX;
+        this.packets = [];
+        this.mixerPools = {};
+        this.perTileFlow = this.createFlowArray();
+        this.gate.openThisWave = this.gate.openNextWave;
+        this.gate.openNextWave = false;
+        this.flowGraph = this.buildFlowGraph();
+
+        this.sources.forEach(source => {
+          const entry = { col: 0, row: source.row };
+          if (this.isPassableForFlow(entry.col, entry.row)) {
+            this.perTileFlow[entry.col][entry.row] += SOURCE_VOL;
+            for (let i = 0; i < PACKETS_PER_SOURCE; i++) {
+              const center = tileCenter(entry.col, entry.row);
+              this.packets.push({
+                col: entry.col,
+                row: entry.row,
+                x: center.x,
+                y: center.y,
+                color: [...source.color],
+                volume: SOURCE_VOL / PACKETS_PER_SOURCE,
+                next: null
+              });
+            }
+          }
+        });
+      }
+
+      updateWave(dt) {
+        Object.keys(this.mixerPools).forEach(key => {
+          const pool = this.mixerPools[key];
+          if (pool.bufferVol <= 0) return;
+          pool.holdTimer -= dt;
+          if (pool.holdTimer <= 0) {
+            const [c, r] = key.split(',').map(Number);
+            const center = tileCenter(c, r);
+            this.packets.push({
+              col: c,
+              row: r,
+              x: center.x,
+              y: center.y,
+              color: [...pool.bufferColor],
+              volume: pool.bufferVol,
+              next: null
+            });
+            pool.bufferVol = 0;
+            pool.bufferColor = [0, 0, 0];
+          }
+        });
+
+        for (let i = 0; i < this.packets.length; i++) {
+          const packet = this.packets[i];
+          if (packet.volume < 1) continue;
+          let remaining = SPEED * dt;
+          while (remaining > 0 && packet.volume > 0) {
+            if (!packet.next) {
+              const exits = this.flowGraph[keyFor(packet.col, packet.row)] || [];
+              const usable = exits.filter(ex => this.edgeAllows(packet.col, packet.row, ex.col, ex.row));
+              if (usable.length === 0) {
+                packet.volume = 0;
+                break;
+              }
+              if (usable.length > 1) {
+                const per = packet.volume / usable.length;
+                packet.volume = per;
+                packet.next = usable[0];
+                for (let j = 1; j < usable.length; j++) {
+                  this.packets.push({
+                    col: packet.col,
+                    row: packet.row,
+                    x: packet.x,
+                    y: packet.y,
+                    color: [...packet.color],
+                    volume: per,
+                    next: usable[j]
+                  });
+                }
+              } else {
+                packet.next = usable[0];
+              }
+            }
+
+            const target = tileCenter(packet.next.col, packet.next.row);
+            const dx = target.x - packet.x;
+            const dy = target.y - packet.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist <= remaining) {
+              packet.x = target.x;
+              packet.y = target.y;
+              remaining -= dist;
+              this.perTileFlow[packet.next.col][packet.next.row] += packet.volume;
+              packet.col = packet.next.col;
+              packet.row = packet.next.row;
+              packet.next = null;
+              this.applyTileEffects(packet);
+            } else {
+              const ratio = remaining / dist;
+              packet.x += dx * ratio;
+              packet.y += dy * ratio;
+              remaining = 0;
+            }
+          }
+        }
+
+        this.mergePackets();
+        this.packets = this.packets.filter(packet => packet.volume >= 1);
+      }
+
+      hasBufferedMixer() {
+        return Object.values(this.mixerPools).some(pool => pool.bufferVol > 0);
+      }
+
+      mergePackets() {
+        const buckets = {};
+        const merged = [];
+        this.packets.forEach(packet => {
+          if (packet.volume < 1) return;
+          if (packet.next) {
+            merged.push(packet);
+            return;
+          }
+          const key = keyFor(packet.col, packet.row);
+          if (!buckets[key]) {
+            buckets[key] = { packet: { ...packet }, total: packet.volume };
+            merged.push(buckets[key].packet);
+          } else {
+            const entry = buckets[key];
+            const total = entry.total + packet.volume;
+            const color = mixColorsWeighted(entry.packet.color, entry.total, packet.color, packet.volume);
+            entry.packet.color = color;
+            entry.packet.volume = total;
+            entry.total = total;
+          }
+        });
+        this.packets = merged;
+      }
+
+      applyTileEffects(packet) {
+        const tile = this.grid[packet.col][packet.row];
+        if (tile.type === TILE_TYPES.FILTER) {
+          let maxIdx = 0;
+          if (packet.color[1] > packet.color[maxIdx]) maxIdx = 1;
+          if (packet.color[2] > packet.color[maxIdx]) maxIdx = 2;
+          packet.color[maxIdx] *= 0.7;
+          tile.pulse = RUNE_PULSE_TIME;
+        } else if (tile.type === TILE_TYPES.MIXER) {
+          const key = keyFor(packet.col, packet.row);
+          if (!this.mixerPools[key]) {
+            this.mixerPools[key] = { bufferVol: 0, bufferColor: [0, 0, 0], holdTimer: 0 };
+          }
+          const pool = this.mixerPools[key];
+          if (pool.bufferVol === 0) {
+            pool.bufferColor = [...packet.color];
+          } else {
+            pool.bufferColor = mixColorsWeighted(pool.bufferColor, pool.bufferVol, packet.color, packet.volume);
+          }
+          pool.bufferVol += packet.volume;
+          pool.holdTimer = MIXER_HOLD;
+          packet.volume = 0;
+          tile.pulse = RUNE_PULSE_TIME;
+        } else if (tile.type === TILE_TYPES.SHELL) {
+          this.deliverToShell(packet);
+          packet.volume = 0;
+        }
+
+        if (packet.col === this.gate.inlet.col && packet.row === this.gate.inlet.row) {
+          if (colorDistance(packet.color, this.gate.required) <= MATCH_TOL) {
+            this.gate.openNextWave = true;
+            this.gate.flashTimer = 0.6;
+            this.gate.inletPulse = 0.6;
+            this.playGateTone();
+          }
+        }
+      }
+
+      deliverToShell(packet) {
+        const shell = this.shells.find(s => s.col === packet.col && s.row === packet.row);
+        if (!shell || shell.complete) return;
+        shell.lastColor = [...packet.color];
+        shell.lastTimer = 0.8;
+        if (colorDistance(packet.color, shell.target) <= MATCH_TOL) {
+          const needed = shell.required - shell.current;
+          const inc = Math.min(packet.volume, needed);
+          shell.current += inc;
+          if (shell.current >= shell.required) {
+            shell.complete = true;
+            this.playShellChord(shell);
+          }
+        }
+      }
+
+      endWave() {
+        this.applyErosion();
+        const shellsFilled = this.shells.filter(s => s.complete).length;
+        if (shellsFilled === this.shells.length) {
+          this.scene.start('EndScene', { success: true, shellsFilled, wavesUsed: this.waveIndex });
+          return;
+        }
+        if (this.waveIndex >= MAX_WAVES) {
+          this.scene.start('EndScene', { success: false, shellsFilled, wavesUsed: this.waveIndex });
+          return;
+        }
+        this.waveIndex += 1;
+        this.phase = 'Calm';
+        this.phaseTimer = CALM_DUR[this.waveIndex];
+      }
+
+      applyErosion() {
+        for (let c = 0; c < GRID_COLS; c++) {
+          for (let r = 0; r < GRID_ROWS; r++) {
+            const tile = this.grid[c][r];
+            if (tile.type === TILE_TYPES.GROOVE) {
+              if (this.perTileFlow[c][r] >= EROSION_THRESHOLD) {
+                tile.stability = Math.min(2, tile.stability + 1);
+              } else {
+                tile.stability -= 1;
+              }
+              if (tile.stability <= 0) {
+                tile.type = TILE_TYPES.SAND;
+                tile.stability = 0;
+              }
+            }
+          }
+        }
+      }
+
+      updateTilePulses(dt) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          for (let r = 0; r < GRID_ROWS; r++) {
+            const tile = this.grid[c][r];
+            if (tile.pulse > 0) {
+              tile.pulse = Math.max(0, tile.pulse - dt);
+            }
+          }
+        }
+      }
+
+      playShellChord() {
+        // Optional audio hook.
+      }
+
+      playGateTone() {
+        // Optional audio hook.
+      }
+
+      update(delta) {
+        const dt = delta / 1000;
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.one)) this.setTool('Carve');
+        if (Phaser.Input.Keyboard.JustDown(this.keys.two)) this.setTool('Filter');
+        if (Phaser.Input.Keyboard.JustDown(this.keys.three)) this.setTool('Mixer');
+        if (Phaser.Input.Keyboard.JustDown(this.keys.four)) this.setTool('Ridge');
+        if (Phaser.Input.Keyboard.JustDown(this.keys.five)) this.setTool('Erase');
+
+        if (this.selectedTool === 'Ridge') {
+          if (Phaser.Input.Keyboard.JustDown(this.keys.q)) {
+            this.ridgeDirIndex = (this.ridgeDirIndex + DIRS.length - 1) % DIRS.length;
+          }
+          if (Phaser.Input.Keyboard.JustDown(this.keys.e)) {
+            this.ridgeDirIndex = (this.ridgeDirIndex + 1) % DIRS.length;
+          }
+        }
+
+        if (this.phase === 'Calm') {
+          this.phaseTimer -= dt;
+          if (this.phaseTimer <= 0) {
+            this.startWave();
+          }
+        } else if (this.phase === 'Wave') {
+          this.phaseTimer -= dt;
+          this.updateWave(dt);
+          const hasBuffered = this.hasBufferedMixer();
+          if (this.phaseTimer <= 0 || (this.packets.length === 0 && !hasBuffered)) {
+            this.endWave();
+          }
+        }
+
+        if (this.gate.flashTimer > 0) {
+          this.gate.flashTimer -= dt;
+        }
+        if (this.gate.inletPulse > 0) {
+          this.gate.inletPulse -= dt;
+        }
+
+        this.shells.forEach(shell => {
+          if (shell.lastTimer > 0) {
+            shell.lastTimer -= dt;
+          }
+        });
+
+        this.updateTilePulses(dt);
+        this.updateHud();
+        this.drawSeaWaves(delta);
+        this.drawGridAndTiles();
+        this.updateTidePulse();
+        this.drawPackets();
+        this.updateGateTooltip();
+      }
+
+      updateHud() {
+        this.wavesText.setText(`Waves: ${this.waveIndex}/9`);
+        if (this.phase === 'Calm') {
+          this.phaseText.setText(`Phase: Calm | Wave in: ${this.phaseTimer.toFixed(1)}s`);
+        } else if (this.phase === 'Wave') {
+          this.phaseText.setText(`Phase: Wave | Time left: ${Math.max(0, this.phaseTimer).toFixed(1)}s`);
+        }
+        this.tokensText.setText(`Filter: ${this.runeTokens.filters}  Mixer: ${this.runeTokens.mixers}  Ridge: ${this.runeTokens.ridges}`);
+
+        if (this.phase === 'Calm' && this.waveIndex <= 2) {
+          const message = this.waveIndex === 1
+            ? 'Carve grooves. Waves carry color.'
+            : 'Runes reshape the flow: Filter, Mixer, Ridge.';
+          this.tutorialText.setText(message);
+        } else {
+          this.tutorialText.setText('');
+        }
+      }
+
+      updateTidePulse() {
+        if (!this.tidePulse) return;
+        if (this.phase !== 'Wave') {
+          this.tidePulse.setVisible(false);
+          return;
+        }
+        const progress = clamp(1 - this.phaseTimer / WAVE_MAX, 0, 1);
+        const span = GRID_WIDTH + TIDE_PULSE_WIDTH;
+        const x = GRID_ORIGIN_X - TIDE_PULSE_WIDTH + span * progress;
+        const alpha = 0.35 + 0.25 * Math.sin(progress * Math.PI);
+        this.tidePulse.setVisible(true);
+        this.tidePulse.setPosition(x, GRID_ORIGIN_Y + GRID_HEIGHT / 2);
+        this.tidePulse.setAlpha(alpha);
+      }
+
+      drawSeaWaves(time) {
+        const t = time * 0.002;
+        this.seaWaveGraphics.clear();
+        this.seaWaveGraphics.lineStyle(1, 0xa8d0e0, 0.5);
+        for (let i = 0; i < 8; i++) {
+          const y = 30 + i * 70 + Math.sin(t + i * 0.6) * 6;
+          this.seaWaveGraphics.beginPath();
+          this.seaWaveGraphics.moveTo(12, y);
+          this.seaWaveGraphics.lineTo(SEA_BAND_WIDTH - 12, y);
+          this.seaWaveGraphics.strokePath();
+        }
+      }
+
+      drawGridAndTiles() {
+        this.gridGraphics.clear();
+        this.gridGraphics.lineStyle(1, COLORS.gridLine, 0.6);
+        for (let c = 0; c <= GRID_COLS; c++) {
+          const x = GRID_ORIGIN_X + c * TILE_SIZE;
+          this.gridGraphics.beginPath();
+          this.gridGraphics.moveTo(x, GRID_ORIGIN_Y);
+          this.gridGraphics.lineTo(x, GRID_ORIGIN_Y + GRID_HEIGHT);
+          this.gridGraphics.strokePath();
+        }
+        for (let r = 0; r <= GRID_ROWS; r++) {
+          const y = GRID_ORIGIN_Y + r * TILE_SIZE;
+          this.gridGraphics.beginPath();
+          this.gridGraphics.moveTo(GRID_ORIGIN_X, y);
+          this.gridGraphics.lineTo(GRID_ORIGIN_X + GRID_WIDTH, y);
+          this.gridGraphics.strokePath();
+        }
+
+        for (let c = 0; c < GRID_COLS; c++) {
+          for (let r = 0; r < GRID_ROWS; r++) {
+            const tile = this.grid[c][r];
+            const x = GRID_ORIGIN_X + c * TILE_SIZE;
+            const y = GRID_ORIGIN_Y + r * TILE_SIZE;
+            const center = tileCenter(c, r);
+
+            if (tile.type === TILE_TYPES.GROOVE) {
+              const color = tile.stability >= 2 ? COLORS.grooveDark : COLORS.grooveMid;
+              this.gridGraphics.fillStyle(color, 0.9);
+              this.gridGraphics.fillRect(x + 3, y + 3, TILE_SIZE - 6, TILE_SIZE - 6);
+              this.gridGraphics.lineStyle(1, COLORS.grooveEdge, 0.6);
+              this.gridGraphics.strokeRect(x + 3, y + 3, TILE_SIZE - 6, TILE_SIZE - 6);
+            } else if (tile.type === TILE_TYPES.FILTER) {
+              this.gridGraphics.fillStyle(COLORS.filter, 0.9);
+              this.gridGraphics.fillCircle(center.x, center.y, 10);
+              this.gridGraphics.lineStyle(2, 0xd5c7ab, 0.9);
+              this.gridGraphics.beginPath();
+              this.gridGraphics.arc(center.x, center.y, 8, 0.6, 3.6, false);
+              this.gridGraphics.strokePath();
+            } else if (tile.type === TILE_TYPES.MIXER) {
+              this.gridGraphics.fillStyle(COLORS.mixer, 0.7);
+              this.gridGraphics.fillCircle(center.x, center.y, 12);
+              this.gridGraphics.lineStyle(1, 0x6fa3c0, 0.8);
+              this.gridGraphics.strokeCircle(center.x, center.y, 12);
+            } else if (tile.type === TILE_TYPES.RIDGE) {
+              this.gridGraphics.lineStyle(3, COLORS.ridge, 1);
+              const dir = tile.ridgeDir;
+              if (dir === 'Up') {
+                this.gridGraphics.strokeLineShape(new Phaser.Geom.Line(center.x, center.y + 10, center.x, center.y - 10));
+                this.gridGraphics.fillStyle(COLORS.ridge, 1);
+                this.gridGraphics.fillTriangle(center.x - 5, center.y - 6, center.x + 5, center.y - 6, center.x, center.y - 12);
+              } else if (dir === 'Down') {
+                this.gridGraphics.strokeLineShape(new Phaser.Geom.Line(center.x, center.y - 10, center.x, center.y + 10));
+                this.gridGraphics.fillStyle(COLORS.ridge, 1);
+                this.gridGraphics.fillTriangle(center.x - 5, center.y + 6, center.x + 5, center.y + 6, center.x, center.y + 12);
+              } else if (dir === 'Left') {
+                this.gridGraphics.strokeLineShape(new Phaser.Geom.Line(center.x + 10, center.y, center.x - 10, center.y));
+                this.gridGraphics.fillStyle(COLORS.ridge, 1);
+                this.gridGraphics.fillTriangle(center.x - 6, center.y - 5, center.x - 6, center.y + 5, center.x - 12, center.y);
+              } else if (dir === 'Right') {
+                this.gridGraphics.strokeLineShape(new Phaser.Geom.Line(center.x - 10, center.y, center.x + 10, center.y));
+                this.gridGraphics.fillStyle(COLORS.ridge, 1);
+                this.gridGraphics.fillTriangle(center.x + 6, center.y - 5, center.x + 6, center.y + 5, center.x + 12, center.y);
+              }
+            } else if (tile.type === TILE_TYPES.SHELL) {
+              const shell = this.shells.find(s => s.col === c && s.row === r);
+              if (shell) {
+                this.gridGraphics.lineStyle(2, COLORS.shellOutline, 1);
+                this.gridGraphics.strokeCircle(center.x, center.y, 12);
+                this.gridGraphics.lineStyle(4, 0xe9ddc0, 0.8);
+                this.gridGraphics.strokeCircle(center.x, center.y, 12);
+                const progress = clamp(shell.current / shell.required, 0, 1);
+                this.gridGraphics.lineStyle(4, rgbToHex(shell.target), 1);
+                this.gridGraphics.beginPath();
+                this.gridGraphics.arc(center.x, center.y, 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress, false);
+                this.gridGraphics.strokePath();
+                this.gridGraphics.fillStyle(rgbToHex(shell.target), 0.9);
+                this.gridGraphics.fillCircle(center.x, center.y, 4);
+                if (shell.lastTimer > 0 && shell.lastColor) {
+                  const glow = clamp(shell.lastTimer / 0.8, 0, 1);
+                  this.gridGraphics.lineStyle(2, rgbToHex(shell.lastColor), 0.7 * glow);
+                  this.gridGraphics.strokeCircle(center.x, center.y, 16 + (1 - glow) * 6);
+                  this.gridGraphics.fillStyle(rgbToHex(shell.lastColor), 1);
+                  this.gridGraphics.fillRect(center.x + 8, center.y - 14, 8, 8);
+                }
+              }
+            } else if (tile.type === TILE_TYPES.GATE) {
+              const isOpen = this.gate.openThisWave;
+              const color = isOpen ? COLORS.coralOpen : COLORS.coral;
+              const alpha = isOpen ? 0.6 : 1;
+              this.gridGraphics.fillStyle(color, alpha);
+              this.gridGraphics.fillRect(x + 4, y + 6, TILE_SIZE - 8, TILE_SIZE - 12);
+              this.gridGraphics.lineStyle(2, 0xc96f5c, 0.8);
+              this.gridGraphics.strokeRect(x + 4, y + 6, TILE_SIZE - 8, TILE_SIZE - 12);
+              if (this.gate.flashTimer > 0) {
+                this.gridGraphics.lineStyle(2, 0xffffff, 0.8);
+                this.gridGraphics.strokeRect(x + 2, y + 4, TILE_SIZE - 4, TILE_SIZE - 8);
+              }
+            }
+
+            if (tile.pulse > 0) {
+              const glow = clamp(tile.pulse / RUNE_PULSE_TIME, 0, 1);
+              const radius = 14 + (1 - glow) * 6;
+              this.gridGraphics.lineStyle(2, 0xffffff, 0.6 * glow);
+              this.gridGraphics.strokeCircle(center.x, center.y, radius);
+            }
+          }
+        }
+
+        if (this.gate.inletPulse > 0) {
+          const inletCenter = tileCenter(this.gate.inlet.col, this.gate.inlet.row);
+          const glow = clamp(this.gate.inletPulse / 0.6, 0, 1);
+          this.gridGraphics.lineStyle(2, 0xd4f1ff, 0.7 * glow);
+          this.gridGraphics.strokeCircle(inletCenter.x, inletCenter.y, 16 + (1 - glow) * 8);
+        }
+
+        this.sources.forEach(source => {
+          const center = tileCenter(0, source.row);
+          const buoyX = SEA_BAND_WIDTH / 2;
+          this.gridGraphics.fillStyle(rgbToHex(source.color), 1);
+          this.gridGraphics.fillCircle(buoyX, center.y, 10);
+          this.gridGraphics.lineStyle(2, 0xffffff, 0.8);
+          this.gridGraphics.strokeCircle(buoyX, center.y, 10);
+        });
+      }
+
+      drawPackets() {
+        this.packetGraphics.clear();
+        this.packets.forEach(packet => {
+          if (packet.volume < 1) return;
+          this.packetGraphics.fillStyle(rgbToHex(packet.color), 0.9);
+          this.packetGraphics.fillCircle(packet.x, packet.y, 5);
+        });
+      }
+
+      updateGateTooltip() {
+        const pointer = this.input.activePointer;
+        const tile = this.pointerToTile(pointer);
+        if (!tile) {
+          this.gateTooltip.setVisible(false);
+          return;
+        }
+        const onGate = this.gate.tiles.some(g => g.col === tile.col && g.row === tile.row);
+        if (onGate) {
+          this.gateTooltip.setPosition(pointer.worldX + 12, pointer.worldY + 12);
+          this.gateTooltip.setVisible(true);
+        } else {
+          this.gateTooltip.setVisible(false);
+        }
+      }
+    }
+
+    const config = {
+      type: Phaser.AUTO,
+      width: WIDTH,
+      height: HEIGHT,
+      parent: 'game-container',
+      backgroundColor: '#f2e2b8',
+      scene: [TitleScene, GameScene, EndScene],
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+      }
+    };
+
+    new Phaser.Game(config);
+  </script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+Let me read the full game file to do a thorough mental playtest.
+
+Read index.html
+Let me mentally simulate the complete player experience as a first-time casual player.
+
+Mental Playtest
+Title Screen:
+I see "DECIBEL THIEF" in big letters. "Consume the music. Embrace the silence." Subtitle. Four colored orbs pulsing in the corners. Instructions say WASD/Arrows to move, SPACE to feed near a sound, approach glowing creatures, time feed to beat, silence all four. "Press SPACE to begin" is pulsing.
+
+Okay, I have a rough idea. Let me press SPACE.
+
+First 5 seconds:
+Screen fades in.
+
+I'm surrounded by darkness with my small purple-glowing circle at the center. Four colored orbs sit in each corner—cyan, gold, pink, and green—each radiating their own glow. Music fills the space with distinct instruments playing, and the HUD tells me I've stolen 0 sounds so far with a timer running. The world is mostly black except for pools of light around each instrument, with subtle grid dots glowing near them.
+
+As I move upward toward the cyan melody, I notice the instruments pulse with the beat—the melody flashes, the bass throbs, percussion snaps. The music grows louder as I get closer. But hazards are spawning too. The melody launches seeking notes every 1.2 seconds, the bass sends shockwaves at the same interval, harmony drops fog every 1.8 seconds, and percussion fires mines every 0.6 seconds. I need to figure out the timing patterns to navigate safely.
+
+The percussion is relentless—it drops a mine every single beat starting from beat 1, with a cap of 12 mines where the oldest detonates when new ones spawn. Each mine arms after 500ms and auto-detonates at 4 seconds. As I approach the melody, the seeking notes home in on me at 80 pixels per second with a turn rate of 1.5 radians per second, and they last for 3 seconds. I can outrun them at my speed of 200 pixels per second, but their homing makes it tricky.
+
+The seeking notes turn slowly though, so I should be able to dodge them by moving perpendicular. Meanwhile, shockwaves are expanding from the bass at the bottom-right corner (600, 450) at 150 pixels per second. Since I start at the center (400, 300), that's about 250 pixels away, meaning the shockwave reaches me in roughly 1.7 seconds. The collision ring is only 14 pixels wide, which is tight but manageable—except there's a visibility problem. The shockwaves are rendered under the darkness layer, so I might not even see them coming.
+
+Looking at the depth layers, everything except the HUD sits below the darkness layer at depth 80. This means all hazards—seeking notes, shockwaves, mines—are only visible within light pools. If a seeking note is hunting me in the dark, I won't see it until it enters a lit area near me or an instrument. The shockwaves expanding from the bass are similarly hidden unless they pass through light.
+
+This creates a visibility problem: a shockwave expands at 150px/s from the bass, which has a light radius of 160px. So the shockwave escapes the bass's light pool in about a second, then becomes invisible until it hits another light source or my player glow (only 30px radius). That's a dangerous gap where the shockwave could be completely hidden before suddenly striking me.
+
+Actually, I'm realizing the shockwave is rendered as a graphical circle at a fixed position—the ring itself exists at whatever radius it's currently at. When it passes through dark areas, the graphics are still drawn, but the darkness render texture at depth 80 paints over them. Only the parts where light holes have been erased from the darkness layer are visible. So a shockwave originating from the bass...
+
+The ring would be visible while its radius is under 160px, then invisible in the dark, then visible again if it enters another light pool. My player glow is only 30px radius initially, so even when the ring reaches me, I'd only see a tiny sliver of it for a brief moment before impact. This feels like it could create frustrating "I got hit and I don't know why" moments.
+
+The ring is 12px thick with a 14px hit zone, expanding at 150px/s, so it passes through any point in about 90 milliseconds—basically impossible to dodge reactively. But the shockwaves are rhythmic, coming every 2 beats, so a skilled player could anticipate them.
+
+Now I'm checking whether shockwaves even reach distant players before fading. If I'm at the melody position 500px away from the bass, the wave would take 3.3 seconds to reach me, but it fades after about 1.9 seconds, so it would already be destroyed by the time it gets there. seconds. At that point radius is 1.875*150 = 281px. So shockwaves only have a range of about 281px. Bass at (600,450) to melody at (200,150) is ~500px - out of range. Good.
+
+But if I'm closer to bass, say in the center (400, 300), the distance is ~250px. The wave reaches me after 250/150 = 1.67s. Alpha at that point = 0.8 - 0.4*1.67 = 0.13. Still alive but fading. That's dodgeable-range, barely. But I'd need to see it coming.
+
+Actually, the player starts at center (400, 300). All four instruments are at roughly equal distance. Bass at (600, 450) is about 250px away. Melody at (200, 150) is also about 250px. The player is equidistant from all instruments.
+
+So from the start, shockwaves from bass can reach the player at center, and they're barely visible given the player's small glow. Getting hit once isn't catastrophic—just 400ms of stun and knockback—but the real threat is getting overwhelmed by multiple hits in quick succession, which would slow movement for a couple seconds. That's annoying but manageable.
+
+Moving toward the melody around the 15-30 second mark, I enter its light pool and can see better. Seeking notes spawn from it as small cyan circles heading my way, and I can dodge them by moving perpendicular to their trajectory.
+
+Once I'm close enough to the melody to start feeding, a ring appears around me. On each beat, a pulse wave expands outward from center, and I need to press SPACE when it aligns with my ring at radius 35px. The wave travels at exactly the right speed to reach the ring one beat after spawning, giving me a 180ms window to hit the timing.
+
+The code checks if the wave's current radius is close enough to the ring radius by calculating how much time until or since the wave passes through—if that time difference is within the 180ms window, the feed succeeds.
+
+So the wave spawns at radius 0 on each beat and expands to reach the 35px ring in exactly one beat interval, meaning the player should ideally press on the next beat. The visual feedback might be unclear for first-time players though, since both the expanding pulse wave and the feed ring are semi-transparent circles with similar styling.
+
+Actually, looking at the sweet spot detection—when the wave gets within 6px of the ring, the white ring brightens to full opacity and thickens. That's the signal to press SPACE. The expanding colored circle approaching the brightening white ring should make the timing window fairly intuitive.
+
+The real challenge is that feeding requires standing within 50px of the melody while dodging incoming hazards and nailing 8 timed presses in phase 1. That's a lot of simultaneous demands for a new player.
+
+At one press per beat, that's roughly 4.8 seconds of perfect execution, but realistically 15-20 seconds when accounting for dodging. The feed pulse waves spawn once per beat as long as you stay in range, but any hazard hit triggers knockback that usually pushes you out of the 50px feeding zone, forcing you to re-approach and restart the sequence.
+
+The knockback distances are substantial—seeking notes deal 150 px/s and shockwaves 200 px/s—and combined with the 400ms stun, you're displaced 60-80px, which breaks the feed range. This is the intended difficulty, though it gets compounded when multiple hazard sources fire simultaneously.
+
+All four instruments spawn hazards from the start, but the spatial distribution means you're mostly threatened by whichever instrument you're near. Seeking notes cap at 5 and spawn every 2 beats with a 3-second lifetime, so the threat level is actually manageable.
+
+Percussion's mines are the real concern—they drop one every beat at its position and detonate in expanding rings that reach 50px, which is dangerous if you're anywhere near percussion's patrol area. I need to playtest more carefully to see how this actually plays out.
+
+Now I'm thinking through the melody encounter. The pulse waves spawn on the beat and reach the ring exactly one beat later, so I should press SPACE on every beat to hit the sweet spot. But there's a cooldown mechanic—successful feeds have a 300ms cooldown, while mistimed attempts have 500ms. At 600ms per beat, I can't just spam SPACE without consequences.
+
+The strategy is straightforward: press once per beat. If I time it right, I silence the melody with a successful feed. If I mistime it, I waste that beat but the cooldown is short enough to recover. After 8 successful feeds, the melody fully silences with a visual shrink, particles, and SFX on each hit, culminating in a big finale where the instrument fades, ghost motes appear, and the ambient music cuts out.
+
+Once the first instrument is silenced, the phase shifts to 2 and the remaining instruments' quotas reset.
+
+Now the remaining instruments get a light boost and the hazard frequency multiplier kicks in at 1.2x. This makes the bass shockwaves appear every beat instead of every 2 beats, and the harmony fog appears every 2 beats instead of every 3. The percussion stays aggressive at every beat. Bass shockwaves expanding at 150px/s for nearly 2 seconds means I need to stay mobile to avoid them.
+
+Looking at the spacing, consecutive shockwave rings are about 90px apart with 76px of safe space between them—plenty of room to dodge radially. But here's the tension: I need to be within 50px of the bass to feed it, which puts me right in the danger zone where the innermost shockwave is already expanding.
+
+The collision detection is tight—a ring hits me when the distance between my position and the ring's radius falls within 14px. If I'm at 30px from the bass, I get caught between 0.07-0.16 seconds after a wave spawns, which is incredibly fast. However, there's a saving grace: each wave can only hit once, and getting hit triggers a 400ms stun period where I'm completely invulnerable. So the strategy becomes managing that invulnerability window.
+
+Let me trace through the actual timing. I'm standing close to the bass, within the 50px feed range. Waves spawn every 600ms, but my stun only lasts 400ms—meaning I have a 200ms window where I'm vulnerable again before the next wave arrives. When that new wave reaches me in 0.07-0.2 seconds, I get hit again and the cycle repeats.
+
+Three hits in 8 seconds triggers overwhelm, and at this rate I'd accumulate three hits in less than 2 seconds, so I'd be overwhelmed almost immediately while trying to feed. This is a real problem—the feed range requirement puts me directly in the shockwave path.
+
+But wait, I need to double-check the initial shockwave timing. Before silencing any instruments, the bass interval is every 2 beats, not every beat. That changes things significantly.
+
+So initially I'm getting hit every 1.2 seconds. If I'm positioned 40px from the bass, the shockwave takes about 0.13 seconds to reach me, I get stunned for 400ms, then have roughly 800ms of action time before the next wave arrives. That's tight but potentially workable for squeezing in a feed. The knockback is the real issue though—it pushes me away at 80px velocity, which would immediately break my feed range. deceleration of 0.85 per frame... actually deceleration is multiplicative each frame. At 60fps, per frame is ~16ms. So velocity decays as 200 * 0.85^(t/16) per ms. After 400ms (25 frames), velocity = 200 * 0.85^25 ≈ 200 * 0.0172 ≈ 3.4 px/s. Position change ≈ 200 * (1-0.85^25) / (1-0.85) * 16/1000... hmm this is getting complex. Let me approximate: the player gets knocked back maybe 30-50px. Feed range is 50px. So I'd get knocked out of range and need to re-approach, cancelling the feed.
+
+So the pattern for bass would be: approach → get hit by shockwave → knocked back → stun wears off → approach again → feed one or two times → get hit again. This is doable but frustrating.
+
+Wait, I need to reconsider how the hazards work. Looking at the code, all four instruments spawn hazards on every beat regardless of where the player is. Most of these hazards have spatial limits though—seeking notes home in on the player up to about 240px away, shockwaves expand to roughly 280px radius, fog stays near harmony, and mines detonate after 4 seconds or when triggered. So the threat landscape is more complex than just the bass shockwave.
+
+Let me map out the geometry. If I'm at melody's position (200, 150), harmony is 400px away at (600, 150), percussion is 300px away at (200, 450), and bass is 500px away at (600, 450). Bass shockwaves won't reach me there since they only expand to 280px. The main danger would be melody's own seeking notes. Fog and mines are too far to matter. This actually makes melody a reasonable first target—I'm mostly dealing with its own attacks.
+
+Let me trace through the actual game experience from the start. The title screen shows the controls clearly. I press space to begin.
+
+I spawn at the center (400, 300) with a small purple glowing circle. Four colored instrument circles sit in the corners, each with their own glow pools, and the world is mostly dark except for these light islands. Right away, all four instruments start firing hazards. On the first beat, percussion launches a mine immediately, melody fires a seeking note on beat 2, bass sends a shockwave on beat 2, and harmony creates fog on beat 3. Let me trace through the beat counter logic to see exactly when each hazard triggers.
+
+The percussion mine spawns every single beat, so it's coming at me right away. The melody seeking note waits until beat 2, which gives me about 1.2 seconds to react—tight but manageable. The bass shockwave also hits on beat 2 from the bass position at (600, 450), and since I'm at the center, that shockwave travels roughly 250 pixels to reach me, taking about 1.67 seconds to arrive.
+
+By the time it gets there, the ring's alpha has faded to around 0.13, making it barely visible against my small 30-pixel glow radius. I'd only see it for maybe 0.2 seconds as it passes through. So there's a real visibility problem with bass shockwaves—they're nearly invisible by the time they reach the center. That said, a single hit isn't catastrophic; the stun and knockback are manageable, and recovering quickly is fine. The real threat is getting hit multiple times in rapid succession and getting overwhelmed.
+
+Let me trace through what could actually hit the player at center in those first 8 seconds. The seeking notes from the melody start at beat 2, traveling at 80 pixels per second from position (200, 150) toward the player at (400, 300)—that's roughly 250 pixels away, which would take about 3.1 seconds to cover, plus the 1.2-second delay means impact around 4.3 seconds. But the note only lives for 3 seconds, so it might expire before reaching the player. Even with homing, at 80 pixels per second it only travels 240 pixels in its lifetime, falling just short of the distance needed.
+
+The next seeking note arrives around 5.5 to 6 seconds, and there's a shockwave hitting around 2.9 seconds. So theoretically that's 3 hits in about 6 seconds if everything connects—enough to overwhelm. But the player isn't stationary; they're moving, and slow-homing notes are easy to dodge when you're mobile. Plus shockwaves lose intensity at range.
+
+I should try a different approach to this analysis.
+
+What if the player rushes the melody instead? They'd cover the ~250px distance in about 1.25 seconds at their normal speed. The first seeking note spawns at 1.2 seconds from the melody's position, but by then the player is already within 50px of it. The note spawns right on top of them and homes in almost instantly—that's basically unavoidable collision within the first couple frames.
+
+Actually, thinking through the math more carefully: if the player is 50px away when the note spawns, it takes roughly half a second for the note to close that gap at 80px/s. That gives the player a window to dodge, but here's the problem—they're trying to stay close to the instrument to feed it, and the note is coming directly from that same instrument. So they'd need to dodge sideways while maintaining their approach, which creates a real tension in the strategy.
+
+The bigger issue is that the instrument itself is moving in a figure-8 pattern, so the player has to chase it to stay within range. When they're chasing and a note spawns from the instrument's current position, they're essentially running straight into it—the closing speed becomes the sum of both velocities, around 280px/s. That's much faster and leaves almost no time to react.
+
+Looking at the timing, notes spawn every 1.2 seconds, and each hit stuns for 400ms. So the player gets hit, recovers, then immediately gets hit again before they can reposition. After three hits in quick succession, they hit overwhelm state, which locks them into slow movement for 2 seconds and prevents feeding entirely. This creates a trap where trying to feed melody just leads to a cascade of unavoidable hits and overwhelm.
+
+But wait—there's a cap of 5 seeking notes total, and each note dies on impact, so they're one-time threats. The real question is whether the player can exploit the notes' limited turn rate. At 1.5 rad/s, they turn about 85 degrees per second, which isn't that sharp. If I circle around the instrument while staying close, the notes would have to chase me in a curve, and at close range where the angular distance is large, their turn rate might not be enough to track me effectively.
+
+Let me think through the math: orbiting at 40-50px radius with a player speed of 200px/s means I'd complete a loop in about 1.25 seconds. The notes would spiral outward trying to follow, but they'd likely miss. So the winning strategy is to orbit the instrument and hit SPACE on beat—but that's not intuitive at all. A new player would just walk straight up, get hit by notes, get knocked back, and have no idea what went wrong.
+
+This is really a design problem, not a bug. The game has a learning curve, which is fine, but I need to check if those first 30 seconds are actually survivable while someone's figuring it out. Let me trace through what a casual player would actually experience: they see the title, press SPACE, find themselves in a dark world with four colored circles. The hint says "WASD: move | SPACE: feed near a sound | Silence all four." They move toward the nearest one—the melody in the top-left—and as they get closer, the light helps them see better. The instrument is pulsing with the music, which is cool. Then a cyan circle comes at them out of nowhere, hits them, they flash red and get knocked back. At that point, they're confused about what just happened.
+
+They approach again. A white ring appears and shows "FEEDS: 0/8"—okay, so SPACE feeds. They press it, maybe miss the timing, try again on the next beat and succeed. Particles fly, satisfying sound, "FEEDS: 1/8" appears. They keep trying to feed but another note hits them, cancels the feed, knocks them back. They're cycling between approaching, feeding, and dodging.
+
+Actually, this doesn't sound terrible. The player gets hit but recovers quickly. The real frustration is probably just that repetitive cycle of approach-feed-dodge.
+
+Now I'm checking the overwhelm mechanic more carefully. Three hits in eight seconds would trigger it, and if seeking notes come every 1.2 seconds, that's three hits in 3.6 seconds. Overwhelm lasts 2000ms and sets speed to 100px/s. Let me trace through the movement logic—when overwhelmed, canMove becomes false, but there's an OR condition that lets you move if overwhelmed AND stunTimer is zero. So you can actually move during overwhelm, just not while stunned.
+
+The real question is whether a player walking straight at the melody instrument in the first 30 seconds gets overwhelmed just from the incoming notes. If they stay near it, the notes hit them at roughly 1.7s, 2.9s, and 4.1s—that's three hits within the overwhelm window, so yeah, they'd get locked into that reduced speed state pretty quickly.
+
+The best fixes seem to be adding a grace period at the start where hazards don't spawn, slowing down the initial note speed, or giving the player a brief invincibility window when they first approach an instrument. A 5-second grace period combined with slower initial seeking notes would probably feel the most forgiving for someone just starting out.
+
+Wait, let me check the actual feedback criteria—the user wants me to flag moments where I'm confused, fail without understanding why, don't have time to react, or find something unfairly hard. Looking at the seeking note mechanics more carefully: the player moves at 200px/s while the note moves at 80px/s, and the note can only turn at 1.5 rad/s. At close range, that turning speed isn't fast enough to track a player moving perpendicular to the note-player axis, so the note actually isn't unavoidable if the player reacts with sideways movement.
+
+The knockback after getting hit is what I'm really concerned about—the player gets launched at 150px/s and needs 24 frames to decelerate enough to move back into feed range, which creates this frustrating cycle of being knocked out and having to chase back in. = 2.4 * (1 - 0.85^24)/(1 - 0.85)
+
+= 2.4 * (1 - 0.0195) / 0.15
+= 2.4 * 6.537
+≈ 15.7 pixels
+So knockback from a seeking note moves you about 16 pixels. If you were at 40px from the instrument, you'd be at ~56px - just outside feed range (50px). You'd need to take one step back toward the instrument.
+
+Actually that's not terrible. You get knocked back ~16px, stun lasts 400ms, then you can move back in about 16/200 = 0.08s. So you're back in range in ~480ms total. That's less than one beat. You'd miss maybe one feed opportunity.
+
+Wait, I need to think about the knockback direction more carefully. The knockback pushes you away from the note's position, and since the note hit you while you were near the instrument, that means you're getting pushed away from the instrument itself. So the cycle is: you're feeding near the melody, a seeking note hits you and knocks you back about 16 pixels away from it, you're stunned for 400ms, then you can walk back in range.
+
+So the pattern becomes: you get hit roughly every 1.2 seconds, recover in under half a second, and resume feeding. But if you take three hits in quick succession, you trigger overwhelm - 2 seconds of slow movement and no feeding. Then the cycle repeats. Over a longer timeframe, you're alternating between feeding periods where you're getting hit repeatedly and overwhelm recovery periods, with maybe 2-3 successful feeds squeezed in during each feeding window before overwhelm kicks in.
+
+The real problem isn't the damage or the pacing - it's that the seeking notes are nearly invisible. They're rendered below the darkness layer, so when they home in from outside the light radius, the player never sees them coming. They just suddenly get knocked back by something they didn't even notice. That's the core issue: the darkness mechanic that's supposed to create tension is actually just hiding the hazards entirely, making hits feel unfair rather than challenging. makes hazards unfair when the player can't anticipate them.
+
+Possible fixes:
+
+Give hazards their own faint glow that partially shows through darkness
+Make the player's initial light radius larger so they can see hazards approaching
+Add visual/audio warning before hazards arrive (like a directional indicator on the edge of the player's glow)
+Actually, thinking through this more carefully—the seeking notes spawn from instruments that have their own light pools. They start visible in the instrument's light and home toward the player, becoming invisible as they leave that light and only briefly visible again when entering the player's glow. At close range in the instrument's light pool, the player can see them spawn and react by dodging sideways given the limited turn rate. This seems like the intended design.
+
+The real problem is the bass shockwave. It expands at 150px/s with a thin ring, so when the player is far away at melody (200, 150) and bass is at (600, 450)—about 500px apart—the shockwave travels through darkness invisibly and only flickers into view in the player's tiny glow before impact. But actually, the max shockwave range is around 280px, so bass can't even reach the player at melody. The hazards that actually threaten the player come from the instrument they're actively feeding, and those are visible in that instrument's light. So the core loop works: stay in the light, dodge visible hazards, and feed.
+
+This feels right. Let me keep playtesting.
+
+After silencing melody (around 30-45 seconds in):
+The world darkens as one light source vanishes, but the remaining instruments brighten while my glow intensifies. The ghost motes lingering at melody's old position are a nice visual touch.
+
+Now I need to pick my next target. From melody's position at (200, 150), percussion at (200, 450) is closest at 300px down, compared to harmony at 400px right or bass at roughly 500px away. But percussion is tricky—it spawns mines every beat that arm after 500ms, creating a minefield I'll need to navigate through while staying within 50px of a zigzagging enemy. The mines are visible as green circles in the light pool, blinking while unarming, then settling to full opacity once armed. With new mines spawning every 0.6 seconds and persisting for 4 seconds, the field gets progressively denser as I approach.
+
+The mines spawn along percussion's patrol path rather than randomly, so they trace its zigzag movement. This means there might be gaps I can exploit if I approach from the right angle, though a first-time player probably won't realize this spatial advantage immediately.
+
+Now I'm looking at what's actually a bug versus intentional design. The grid dot update function has a performance check that's not working—it's supposed to skip updates every few frames, but the condition is written incorrectly so it runs every frame instead, causing unnecessary distance calculations across all the grid dots and instruments. The feed timing mechanic relies on visual alignment—the ring brightens when the expanding wave hits the sweet spot—but players might just mash SPACE randomly instead of learning the rhythm, and the 500ms cooldown doesn't really explain how it works. The hit feedback seems fine with the red flash, knockback, and sound effect, but the overwhelmed state is poorly communicated—the player just turns red and slows down with no text or icon to explain what's happening. Looking at actual frustration points, the shockwaves are nearly invisible when... The sweet spot indicator is really the only visual guide for timing. I'm weighing a few options to smooth out the early experience: a brief grace period before hazards activate, clearer feedback when overwhelmed, or temporary invulnerability when first entering an instrument's range. The grace period feels like the most straightforward fix—letting hazards stay dormant for the first few seconds gives players time to orient themselves before the real challenge begins.
+
+I'm also noticing the onscreen cues could be stronger. The feed progress text appears when you're near an instrument, but it only shows the count, not what action to take. The control hint fades after 8 seconds, so players lose that guidance pretty quickly. The main friction point seems to be that the hint text disappears too early, leaving players to rely on memory or trial and error.
+
+Beyond that, the game throws hazards at you from the very first beat, which is rough for someone still learning the controls. And when you do get overwhelmed—three hits within 8 seconds—there's no visible signal that something's changed, just a subtle slowdown that's easy to miss.
+
+Looking at what would actually help most, I should prioritize a grace period at the start to let players get their bearings before the chaos begins, add some clear feedback when overwhelm kicks in, and make sure the controls hint sticks around long enough to actually be useful. The beat timing for feeding is trickier since it's meant to be learned through play, but I'll see what makes sense as I work through these fixes.
+
+I'm also noticing some logic in the movement code that might need attention—checking how the stun and overwhelm states interact with player input. So input is always processed when not stunned, regardless of overwhelm status—the overwhelm mechanic only reduces movement speed, which is the intended behavior. Now I'm checking the feed ring system to see if there's an issue with how the pulse wave tracks the player's position. The wave is redrawn each frame centered on wherever the player currently is, so even if they move while the wave expands, it should stay synchronized with them.
+
+The timing works out correctly too—the wave's radius increases independently of player movement, and with a 300ms cooldown between feeds and a 600ms beat interval, the player can feed at most once per beat, which matches the intended design.
+
+Now looking at what happens when instruments get silenced: each silenced instrument increases the hazard frequency by 20%, so with three silenced, the remaining instrument fires hazards every beat with a 1.6x multiplier. Combined with the lowest quota of 5 feeds needed and the enhanced intensity from the last instrument, this creates a challenging final phase.
+
+With bass shockwaves expanding every 600ms and the player positioned within 50px, they'd get hit roughly every other beat due to stun invulnerability windows, resulting in about 3 hits per 2 seconds—which feels overwhelming. However, the player's larger glow radius and the instrument's expanded light pool provide some counterbalance, and by this point they should have internalized the patterns. I'm realizing the shockwave mechanics might actually be more forgiving than I initially thought since each ring only hits once.
+
+Let me trace through the actual timeline: the first wave spawns at t=0 and connects at t=0.13s, triggering a 400ms stun that ends at t=0.53s. The second wave spawns at t=0.6s when the player is already vulnerable again, hitting at t=0.73s and extending stun to t=1.13s. By t=1.2s when the third wave spawns, the player is vulnerable once more. So the player does get hit repeatedly, but there are brief windows of vulnerability between waves where they could theoretically react or reposition. Feed gets interrupted by the stun, then restarts, but the cycle repeats—wave spawns, hit lands, feed cancels again. By the time wave 3 hits at 1.33 seconds, the player never actually gets a window to press SPACE and complete a feed. This reveals a serious design problem: in later phases with rapid hazards, feeding becomes nearly impossible because the shockwaves and seeking notes keep breaking the feed loop before it can finish.
+
+I'm realizing the player could strategically choose which instrument to silence last—harmony might be the smartest choice since fog only slows movement rather than dealing damage or canceling feed. But a new player wouldn't know this and might accidentally pick bass or percussion for last, making the endgame feel unfairly punishing.
+
+Looking at my playtest findings, the critical problems are the lack of a grace period at the start and the overwhelming hazard spam in later phases that makes certain instruments nearly impossible to feed. I also notice the controls hint disappears too quickly and there's some dead code in the grid dot optimization. My priority is fixing the first-time experience, so I'll add a 5-second warmup phase where hazards don't spawn yet, giving players time to learn before things get chaotic.
+
+For the other fixes, I'm narrowing down to what actually matters: adding a grace period, showing overwhelm feedback so players understand why they're slowed down, and keeping the controls hint visible until they successfully feed an instrument. I'm being cautious about over-designing here. Let me reconsider whether the endgame is truly impossible—with three instruments silenced, hazard frequency increases by 1.6x, but the player's glow radius is 81 pixels, so...
+
+Actually, looking at the light mechanics more carefully: the remaining instrument gets a 1.45x boost, pushing the bass light from 160 to 232 pixels. That's substantial visibility. The instrument's light pool itself is visible, and the shockwaves expand within it, so the player can see them coming and potentially time their movements. The real constraint is that shockwaves arrive every beat while the player needs to stay within 50 pixels to feed, which makes dodging between rings nearly impossible when they're coming that frequently. I'm wondering if there's a positioning strategy where the player moves perpendicular to the shockwave's radius to slip through at certain points on the ring's circumference...
+
+Actually no, that doesn't work. The ring expands radially outward, so moving tangentially doesn't help—it'll hit you regardless of where you are at that radius. The only real dodge is timing your distance so you're not at the ring's radius when it passes through your location. Since the ring reaches 50 pixels in 0.2 seconds, the player could potentially move closer or further to avoid it, but that conflicts with needing to stay in feed range.
+
+Let me think through the actual numbers. If you're at 30 pixels when a ring spawns, it reaches you in about 0.067 seconds—too fast to react. But if you're at 55 pixels, you have 0.23 seconds to get there, which is doable at the player's speed. The problem is rings spawn every 0.6 seconds, so you'd be constantly weaving in and out of range. It's actually interesting gameplay for skilled players, but brutal for newcomers. I should probably keep the mechanic but ease players into it with a gentler early game.
+
+I'm going to focus on three things: adding a grace period at the start, improving feedback when overwhelmed, and keeping the controls hint visible. Let me implement those changes now.
+
+Actually, before I do that, I should verify the restart logic works correctly. When the scene restarts, it creates a fresh GameScene instance and resets everything. The audio gets ramped down to silence before creating a new AudioContext, so there shouldn't be overlapping sounds from the old context.
+
+Wait, there's a potential issue here—the old AudioContext never gets closed, so its oscillators remain scheduled even though they're playing at zero gain. Over multiple restarts, this could leak memory as old contexts accumulate. It's probably not a major concern since players typically restart only a few times, but it's worth noting.
+
+I'm also noticing that clearAllHazards() is called during the timeout ending but not the good ending. After a good ending, hazards stay on screen while the game is inactive, which might look odd during the ending sequence.
+
+During the good ending, the darkness layer keeps its last rendered state since the update loop stops running. Then when the ending text appears, the darkness alpha is set to zero, revealing all those frozen hazard sprites behind the text.
+
+But actually, by the time the good ending triggers, all hazards have already been cleared—each instrument clears its hazards when silenced, so there's nothing frozen to worry about. The timeout ending also clears all hazards explicitly, so that's handled too.
+
+Now I'm realizing each hazard type is tied to a specific instrument: melody spawns seeking notes, bass spawns shockwaves, harmony spawns fog, percussion spawns mines. When an instrument is silenced, clearHazardsFor() removes all hazards of that type, which works correctly since only that instrument creates them.
+
+So the main issue I need to address is the lack of a grace period—hazards are firing immediately from the moment they spawn.
+
+Looking at the fixes needed: I should delay hazard spawning for the first 5 seconds to give players time to learn the controls. The overwhelm state needs visual feedback with a flash of text. The controls hint should stay visible until the player successfully feeds something instead of disappearing after 8 seconds. I'm skipping the hazard visibility issue since darkness being dangerous is core to the design—players will learn to stay in lit areas.
+
+Actually, reconsidering the seeking notes: they do spawn in the instrument's light pool and only become hard to see if the player ventures into the dark between pools, which is intentional risk. I'll also add a contextual hint that appears when entering feed range to prompt "Press SPACE on the beat!"
+
+So I'm implementing the grace period, overwhelm feedback, persistent hint until first feed, and the contextual feed hint.
+
+Mental Playtest
+Title Screen (t=0)
+"I see 'DECIBEL THIEF' and four pulsing colored orbs. Instructions say WASD to move, SPACE to feed near a sound, silence all four. 'Press SPACE to begin.' Clear enough. I press SPACE."
+
+First 2 seconds (game start)
+"Screen fades in. Dark world. I see my small purple-glowing circle at center. Four colored circles in the corners, each with a light pool. Music is playing - cool. A hint at the bottom says 'WASD: move | SPACE: feed near a sound | Silence all four.' I try pressing W to move upward..."
+
+Seconds 2-4: First hazard encounter
+"Wait - something hit me! I flashed red and got knocked sideways. What was that? I didn't see anything coming. I was in the dark between light pools."
+
+Root cause: Seeking notes spawn from melody at beat 2 (1.2s into the game) and home toward the player at 80px/s. Shockwaves from bass also start at beat 2. All hazards exist under the darkness layer (depth 22-25 vs darkness depth 80), so they're invisible outside light pools. The player's glow is only 30px radius - too small to see incoming hazards with any reaction time.
+
+Seconds 4-12: Approaching melody
+"Okay, I'll head toward the cyan thing in the top-left. As I enter its light I can see better. Oh, there's a little cyan circle heading toward me - I dodge sideways. I get close and a white ring appears around me. Text on the right says 'FEEDS: 0/8'. I remember SPACE feeds..."
+
+"I press SPACE but nothing happens - just a dull thud sound. I try again... same thing. When do I press it?"
+
+Root cause: The feed mechanic requires pressing SPACE when an expanding pulse wave aligns with the feed ring. But there's no explicit explanation of this timing. The ring brightens at the sweet spot, but a first-time player mashing SPACE gets miss cooldowns (500ms) and doesn't understand why it's not working. Also, the controls hint has already faded (8-second timer), so there's no reminder.
+
+Seconds 12-20: Getting overwhelmed
+"Another cyan note hits me while I'm trying to figure out the feeding. And another. Now I'm moving really slowly. What happened? Did the game glitch? I'm sluggish and can't seem to feed..."
+
+Root cause: Three hits within 8 seconds triggers overwhelm (2 seconds of slow movement, can't feed). There is zero visual feedback explaining this state. The player body turns red, but that also happens during normal stun. No text, no icon, nothing. The player just feels broken.
+
+Seconds 20-30: Finally getting a feed
+"Okay I'm moving normally again. I go back to the cyan creature. I notice the ring brightens briefly as a colored circle expands through it. I try pressing SPACE at that moment... YES! Particles fly out, satisfying sound! FEEDS: 1/8. I think I need to time SPACE to the beat."
+
+From here, the core loop works: the player learns the rhythm, dodges notes, and makes progress. The rest of the game plays reasonably well once the mechanics are understood.
+
+Issues Found
+Issue 1: No grace period - player gets hit before learning controls
+Hazards spawn from beat 1 (0.6s). A player walking toward their first instrument gets hit by invisible hazards in the darkness within 2-3 seconds.
+
+Issue 2: Overwhelm state has no feedback
+Getting hit 3 times in 8 seconds triggers a 2-second debuff with no on-screen explanation. The player thinks the game is broken.
+
+Issue 3: Controls hint disappears after 8 seconds
+The hint fades on a fixed timer regardless of whether the player has learned the mechanic. Many players won't have reached an instrument in 8 seconds.
+
+Issue 4: No contextual guidance for the feed mechanic
+When the feed ring first appears, there's no prompt like "Press SPACE on the beat." The player must deduce the rhythm mechanic from the ring brightening alone.
+
+Let me fix all four.
+
+Update Todos
+
+Add grace period - no hazards for first 5 seconds
+
+Add overwhelm state visual feedback text
+
+Keep controls hint until first successful feed
+
+Add contextual feed prompt when first entering feed range
+Edit index.html
+Added 1 line
+Now add the grace timer countdown in the update loop and gate hazard spawning in onBeat():
+
+Edit index.html
+Added 1 line
+Now gate hazard spawning in onBeat():
+
+Edit index.html
+Added 1 line
+Wait, that return would also skip the feed pulse wave spawning which happens after hazard spawning. Let me check... The onBeat() method:
+
+Pulse player
+Pulse instruments
+Spawn hazards
+Feed pulse wave
+If I return after "skip during grace period", it also skips the feed pulse wave. That's bad - the player should be able to practice feeding during the grace period. Let me change the approach.
+
+Wait - that return would also skip the feed pulse wave spawning at the end of onBeat(). Let me fix that to only skip hazards, not the whole method.
+
+Edit index.html
+Added 1 line
+Update Todos
+
+Add grace period - no hazards for first 5 seconds
+
+Add overwhelm state visual feedback text
+
+Keep controls hint until first successful feed
+
+Add contextual feed prompt when first entering feed range
+Now add the overwhelm feedback text. I need to create the text element in create() and show it when overwhelm triggers.
+
+Edit index.html
+Added 5 lines
+Now trigger the text when overwhelm activates:
+
+Edit index.html
+Added 5 lines
+Update Todos
+
+Add grace period - no hazards for first 5 seconds
+
+Add overwhelm state visual feedback text
+
+Keep controls hint until first successful feed
+
+Add contextual feed prompt when first entering feed range
+Now fix the controls hint to stay until first successful feed. I need to track whether the first feed has happened and change the fade logic.
+
+Edit index.html
+Added 2 lines
+Now change the controls hint fade to not use a fixed timer:
+
+Edit index.html
+Removed 4 lines
+Now fade the hint on first successful feed, in onFeedSuccess():
+
+Edit index.html
+Added 7 lines
+Update Todos
+
+Add grace period - no hazards for first 5 seconds
+
+Add overwhelm state visual feedback text
+
+Keep controls hint until first successful feed
+
+Add contextual feed prompt when first entering feed range
+Now add a contextual feed hint that appears the first time the player enters feed range. I'll show it briefly near the feed ring:
+
+Edit index.html
+Added 14 lines
+Update Todos
+
+Add grace period - no hazards for first 5 seconds
+
+Add overwhelm state visual feedback text
+
+Keep controls hint until first successful feed
+
+Add contextual feed prompt when first entering feed range
+
+Verify syntax
+Task:Verify JS syntax
+IN
+Extract the JavaScript from /Users/jackie3/Desktop/thesis/thesis/claude_4_decibel/index.html (between the script tags, lines 13 to 1814) and verify it has no syntax errors by running it through Node.js `new Function()`. Run this bash command:
+
+```
+node -e "const fs = require('fs'); const html = fs.readFileSync('/Users/jackie3/Desktop/thesis/thesis/claude_4_decibel/index.html', 'utf8'); const match = html.match(/<script>([\s\S]*?)<\/script>/); if (!match) { console.log('No script found'); process.exit(1); } try { new Function(match[1]); console.log('SYNTAX OK'); } catch(e) { console.log('SYNTAX ERROR:', e.message); }"
+```
+
+Report the result.
+Bash Extract and validate JavaScript from HTML file using Node.js
+IN
+node -e "const fs = require('fs'); const html = fs.readFileSync('/Users/jackie3/Desktop/thesis/thesis/claude_4_decibel/index.html', 'utf8'); const match = html.match(/<script>([\s\S]*?)<\/script>/); if (!match) { console.log('No script found'); process.exit(1); } try { new Function(match[1]); console.log('SYNTAX OK'); } catch(e) { console.log('SYNTAX ERROR:', e.message); }"
+
+OUT
+Exit code 1
+[eval]:1
+const fs = require('fs'); const html = fs.readFileSync('/Users/jackie3/Desktop/thesis/thesis/claude_4_decibel/index.html', 'utf8'); const match = html.match(/<script>([\s\S]*?)<\/script>/); if (\!match) { console.log('No script found'); process.exit(1); } try { new Function(match[1]); console.log('SYNTAX OK'); } catch(e) { console.log('SYNTAX ERROR:', e.message); }
+                                                                                                                                                                                                  ^
+
+SyntaxError: Invalid or unexpected token
+    at makeContextifyScript (node:internal/vm:185:14)
+    at node:internal/process/execution:107:22
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3
+
+Node.js v20.19.6
+Bash Extract and validate JavaScript from HTML file using Node.js
+IN
+node -e 'const fs = require("fs"); const html = fs.readFileSync("/Users/jackie3/Desktop/thesis/thesis/claude_4_decibel/index.html", "utf8"); const match = html.match(/<script>([\s\S]*?)<\/script>/); if (!match) { console.log("No script found"); process.exit(1); } try { new Function(match[1]); console.log("SYNTAX OK"); } catch(e) { console.log("SYNTAX ERROR:", e.message); }'
+
+OUT
+Exit code 1
+[eval]:1
+const fs = require("fs"); const html = fs.readFileSync("/Users/jackie3/Desktop/thesis/thesis/claude_4_decibel/index.html", "utf8"); const match = html.match(/<script>([\s\S]*?)<\/script>/); if (\!match) { console.log("No script found"); process.exit(1); } try { new Function(match[1]); console.log("SYNTAX OK"); } catch(e) { console.log("SYNTAX ERROR:", e.message); }
+                                                                                                                                                                                                  ^
+
+SyntaxError: Invalid or unexpected token
+    at makeContextifyScript (node:internal/vm:185:14)
+    at node:internal/process/execution:107:22
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3
+
+Node.js v20.19.6
+Bash Create and run Node.js validation script for HTML file JavaScript
+IN
+cat > /tmp/validate.js << 'SCRIPT'
+const fs = require('fs');
+const html = fs.readFileSync('/Users/jackie3/Desktop/thesis/thesis/claude_4_decibel/index.html', 'utf8');
+const match = html.match(/<script>([\s\S]*?)<\/script>/);
+if (!match) {
+  console.log('No script found');
+  process.exit(1);
+}
+try {
+  new Function(match[1]);
+  console.log('SYNTAX OK');
+} catch(e) {
+  console.log('SYNTAX ERROR:', e.message);
+}
+SCRIPT
+node /tmp/validate.js
+
+OUT
+SYNTAX OK
+Syntax check passed.
+
+Update Todos
+
+Add grace period - no hazards for first 5 seconds
+
+Add overwhelm state visual feedback text
+
+Keep controls hint until first successful feed
+
+Add contextual feed prompt when first entering feed range
+
+Verify syntax
+Playtest Summary
+The core game loop is solid - the concept of feeding on instruments to silence them while dodging beat-synced hazards works well. But a first-time player would hit several frustration walls in the first 30 seconds. Here's what I fixed:
+
+Fixes Applied
+5-second grace period - No hazards spawn for the first 5 seconds. The player can safely explore, reach an instrument, and start learning the feed mechanic before any threats appear. Beat pulsing and feed waves still work during this time.
+
+"OVERWHELMED" text - When the player gets hit 3 times in 8 seconds, red "OVERWHELMED" text now fades in above the player and slowly fades out over 1.8 seconds. This explains why they're suddenly slow and can't feed.
+
+Controls hint persists until first feed - Instead of vanishing on a fixed 8-second timer (often before the player reaches an instrument), the bottom hint now stays visible until the player lands their first successful feed.
+
+Contextual feed prompt - The first time the player enters feed range of any instrument, a floating "Press SPACE on the beat!" hint appears above their character for 2.5 seconds. This bridges the gap between the general controls hint and the specific rhythm mechanic.
+
+Issues Noted But Not Fixed
+Endgame difficulty spike (bass shockwaves every beat after 3 silenced) - This is intense but intended difficulty progression. Players learn to save easier instruments for last.
+Hazards invisible in darkness - Core design intent. Hazards are visible within instrument light pools where feeding happens.

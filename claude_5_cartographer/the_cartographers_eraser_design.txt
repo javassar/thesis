@@ -1,0 +1,1366 @@
+================================================================================
+                     DESIGN REVIEW & REVISION
+================================================================================
+
+
+# CRITIQUE OF "RECOIL CHEF"
+================================================================================
+
+Recoil Chef is competent. It has a clear hook, an obvious fun-factor, and
+it's straightforward to implement. But "competent" isn't the bar we set.
+The brief asked for creativity, and on honest reflection, Recoil Chef
+falls short in several important ways:
+
+1. THE GENRE IS SATURATED.
+   Chaotic cooking games are a well-trodden space: Overcooked, Cook Serve
+   Delicious, Cooking Mama, Battle Chef Brigade. "Cooking, but with a
+   gun" is a punchline, not a creative vision. The humor lands on the
+   first shot and then the game has nowhere emotionally interesting to go.
+
+2. THE MECHANIC IS ONE-NOTE.
+   The recoil gimmick is funny for about 30 seconds. After that, the
+   player is just learning to compensate for it — which is a standard
+   skill-mastery loop found in any physics game. The "escalation" is
+   simply more ingredients and shorter timers. That's difficulty ramping,
+   not creative evolution. Nothing fundamentally changes about what the
+   player is doing or feeling between minute one and minute five.
+
+3. THE THEME IS PAPER-THIN.
+   The design document claims the game explores "creation through
+   destruction," but that theme is stated, not enacted. The kitchen damage
+   meter is purely cosmetic — it doesn't affect gameplay at all. The
+   "destruction" is just visual noise. There's no actual tension between
+   creating and destroying because destruction has no mechanical cost.
+   The theme is a label applied to a physics toy.
+
+4. THE EMOTIONAL ARC IS FLAT.
+   The player feels amused at the start and amused at the end. There's no
+   shift, no surprise, no moment where the game reveals something the
+   player didn't expect. Compare this to the original concept list: The
+   Cartographer's Eraser promised an emotional journey from power to grief.
+   Half-Life of a Party used a scientific metaphor to explore social
+   unpredictability. Recoil Chef offers... slapstick. Enjoyable, but
+   shallow.
+
+5. THE "CREATIVE" CHOICE WAS ACTUALLY THE SAFE CHOICE.
+   Recoil Chef was selected because it was the most obviously fun and the
+   easiest to implement. But "easiest to see working" is not the same as
+   "most potential." Several concepts on the list — The Cartographer's
+   Eraser, One Word Left, Flock Logic — were more creatively ambitious.
+   They were passed over because they were harder to imagine, which is
+   exactly what makes them more interesting.
+
+VERDICT: Recoil Chef is a competent physics-comedy game with a good
+30-second hook. But it doesn't justify its five-minute runtime with
+creative depth. We can do better.
+
+
+================================================================================
+                      THE CARTOGRAPHER'S ERASER
+                     Game Design & Technical Spec
+                            (REVISED PLAN)
+================================================================================
+
+
+# STAGE 1: GAME DESIGN
+================================================================================
+
+## 1. Title & Hook
+
+Title: The Cartographer's Eraser
+
+Pitch: You're given a beautiful, complete fantasy map — and your job is to
+erase it, choosing what to save and what to let vanish as a creeping fog
+consumes the world.
+
+
+## 2. Core Insight
+
+Central question: When you can't save everything, what do you choose to
+keep — and what does that reveal about you?
+
+This matters because triage is one of the most human experiences there is.
+We face it constantly — in time, in attention, in love — but games almost
+never make us sit with it. Games are about accumulation: more loot, more
+territory, more power. This game inverts that. You start with everything
+and watch it disappear. The map is already beautiful and complete. Your
+role isn't to build — it's to decide what survives. That inversion is
+what makes it sting. Every tile you protect means another tile you
+abandoned. And the refugees fleeing across your map make those trade-offs
+visible and personal. You're not managing abstract resources. You're
+watching tiny people walk away from homes you chose not to save.
+
+
+## 3. Mechanic-Theme Integration
+
+Primary mechanic: Click on map tiles to protect them with "ink" (a limited,
+slowly regenerating resource) as fog encroaches from the edges. Protected
+tiles resist the fog temporarily. Unprotected tiles are consumed and gone
+forever.
+
+How the mechanic embodies the theme: The ink limit IS the theme. You
+literally cannot save everything — the math doesn't allow it. Each click
+is a moral micro-decision: save the farmland that feeds the eastern city,
+or save the road that lets refugees from the south reach safety? The fog
+doesn't care about your plans. It advances steadily, and your ink
+regenerates at a pace that forces constant, painful prioritization. The
+eraser isn't a tool you wield — it's the fog, and you're just a
+cartographer desperately re-inking the parts of the world you refuse to
+let go.
+
+Secondary mechanic: Refugees (small dots) automatically travel along
+roads toward the nearest surviving city. If fog consumes a tile a refugee
+is on, they are lost. If a road is severed, refugees must reroute or are
+stranded. The player can spend ink to maintain road connections, adding a
+logistics dimension to the moral triage.
+
+
+## 4. Player Journey
+
+OPENING (0:00 - 0:30):
+The screen fades in on a gorgeous, hand-drawn-style fantasy map filling
+the entire canvas. It's alive with color: green forests, blue rivers,
+brown mountains, golden farmland, with five named cities connected by
+winding roads. Small dots (people) move gently along the roads. A brief
+text at the top reads: "The fog is coming. You cannot save it all." Below,
+a simple instruction: "Click tiles to protect them. Ink is limited."
+The player feels wonder — the map is beautiful — followed by a slow
+creeping dread as gray fog begins to appear at the edges.
+
+FIRST MINUTE (0:30 - 1:30):
+The fog advances slowly from all four edges of the map. It's immediately
+clear that it's consuming the outermost tiles — small villages, the edges
+of forests, peripheral farmland. The player's ink meter is visible: a
+bottle icon that drains as they click and slowly refills. Early clicks
+feel powerful: they stop the fog on a tile with a satisfying golden glow.
+But the player quickly realizes the fog is wide and their ink is thin.
+They can't paint a wall across the entire front. They must choose sectors.
+The first refugee dots begin moving — fleeing inward from consumed edges
+toward interior cities. The player learns the systems: clicking costs ink,
+ink regenerates, refugees follow roads, cities glow when populated.
+
+MIDDLE GAME (1:30 - 3:30):
+The fog has consumed the outer ring. The map is visibly smaller. Names of
+lost places appear briefly in the fog as ghost-text — "Willowmere...
+gone" — a quiet, narrative gut-punch. The player is now making real
+trade-offs. There are five cities, but only enough ink to reliably protect
+the land around two or three. The player must decide: do I protect
+Thornwall in the east (large population, but surrounded by fog on three
+sides) or Ashenveil in the center (safer position, but fewer people)?
+Refugees from abandoned areas stream along roads. If the player has
+maintained road connections, they arrive safely in surviving cities and
+the population counter ticks up. If roads are cut, refugees are stranded
+in the fog. Each lost refugee is marked with a brief, fading dot. The
+player starts feeling the weight of their choices.
+
+ESCALATION (3:30 - 4:30):
+The fog accelerates slightly. The map is now perhaps 40% of its original
+size. Two or three cities have likely fallen. The player's ink feels
+desperately insufficient. This is the emotional climax: the player is no
+longer strategizing, they're grieving. They're clicking frantically to
+keep one last road open, watching refugees stream toward the final
+surviving city. The names in the fog are accumulating. The world is
+mostly gray now, with a bright island of color where the player has
+focused their effort.
+
+ENDING (4:30 - 5:00):
+The fog slows to a stop. A moment of silence. Then the text: "The fog
+has passed." The surviving portion of the map pulses gently with golden
+light. A results panel appears over the fogged area:
+
+  "The World That Remains"
+  - Land Saved: 23%
+  - Cities Surviving: 2 of 5
+  - People Saved: 847 of 2,000
+  - Roads Maintained: 4 of 12
+
+Below the stats, a single line of procedurally chosen text based on
+results, such as: "Ashenveil and Ironhearth endure. The roads between
+them are well-worn with the footsteps of those who made it. The rest
+is silence."
+
+Ending emotion: Bittersweet pride. The player saved something real, but
+they feel the ghost of everything they lost. This is NOT a "try again for
+a better score" feeling — it's a "sit with this for a moment" feeling.
+The option to play again is present but understated.
+
+
+## 5. Game Elements
+
+THE MAP (playing field):
+A 20-column by 15-row grid of square tiles, each 40x40 pixels, filling
+the full 800x600 canvas. Each tile has a terrain type that determines its
+color and function:
+  - Forest: deep green (#2D5A27)
+  - Farmland: golden yellow (#C8A951)
+  - Mountain: gray-brown (#7A6B5D)
+  - River: blue (#4A7FB5) — rivers flow as connected chains of tiles
+  - Road: tan/beige (#A89070) — connects cities, refugees travel on these
+  - City: warm amber (#D4943A) with a small square "building" icon —
+    there are exactly 5 cities, each named
+  - Empty/Plains: light green (#7CAA5A)
+
+Each tile also has a subtle 1px border in a slightly darker shade of its
+color, giving the map a hand-drawn grid feel.
+
+THE FOG:
+A dark gray (#3A3A4A) overlay that covers consumed tiles. Tiles don't
+disappear instantly — they fade to gray over 0.5 seconds with a wispy
+particle edge effect (small gray particles drifting inward). The fog
+boundary has an organic, uneven look: not a clean line, but a crawling
+edge. Implemented as a per-tile state (clear → threatened → consumed).
+"Threatened" tiles show a semi-transparent gray wash, warning the player
+they're next.
+
+INK (player resource):
+Displayed as a vertical bar on the right edge of the screen, styled to
+look like a bottle of ink. Maximum 100 units. Clicking a tile to protect
+it costs 8 ink. Ink regenerates at 3 units per second. The bottle fill
+color shifts: blue (#3366CC) when above 50%, amber (#CC9933) when 25-50%,
+red (#CC3333) when below 25%. A numeric display shows current/max.
+
+PROTECTION GLOW:
+When the player clicks a tile to protect it, the tile gains a golden
+border glow (#FFD700, 2px, animated soft pulse). Protected tiles resist
+the fog for 20 seconds, after which the protection fades (glow dims and
+disappears) and the tile becomes vulnerable again. The player can
+re-protect it by spending ink again.
+
+REFUGEES:
+Small colored dots (3px circles, #E8D4B8 warm white) that spawn at cities
+or settlements when nearby tiles are consumed by fog. They move along
+road tiles at 1 tile per second toward the nearest surviving city. Each
+refugee dot represents ~50 people. When a refugee reaches a surviving
+city, the city's population counter ticks up and the dot is absorbed
+with a brief warm glow. When fog consumes a tile a refugee is on, the
+dot fades to gray and drifts away (lost). Approximately 40 refugee dots
+will be active across the full game.
+
+CITIES:
+Five named cities placed at fixed positions on the map. Each has:
+  - A name label (10px text, white with dark stroke) above it
+  - A population counter below (starts at a set value, increases with
+    refugees, decreases if city is consumed)
+  - A visual state: Alive (warm amber with gentle glow), Threatened
+    (amber flickering), Fallen (fades to fog gray, name becomes ghost
+    text in the fog)
+City names: Ashenveil, Thornwall, Duskhollow, Ironhearth, Willowmere
+
+GHOST TEXT:
+When a named location (city or notable tile) is consumed, its name
+appears in the fog as faint white text (#AAAAAA, 60% alpha) that slowly
+fades to 20% alpha over 5 seconds and persists. This accumulating ghost
+text is the emotional memory of the lost world.
+
+UI ELEMENTS:
+  - Ink meter: right edge, vertical bar, 20px wide, full height
+  - Top bar: thin semi-transparent black (#000000, 40% alpha) strip,
+    30px tall, displaying:
+    - "People Saved: X" (left-aligned)
+    - "Cities: X / 5" (centered)
+    - Timer: "Time Remaining: X:XX" (right-aligned)
+  - Cursor: changes to a small ink-drop icon when hovering over
+    protectable tiles, and a no-entry icon over fog
+  - Initial instruction overlay: "The fog is coming. Click tiles to
+    protect them. Ink is limited." (fades after 8 seconds)
+
+SCREENS:
+1. Title Screen: The full map, fully vibrant, with "THE CARTOGRAPHER'S
+   ERASER" in elegant serif-style text across the top. Subtitle: "You
+   cannot save it all." Below: "Click to Begin." The map is visible
+   behind the title as a preview of the beauty that will be lost.
+2. Game Screen: The map, fog, refugees, ink meter, top bar HUD.
+3. Ending Screen: Fog stops. Surviving map region glows gold. Stats
+   overlay appears on the fogged area. Procedural closing text.
+   "Click to Remember Again" prompt (subtle, small text, bottom-center).
+
+
+## 6. Rules & Systems
+
+WHAT THE PLAYER CAN DO:
+  - Click on any non-fogged, non-protected tile to protect it (costs 8
+    ink, must have >= 8 ink)
+  - That's it. One input, infinite decisions.
+
+HOW THE GAME RESPONDS:
+  - Protected tiles glow gold and resist fog for 20 seconds
+  - After 20 seconds, protection fades and the tile is vulnerable again
+  - The fog advances inward every 3 seconds, consuming the outermost
+    ring of unprotected tiles
+  - Fog advancement is somewhat organic: it prefers to advance into tiles
+    adjacent to already-fogged tiles, creating an uneven, creeping border
+    rather than a perfect shrinking rectangle
+  - When fog consumes a tile:
+      - The tile fades to gray (0.5s transition)
+      - If it was a city: the city falls, population is lost, ghost name
+        appears
+      - If it was a road: the path is severed — refugees using it must
+        reroute or are stranded
+      - If it was farmland: surviving cities lose a food connection
+        (cosmetic — contributes to ending narrative, not a mechanical
+        fail state)
+  - Refugees automatically spawn and pathfind along roads to the nearest
+    surviving city
+
+WHAT DETERMINES SUCCESS:
+  - There is no fail state. The game always ends after 5 minutes.
+  - Success is measured by what survives: land percentage, cities, people
+    saved, roads maintained
+  - There is no "winning." There are only degrees of saving.
+  - The procedural ending text reflects the player's specific choices,
+    making every playthrough's ending feel personal.
+
+HOW THE EXPERIENCE CHANGES OVER TIME:
+  Phase 1 (0:00-1:30): Slow fog, full ink — player feels powerful,
+    exploratory, learning the map. "I can handle this."
+  Phase 2 (1:30-3:00): Fog at steady pace, ink scarcity kicks in —
+    player realizes they must specialize. Strategic triage begins.
+  Phase 3 (3:00-4:00): Fog accelerates slightly, map noticeably smaller,
+    ghost text accumulating — emotional weight builds. Player shifts from
+    strategy to desperate preservation.
+  Phase 4 (4:00-5:00): Fog slows and stops. The final shape of the
+    surviving world crystallizes. Moment of stillness before results.
+
+
+================================================================================
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+================================================================================
+
+## 7. Technical Specification
+
+### Display
+  - Canvas: 800 x 600 pixels
+  - The map grid fills the entire canvas: 20 columns x 15 rows = 300 tiles
+  - Each tile: 40 x 40 pixels
+  - No camera scrolling. Fixed view.
+  - Background color (visible only briefly before map draws): #1A1A2E
+
+### Map Grid
+  The map is a 2D array: grid[col][row], each cell is an object:
+    {
+      terrain: string (forest/farmland/mountain/river/road/city/plains),
+      state: string (clear/threatened/protected/consumed),
+      protectionTimer: float (seconds remaining, 0 if unprotected),
+      cityName: string or null,
+      cityPopulation: int or null,
+      fogAlpha: float (0.0 = clear, 1.0 = fully consumed)
+    }
+
+  Map layout (predefined — see MAP DATA below):
+  The map is hand-designed to create interesting strategic choices.
+  Key design principles:
+    - 5 cities spread across the map, not centered
+    - Roads connect all cities in a rough network (not fully connected —
+      some cities have only 1-2 road links)
+    - Farmland clusters near cities
+    - Mountains create natural chokepoints
+    - Rivers cut across the map, acting as visual landmarks
+    - Outer edges are mostly forest and plains (expendable but sad to lose)
+
+  MAP DATA — Terrain Key:
+    P = Plains, F = Forest, M = Mountain, R = River, D = Road
+    A = Farmland, C = City
+
+  Row 0 (top):  F F F F F P P F F F F F P P F F F F F F
+  Row 1:        F F P P D D D P F F F F P D D D P P F F
+  Row 2:        P P P C1 D P P P F F P P C2 D P P P F F F
+  Row 3:        P A A A D P P R R F P A A A P P M M F F
+  Row 4:        F A A P D P P R P P P A P P P P M M P F
+  Row 5:        F P P P D D D R D D D D D D D P P P P F
+  Row 6:        F F P P P P P R P P P P P P D P F F F F
+  Row 7:        P P P M M P P R P P M P P P D P P F F F
+  Row 8:        P P M M P P P R R P M P P P D P P P P P
+  Row 9:        P P P P P P C3 D D D D P P P D D P P P P
+  Row 10:       F P A A A P P P P P P P P P P D P P P F
+  Row 11:       F P A A P D D D D P P P A A A D P P F F
+  Row 12:       F P P P C4 D P P D D D D A A C5 D P F F F
+  Row 13:       F F P P P P P P P P P P P A P P P F F F
+  Row 14 (bot): F F F F F F P P P P P P P P F F F F F F
+
+  City positions and names:
+    C1: col=3,  row=2  — "Ashenveil"    (pop: 400)
+    C2: col=12, row=2  — "Willowmere"   (pop: 350)
+    C3: col=6,  row=9  — "Ironhearth"   (pop: 500)
+    C4: col=4,  row=12 — "Duskhollow"   (pop: 300)
+    C5: col=14, row=12 — "Thornwall"    (pop: 450)
+
+  Total starting population: 2,000
+
+### Tile Colors
+  Plains:   fill #7CAA5A, border #6B9A4E
+  Forest:   fill #2D5A27, border #245020
+  Mountain: fill #7A6B5D, border #6B5C4E
+  River:    fill #4A7FB5, border #3D6E9E
+  Road:     fill #A89070, border #988060
+  Farmland: fill #C8A951, border #B89841
+  City:     fill #D4943A, border #C4842A
+  Fog:      fill #3A3A4A (drawn as overlay with fogAlpha)
+
+### Fog System
+  - Fog advances every 3 seconds in a "wave"
+  - Each wave: iterate all tiles. A clear/unprotected tile becomes
+    "consumed" if it is adjacent (4-directional) to a consumed tile
+    or is on the outermost edge of the map
+  - Tiles that are "protected" are skipped (fog flows around them)
+  - To create organic edges: each eligible tile has a 70% chance of
+    being consumed per wave (not 100%). This creates an uneven, natural
+    fog boundary. Tiles that resist one wave will likely be consumed the
+    next.
+  - When a tile is consumed:
+      fogAlpha transitions from 0.0 to 1.0 over 0.5 seconds (30 frames
+      at 60fps: increment fogAlpha by ~0.033 per frame)
+  - Fog acceleration: after 3:00 elapsed, wave interval decreases from
+    3.0 seconds to 2.0 seconds. After 4:00, it returns to 3.0 seconds
+    and then stops entirely at 4:40. Last 20 seconds are still.
+
+### Protection System
+  - Cost: 8 ink per tile
+  - Duration: 20 seconds
+  - Visual: golden (#FFD700) 2px inner border, pulsing alpha 0.5 to 1.0
+    with a 1-second tween loop
+  - When timer expires: glow fades out over 1 second, tile returns to
+    "clear" state and becomes vulnerable
+  - Tiles already consumed CANNOT be protected (click does nothing)
+  - Already-protected tiles CAN be re-protected (refreshes the 20s timer,
+    costs 8 ink again)
+
+### Ink System
+  - Max ink: 100
+  - Starting ink: 100 (full)
+  - Cost per protection: 8
+  - Regeneration rate: 3 per second
+  - Display: vertical bar, right edge of screen
+    - Position: x=780, y=20 to y=580 (560px tall)
+    - Width: 15px
+    - Background: #222222 with 1px #444444 border
+    - Fill: from bottom up, height proportional to (currentInk / 100)
+    - Fill color: #3366CC (>50), #CC9933 (25-50), #CC3333 (<25)
+    - Numeric label: above the bar, centered, "INK" in 10px text,
+      and current value "87" in 12px text below it
+
+### Refugees
+  - Implementation: small sprites (6x6 circle, color #E8D4B8)
+  - Spawn trigger: when fog consumes a tile within 3 tiles of a city
+    that hasn't fallen yet, spawn 1-2 refugee dots at the threatened
+    city's tile
+  - Also spawn 1 refugee per wave from any surviving city that has
+    fog within 2 tiles of it (people fleeing preemptively)
+  - Movement: refugees move along road tiles at 1 tile per 1.0 second
+    (40px/sec). They pathfind (simple BFS) to the nearest surviving city
+    along non-consumed road tiles.
+  - If no path exists: refugee stops and is marked "stranded" (dot turns
+    gray but doesn't disappear until fog consumes its tile)
+  - When refugee reaches destination city: dot absorbed with small warm
+    glow particle (3 particles, gold, 200ms), city population += 50
+  - When fog consumes a refugee's tile: dot fades and drifts upward
+    (tween y-15, alpha to 0 over 0.8 seconds), population not added
+  - Cap: max 40 active refugee dots at once (pool and reuse)
+  - Each refugee represents 50 people for the population counter
+
+### Ghost Text
+  - Triggered when a city is consumed by fog
+  - City name displayed at city's grid position
+  - Font: 12px Arial, color #AAAAAA, alpha starts at 0.7
+  - Fades to alpha 0.2 over 5 seconds (tween), then persists
+  - Also shows "...gone" below the name in 9px, same fade behavior
+  - Non-interactive, depth layer above fog but below UI
+
+### HUD / Text Elements
+
+  Top bar:
+    - Background: rectangle x=0 y=0, 800w x 28h, color #000000, alpha 0.4
+    - "People Saved: 0": x=10, y=6, font 13px Arial, color #DDDDDD
+    - "Cities: 5 / 5": x=400, y=6, font 13px Arial Bold, color #FFD700,
+      centered
+    - "2:47": x=750, y=6, font 13px Arial, color #DDDDDD, right-aligned
+    - All HUD text: stroke #000000, strokeThickness 2
+
+  Ink meter (see Ink System above)
+
+  Opening instruction overlay:
+    - Semi-transparent panel: x=200, y=220, 400w x 130h, #000000 alpha 0.7
+    - "The fog is coming." — 20px Arial, #FFFFFF, centered at x=400 y=250
+    - "Click tiles to protect them." — 16px, #CCCCCC, centered at y=278
+    - "Ink is limited." — 16px, #CC9933, centered at y=302
+    - "Click anywhere to begin" — 14px, #AAAAAA, centered at y=330
+    - This overlay is dismissed on first click, which also starts the
+      fog timer
+
+  Ending overlay:
+    - Appears after fog stops + 2 second pause
+    - Large text: "The World That Remains" — 32px Arial, #FFD700,
+      stroke #000 thickness 4, centered at y=100
+    - Stats: 20px Arial, #FFFFFF, centered, starting at y=180:
+        "Land Saved: XX%"
+        "Cities Surviving: X of 5"
+        "People Saved: X of 2,000"
+    - Narrative line: 16px Arial Italic, #CCCCCC, centered at y=340,
+      max width 500px, word-wrapped
+    - "Click to Remember Again": 14px, #AAAAAA, centered at y=520,
+      pulsing alpha
+
+### Input
+  - Left mouse click on a non-consumed, non-mountain, non-river tile:
+    if ink >= 8, protect that tile (cost 8 ink, start 20s timer)
+  - Left mouse click on consumed tile: nothing (subtle "blocked" visual
+    — brief red flash on cursor)
+  - Left mouse click on mountain/river tile: nothing (these are natural
+    barriers, cannot be protected but also resist fog naturally for twice
+    as long — 70% consume chance drops to 35%)
+  - Mouse hover: tile under cursor gets a subtle highlight (white border,
+    20% alpha) to show which tile the player is targeting
+
+### State Variables
+  - grid[20][15]: the full map state (see Map Grid above)
+  - ink: float, starts 100
+  - fogTimer: float, tracks seconds since last fog wave
+  - fogWaveInterval: float, starts 3.0
+  - elapsedTime: float, total seconds since game started
+  - gameDuration: 280 seconds (4:40 active fog + 20s still)
+  - totalPeopleSaved: int, starts with sum of all city pops (2000)
+    — actually, starts at 0 and accumulates from refugees arriving
+    — remaining city populations at end are also counted
+  - citiesAlive: int, starts 5
+  - refugees: array of {col, row, targetCity, path, moveTimer, active}
+  - ghostTexts: array of {text, x, y, alpha}
+  - gamePhase: string (title / instructions / playing / ending / results)
+  - fogActive: boolean
+  - protectedTiles: list of {col, row, timer} for efficient updating
+  - totalLandTiles: int (count of non-consumed tiles at any time)
+  - startingLandTiles: 300 (all tiles)
+
+### Timing
+  - Fog wave interval: 3.0s (phases 1-2), 2.0s (phase 3), 3.0s then
+    stop (phase 4)
+  - Protection duration: 20 seconds per application
+  - Ink regen: 3 units/second (continuous)
+  - Refugee speed: 1 tile per 1.0 second
+  - Fog tile fade: 0.5 seconds (fogAlpha 0 → 1)
+  - Protection glow pulse: 1.0 second cycle (alpha 0.5 → 1.0, yoyo)
+  - Ghost text fade: 0.7 → 0.2 alpha over 5 seconds
+  - Game duration: 4 minutes 40 seconds of fog + 20 seconds still = 5:00
+  - Results appear: 2 seconds after fog stops (at 5:02 effectively)
+
+### Interactions
+
+  PLAYER CLICKS TILE:
+    IF tile.state is "consumed" → do nothing, brief red cursor flash
+    IF tile.terrain is "mountain" or "river" → do nothing
+    IF ink < 8 → do nothing, brief flash on ink meter
+    ELSE:
+      ink -= 8
+      tile.state = "protected"
+      tile.protectionTimer = 20.0
+      add golden glow visual to tile
+      add to protectedTiles tracking list
+
+  FOG WAVE TRIGGERS:
+    FOR EACH tile in grid:
+      IF tile.state is "clear" AND tile is adjacent to consumed tile:
+        roll = random(0, 1)
+        threshold = 0.70 (or 0.35 for mountain/river)
+        IF roll < threshold:
+          consume(tile)
+    // Also consume edge tiles that haven't been consumed yet
+
+  consume(tile):
+    tile.state = "consumed"
+    begin fogAlpha transition 0 → 1 over 0.5s
+    IF tile.terrain is "city":
+      mark city as fallen
+      citiesAlive--
+      create ghost text at tile position
+      any refugees targeting this city must re-pathfind
+    IF tile has a refugee on it:
+      trigger refugee lost animation
+
+  PROTECTION EXPIRES:
+    tile.protectionTimer reaches 0
+    tile.state = "clear" (vulnerable again)
+    fade out golden glow over 1 second
+
+  REFUGEE REACHES CITY:
+    remove refugee from active list
+    city.population += 50
+    totalPeopleSaved += 50
+    warm glow particle at city
+
+  GAME TIMER REACHES 4:40:
+    fogActive = false (no more waves)
+    20 seconds of stillness
+    then transition to results
+
+### Progression
+  There are no levels. One continuous 5-minute experience. The
+  "progression" is the emotional arc: from abundance to scarcity,
+  from strategy to desperation, from control to acceptance.
+  
+  The ending text is procedurally selected:
+
+  IF 5 cities survive:
+    "Against all odds, the world endures. Every road, every field,
+     every home — held against the dark."
+
+  IF 3-4 cities survive:
+    "[City A] and [City B] endure. The roads between them are
+     well-worn with the footsteps of those who made it through.
+     The rest is silence."
+
+  IF 1-2 cities survive:
+    "[City A] stands alone, swollen with the memories of
+     refugees who remember places the map no longer shows."
+
+  IF 0 cities survive:
+    "The fog takes everything. But you tried. The ink stains
+     on your fingers prove that you tried."
+
+
+## 8. Game Flow
+
+1. GAME LOADS:
+   - Phaser initializes: 800x600, arcade physics (gravity 0), no physics
+     needed for most elements — refugees use simple tween/timer movement
+   - BootScene: generate all tile textures (colored squares for each
+     terrain type, fog overlay texture, protection glow texture, refugee
+     dot texture, particle textures)
+   - Transition to GameScene (which handles title and all phases)
+
+2. TITLE DISPLAY (within GameScene):
+   - Draw the full, beautiful map (all tiles rendered in their colors)
+   - Draw city names and dots
+   - Overlay title text: "THE CARTOGRAPHER'S ERASER"
+   - Subtitle: "You cannot save it all."
+   - "Click to Begin" prompt
+   - Player sees the complete map in all its color — this is important.
+     They need to see what they're about to lose.
+   - On click: fade out title text, show instruction overlay
+
+3. INSTRUCTION OVERLAY:
+   - Brief instructions appear over the map
+   - Map is visible behind the semi-transparent panel
+   - On click: dismiss overlay, start fog timer, begin gameplay
+   - gamePhase = "playing"
+
+4. MAIN GAMEPLAY LOOP (per frame):
+   - Update elapsed time
+   - Regenerate ink: ink = min(ink + 3 * delta, 100)
+   - Update fog wave timer:
+       fogTimer += delta
+       IF fogTimer >= fogWaveInterval:
+         triggerFogWave()
+         fogTimer = 0
+   - Update all protection timers:
+       FOR EACH protected tile:
+         timer -= delta
+         IF timer <= 0: expire protection
+   - Update all refugees:
+       FOR EACH active refugee:
+         moveTimer -= delta
+         IF moveTimer <= 0:
+           advance refugee one tile along path
+           moveTimer = 1.0
+           IF refugee reached destination: absorb into city
+           IF refugee's tile is consumed: trigger lost animation
+   - Update fog alpha transitions (for tiles currently fading)
+   - Update HUD text (people saved, cities, timer)
+   - Check if elapsed time >= 280: stop fog
+   - Check if elapsed time >= 300: show results
+
+5. WHEN PLAYER CLICKS (during playing phase):
+   - Determine which grid tile was clicked (col = floor(x/40), row = floor(y/40))
+   - Validate: tile not consumed, not mountain/river, ink >= 8
+   - Apply protection: set state, start timer, subtract ink, add glow
+
+6. FOG WAVE:
+   - Iterate all tiles
+   - For each "clear" tile adjacent to a consumed tile: roll for consumption
+   - First wave also consumes all edge tiles (row 0, row 14, col 0, col 19)
+     that aren't protected
+   - Process all consumptions: trigger fades, city falls, refugee spawns, etc.
+   - After processing: spawn 1-2 refugees from surviving cities near fog
+
+7. GAME END:
+   - At 4:40: fogActive = false, no more waves
+   - At 5:00: gamePhase = "ending"
+   - Fade in golden glow on all surviving tiles (tween alpha 0 → 0.3,
+     duration 1 second)
+   - At 5:02: show results overlay
+     - Calculate final stats:
+       landSaved = count non-consumed tiles / 300 * 100
+       citiesSurviving = count cities with state != consumed
+       peopleSaved = totalPeopleSaved + sum of surviving city populations
+     - Display stats and procedural narrative
+   - gamePhase = "results"
+
+8. RESTART:
+   - On click during results: restart GameScene (full state reset)
+   - Everything reloads: fresh map, full ink, no fog, all cities alive
+
+
+## 9. Pseudocode
+
+### BOOT SCENE
+
+class BootScene:
+  preload():
+    generateTextures()
+
+  generateTextures():
+    // Tile textures — one for each terrain type
+    terrainColors = {
+      plains:   {fill: 0x7CAA5A, border: 0x6B9A4E},
+      forest:   {fill: 0x2D5A27, border: 0x245020},
+      mountain: {fill: 0x7A6B5D, border: 0x6B5C4E},
+      river:    {fill: 0x4A7FB5, border: 0x3D6E9E},
+      road:     {fill: 0xA89070, border: 0x988060},
+      farmland: {fill: 0xC8A951, border: 0xB89841},
+      city:     {fill: 0xD4943A, border: 0xC4842A}
+    }
+
+    FOR EACH terrain, colors in terrainColors:
+      g = createGraphics()
+      g.fillStyle(colors.border)
+      g.fillRect(0, 0, 40, 40)
+      g.fillStyle(colors.fill)
+      g.fillRect(1, 1, 38, 38)
+      // City gets a small inner square "building"
+      IF terrain == "city":
+        g.fillStyle(0xFFDDAA)
+        g.fillRect(14, 14, 12, 12)
+      g.generateTexture('tile_' + terrain, 40, 40)
+      g.destroy()
+
+    // Fog overlay (semi-transparent dark square)
+    g = createGraphics()
+    g.fillStyle(0x3A3A4A)
+    g.fillRect(0, 0, 40, 40)
+    g.generateTexture('fog', 40, 40)
+    g.destroy()
+
+    // Protection glow (golden border, transparent center)
+    g = createGraphics()
+    g.lineStyle(2, 0xFFD700, 1)
+    g.strokeRect(1, 1, 38, 38)
+    g.generateTexture('protection', 40, 40)
+    g.destroy()
+
+    // Refugee dot
+    g = createGraphics()
+    g.fillStyle(0xE8D4B8)
+    g.fillCircle(3, 3, 3)
+    g.generateTexture('refugee', 6, 6)
+    g.destroy()
+
+    // Particle (generic small white dot)
+    g = createGraphics()
+    g.fillStyle(0xFFFFFF)
+    g.fillCircle(3, 3, 3)
+    g.generateTexture('particle', 6, 6)
+    g.destroy()
+
+    // Hover highlight (white border, transparent)
+    g = createGraphics()
+    g.lineStyle(2, 0xFFFFFF, 0.3)
+    g.strokeRect(1, 1, 38, 38)
+    g.generateTexture('hover', 40, 40)
+    g.destroy()
+
+  create():
+    startScene('GameScene')
+
+
+### GAME SCENE
+
+class GameScene:
+
+  MAP_DATA = [
+    // 20x15 2D array of terrain characters (as defined in spec)
+    // P=plains, F=forest, M=mountain, R=river, D=road, A=farmland, C=city
+    // (Full map data from the spec section)
+  ]
+
+  CITY_INFO = [
+    {col:3,  row:2,  name:"Ashenveil",  pop:400},
+    {col:12, row:2,  name:"Willowmere", pop:350},
+    {col:6,  row:9,  name:"Ironhearth", pop:500},
+    {col:4,  row:12, name:"Duskhollow", pop:300},
+    {col:14, row:12, name:"Thornwall",  pop:450}
+  ]
+
+  TERRAIN_MAP = {P:"plains", F:"forest", M:"mountain", R:"river",
+                 D:"road", A:"farmland", C:"city"}
+
+  init():
+    ink = 100
+    fogTimer = 0
+    fogWaveInterval = 3.0
+    elapsedTime = 0
+    totalPeopleSaved = 0
+    citiesAlive = 5
+    gamePhase = "title"
+    fogActive = false
+    protectedTiles = []
+    refugees = []
+    ghostTexts = []
+
+  create():
+    // -- BUILD THE MAP --
+    grid = 2D array [20][15]
+    tileSprites = 2D array [20][15]
+    fogSprites = 2D array [20][15]
+    protectionSprites = 2D array [20][15]
+
+    FOR col = 0 to 19:
+      FOR row = 0 to 14:
+        terrainChar = MAP_DATA[row][col]
+        terrainType = TERRAIN_MAP[terrainChar]
+        x = col * 40 + 20  // center of tile
+        y = row * 40 + 20
+
+        // Create tile sprite
+        tileSprites[col][row] = addImage(x, y, 'tile_' + terrainType)
+
+        // Create fog overlay (initially invisible)
+        fogSprites[col][row] = addImage(x, y, 'fog')
+        fogSprites[col][row].setAlpha(0)
+        fogSprites[col][row].setDepth(10)
+
+        // Create protection overlay (initially invisible)
+        protectionSprites[col][row] = addImage(x, y, 'protection')
+        protectionSprites[col][row].setAlpha(0)
+        protectionSprites[col][row].setDepth(15)
+
+        // Initialize grid data
+        grid[col][row] = {
+          terrain: terrainType,
+          state: "clear",
+          protectionTimer: 0,
+          fogAlpha: 0,
+          cityIndex: -1  // set below for cities
+        }
+
+    // -- CITY LABELS --
+    cityLabels = []
+    cityPopLabels = []
+    FOR EACH city in CITY_INFO:
+      x = city.col * 40 + 20
+      y = city.row * 40 + 20
+      grid[city.col][city.row].cityIndex = indexOf(city)
+
+      nameLabel = addText(x, y - 24, city.name, {
+        font: "11px Arial", color: "#FFFFFF",
+        stroke: "#000000", strokeThickness: 2
+      }).setOrigin(0.5).setDepth(20)
+      cityLabels.push(nameLabel)
+
+      popLabel = addText(x, y + 24, "Pop: " + city.pop, {
+        font: "9px Arial", color: "#DDDDDD",
+        stroke: "#000000", strokeThickness: 2
+      }).setOrigin(0.5).setDepth(20)
+      cityPopLabels.push(popLabel)
+
+    // -- REFUGEE GROUP --
+    refugeeGroup = add.group()
+
+    // -- HOVER HIGHLIGHT --
+    hoverHighlight = addImage(-100, -100, 'hover').setDepth(25)
+
+    // -- HUD --
+    hudBar = addRectangle(400, 14, 800, 28, 0x000000, 0.4).setDepth(50)
+    peopleSavedText = addText(10, 6, "People Saved: 0", {
+      font: "13px Arial", color: "#DDDDDD",
+      stroke: "#000000", strokeThickness: 2
+    }).setDepth(51)
+    citiesText = addText(400, 6, "Cities: 5 / 5", {
+      font: "13px Arial Bold", color: "#FFD700",
+      stroke: "#000000", strokeThickness: 2
+    }).setOrigin(0.5, 0).setDepth(51)
+    timerText = addText(750, 6, "5:00", {
+      font: "13px Arial", color: "#DDDDDD",
+      stroke: "#000000", strokeThickness: 2
+    }).setOrigin(1, 0).setDepth(51)
+
+    // Ink meter
+    inkBarBg = addRectangle(780, 300, 15, 560, 0x222222).setDepth(50)
+    inkBarFill = addRectangle(780, 580, 13, 0, 0x3366CC)
+      .setOrigin(0.5, 1).setDepth(51)
+    inkLabel = addText(780, 15, "INK", {
+      font: "10px Arial Bold", color: "#AAAAAA"
+    }).setOrigin(0.5).setDepth(52)
+
+    // -- TITLE OVERLAY --
+    titleGroup = add.group()
+    titleBg = addRectangle(400, 300, 800, 600, 0x000000, 0.5)
+    titleText = addText(400, 180, "THE CARTOGRAPHER'S ERASER", {
+      font: "36px Georgia", color: "#FFD700",
+      stroke: "#000000", strokeThickness: 5
+    }).setOrigin(0.5)
+    subtitleText = addText(400, 240, "You cannot save it all.", {
+      font: "18px Georgia", color: "#CCCCCC"
+    }).setOrigin(0.5)
+    startText = addText(400, 450, "Click to Begin", {
+      font: "22px Arial", color: "#FFFFFF"
+    }).setOrigin(0.5)
+    addTween(startText, alpha 0.4 to 1.0, yoyo, 800ms loop)
+    titleGroup.addMultiple([titleBg, titleText, subtitleText, startText])
+    titleGroup.setDepth(100)
+
+    // -- INPUT --
+    input.on('pointerdown', onPointerDown)
+    input.on('pointermove', onPointerMove)
+
+
+  onPointerDown(pointer):
+    IF gamePhase == "title":
+      // Dismiss title, show instructions
+      titleGroup.setVisible(false)
+      showInstructions()
+      gamePhase = "instructions"
+      RETURN
+
+    IF gamePhase == "instructions":
+      instructionGroup.setVisible(false)
+      gamePhase = "playing"
+      fogActive = true
+      RETURN
+
+    IF gamePhase == "results":
+      restartScene()
+      RETURN
+
+    IF gamePhase == "playing":
+      col = floor(pointer.x / 40)
+      row = floor(pointer.y / 40)
+      IF col < 0 OR col > 19 OR row < 0 OR row > 14: RETURN
+
+      tile = grid[col][row]
+
+      IF tile.state == "consumed": RETURN
+      IF tile.terrain == "mountain" OR tile.terrain == "river": RETURN
+      IF ink < 8:
+        flashInkMeter()
+        RETURN
+
+      // PROTECT THE TILE
+      ink -= 8
+      tile.state = "protected"
+      tile.protectionTimer = 20.0
+      protectedTiles.push({col: col, row: row})
+
+      // Show protection glow
+      protectionSprites[col][row].setAlpha(0.8)
+      addTween(protectionSprites[col][row], {
+        alpha: 0.5, yoyo: true, repeat: -1, duration: 1000
+      })
+
+
+  onPointerMove(pointer):
+    col = floor(pointer.x / 40)
+    row = floor(pointer.y / 40)
+    IF col >= 0 AND col <= 19 AND row >= 0 AND row <= 14:
+      hoverHighlight.setPosition(col * 40 + 20, row * 40 + 20)
+    ELSE:
+      hoverHighlight.setPosition(-100, -100)
+
+
+  showInstructions():
+    instructionGroup = add.group()
+    panel = addRectangle(400, 270, 400, 140, 0x000000, 0.75)
+    t1 = addText(400, 225, "The fog is coming.", {font: "20px Arial", color: "#FFF"}).setOrigin(0.5)
+    t2 = addText(400, 255, "Click tiles to protect them.", {font: "16px Arial", color: "#CCC"}).setOrigin(0.5)
+    t3 = addText(400, 280, "Ink is limited.", {font: "16px Arial", color: "#CC9933"}).setOrigin(0.5)
+    t4 = addText(400, 315, "Click anywhere to begin", {font: "14px Arial", color: "#AAA"}).setOrigin(0.5)
+    instructionGroup.addMultiple([panel, t1, t2, t3, t4])
+    instructionGroup.setDepth(100)
+
+
+  triggerFogWave():
+    tilesToConsume = []
+
+    FOR col = 0 to 19:
+      FOR row = 0 to 14:
+        tile = grid[col][row]
+        IF tile.state == "consumed" OR tile.state == "protected":
+          CONTINUE
+
+        // Check if on map edge OR adjacent to a consumed tile
+        isEdge = (col == 0 OR col == 19 OR row == 0 OR row == 14)
+        adjacentToFog = false
+
+        FOR EACH neighbor in getNeighbors4(col, row):
+          IF grid[neighbor.col][neighbor.row].state == "consumed":
+            adjacentToFog = true
+            BREAK
+
+        IF isEdge OR adjacentToFog:
+          // Roll for consumption
+          threshold = 0.70
+          IF tile.terrain == "mountain" OR tile.terrain == "river":
+            threshold = 0.35
+          IF random() < threshold:
+            tilesToConsume.push({col, row})
+
+    // Process all consumptions
+    FOR EACH {col, row} in tilesToConsume:
+      consumeTile(col, row)
+
+    // Spawn refugees from surviving cities near fog
+    FOR EACH city in CITY_INFO:
+      IF grid[city.col][city.row].state == "consumed": CONTINUE
+      // Check if fog is within 3 tiles
+      hasFogNearby = false
+      FOR dx = -3 to 3:
+        FOR dy = -3 to 3:
+          nc = city.col + dx
+          nr = city.row + dy
+          IF nc >= 0 AND nc < 20 AND nr >= 0 AND nr < 15:
+            IF grid[nc][nr].state == "consumed":
+              hasFogNearby = true
+      IF hasFogNearby AND refugees.length < 40:
+        spawnRefugee(city.col, city.row, indexOf(city))
+
+
+  consumeTile(col, row):
+    tile = grid[col][row]
+    tile.state = "consumed"
+
+    // Animate fog overlay
+    addTween(fogSprites[col][row], {alpha: 1.0, duration: 500})
+
+    // Stop any protection glow tween
+    tweens.killTweensOf(protectionSprites[col][row])
+    protectionSprites[col][row].setAlpha(0)
+
+    // Check if city
+    IF tile.cityIndex >= 0:
+      cityInfo = CITY_INFO[tile.cityIndex]
+      citiesAlive--
+      // Ghost text
+      x = col * 40 + 20
+      y = row * 40 + 20
+      ghost = addText(x, y, cityInfo.name, {
+        font: "12px Arial", color: "#AAAAAA"
+      }).setOrigin(0.5).setAlpha(0.7).setDepth(12)
+      ghostSub = addText(x, y + 14, "...gone", {
+        font: "9px Arial", color: "#AAAAAA"
+      }).setOrigin(0.5).setAlpha(0.7).setDepth(12)
+      addTween(ghost, {alpha: 0.2, duration: 5000})
+      addTween(ghostSub, {alpha: 0.2, duration: 5000})
+
+      // Hide city labels
+      cityLabels[tile.cityIndex].setVisible(false)
+      cityPopLabels[tile.cityIndex].setVisible(false)
+
+      // Refugees targeting this city need to re-pathfind
+      FOR EACH refugee in refugees:
+        IF refugee.targetCityIndex == tile.cityIndex:
+          rePathfindRefugee(refugee)
+
+    // Check if any refugee is on this tile
+    FOR EACH refugee in refugees:
+      IF refugee.col == col AND refugee.row == row:
+        loseRefugee(refugee)
+
+
+  spawnRefugee(col, row, fromCityIndex):
+    // Find nearest OTHER surviving city via BFS on road tiles
+    target = findNearestSurvivingCity(col, row, fromCityIndex)
+    IF target == null: RETURN  // no reachable city
+
+    path = findPathBFS(col, row, target.col, target.row)
+    IF path == null OR path.length == 0: RETURN
+
+    sprite = refugeeGroup.create(col * 40 + 20, row * 40 + 20, 'refugee')
+    sprite.setDepth(18)
+
+    refugee = {
+      sprite: sprite,
+      col: col, row: row,
+      targetCityIndex: target.index,
+      path: path,
+      pathIndex: 0,
+      moveTimer: 1.0,
+      active: true
+    }
+    refugees.push(refugee)
+
+
+  findNearestSurvivingCity(fromCol, fromRow, excludeIndex):
+    // BFS from (fromCol, fromRow) along non-consumed road/city tiles
+    // Return first city found that isn't excludeIndex and isn't consumed
+    queue = [{col: fromCol, row: fromRow, dist: 0}]
+    visited = set()
+    visited.add(key(fromCol, fromRow))
+
+    WHILE queue is not empty:
+      current = queue.shift()
+      FOR EACH neighbor in getNeighbors4(current.col, current.row):
+        IF visited.has(key(neighbor)): CONTINUE
+        tile = grid[neighbor.col][neighbor.row]
+        IF tile.state == "consumed": CONTINUE
+        IF tile.terrain != "road" AND tile.terrain != "city": CONTINUE
+        visited.add(key(neighbor))
+        IF tile.terrain == "city" AND tile.cityIndex != excludeIndex:
+          RETURN {col: neighbor.col, row: neighbor.row, index: tile.cityIndex}
+        queue.push({col: neighbor.col, row: neighbor.row})
+
+    RETURN null  // no reachable city
+
+
+  findPathBFS(startCol, startRow, endCol, endRow):
+    // Standard BFS pathfinding on road and city tiles, avoiding consumed
+    // Returns array of {col, row} from start to end
+    queue = [{col: startCol, row: startRow, path: []}]
+    visited = set()
+    visited.add(key(startCol, startRow))
+
+    WHILE queue is not empty:
+      current = queue.shift()
+      IF current.col == endCol AND current.row == endRow:
+        RETURN current.path
+
+      FOR EACH neighbor in getNeighbors4(current.col, current.row):
+        IF visited.has(key(neighbor)): CONTINUE
+        tile = grid[neighbor.col][neighbor.row]
+        IF tile.state == "consumed": CONTINUE
+        IF tile.terrain != "road" AND tile.terrain != "city": CONTINUE
+        visited.add(key(neighbor))
+        newPath = current.path.concat([{col: neighbor.col, row: neighbor.row}])
+        queue.push({col: neighbor.col, row: neighbor.row, path: newPath})
+
+    RETURN null  // no path found
+
+
+  rePathfindRefugee(refugee):
+    // Find new target among surviving cities
+    newTarget = findNearestSurvivingCity(refugee.col, refugee.row, -1)
+    IF newTarget == null:
+      // Stranded
+      refugee.sprite.setTint(0x888888)
+      refugee.path = []
+      RETURN
+    refugee.targetCityIndex = newTarget.index
+    newPath = findPathBFS(refugee.col, refugee.row, newTarget.col, newTarget.row)
+    IF newPath == null:
+      refugee.sprite.setTint(0x888888)
+      refugee.path = []
+      RETURN
+    refugee.path = newPath
+    refugee.pathIndex = 0
+
+
+  loseRefugee(refugee):
+    refugee.active = false
+    addTween(refugee.sprite, {
+      y: refugee.sprite.y - 15, alpha: 0, duration: 800,
+      onComplete: () => refugee.sprite.destroy()
+    })
+
+
+  absorbRefugee(refugee, cityIndex):
+    refugee.active = false
+    city = CITY_INFO[cityIndex]
+    city.pop += 50
+    totalPeopleSaved += 50
+    cityPopLabels[cityIndex].setText("Pop: " + city.pop)
+    // Warm glow particle
+    emitParticles(refugee.sprite.x, refugee.sprite.y, 0xFFD700, 3, 200)
+    refugee.sprite.destroy()
+
+
+  flashInkMeter():
+    addTween(inkBarFill, {
+      tint: 0xFF0000, duration: 100, yoyo: true, repeat: 2
+    })
+
+
+  getNeighbors4(col, row):
+    result = []
+    IF col > 0:  result.push({col: col-1, row: row})
+    IF col < 19: result.push({col: col+1, row: row})
+    IF row > 0:  result.push({col: col, row: row-1})
+    IF row < 14: result.push({col: col, row: row+1})
+    RETURN result
+
+
+  showResults():
+    gamePhase = "results"
+
+    // Calculate stats
+    landSaved = 0
+    FOR col = 0 to 19:
+      FOR row = 0 to 14:
+        IF grid[col][row].state != "consumed":
+          landSaved++
+    landPercent = round(landSaved / 300 * 100)
+
+    survivingCities = []
+    FOR EACH city in CITY_INFO:
+      IF grid[city.col][city.row].state != "consumed":
+        survivingCities.push(city)
+        totalPeopleSaved += city.pop  // add remaining city populations
+
+    // Choose narrative text
+    IF survivingCities.length == 5:
+      narrative = "Against all odds, the world endures. Every road, every field, every home — held against the dark."
+    ELSE IF survivingCities.length >= 3:
+      names = survivingCities[0].name + " and " + survivingCities[1].name
+      narrative = names + " endure. The roads between them are well-worn with the footsteps of those who made it through. The rest is silence."
+    ELSE IF survivingCities.length >= 1:
+      narrative = survivingCities[0].name + " stands alone, swollen with the memories of refugees who remember places the map no longer shows."
+    ELSE:
+      narrative = "The fog takes everything. But you tried. The ink stains on your fingers prove that you tried."
+
+    // Display overlay
+    overlay = addRectangle(400, 300, 500, 450, 0x000000, 0.8).setDepth(100)
+
+    addText(400, 110, "The World That Remains", {
+      font: "30px Georgia", color: "#FFD700",
+      stroke: "#000000", strokeThickness: 4
+    }).setOrigin(0.5).setDepth(101)
+
+    addText(400, 190, "Land Saved: " + landPercent + "%", {
+      font: "20px Arial", color: "#FFFFFF"
+    }).setOrigin(0.5).setDepth(101)
+
+    addText(400, 225, "Cities Surviving: " + survivingCities.length + " of 5", {
+      font: "20px Arial", color: "#FFFFFF"
+    }).setOrigin(0.5).setDepth(101)
+
+    addText(400, 260, "People Saved: " + totalPeopleSaved + " of 2,000", {
+      font: "20px Arial", color: "#FFFFFF"
+    }).setOrigin(0.5).setDepth(101)
+
+    narrativeText = addText(400, 350, narrative, {
+      font: "15px Georgia", color: "#CCCCCC",
+      wordWrap: {width: 420}, align: "center"
+    }).setOrigin(0.5).setDepth(101)
+
+    restartPrompt = addText(400, 490, "Click to Remember Again", {
+      font: "14px Arial", color: "#AAAAAA"
+    }).setOrigin(0.5).setDepth(101)
+    addTween(restartPrompt, {alpha: 0.4, yoyo: true, repeat: -1, duration: 800})
+
+
+  update(time, delta):
+    IF gamePhase != "playing": RETURN
+
+    deltaS = delta / 1000
+    elapsedTime += deltaS
+
+    // -- INK REGEN --
+    ink = min(ink + 3 * deltaS, 100)
+    inkFillHeight = (ink / 100) * 540
+    inkBarFill.setSize(13, inkFillHeight)
+    inkBarFill.setPosition(780, 580 - inkFillHeight + inkFillHeight)
+    // Color based on level
+    IF ink > 50: inkBarFill.setFillStyle(0x3366CC)
+    ELSE IF ink > 25: inkBarFill.setFillStyle(0xCC9933)
+    ELSE: inkBarFill.setFillStyle(0xCC3333)
+
+    // -- FOG WAVE TIMING --
+    IF fogActive:
+      // Adjust fog speed based on elapsed time
+      IF elapsedTime < 180:
+        fogWaveInterval = 3.0
+      ELSE IF elapsedTime < 240:
+        fogWaveInterval = 2.0
+      ELSE IF elapsedTime < 280:
+        fogWaveInterval = 3.0
+      ELSE:
+        fogActive = false  // stop at 4:40
+
+      fogTimer += deltaS
+      IF fogTimer >= fogWaveInterval:
+        triggerFogWave()
+        fogTimer = 0
+
+    // -- PROTECTION TIMERS --
+    FOR i = protectedTiles.length - 1 DOWNTO 0:
+      pt = protectedTiles[i]
+      tile = grid[pt.col][pt.row]
+      tile.protectionTimer -= deltaS
+      IF tile.protectionTimer <= 0:
+        tile.state = "clear"
+        tile.protectionTimer = 0
+        tweens.killTweensOf(protectionSprites[pt.col][pt.row])
+        addTween(protectionSprites[pt.col][pt.row], {alpha: 0, duration: 1000})
+        protectedTiles.splice(i, 1)
+
+    // -- REFUGEES --
+    FOR i = refugees.length - 1 DOWNTO 0:
+      ref = refugees[i]
+      IF NOT ref.active:
+        refugees.splice(i, 1)
+        CONTINUE
+      IF ref.path.length == 0: CONTINUE  // stranded
+
+      ref.moveTimer -= deltaS
+      IF ref.moveTimer <= 0:
+        ref.moveTimer = 1.0
+        ref.pathIndex++
+        IF ref.pathIndex >= ref.path.length:
+          // Reached destination
+          absorbRefugee(ref, ref.targetCityIndex)
+          CONTINUE
+        nextStep = ref.path[ref.pathIndex]
+        // Check if next tile is consumed
+        IF grid[nextStep.col][nextStep.row].state == "consumed":
+          // Try to repath
+          rePathfindRefugee(ref)
+          IF ref.path.length == 0: CONTINUE
+          nextStep = ref.path[0]
+          ref.pathIndex = 0
+
+        ref.col = nextStep.col
+        ref.row = nextStep.row
+        // Animate sprite movement
+        addTween(ref.sprite, {
+          x: nextStep.col * 40 + 20,
+          y: nextStep.row * 40 + 20,
+          duration: 900  // slightly less than 1s for smooth motion
+        })
+
+    // -- HUD UPDATES --
+    peopleSavedText.setText("People Saved: " + totalPeopleSaved)
+    citiesText.setText("Cities: " + citiesAlive + " / 5")
+    remaining = max(0, 300 - elapsedTime)
+    minutes = floor(remaining / 60)
+    seconds = floor(remaining % 60)
+    timerText.setText(minutes + ":" + (seconds < 10 ? "0" : "") + seconds)
+
+    // -- CHECK END --
+    IF elapsedTime >= 300:
+      // Golden glow on surviving tiles
+      FOR col = 0 to 19:
+        FOR row = 0 to 14:
+          IF grid[col][row].state != "consumed":
+            addTween(tileSprites[col][row], {alpha: 1.2, duration: 1000})
+            // Or overlay a gold tint
+      delayedCall(2000, showResults)
+      gamePhase = "ending"  // prevent re-triggering
+
+
+### PHASER CONFIG
+
+config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  parent: 'game-container',
+  backgroundColor: '#1A1A2E',
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 0 },
+      debug: false
+    }
+  },
+  scene: [BootScene, GameScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  }
+}
+
+game = new Phaser.Game(config)

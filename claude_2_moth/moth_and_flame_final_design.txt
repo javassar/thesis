@@ -1,0 +1,1461 @@
+================================================================================
+                     MOTH & FLAME (FINAL REVISION)
+                   Complete Game Design Document
+================================================================================
+
+
+################################################################################
+# CRITICAL REVIEW OF REVISED DESIGN (V2)
+################################################################################
+
+The V2 design made a genuine creative leap. The dependency system — where
+every use of artificial light incrementally rewrites the moth's needs,
+perception, and capabilities — is the kind of mechanic that produces player
+insight rather than just illustrating a theme. The four endings, the rain-as-
+withdrawal system, and the perception shifts are all strong. The removal of
+generic filler (bats, wind) showed discipline.
+
+However, the V2 design has four specific shortcomings that limit its impact.
+These aren't cosmetic problems — each represents a missed opportunity to make
+the dependency system's insight DEEPER, not just WIDER.
+
+SHORTCOMING 1: DEPENDENCY IS MATHEMATICAL BUT NOT PHYSICAL.
+
+  The V2 design changes stamina drain rates, recharge multipliers, and visual
+  overlays as dependency rises. These are economic/perceptual changes. But the
+  core physical act — pressing SPACE to flap — feels identical at dependency
+  0.0 and dependency 1.0. The impulse is the same. The interval is the same.
+  The player experiences dependency as "my numbers got worse" rather than "my
+  body feels different."
+
+  Real dependency changes how your body MOVES. An addicted person doesn't just
+  need more substance — their baseline motor state degrades. Hands shake.
+  Coordination falters. The game should make the player feel dependency in
+  their FINGERS, not just in their stamina bar arithmetic.
+
+  FIX: Dependency should alter the flap mechanic itself. At low dependency,
+  flaps are strong, evenly spaced, and efficient (the moth moves with
+  deliberate grace). At high dependency, the flap impulse weakens, the flap
+  interval shortens (the moth flaps frantically for less lift), and horizontal
+  control becomes sluggish. The player has to press SPACE more rapidly and
+  urgently to achieve the same altitude — their input pattern physically
+  changes. This makes dependency tactile.
+
+SHORTCOMING 2: THE WORLD ESCALATES LINEARLY.
+
+  V2's zones escalate in a straight line: more lights, stronger lights, denser
+  lights. This is competent level design but not surprising. The dependency
+  system's best quality is that it makes the SAME object mean different things
+  to different players — but V2 never creates a single dramatic moment that
+  fully exploits this.
+
+  FIX: The Blackout. Midway through Zone 3, every artificial light goes dark
+  simultaneously for a 900px stretch. For low-dependency players, this is
+  relief — peaceful darkness, safe passage, a reward for restraint. For high-
+  dependency players, this is a crisis — no recharge source, dependency still
+  driving elevated stamina drain, mounting panic. The exact same level section
+  is heaven or hell depending on your past choices. ONE scripted event, zero
+  new mechanics, maximum thematic payoff.
+
+SHORTCOMING 3: THE MOTH EXISTS IN A VACUUM.
+
+  The moth is alone in the world. It interacts with lights, moonbeams, and
+  rain — all inert objects. There are no other living things. This is a missed
+  opportunity because dependency is fundamentally RELATIONAL. It changes not
+  just what you need but what you become to others.
+
+  FIX: Other moths. Small NPC moth silhouettes appear throughout the world in
+  three states: (a) healthy moths gliding freely near moonbeams, (b) trapped
+  moths spiraling endlessly around lights, and (c) — the key addition —
+  follower moths that are attracted to the PLAYER once the player's dependency
+  glow becomes bright enough. At dependency > 0.4, the player's warm glow
+  starts attracting 1-3 nearby NPC moths that trail behind them. These
+  followers are harmless but visible. When the player gets mesmerized, the
+  followers spiral into the same light too. The player watches them get
+  trapped because they followed you. This costs the player nothing
+  mechanically — but emotionally, it reframes the stakes. You're not just
+  managing your own dependency anymore. Your warm glow — the symptom of your
+  dependency — has become something other creatures mistake for safety.
+
+SHORTCOMING 4: THE ENDING TELLS YOU NUMBERS. IT SHOULD SHOW YOU YOUR PATH.
+
+  The V2 ending screen displays stats: dependency percentage, time in light,
+  time in moonlight. These are data points. They don't create a visceral
+  confrontation with your choices.
+
+  FIX: Flight Path Visualization. The ending screen renders the moth's actual
+  trajectory through the world as a thin line. The line is colored by what the
+  moth was doing at each point: cool blue when in moonlight or open air, warm
+  amber when near artificial light, bright gold when mesmerized. A low-
+  dependency player sees a mostly-blue line with a few amber detours —
+  a clean, purposeful ascent. A high-dependency player sees a line that is
+  mostly amber, with long horizontal detours toward lights, tight spiral
+  loops at mesmerize points, and a final stretch that either barely reaches
+  the moon or curves downward. The shape of your flight IS the shape of your
+  dependency. No numbers needed — the picture tells the story.
+
+
+WHAT THIS REVISION CHANGES:
+  - Adds dependency-scaled flap physics (impulse, interval, drag)
+  - Adds the Blackout event in Zone 3
+  - Adds NPC moths (free, trapped, and follower types)
+  - Adds flight path recording and visualization on the ending screen
+  - All other V2 systems (dependency, rain, mesmerize, perception shifts,
+    four endings) remain intact
+
+WHAT THIS REVISION DOES NOT DO:
+  - Does not add new resource types, UI elements, or control schemes
+  - Does not change the 5-minute playtime or the core
+    flap/steer/approach/avoid loop
+  - Does not add scope that would make implementation unreasonable
+  Each addition is mechanically simple (tweaking existing constants,
+  spawning a few sprite followers, drawing a polyline) but thematically
+  significant.
+
+
+################################################################################
+# STAGE 1: GAME DESIGN (FINAL)
+################################################################################
+
+
+## 1. Title & Hook
+
+Title: Moth & Flame
+
+One-sentence pitch: A moth flies toward the moon, but every light it
+touches rewires its need for more — and the smaller moths that start
+following your glow don't know what they're following you into.
+
+
+## 2. Core Insight
+
+Central question: At what point does a choice stop being a choice — and
+when do your choices start making choices for others?
+
+The V2 design asked the first half of this question. This revision adds
+the second. Dependency doesn't just change your relationship to a substance.
+It changes your relationship to the people (or creatures) around you. The
+moth's growing glow — the physical symptom of its dependency — becomes a
+beacon that other moths follow. Your sickness looks like warmth to them.
+
+The flight path visualization adds a final layer: the player doesn't just
+experience their dependency in the moment. At the end, they see its entire
+shape laid out as a drawing — the literal trajectory of every choice.
+Numbers are abstract. A picture of your own wandering, looping, desperate
+path is not.
+
+
+## 3. Mechanic-Theme Integration
+
+All V2 systems remain. Four additions:
+
+PHYSICAL DEPENDENCY (flap degradation):
+  At dependency 0.0, the moth flaps with a strong impulse (-120 px/sec)
+  at a comfortable interval (150ms) with responsive horizontal control.
+  The player presses SPACE in a relaxed rhythm and the moth rises
+  gracefully. At dependency 1.0, the flap impulse weakens to -70 px/sec,
+  the interval shortens to 90ms (the moth flaps frantically for less
+  lift), and horizontal drag increases (steering feels sluggish, heavy).
+  The player must press SPACE much more urgently and frequently to
+  maintain altitude, and steering becomes loose and imprecise.
+
+  This means the player's INPUT PATTERN changes with dependency. At low
+  dependency, playing the game feels calm and controlled. At high
+  dependency, it feels frantic — the player is physically mashing SPACE
+  harder and more often, mirroring the moth's desperation. The dependency
+  is in their hands, not just on screen.
+
+THE BLACKOUT:
+  At y=4400 (midway through Zone 3), all artificial lights in a 900px
+  vertical band (y 4400 to y 3500) are absent. No streetlamps, no neon,
+  no bonfires. Just darkness, with one moonbeam placed at x=400, y=4000.
+
+  For low-dependency players (dep < 0.3): The blackout is a sanctuary.
+  Stamina drain is low, the moonbeam works fully, and the absence of pull
+  forces makes navigation easy. It feels like a clearing in a dense
+  forest — a moment to breathe.
+
+  For high-dependency players (dep > 0.5): The blackout is terrifying.
+  Stamina drain is high, the moonbeam barely works, there are no lights
+  to refuel from, and the player watches their stamina bar drop with
+  nothing they can do. If they had follower moths, the followers scatter
+  in confusion (no glow to follow). The player may stall in this section.
+
+  The blackout requires ZERO new mechanics. It's a level design choice
+  that exploits the dependency system to create dramatically different
+  player experiences from the same space.
+
+NPC MOTHS:
+  Small moth silhouettes (~12x8px, slightly transparent) exist in three
+  behavioral states:
+
+  FREE MOTHS: 6-8 scattered through Zones 1-2, drifting gently upward
+  near moonbeams. They pulse a cool blue-white. They don't interact with
+  the player. They're ambient — a reminder that the moon is the natural
+  destination and that flight can look peaceful. If the player is near a
+  moonbeam with a free moth, both moth and player recharge side by side.
+
+  TRAPPED MOTHS: 4-6 in Zones 2-3, perpetually orbiting artificial
+  lights in slow, endless spirals. They glow warm amber. They are
+  visual cautionary tales — the player sees what mesmerize looks like
+  from the outside and recognizes the pattern.
+
+  FOLLOWER MOTHS: When the player's dependency exceeds 0.4, their warm
+  glow becomes bright enough to attract nearby free moths. Any free moth
+  within 200px begins drifting toward the player and following them at a
+  distance of 40-60px. They trail behind like ducklings. This happens
+  silently — no announcement, no UI change. The player simply notices
+  small shapes following them.
+
+  Followers have consequences:
+    - When the player is mesmerized, all current followers are pulled
+      into the same light and begin orbiting it permanently. They become
+      trapped moths. The player watches this happen during the mesmerize
+      spiral. After the player is ejected, the followers remain — they
+      don't get ejected. They're stuck.
+    - When the player enters the blackout zone, followers lose their
+      attraction source and scatter randomly, drifting away in confused
+      patterns. If the player emerges on the other side still glowing,
+      nearby moths may re-attach.
+    - When the player enters rain, followers don't follow into the rain
+      column (rain repels the small moths). They hover outside, waiting.
+      If the player's dependency drops below 0.4 while in rain, they
+      don't re-attach when the player exits — the player's glow is no
+      longer bright enough. The followers drift away freely. This is a
+      quiet, beautiful moment: letting go.
+    - At the ending screen, the number of moths still following vs.
+      trapped is shown. A low-dependency player might reach the moon
+      with no followers (never attracted any) or with freed followers
+      (entered rain, lost them to freedom). A high-dependency player
+      might have left a trail of trapped moths at every light they
+      got mesmerized at.
+
+  Followers add no mechanical difficulty and require no new player input.
+  They are purely a mirror — a way for the player to see the external
+  consequences of their internal state.
+
+FLIGHT PATH RECORDING AND VISUALIZATION:
+  Throughout gameplay, the moth's position is recorded every 200ms as a
+  data point: {x, y, state}. State is one of: NEUTRAL (cool blue),
+  NEAR_LIGHT (warm amber), MESMERIZED (bright gold), IN_MOONBEAM (pale
+  silver), IN_RAIN (gray-blue). This produces roughly 1500 data points
+  over 5 minutes.
+
+  On the ending screen, after the text appears but before the stats,
+  the flight path draws itself as an animated polyline — starting from
+  the bottom and tracing upward. Each segment is colored by its state.
+  The line draws at ~10x real speed (30 seconds of path per 3 seconds
+  of animation). The player watches their entire journey replay as a
+  shape.
+
+  Characteristics of different paths:
+    - Low-dependency path: mostly vertical, cool-toned, with small
+      lateral deviations toward moonbeams. Clean, direct, intentional.
+    - High-dependency path: wandering laterally toward lights,
+      with tight spiral loops at mesmerize points (gold circles),
+      long horizontal detours, and possibly a downward curve at the end
+      if the player failed in Zone 4.
+    - Medium path: a mix — some clean sections, some warm detours.
+      The contrast between sections tells its own story.
+
+  The path visualization is the game's final statement. No text is
+  needed to explain it. The player sees what their choices looked like
+  from above and draws their own conclusions.
+
+
+## 4. Player Journey
+
+Opening (0:00 - 0:30):
+  The screen is dark and cool. A moth appears at the bottom. The moon
+  glows distantly at the top. A streetlamp glows nearby; a moonbeam
+  slants down a bit further away. Near the moonbeam, two small free
+  moths drift upward peacefully, glowing cool blue.
+
+  The prompt reads: "Reach the moon. SPACE to flap. Arrows to steer."
+
+  The player's flaps feel strong and deliberate. The moth rises
+  gracefully. Most players go to the streetlamp first (it's closer,
+  brighter). Some notice the free moths near the moonbeam and follow
+  them. Either choice works. Dependency is at zero. Everything feels
+  clean and controlled.
+
+Discovery (0:30 - 1:30):
+  Zone 1. Scattered lights and moonbeams. Free moths drift near
+  moonbeams. The player ascends, managing stamina, learning the
+  pull-and-retreat rhythm around lights.
+
+  Players who use lights notice a subtle warmth creeping into the
+  screen edges (dependency vignette). Their flaps still feel strong.
+  They might notice that moonbeams feel slightly less effective than
+  they did 30 seconds ago — or they might not. The shift is gentle.
+
+  By the top of Zone 1, a light-using player might be at dependency
+  0.15-0.25. A moonbeam-favoring player might be at 0.05-0.10.
+  The free moths near moonbeams serve as a gentle visual suggestion:
+  those moths look peaceful. You could be doing what they're doing.
+
+Reckoning (1:30 - 3:00):
+  Zone 2. Stronger lights. The "no moonbeam stretch" — a 1200px
+  section with only artificial lights. A trapped moth orbits one of
+  the neon signs, endlessly circling. The player recognizes this
+  behavior from their own mesmerize experiences (if they've had one).
+
+  Players with moderate dependency feel their flaps getting slightly
+  weaker. They have to flap a bit more often. Steering is a touch
+  less crisp. The change is subtle but accumulating. The stamina arc
+  is harder to keep full.
+
+  THE FOLLOWER MOMENT (dependency > 0.4): For players who've used
+  lights liberally, their moth's glow has become warm and bright. A
+  nearby free moth pauses its drift toward a moonbeam and turns
+  toward the player instead. It begins following. Then another. The
+  player hasn't done anything new — they just notice small shapes
+  trailing behind them. No announcement. No UI popup. Just company.
+
+  Rain appears: two columns in Zone 2. The player can choose to
+  enter the rain — it's slow and dim and uncomfortable. If they do
+  and dependency drops below 0.4, any followers quietly drift away
+  when the player exits. If the player doesn't enter rain, followers
+  persist.
+
+  After the dry stretch, a moonbeam appears. Low-dependency players
+  feel relief. High-dependency players watch their stamina bar crawl
+  upward slowly, painfully, while the moonbeam that used to feel like
+  a full reset now barely helps.
+
+Climax (3:00 - 4:15):
+  Zone 3. Dense lights. More trapped moths orbiting neon signs and
+  spotlights. A bonfire with a very strong pull has two trapped moths
+  circling it — a warning.
+
+  Players at high dependency are now flapping frantically — SPACE is
+  being pressed nearly twice as fast as it was at the start, and the
+  moth rises with small, desperate jolts rather than confident beats.
+  Steering is sluggish. The warm vignette is noticeable. Lights look
+  larger and more inviting. Moonbeams are dim. The player's follower
+  moths trail behind.
+
+  If the player gets mesmerized here, their followers spiral into the
+  light too. The player watches helplessly during the 3-4 second
+  mesmerize — their moth orbiting contentedly, the follower moths
+  pulled in and trapped. When the player is ejected, the followers
+  stay. They're stuck now. The player emerges alone, or with fewer
+  companions. This is the moment that transforms the game from a
+  personal challenge into something that weighs on you.
+
+  THE BLACKOUT (y 4400 to 3500): All lights go dark. One moonbeam at
+  x=400, y=4000.
+
+  Low-dependency player: Breathes. Glides through darkness. The
+  moonbeam refuels them. Their few followers (if any) drift peacefully.
+  The silence is welcome. They emerge ready for Zone 4.
+
+  High-dependency player: Panic. Stamina dropping, no recharge source
+  that works, flapping desperately but weakly. Followers scatter,
+  confused — the player's glow is the only light, and it's not enough.
+  The player may stall in the blackout. May drift down. The moonbeam
+  at y=4000 is their last hope — but at high dependency it barely
+  helps. If they make it through, they emerge shaken and alone.
+
+  After the blackout, the last rain column (y 4800 to 4000) appears
+  just before it — the last chance to recover before the gauntlet.
+
+Resolution (4:15 - 5:00):
+  Zone 4. No lights. Only moonlight. The test.
+
+  Low dependency (< 0.3): Moonlight fills the moth. Flaps are strong.
+  Rising toward the moon feels effortless and earned. If free moths
+  are nearby, they rise alongside the player — companions in the
+  moonlight. The ascent is quiet and beautiful. The warm vignette is
+  barely there. The moon is vivid.
+
+  Medium dependency (0.3 - 0.6): Tense. Stamina dips. Flaps are
+  noticeably weaker than they were at the start. The player has to
+  be conservative — minimal flapping, coasting on momentum. They make
+  it, but it's not peaceful. Any followers are watching, trailing.
+
+  High dependency (> 0.6): Desperate. Flaps are frantic and weak.
+  Stamina drains faster than moonlight can fill. The moon appears dim
+  and washed-out through the warm haze. The player may barely scrape
+  through with perfect play. Or they stall, momentum exhausted, and
+  begin to drift downward.
+
+Endings:
+  The screen transitions based on outcome and dependency. Then:
+
+  The flight path draws itself. The player watches their journey
+  rendered as a colored line — every detour toward a light, every
+  mesmerize spiral, every stretch of clean moonlit flight. The shape
+  of their dependency made visible.
+
+  Stats appear below the path:
+    Dependency: [X]%
+    Moths still following: [X]
+    Moths lost to lights: [X]
+    Time in artificial light / moonlight / rain
+
+  End text (same four variants as V2):
+    Low dep: "You found the moon."
+    Medium dep: "You reached the moon." / "It was enough."
+    High dep (reached): "The moon was not what you remembered."
+    Failed: "You looked for the moon." /
+            "It looked different than you remembered."
+
+
+## 5. Game Elements
+
+PLAYER CHARACTER — THE MOTH:
+  Identical to V2 visuals (body #d4c5a9, wing color shifts cool-to-warm
+  with dependency, glow radius increases with dependency).
+
+  NEW — DEPENDENCY-SCALED PHYSICS:
+    Flap impulse: lerp(-120, -70, dependency) px/sec
+      At dep 0.0: -120 (strong, confident lift)
+      At dep 1.0: -70 (weak, barely effective)
+    Flap interval: lerp(0.15, 0.09, dependency) sec
+      At dep 0.0: 150ms (relaxed rhythm)
+      At dep 1.0: 90ms (frantic mashing)
+    Horizontal drag: lerp(0.88, 0.78, dependency)
+      At dep 0.0: 0.88 (responsive, crisp steering)
+      At dep 1.0: 0.78 (sluggish, floaty, imprecise)
+    Flap stamina cost: lerp(1.5, 1.0, dependency)
+      At dep 0.0: 1.5 per flap (each strong flap costs more)
+      At dep 1.0: 1.0 per flap (cheap but weak)
+
+    The NET effect: at high dependency, the player gets less altitude
+    per unit of stamina spent (weaker impulse) even though individual
+    flaps are cheaper. They flap more often, spend stamina faster in
+    aggregate, and have less directional control. This makes flight feel
+    physically degraded — not just economically worse.
+
+ARTIFICIAL LIGHTS:
+  Identical to V2 (five types with escalating pullRadius, pullStrength,
+  coreRadius, baseRecharge, depRate). Perception scaling with dependency
+  (lights appear 30% larger and 40% brighter at dep 1.0).
+
+  NEW — BLACKOUT ZONE: Between y=4400 and y=3500, NO artificial lights
+  are placed. This is a gap in the Zone 3 light layout. One moonbeam at
+  x=400, y=4000 is the only light source.
+
+MOONBEAMS:
+  Identical to V2 (recharge = 20 * (1.0 - dependency), visual dimming
+  with dependency).
+
+RAIN:
+  Identical to V2 (speed reduction, gravity increase, dependency
+  decrease at 0.012/sec). NEW: NPC moths will not enter rain columns.
+  Followers hover outside.
+
+NPC MOTHS (NEW):
+  Visual: 12x8px sprites. Generated programmatically. Body is a small
+  circle (3px), wings are two small ellipses (5x4px each).
+
+  Three behavioral types:
+
+  FREE MOTHS:
+    Color: #aabbcc (cool blue-gray), alpha 0.6
+    Count: 8 total (5 in Zone 1, 3 in Zone 2)
+    Behavior: Drift slowly upward at 5 px/sec with gentle horizontal
+      sine-wave oscillation (amplitude 30px, period 4 sec). Positioned
+      near moonbeams (within 100px). They don't interact with lights.
+    Player interaction: If player dependency > 0.4 AND free moth is
+      within 200px of player, the free moth transitions to FOLLOWER.
+
+  TRAPPED MOTHS:
+    Color: #cc9955 (warm amber), alpha 0.5
+    Count: 6 total (2 in Zone 2, 4 in Zone 3)
+    Behavior: Orbit a specific light source perpetually at that light's
+      coreRadius, angular speed 1.5π rad/sec. Never leave.
+    Player interaction: None. Purely visual. They serve as mirrors —
+      the player sees what mesmerize looks like from outside.
+
+  FOLLOWER MOTHS:
+    Color: transitions from #aabbcc to #cc9955 as they follow longer
+    Count: variable (converted from free moths when player dep > 0.4)
+    Alpha: 0.5
+    Behavior: Track toward player position with a soft follow (lerp
+      toward player at 0.03/frame, maintaining 40-60px distance).
+      Gentle trailing formation. They don't block or hinder the player.
+    Events:
+      MESMERIZE: When player is mesmerized, all followers within 150px
+        of the mesmerize light are pulled in. They orbit the light and
+        become TRAPPED permanently. Animation: 500ms tween from current
+        position to orbit radius, then perpetual orbit.
+      BLACKOUT: Followers lose attraction if no light sources are within
+        300px (the player's glow isn't bright enough without nearby
+        ambient light to sustain the attraction). They scatter: each
+        picks a random direction and drifts at 20 px/sec for 3 seconds,
+        then resumes free behavior.
+      RAIN: Followers don't enter rain columns. They hover at the
+        column boundary. If player dependency drops below 0.4 while in
+        rain, followers revert to FREE when player exits.
+      ZONE 4: Followers that survive to Zone 4 drift alongside the
+        player toward the moon.
+    Tracking stat: mothsFollowing (current count), mothsTrapped
+      (cumulative count lost to lights).
+
+THE MOON:
+  Identical to V2 (position, glow, dependency-scaled perception).
+
+ENVIRONMENT & VISUAL STYLE:
+  Identical to V2 (parallax silhouettes, dependency-driven color
+  palette shift, zone-based backgrounds).
+
+  NEW — BLACKOUT ZONE VISUAL: In the y 4400-3500 band, silhouettes
+  are darker (#080810) and the background is slightly darker than
+  surrounding Zone 3 areas. This creates a visible "gap" in the
+  cityscape — like a section of city with no power.
+
+FLIGHT PATH RECORDER (NEW):
+  An array that stores position snapshots every 200ms:
+    { x: moth.x, y: moth.y, state: currentState }
+  States:
+    NEUTRAL = 0 (open air, no light source), color: #5566aa
+    NEAR_LIGHT = 1 (inside any artificial light's pull radius), color: #cc8844
+    MESMERIZED = 2 (during mesmerize spiral), color: #ffcc22
+    IN_MOONBEAM = 3 (inside moonbeam), color: #99aacc
+    IN_RAIN = 4 (inside rain column), color: #667788
+  Over 5 minutes at 5 samples/sec = ~1500 data points. Stored in a
+  simple array. No performance concern.
+
+ENDING SCREEN FLIGHT PATH DISPLAY (NEW):
+  The full world height (12000px) is mapped to a vertical strip on the
+  ending screen. Strip dimensions: 200px wide, centered horizontally at
+  x=400, vertical range y=80 to y=450 on the 600px canvas.
+
+  Mapping: world y 11400 → screen y 450, world y 200 → screen y 80.
+  World x 0-800 → screen x 300-500.
+
+  The path draws itself as an animated polyline: segments appear
+  sequentially at 10x speed (~30 seconds of gameplay per 3 seconds of
+  drawing, total animation ~10 seconds). Each segment is a 1.5px line
+  colored by state.
+
+  Mesmerize points (state == MESMERIZED) are drawn as small circles
+  (radius 4px, gold) at the mesmerize location, making spiral events
+  visible as distinct markers.
+
+  The path draws behind a semi-transparent overlay so text remains
+  readable. Path alpha: 0.7.
+
+UI ELEMENTS:
+  Identical to V2: stamina arc (follows moth), dependency vignette
+  (screen border), altitude indicator (right edge).
+
+  NEW — on ending screen: flight path visualization as described above,
+  plus two new stat lines:
+    "Moths still following: [X]"
+    "Moths lost to lights: [X]"
+
+SCREENS:
+  Title screen: Identical to V2 ("Moth" in blue, "&" in white, "Flame"
+  in amber, moth silhouette and light illustration).
+
+  Game screen: Identical to V2 plus NPC moths as ambient elements.
+
+  Ending screens: Same four text variants as V2 (clean, mixed,
+  dependent, failed). NEW: flight path visualization draws after title
+  text appears (2 second delay, 10 second draw animation). Stats fade
+  in after path finishes drawing.
+
+
+## 6. Rules & Systems
+
+MOVEMENT (REVISED):
+  Gravity: 30 px/sec² (constant).
+  Flap impulse: lerp(-120, -70, dependency) px/sec.
+  Flap interval: lerp(0.15, 0.09, dependency) sec.
+  Flap stamina cost: lerp(1.5, 1.0, dependency).
+  Horizontal target speed: 180 px/sec.
+  Horizontal drag: lerp(0.88, 0.78, dependency).
+  Max velocity: 200 px/sec horizontal, 250 px/sec vertical.
+  Low-stamina horizontal multiplier: 0.6.
+  Rain speed multiplier: 0.7.
+  Rain gravity multiplier: 1.5.
+
+STAMINA:
+  Identical to V2. Range 0-100, base drain = 2 + dependency*6,
+  passive regen 0.5/sec, moonbeam regen = 20*(1-dependency),
+  light recharge = baseRecharge * (0.5 + dependency*0.5).
+
+DEPENDENCY:
+  Identical to V2. Range 0.0-1.0, increases near lights (at depRate),
+  increases 2x during mesmerize, decreases only in rain (0.012/sec).
+  NEW EFFECTS on flap impulse, flap interval, flap cost, and
+  horizontal drag (see Movement above).
+
+ARTIFICIAL LIGHT INTERACTION:
+  Identical to V2 (pull force, recharge, dependency increase,
+  mesmerize trigger at core radius).
+
+MOONBEAM INTERACTION:
+  Identical to V2 (recharge scaled by 1-dependency, no pull, no
+  dependency change).
+
+RAIN INTERACTION:
+  Identical to V2 (speed reduction, gravity increase, dependency
+  decrease). NEW: NPC follower moths do not enter rain columns.
+
+MESMERIZE:
+  Duration: 2.0 + dependency*2.0 seconds (identical to V2).
+  NEW: All follower moths within 150px of the light are converted
+  to TRAPPED moths (begin orbiting, never leave).
+
+NPC MOTH RULES:
+  Free moths:
+    - Drift upward at 5 px/sec, sine-wave horizontal (amp 30, period 4s)
+    - Convert to FOLLOWER if player dependency > 0.4 and within 200px
+    - Conversion is one-way: once a follower, cannot revert to free
+      EXCEPT via rain (see below)
+  Follower moths:
+    - Track toward player: position lerps toward player at 0.03/frame
+    - Maintain 40-60px distance (don't stack on player)
+    - If player mesmerized and follower within 150px of that light:
+        follower → TRAPPED (permanent)
+    - If player in blackout zone (no lights within 300px):
+        followers scatter (random drift 20px/sec, 3 sec), become free
+    - If player in rain: followers don't enter rain column.
+        If player dep drops below 0.4 while in rain:
+          on exit, followers revert to FREE (drift away)
+    - Max followers at once: 3 (additional free moths don't convert)
+  Trapped moths:
+    - Orbit assigned light at coreRadius, 1.5π rad/sec
+    - Never leave. Permanent. Visual reminder.
+
+BLACKOUT ZONE:
+  Y range: 4400 to 3500. No artificial lights placed in this range.
+  One moonbeam at x=400, y=4000. NPC followers scatter on entry.
+  All other rules unchanged — the blackout is purely a LEVEL DESIGN
+  decision, not a new mechanic.
+
+FLIGHT PATH RECORDING:
+  Record moth position every 200ms (5 Hz). Store: x, y, state enum.
+  State determined each sample by priority:
+    1. If isMesmerized → MESMERIZED
+    2. If inRain → IN_RAIN
+    3. If insideAnyMoonbeam → IN_MOONBEAM
+    4. If insideAnyLightPullRadius → NEAR_LIGHT
+    5. Else → NEUTRAL
+
+WORLD STRUCTURE (REVISED):
+  Total height: 12000 px. Moth starts y=11400. Moon at y=200.
+
+  Zone 1 (y 11400-9200): 5 streetlamps, 3 porch lights, 5 moonbeams,
+    5 free moths (near moonbeams), 0 trapped moths, no rain.
+
+  Zone 2 (y 9200-6200): 6 porch lights, 4 neon signs, 2 bonfires,
+    3 moonbeams, 3 free moths (near moonbeams), 2 trapped moths
+    (orbiting neon signs), 2 rain columns.
+    "Dry stretch" (y 8000-6800): no moonbeams, only artificial lights.
+
+  Zone 3 (y 6200-2600): 5 neon signs, 3 spotlights, 8 window-cluster
+    lights (streetlamp type), 2 moonbeams, 0 free moths, 4 trapped
+    moths (orbiting various lights), 1 rain column (y 4800-4000).
+    BLACKOUT (y 4400-3500): no lights, 1 moonbeam at x=400 y=4000.
+    NOTE: Rain column (4800-4000) slightly overlaps the top of the
+    blackout zone, giving the player a chance to reduce dependency
+    immediately before entering the dark stretch.
+
+  Zone 4 (y 2600-0): No lights. No rain. Moonlight only.
+    Ambient moon regen: 15 * (1 - dependency) per sec.
+    Any surviving followers ascend alongside the player.
+
+WIN / FAIL CONDITIONS:
+  Identical to V2.
+  Win: moth y < 350. Ending based on dependency.
+  Fail: Zone 4, stamina 0, moth drifts below y=3000.
+
+
+################################################################################
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+################################################################################
+
+
+## 7. Technical Specification
+
+All V2 specifications remain unless noted as REVISED or NEW below.
+
+**DISPLAY**
+  Identical to V2: 800x600, #0a0a1a background, Phaser.Scale.FIT.
+
+**WORLD DIMENSIONS**
+  Identical to V2: 12000 height, 800 width, start y=11400, moon y=200.
+
+**DEPTH LAYERS (REVISED)**
+  BACKGROUND_STARS: 0
+  SILHOUETTES: 5
+  MOON_GLOW: 8
+  MOONBEAMS: 10
+  RAIN_BG: 12
+  LIGHT_GLOWS: 15
+  LIGHT_CORES: 20
+  NPC_MOTHS: 22        // NEW
+  RAIN_DROPS: 25
+  MOTH_TRAIL: 35
+  MOTH_GLOW: 39
+  MOTH: 40
+  STAMINA_ARC: 41
+  DEP_VIGNETTE: 90
+  ALTITUDE_BAR: 95
+  FLIGHT_PATH: 85      // NEW (ending screen only)
+
+**MOTH (REVISED — dependency-scaled physics)**
+  Visual: identical to V2.
+  Physics body: circle, radius 6.
+
+  Movement constants (NOW DYNAMIC):
+    FLAP_IMPULSE = lerp(-120, -70, dependency)
+    FLAP_INTERVAL = lerp(0.15, 0.09, dependency)
+    FLAP_COST = lerp(1.5, 1.0, dependency)
+    H_DRAG = lerp(0.88, 0.78, dependency)
+
+  Static constants (unchanged):
+    GRAVITY: 30 px/sec²
+    H_SPEED: 180 px/sec
+    MAX_VX: 200, MAX_VY: 250
+    LOW_STAMINA_SPEED_MULT: 0.6
+
+**STAMINA CONSTANTS**
+  Identical to V2.
+
+**DEPENDENCY CONSTANTS**
+  Identical to V2 base values. NEW effects:
+    Flap impulse scaling: lerp(-120, -70, dep)
+    Flap interval scaling: lerp(0.15, 0.09, dep)
+    Flap cost scaling: lerp(1.5, 1.0, dep)
+    H-drag scaling: lerp(0.88, 0.78, dep)
+
+**LIGHT DEFINITIONS**
+  Identical to V2 (5 types, same params).
+  NEW: No lights placed in y range 4400-3500 (blackout zone).
+
+**LIGHT PLACEMENT (REVISED)**
+  Zone 1 (y 11400-9200) — same as V2:
+    streetlamp: (200,11000), (600,10800), (350,10400), (550,10000), (150,9600)
+    porch: (450,10600), (700,10200), (300,9400)
+
+  Zone 2 (y 9200-6200) — same as V2:
+    porch: (200,9000), (500,8800), (650,8400), (300,7400), (450,7000), (350,6400)
+    neon: (350,8200), (150,7800), (600,7200), (200,6800)
+    bonfire: (500,7600), (650,6600)
+
+  Zone 3 (y 6200-2600) — REVISED (blackout gap):
+    neon: (200,6000), (350,5500), (650,5200), (450,4600), (300,3200)
+    spotlight: (500,5800), (150,4900), (600,3400)
+    streetlamp clusters: (100,5600), (700,5400), (250,5100), (550,4800),
+      (400,4500), (150,3100), (650,2900), (350,2700)
+    NOTE: No lights between y=4400 and y=3500.
+
+**MOONBEAM PLACEMENT (REVISED)**
+  Zone 1: x/yTop = (150,11100), (650,10700), (300,10300), (550,9900), (400,9500)
+  Zone 2: (350,9100), (600,8600), (200,6500)
+  Zone 3: (100,5300), (720,3600)
+  BLACKOUT moonbeam: (400,4000) — inside blackout zone, the only light source.
+
+**RAIN COLUMNS**
+  Identical to V2:
+    Zone 2: (x=200, y 8500-7900), (x=600, y 7400-6800)
+    Zone 3: (x=400, y 4800-4000) — overlaps top of blackout zone
+
+**NPC MOTH DEFINITIONS (NEW)**
+
+  Texture: 'npcMoth', 12x8px. Generated in BootScene:
+    Small circle body (2px radius), two ellipse wings (4x3px each).
+    Base color: #aabbcc (recolored via setTint).
+
+  Free moths (initial placement):
+    Zone 1 (5):
+      (160,11050), (640,10650), (310,10250), (540,9850), (410,9450)
+      Each positioned ~50px from its nearby moonbeam.
+    Zone 2 (3):
+      (360,9050), (590,8550), (210,6450)
+    Total: 8 free moths.
+    Behavior params: driftSpeed 5 px/sec upward, sineAmplitude 30px,
+      sinePeriod 4 sec (each moth gets random phase offset 0-2π).
+
+  Trapped moths (initial placement):
+    Zone 2 (2): orbiting neon at (350,8200) and neon at (200,6800)
+    Zone 3 (4): orbiting neon at (200,6000), spotlight at (500,5800),
+      neon at (650,5200), spotlight at (600,3400)
+    Total: 6 trapped moths.
+    Orbit params: radius = parent light's coreRadius, angularSpeed 1.5π rad/sec.
+
+  Follower behavior params:
+    FOLLOW_THRESHOLD: dependency > 0.4
+    ATTRACTION_RADIUS: 200px
+    FOLLOW_LERP: 0.03 per frame
+    FOLLOW_DISTANCE: 40-60px (each follower picks random value in range)
+    MAX_FOLLOWERS: 3
+    MESMERIZE_TRAP_RADIUS: 150px (distance from light to trap a follower)
+    SCATTER_SPEED: 20 px/sec
+    SCATTER_DURATION: 3 sec
+    BLACKOUT_CHECK_RADIUS: 300px (if no lights within this range, followers scatter)
+
+  Follower visual: tint transitions from #aabbcc to #cc9955 over 3 seconds
+    after becoming a follower (tween).
+
+**FLIGHT PATH RECORDER (NEW)**
+  Data structure: array of { x: number, y: number, state: int }
+  Sample interval: 200ms (5 Hz)
+  State enum: NEUTRAL=0, NEAR_LIGHT=1, MESMERIZED=2, IN_MOONBEAM=3, IN_RAIN=4
+  State colors: [0x5566aa, 0xcc8844, 0xffcc22, 0x99aacc, 0x667788]
+  Max samples: ~1500 (5 min * 60 sec * 5/sec)
+
+**FLIGHT PATH DISPLAY (NEW — ending screen only)**
+  Mapping:
+    World Y (11400 to 200) → Screen Y (450 to 80)
+    World X (0 to 800) → Screen X (300 to 500)
+    Formula: screenX = 300 + (worldX / 800) * 200
+             screenY = 450 - ((11400 - worldY) / 11200) * 370
+  Line width: 1.5px
+  Line alpha: 0.7
+  Draw animation: 150 samples drawn per second (at 60fps, ~2.5 samples/frame)
+    Total draw time for 1500 samples: ~10 seconds.
+  Mesmerize markers: circle, radius 4px, color 0xffcc22, alpha 0.8,
+    drawn at each point where state == MESMERIZED and the previous point
+    was not MESMERIZED (marks the START of each mesmerize event).
+
+**MESMERIZE (REVISED)**
+  Identical to V2 PLUS:
+  On mesmerize trigger, for each active follower moth:
+    if distance(follower, mesmerizeLight) < MESMERIZE_TRAP_RADIUS:
+      convert follower to TRAPPED:
+        - Tween position to orbit radius of mesmerize light over 500ms
+        - Set orbit params (angularSpeed 1.5π, radius = light.coreRadius)
+        - Change state to TRAPPED
+        - Increment mothsTrapped counter
+        - Decrement mothsFollowing counter
+
+**STATE VARIABLES (REVISED)**
+  All V2 variables PLUS:
+    npcMoths: array of NPC moth objects
+      each: { sprite, state: FREE|FOLLOWER|TRAPPED, parentLight (if trapped),
+              followDistance, orbitAngle, scatterTimer, scatterVelX, scatterVelY }
+    mothsFollowing: int = 0
+    mothsTrapped: int = 0
+    flightPath: array of { x, y, state }
+    pathRecordTimer: float = 0
+    pathRecordInterval: 0.2 (sec)
+
+
+## 8. Game Flow
+
+1. BOOT:
+   Identical to V2 plus:
+     Generate 'npcMoth' texture (12x8px).
+
+2. TITLE SCREEN:
+   Identical to V2.
+
+3. GAME INITIALIZATION (GameScene.create):
+   All V2 setup PLUS:
+   a. Create NPC moths:
+      - Instantiate 8 free moths at defined positions with sine-wave movement.
+      - Instantiate 6 trapped moths at defined positions orbiting their lights.
+      - Initialize mothsFollowing=0, mothsTrapped=0.
+   b. Initialize flight path recorder:
+      - flightPath = []
+      - pathRecordTimer = 0
+
+4. MAIN UPDATE LOOP (every frame):
+   All V2 logic PLUS the following additions integrated at appropriate points:
+
+   AFTER movement/stamina/light/moonbeam/rain logic:
+
+   // A. RECALCULATE DYNAMIC FLAP PARAMETERS
+   currentFlapImpulse = lerp(-120, -70, dependency)
+   currentFlapInterval = lerp(0.15, 0.09, dependency)
+   currentFlapCost = lerp(1.5, 1.0, dependency)
+   currentHDrag = lerp(0.88, 0.78, dependency)
+   (These are used in the flap and movement sections above instead of constants)
+
+   // B. UPDATE NPC MOTHS
+   for each npc in npcMoths:
+     switch npc.state:
+       case FREE:
+         // Drift upward with sine wave
+         npc.sprite.y -= 5 * dt
+         npc.sprite.x = npc.baseX + sin(time * PI/2 + npc.phase) * 30
+         // Check conversion to follower
+         if dependency > 0.4 AND mothsFollowing < 3:
+           dist = distance(moth, npc.sprite)
+           if dist < 200:
+             npc.state = FOLLOWER
+             npc.followDistance = random(40, 60)
+             mothsFollowing++
+             // Tint transition tween
+             tweens.add(npc.sprite, tint #aabbcc → #cc9955, 3000)
+
+       case FOLLOWER:
+         // Check blackout scatter
+         nearestLightDist = distToNearestLight(npc.sprite)
+         if nearestLightDist > 300:
+           scatterFollower(npc)
+           break
+         // Check rain avoidance
+         if isInsideRainColumn(moth):
+           // Don't follow into rain; hover at column edge
+           npc.sprite.x stays outside rain column
+           // Check if player dep dropped below threshold
+           if dependency < 0.4:
+             npc.state = FREE
+             mothsFollowing--
+             tweens.add(npc.sprite, tint → #aabbcc, 2000)
+           break
+         // Normal follow behavior
+         targetX = moth.x + random offset
+         targetY = moth.y + npc.followDistance
+         npc.sprite.x += (targetX - npc.sprite.x) * 0.03
+         npc.sprite.y += (targetY - npc.sprite.y) * 0.03
+
+       case TRAPPED:
+         // Orbit parent light
+         npc.orbitAngle += 1.5 * PI * dt
+         npc.sprite.x = npc.parentLight.x + cos(npc.orbitAngle) * npc.parentLight.coreRadius
+         npc.sprite.y = npc.parentLight.y + sin(npc.orbitAngle) * npc.parentLight.coreRadius
+
+       case SCATTERING:
+         // Drift in scatter direction
+         npc.sprite.x += npc.scatterVelX * dt
+         npc.sprite.y += npc.scatterVelY * dt
+         npc.scatterTimer -= dt
+         if npc.scatterTimer <= 0:
+           npc.state = FREE
+           npc.baseX = npc.sprite.x  // new sine center
+           mothsFollowing--
+
+   // C. RECORD FLIGHT PATH
+   pathRecordTimer -= dt
+   if pathRecordTimer <= 0:
+     pathRecordTimer = pathRecordInterval
+     state = NEUTRAL
+     if isMesmerized: state = MESMERIZED
+     else if inRain: state = IN_RAIN
+     else if insideAnyMoonbeam: state = IN_MOONBEAM
+     else if insideAnyLight: state = NEAR_LIGHT
+     flightPath.push({ x: moth.x, y: moth.y, state: state })
+
+   // D. MESMERIZE ADDITION (in startMesmerize function):
+   // After existing mesmerize logic:
+   for each npc in npcMoths where npc.state == FOLLOWER:
+     if distance(npc.sprite, mesmerizeLight) < 150:
+       convertToTrapped(npc, mesmerizeLight)
+
+5. ENDING TRANSITION:
+   Same as V2 (triggerEnding or triggerFail), with additional data passed:
+     mothsFollowing, mothsTrapped, flightPath array.
+
+6. END SCENE (REVISED):
+   init(data): store all stats, endType, AND flightPath.
+
+   create():
+     // Same background and text selection as V2 (four ending variants)
+
+     // NEW: After title text appears (2 sec delay), draw flight path
+     this.pathGfx = this.add.graphics().setDepth(85).setAlpha(0)
+     this.tweens.add({ targets: this.pathGfx, alpha: 0.7, delay: 2000, duration: 500 })
+
+     // Animated path drawing: use a timed event
+     this.pathIndex = 0
+     this.time.delayedCall(2000, () => {
+       this.pathDrawTimer = this.time.addEvent({
+         delay: 1000/150,  // 150 points per second
+         callback: this.drawNextPathSegment,
+         callbackScope: this,
+         repeat: this.flightPath.length - 2
+       })
+     })
+
+     // Stats fade in AFTER path finishes drawing
+     pathDrawDuration = (flightPath.length / 150) * 1000  // ms
+     statsDelay = 2000 + pathDrawDuration + 500
+
+     // Same stats as V2 PLUS:
+     "Moths still following: " + mothsFollowing
+     "Moths lost to lights: " + mothsTrapped
+     // (inserted after dependency stat)
+
+   drawNextPathSegment():
+     i = this.pathIndex
+     if i >= this.flightPath.length - 1: return
+     p1 = this.flightPath[i]
+     p2 = this.flightPath[i + 1]
+     sx1 = 300 + (p1.x / 800) * 200
+     sy1 = 450 - ((11400 - p1.y) / 11200) * 370
+     sx2 = 300 + (p2.x / 800) * 200
+     sy2 = 450 - ((11400 - p2.y) / 11200) * 370
+     color = STATE_COLORS[p1.state]
+     this.pathGfx.lineStyle(1.5, color, 0.7)
+     this.pathGfx.lineBetween(sx1, sy1, sx2, sy2)
+     // Mesmerize marker
+     if p2.state == 2 AND p1.state != 2:
+       this.pathGfx.fillStyle(0xffcc22, 0.8)
+       this.pathGfx.fillCircle(sx2, sy2, 4)
+     this.pathIndex++
+
+
+## 9. Pseudocode
+
+The V2 pseudocode remains the foundation. Below are ONLY the changes and
+additions. A programmer should apply these as modifications to the V2
+pseudocode.
+
+```
+// =============================================
+// ADDITIONAL CONSTANTS
+// =============================================
+CONST NPC_FOLLOW_THRESHOLD = 0.4
+CONST NPC_ATTRACT_RADIUS = 200
+CONST NPC_FOLLOW_LERP = 0.03
+CONST NPC_MAX_FOLLOWERS = 3
+CONST NPC_TRAP_RADIUS = 150
+CONST NPC_SCATTER_SPEED = 20
+CONST NPC_SCATTER_DURATION = 3.0
+CONST NPC_BLACKOUT_CHECK_RADIUS = 300
+CONST NPC_ORBIT_SPEED = 1.5 * Math.PI
+CONST NPC_DRIFT_SPEED = 5
+CONST NPC_SINE_AMP = 30
+CONST NPC_SINE_PERIOD = 4.0
+CONST PATH_RECORD_INTERVAL = 0.2
+CONST PATH_DRAW_RATE = 150  // points per second on ending screen
+CONST STATE_NEUTRAL = 0, STATE_NEAR_LIGHT = 1, STATE_MESMERIZED = 2
+CONST STATE_IN_MOONBEAM = 3, STATE_IN_RAIN = 4
+CONST STATE_COLORS = [0x5566aa, 0xcc8844, 0xffcc22, 0x99aacc, 0x667788]
+
+// NPC states
+CONST NPC_FREE = 0, NPC_FOLLOWER = 1, NPC_TRAPPED = 2, NPC_SCATTERING = 3
+
+// Blackout zone
+CONST BLACKOUT_TOP = 3500, BLACKOUT_BOTTOM = 4400
+
+
+// =============================================
+// BOOT SCENE ADDITION
+// =============================================
+// In BootScene.preload(), add:
+generateTexture('npcMoth', 12, 8):
+  gfx.fillStyle(0xaabbcc, 0.6)
+  gfx.fillCircle(6, 4, 2)          // body
+  gfx.fillEllipse(2, 3, 4, 3)      // left wing
+  gfx.fillEllipse(10, 3, 4, 3)     // right wing
+
+
+// =============================================
+// GAME SCENE ADDITIONS
+// =============================================
+
+// In GameScene.init(), add:
+this.npcMoths = []
+this.mothsFollowing = 0
+this.mothsTrapped = 0
+this.flightPath = []
+this.pathRecordTimer = 0
+
+// In GameScene.create(), add after existing setup:
+this.createNPCMoths()
+this.pathRecordTimer = PATH_RECORD_INTERVAL
+
+createNPCMoths():
+  // Free moths
+  freeDefs = [
+    {x:160, y:11050}, {x:640, y:10650}, {x:310, y:10250},
+    {x:540, y:9850}, {x:410, y:9450},   // Zone 1
+    {x:360, y:9050}, {x:590, y:8550}, {x:210, y:6450}  // Zone 2
+  ]
+  for each def in freeDefs:
+    sprite = this.add.image(def.x, def.y, 'npcMoth')
+      .setDepth(22).setAlpha(0.6).setTint(0xaabbcc)
+    npc = {
+      sprite: sprite,
+      state: NPC_FREE,
+      baseX: def.x,
+      baseY: def.y,
+      phase: Math.random() * Math.PI * 2,
+      followDistance: 0,
+      parentLight: null,
+      orbitAngle: 0,
+      scatterTimer: 0,
+      scatterVelX: 0,
+      scatterVelY: 0
+    }
+    this.npcMoths.push(npc)
+
+  // Trapped moths
+  trapDefs = [
+    {lightIndex: 8},   // neon at (350,8200) — index into this.lights array
+    {lightIndex: 15},  // neon at (200,6800)
+    {lightIndex: 16},  // neon at (200,6000)
+    {lightIndex: 17},  // spotlight at (500,5800)
+    {lightIndex: 19},  // neon at (650,5200)
+    {lightIndex: 23}   // spotlight at (600,3400)
+  ]
+  for each def in trapDefs:
+    light = this.lights[def.lightIndex]
+    sprite = this.add.image(light.x, light.y, 'npcMoth')
+      .setDepth(22).setAlpha(0.5).setTint(0xcc9955)
+    npc = {
+      sprite: sprite,
+      state: NPC_TRAPPED,
+      parentLight: light,
+      orbitAngle: Math.random() * Math.PI * 2,
+      // other fields default
+      baseX: light.x, baseY: light.y, phase: 0,
+      followDistance: 0, scatterTimer: 0, scatterVelX: 0, scatterVelY: 0
+    }
+    this.npcMoths.push(npc)
+
+
+// =============================================
+// REVISED UPDATE LOOP (changes from V2)
+// =============================================
+
+// REPLACE the flap section with dependency-scaled values:
+// In the "if NOT isMesmerized" block:
+
+  // Recalculate dynamic physics
+  curFlapImpulse = Phaser.Math.Linear(-120, -70, this.dependency)
+  curFlapInterval = Phaser.Math.Linear(0.15, 0.09, this.dependency)
+  curFlapCost = Phaser.Math.Linear(1.5, 1.0, this.dependency)
+  curHDrag = Phaser.Math.Linear(0.88, 0.78, this.dependency)
+
+  // Movement (REVISED drag)
+  targetVX = 0
+  if this.cursors.left.isDown: targetVX = -H_SPEED
+  if this.cursors.right.isDown: targetVX = H_SPEED
+  if this.stamina <= 0: targetVX *= LOW_STAMINA_SPEED_MULT
+  if this.inRain: targetVX *= RAIN_SPEED_MULT
+  // Apply dependency-scaled drag
+  if targetVX == 0:
+    this.moth.body.velocity.x *= curHDrag
+  else:
+    currentVX = this.moth.body.velocity.x
+    newVX = currentVX + (targetVX - currentVX) * 0.12
+    this.moth.body.setVelocityX(newVX)
+
+  // Flapping (REVISED with dynamic values)
+  this.flapCooldown -= dt
+  if this.spaceKey.isDown AND this.flapCooldown <= 0 AND this.stamina > 0:
+    this.moth.body.velocity.y += curFlapImpulse   // was FLAP_IMPULSE
+    this.stamina -= curFlapCost                    // was FLAP_COST
+    this.flapCooldown = curFlapInterval            // was FLAP_INTERVAL
+    // Flap animation — more frantic at high dep
+    squeezeAmt = Phaser.Math.Linear(0.7, 0.85, this.dependency)
+    squeezeDur = Phaser.Math.Linear(60, 35, this.dependency)
+    this.tweens.add({ targets: this.moth,
+      scaleY: squeezeAmt, duration: squeezeDur, yoyo: true })
+
+  // ... rest of V2 update (rain, stamina drain, lights, moonbeams, etc.)
+
+  // ADD AFTER all V2 per-frame logic:
+
+  // --- NPC MOTH UPDATE ---
+  this.updateNPCMoths(time, dt)
+
+  // --- FLIGHT PATH RECORDING ---
+  this.pathRecordTimer -= dt
+  if this.pathRecordTimer <= 0:
+    this.pathRecordTimer = PATH_RECORD_INTERVAL
+    state = STATE_NEUTRAL
+    if this.isMesmerized: state = STATE_MESMERIZED
+    else if this.inRain: state = STATE_IN_RAIN
+    else if this.insideAnyMoonbeam: state = STATE_IN_MOONBEAM
+    else if this.insideAnyLight: state = STATE_NEAR_LIGHT
+    this.flightPath.push({ x: this.moth.x, y: this.moth.y, state: state })
+
+// NOTE: insideAnyMoonbeam and insideAnyLight should be set as booleans
+// during the moonbeam/light processing loops above (add these flags to
+// the V2 logic where those interactions are checked).
+
+
+updateNPCMoths(time, dt):
+  for each npc in this.npcMoths:
+    if npc.state == NPC_FREE:
+      // Drift and oscillate
+      npc.sprite.y -= NPC_DRIFT_SPEED * dt
+      npc.sprite.x = npc.baseX + Math.sin(time/1000 * Math.PI/2 + npc.phase) * NPC_SINE_AMP
+
+      // Check conversion to follower
+      if this.dependency > NPC_FOLLOW_THRESHOLD AND this.mothsFollowing < NPC_MAX_FOLLOWERS:
+        dx = this.moth.x - npc.sprite.x
+        dy = this.moth.y - npc.sprite.y
+        dist = Math.sqrt(dx*dx + dy*dy)
+        if dist < NPC_ATTRACT_RADIUS:
+          npc.state = NPC_FOLLOWER
+          npc.followDistance = Phaser.Math.Between(40, 60)
+          this.mothsFollowing++
+          this.tweens.add({ targets: npc.sprite,
+            // can't tween tint directly, so use a timer to shift tint
+          })
+          // Tint shift: use timed color transition
+          this.tweens.addCounter({
+            from: 0, to: 1, duration: 3000,
+            onUpdate: (tween) => {
+              t = tween.getValue()
+              npc.sprite.setTint(lerpColor(0xaabbcc, 0xcc9955, t))
+            }
+          })
+
+    else if npc.state == NPC_FOLLOWER:
+      // Check blackout scatter
+      nearestLightDist = this.distToNearestLight(npc.sprite.x, npc.sprite.y)
+      if nearestLightDist > NPC_BLACKOUT_CHECK_RADIUS:
+        this.scatterFollower(npc)
+        return  // skip rest for this npc this frame
+
+      // Check rain avoidance
+      if this.inRain:
+        // Don't follow into rain, hover outside
+        // Find nearest rain column and position outside it
+        for each rc in this.rainColumns:
+          if this.moth.x > rc.x - rc.width/2 AND this.moth.x < rc.x + rc.width/2:
+            // Player is in this column. Follower hovers at edge.
+            if npc.sprite.x < rc.x:
+              npc.sprite.x = rc.x - rc.width/2 - 15
+            else:
+              npc.sprite.x = rc.x + rc.width/2 + 15
+            npc.sprite.y += (this.moth.y - npc.sprite.y) * 0.02
+        // Check if dependency dropped below threshold
+        if this.dependency < NPC_FOLLOW_THRESHOLD:
+          npc.state = NPC_FREE
+          npc.baseX = npc.sprite.x
+          this.mothsFollowing--
+          npc.sprite.setTint(0xaabbcc)
+        return
+
+      // Normal follow
+      targetX = this.moth.x
+      targetY = this.moth.y + npc.followDistance
+      npc.sprite.x += (targetX - npc.sprite.x) * NPC_FOLLOW_LERP
+      npc.sprite.y += (targetY - npc.sprite.y) * NPC_FOLLOW_LERP
+
+    else if npc.state == NPC_TRAPPED:
+      // Orbit parent light
+      npc.orbitAngle += NPC_ORBIT_SPEED * dt
+      npc.sprite.x = npc.parentLight.x + Math.cos(npc.orbitAngle) * npc.parentLight.coreRadius
+      npc.sprite.y = npc.parentLight.y + Math.sin(npc.orbitAngle) * npc.parentLight.coreRadius
+
+    else if npc.state == NPC_SCATTERING:
+      npc.sprite.x += npc.scatterVelX * dt
+      npc.sprite.y += npc.scatterVelY * dt
+      npc.scatterTimer -= dt
+      if npc.scatterTimer <= 0:
+        npc.state = NPC_FREE
+        npc.baseX = npc.sprite.x
+        this.mothsFollowing--
+
+scatterFollower(npc):
+  angle = Math.random() * Math.PI * 2
+  npc.state = NPC_SCATTERING
+  npc.scatterVelX = Math.cos(angle) * NPC_SCATTER_SPEED
+  npc.scatterVelY = Math.sin(angle) * NPC_SCATTER_SPEED
+  npc.scatterTimer = NPC_SCATTER_DURATION
+
+distToNearestLight(x, y):
+  minDist = Infinity
+  for each light in this.lights:
+    d = Math.sqrt((x - light.x)**2 + (y - light.y)**2)
+    if d < minDist: minDist = d
+  return minDist
+
+
+// =============================================
+// REVISED startMesmerize (add follower trapping)
+// =============================================
+startMesmerize(light):
+  // All V2 mesmerize logic...
+  this.isMesmerized = true
+  this.mesmerizeTimer = 2.0 + this.dependency * 2.0
+  this.mesmerizeLight = light
+  this.mesmerizeAngle = Math.atan2(this.moth.y - light.y, this.moth.x - light.x)
+  this.timesMesmerized++
+  if this.dependency < 0.3: this.moth.setTint(0xff6644)
+  else: this.moth.setTint(0xffcc44)
+  this.cameras.main.shake(150, 0.003)
+
+  // NEW: Trap nearby followers
+  for each npc in this.npcMoths:
+    if npc.state == NPC_FOLLOWER:
+      dx = npc.sprite.x - light.x
+      dy = npc.sprite.y - light.y
+      dist = Math.sqrt(dx*dx + dy*dy)
+      if dist < NPC_TRAP_RADIUS:
+        // Tween to orbit position
+        targetX = light.x + Math.cos(npc.orbitAngle) * light.coreRadius
+        targetY = light.y + Math.sin(npc.orbitAngle) * light.coreRadius
+        this.tweens.add({
+          targets: npc.sprite,
+          x: targetX, y: targetY,
+          duration: 500, ease: 'Sine.easeIn',
+          onComplete: () => {
+            npc.state = NPC_TRAPPED
+            npc.parentLight = light
+            npc.orbitAngle = Math.atan2(npc.sprite.y - light.y, npc.sprite.x - light.x)
+          }
+        })
+        npc.sprite.setTint(0xcc9955)
+        this.mothsFollowing--
+        this.mothsTrapped++
+
+
+// =============================================
+// REVISED buildStats (add new data)
+// =============================================
+buildStats(endType):
+  return {
+    endType: endType,
+    dependency: this.dependency,
+    timeInArtificialLight: this.timeInArtificialLight,
+    timeInMoonlight: this.timeInMoonlight,
+    timeInRain: this.timeInRain,
+    gameTime: this.gameTime,
+    timesMesmerized: this.timesMesmerized,
+    mothsFollowing: this.mothsFollowing,       // NEW
+    mothsTrapped: this.mothsTrapped,           // NEW
+    flightPath: this.flightPath                // NEW
+  }
+
+
+// =============================================
+// REVISED END SCENE
+// =============================================
+class EndScene extends Phaser.Scene:
+  constructor(): super('EndScene')
+
+  init(data):
+    this.stats = data
+    this.flightPath = data.flightPath || []
+
+  create():
+    d = this.stats
+    cx = 400
+
+    // --- BACKGROUND AND TITLE TEXT (identical to V2, four variants) ---
+    switch d.endType:
+      case 'clean':
+        this.cameras.main.setBackgroundColor('#c8ced6')
+        this.add.text(cx, 80, 'You found the moon.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '28px', color: '#2a2a3a'
+        }).setOrigin(0.5)
+      case 'mixed':
+        this.cameras.main.setBackgroundColor('#b0b0a8')
+        this.add.text(cx, 70, 'You reached the moon.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '28px', color: '#4a4a3a'
+        }).setOrigin(0.5)
+        sub = this.add.text(cx, 100, 'It was enough.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#777766'
+        }).setOrigin(0.5).setAlpha(0)
+        this.tweens.add({ targets: sub, alpha: 1, delay: 1500, duration: 800 })
+      case 'dependent':
+        this.cameras.main.setBackgroundColor('#c8a878')
+        this.add.text(cx, 80, 'The moon was not what you remembered.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '24px', color: '#3a2a1a'
+        }).setOrigin(0.5)
+      case 'failed':
+        this.cameras.main.setBackgroundColor('#1a1008')
+        this.add.text(cx, 70, 'You looked for the moon.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '26px', color: '#886644'
+        }).setOrigin(0.5)
+        sub = this.add.text(cx, 100, 'It looked different than you remembered.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#665533'
+        }).setOrigin(0.5).setAlpha(0)
+        this.tweens.add({ targets: sub, alpha: 1, delay: 2000, duration: 1000 })
+
+    // --- NEW: FLIGHT PATH VISUALIZATION ---
+    this.pathGfx = this.add.graphics().setDepth(85).setAlpha(0)
+
+    // Fade in the path area
+    this.tweens.add({ targets: this.pathGfx, alpha: 0.7, delay: 2000, duration: 500 })
+
+    // Draw path segments over time
+    this.pathIndex = 0
+    if this.flightPath.length > 1:
+      this.time.delayedCall(2500, () => {
+        this.pathDrawEvent = this.time.addEvent({
+          delay: 1000 / PATH_DRAW_RATE,
+          callback: () => {
+            i = this.pathIndex
+            if i >= this.flightPath.length - 1: return
+            p1 = this.flightPath[i]
+            p2 = this.flightPath[i + 1]
+            sx1 = 300 + (p1.x / 800) * 200
+            sy1 = 450 - ((11400 - p1.y) / 11200) * 370
+            sx2 = 300 + (p2.x / 800) * 200
+            sy2 = 450 - ((11400 - p2.y) / 11200) * 370
+            color = STATE_COLORS[p1.state]
+            this.pathGfx.lineStyle(1.5, color, 0.7)
+            this.pathGfx.beginPath()
+            this.pathGfx.moveTo(sx1, sy1)
+            this.pathGfx.lineTo(sx2, sy2)
+            this.pathGfx.strokePath()
+            // Mesmerize marker
+            if p2.state == STATE_MESMERIZED AND p1.state != STATE_MESMERIZED:
+              this.pathGfx.fillStyle(0xffcc22, 0.8)
+              this.pathGfx.fillCircle(sx2, sy2, 4)
+            this.pathIndex++
+          },
+          callbackScope: this,
+          repeat: this.flightPath.length - 2
+        })
+      })
+
+    // --- STATS (appear after path finishes drawing) ---
+    pathDuration = this.flightPath.length > 1
+      ? ((this.flightPath.length / PATH_DRAW_RATE) * 1000)
+      : 0
+    statsDelay = 2500 + pathDuration + 800
+
+    statColor = (d.endType == 'failed') ? '#886655' : '#888877'
+    statsData = [
+      'Dependency: ' + Math.round(d.dependency * 100) + '%',
+      'Moths still following: ' + d.mothsFollowing,
+      'Moths lost to lights: ' + d.mothsTrapped,
+      'Time near artificial light: ' + formatTime(d.timeInArtificialLight),
+      'Time in moonlight: ' + formatTime(d.timeInMoonlight),
+      'Time in rain: ' + formatTime(d.timeInRain)
+    ]
+    for i = 0 to statsData.length - 1:
+      t = this.add.text(cx, 475 + i * 20, statsData[i], {
+        fontFamily: 'Arial, sans-serif', fontSize: '13px', color: statColor
+      }).setOrigin(0.5).setAlpha(0)
+      this.tweens.add({ targets: t, alpha: 1,
+        delay: statsDelay + i * 300, duration: 500 })
+
+    // Restart prompt
+    restartDelay = statsDelay + statsData.length * 300 + 500
+    restart = this.add.text(cx, 590, 'SPACE to try again', {
+      fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#777766'
+    }).setOrigin(0.5).setAlpha(0)
+    this.tweens.add({ targets: restart, alpha: 1,
+      delay: restartDelay, duration: 500 })
+    this.tweens.add({ targets: restart, alpha: 0.4,
+      delay: restartDelay + 500, duration: 1500, yoyo: true, repeat: -1 })
+
+    this.time.delayedCall(restartDelay, () => {
+      this.input.keyboard.once('keydown-SPACE', () => {
+        this.scene.start('TitleScene')
+      })
+    })
+
+
+// =============================================
+// PHASER CONFIG (identical to V2)
+// =============================================
+config = {
+  type: Phaser.AUTO,
+  width: 800, height: 600,
+  parent: 'game-container',
+  backgroundColor: '#0a0a1a',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false }
+  },
+  scene: [BootScene, TitleScene, GameScene, EndScene],
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }
+}
+new Phaser.Game(config)
+```
+
+
+================================================================================
+                          END OF DOCUMENT
+================================================================================

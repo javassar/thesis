@@ -1,0 +1,497 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Echo Courier: Navigate a pitch-black maze by pulsing sound—each ping reveals the world but draws prowling sentries to your last echo.
+
+## 2. Core Insight
+- Central question: How much risk do you take to see clearly when attention itself is dangerous?
+- Why it matters: It taps into a human tension—visibility brings safety and control, but exposure invites danger. Players feel the tradeoff in their gut each time they choose to ping.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Move quietly through darkness and trigger echolocation pings (expanding sound waves) that briefly reveal the environment and objectives.
+- Embodiment: The act of “seeing” is literally making noise. The same input that grants guidance also lures sentries, unifying navigation and stealth into one meaningful decision.
+
+## 4. Player Journey
+- Start: The screen is nearly black. A soft halo around the player hints at a corridor. A prompt says “Space: Ping.” The first ping blossoms outward, sketching the maze in bright outlines with a fading ripple. It feels empowering and dangerous.
+- First minute: The player learns basics—movement, ping timing, how the ping briefly paints walls and objective beacons, and how sentries converge on noise. Early distances are safe, teaching causality without harsh punishment.
+- Evolution: Deliveries are placed in different wings. The player alternates between quiet edging and decisive pings to plan routes. Sentries begin to triangulate more aggressively. The player starts counting cooldowns, using corners and doors to break line-of-sight.
+- Climax: After delivering the third package, a clear exit unlocks across the map. The player must commit to a final, larger ping (optional) to plot a fast, risky route—or creep, burning precious seconds, while sentries are alert.
+- Ending: Reaching the exit fades the darkness to a calm dim glow and stops the timer. The player sees a summary: time and pings used. The intended feeling is relief and a quiet pride for outwitting the dark and its listeners.
+
+## 5. Game Elements
+- Player: A small, soft-glowing circle with a directional arrow. Speedy but fragile.
+- Sentries: Triangular silhouettes with a faint, sweeping cone indicating facing (not hard vision, just flavor). They patrol or pursue last-heard ping.
+- Walls: Tile-based maze walls, visible only when revealed by the player’s proximity halo or by recent pings.
+- Floors: Dark background surface.
+- Beacons (Packages): Three pulsing markers (distinct colors) to “deliver” by proximity + interact key.
+- Exit Door: Locked at start; opens (changes color/animation) after all deliveries.
+- Sound Waves: Expanding rings emitted by the player when pressing Space. They reveal terrain within their radius while active.
+- UI:
+  - Top bar with 300-second countdown timer.
+  - Package icons (3) that light up when delivered.
+  - Ping cooldown meter (small circular or bar near player or HUD).
+  - Minimal prompts: Space (Ping), E (Deliver), R (Retry).
+- Screens:
+  - Title screen: Logo, short instructions, Start button.
+  - Pause/Retry overlay when caught.
+  - Ending screen with stats (Time, Pings Used, Rank text).
+
+## 6. Rules & Systems
+- Player actions:
+  - Move with WASD/Arrows.
+  - Ping with Space (cooldown).
+  - Deliver with E when adjacent to a beacon.
+  - Restart with R.
+- Visibility:
+  - A small constant halo (short radius) around the player is always visible.
+  - Pings create expanding rings that reveal all tiles and objects within their current radius for a short fade duration.
+  - Revealed elements fade back to black after a few seconds unless re-illuminated.
+- Sentries:
+  - Patrol along predefined waypoints when idle.
+  - When a ping occurs within their hearing radius (even through walls), they record the ping position, switch to pursuit, and pathfind toward that point for a brief pursuit window. After reaching or timing out, they return to patrol.
+  - If they contact the player, the player is caught (fail state).
+- Objectives:
+  - Three beacons must be delivered in any order. Approaching within range shows a prompt; pressing E completes delivery and updates UI.
+  - After three deliveries, the exit unlocks. Reaching it ends the game successfully.
+- Progress/Failure:
+  - Success = Reach exit after all deliveries within 300 seconds, without being caught.
+  - Failure = Timer hits zero or a sentry collides with the player. The player can retry immediately.
+- Pacing:
+  - The level is sized to be completable in about 3–5 minutes depending on caution vs. risk. The design encourages a handful of meaningful pings rather than spam, via cooldown and enemy reaction.
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Phaser version: 3.x
+- Canvas size: 960 x 540 (16:9)
+- Physics: Arcade Physics (for simple collisions) with tilemap collisions
+- Background color: #0b0e12 (very dark blue-black)
+- Camera: Fixed (no scrolling)
+
+Tilemap:
+- Tile size: 30 x 30 px
+- Grid: 32 columns x 18 rows
+- Layers:
+  - “Walls” layer: collidable tiles
+  - “Floor” layer: non-collidable background
+- Tileset style: Simple rectangles; wall tiles tinted #1b2430; floor #0f141a when revealed
+
+Player:
+- Shape: Circle sprite (radius 10 px) or small image
+- Speed: 120 px/s
+- Collision: Collides with “Walls” layer
+
+Sentries:
+- Count: 3
+- Shape: Triangle or small sprite (approx 20x20 px)
+- Speed: 80 px/s
+- Patrol:
+  - Sentry A waypoints: [(150,120), (450,120), (450,240), (150,240)]
+  - Sentry B waypoints: [(690,120), (810,120), (810,360), (690,360)]
+  - Sentry C waypoints: [(210,360), (450,360), (450,450), (210,450)]
+- Hearing radius: 300 px (from sentry position to ping origin)
+- Pursuit duration per ping: 2.5 s
+- Pathfinding: A* grid over tilemap walls (4-directional), updated target = last-heard ping tile
+
+Beacons (Packages):
+- Count: 3
+- Positions: (180, 90), (780, 330), (300, 420)
+- Interaction radius: 24 px (within center distance)
+- Visual: Pulsing circle (outer radius 14→20 px over 1.2 s loop), colors: #ffda6b, #84ffd2, #ffa0c3
+
+Exit Door:
+- Position: (900, 60)
+- Locked color: #5a6470
+- Unlocked color: #7cff7a
+- Size: 24 x 36 px (rect)
+- Unlock condition: allDelivered == true
+
+Visibility & Ping:
+- Player halo:
+  - Radius: 60 px
+  - Opacity: fully reveals tiles within radius each frame
+- Ping:
+  - Trigger: Space if pingCooldown <= 0
+  - Expansion speed: 600 px/s
+  - Max radius: 240 px
+  - Ring thickness (for rendering): 18 px
+  - Fade duration after ring passes a tile: 1.2 s visibility memory per tile
+  - Cooldown between pings: 1.2 s
+  - Visual: Expanding ring with outer bright edge #76e1ff, inner fade to transparent
+- Tile visibility memory:
+  - Each tile stores lastSeenTime; tiles with now - lastSeenTime < 1.2 s are drawn visible at alpha = clamp(1 - t/1.2, 0, 1)
+  - Player halo forcibly sets lastSeenTime = now each frame for tiles inside 60 px
+
+UI:
+- Top bar: 960 x 40 px, background #121821
+- Timer text: Top-left (12, 10), font: 18px monospace, color #b9cdf2
+- Packages icons: 3 small circles at (420, 10), (450, 10), (480, 10), size 10 px; off color #3a4557, delivered color per beacon color
+- Ping cooldown bar: Top-right (840, 10), background rect 100x8 px #283142, fill #76e1ff proportional to remaining cooldown (reverse fill)
+- Prompt text (contextual): Above player, “E: Deliver” when in range; “Space: Ping” first 10 seconds if no ping used
+- End screen text: Centered; “Delivered in {time}s with {pings} pings”
+
+Input:
+- Keyboard:
+  - Arrow keys or WASD: move
+  - Space: ping
+  - E: deliver (if in range of an undelivered beacon)
+  - R: restart (from fail or during play)
+  - Esc/P: pause (optional)
+  - M: toggle mute (optional)
+
+State (key variables):
+- player: {sprite, speed, vx, vy}
+- sentries[]: each {sprite, mode: 'patrol'|'pursue'|'cooldown', waypoints[], wpIndex, targetTile, path[], pathIndex, lastHeardPingPos, pursueUntil}
+- beacons[]: each {pos, delivered: bool, color}
+- exit: {pos, unlocked: bool}
+- ping:
+  - activeWaves[]: each {originX, originY, radius, alive: bool, startedAt}
+  - cooldown: float (seconds)
+- visibility:
+  - lastSeenTime[cols][rows]: float timestamp for each tile (default -Infinity)
+- game:
+  - deliveredCount: 0
+  - timeRemaining: 300.0 (seconds)
+  - pingsUsed: 0
+  - state: 'title'|'playing'|'paused'|'won'|'lost'
+  - inputBuffer: booleans for controls
+
+Timing:
+- Delta time from Phaser update
+- Player movement speed: 120 px/s
+- Sentry speed: 80 px/s
+- Sentry path recompute:
+  - On hearing a ping, compute full path to ping tile
+  - While pursuing, recompute every 0.5 s toward same target to avoid dynamic blockage
+- UI update: per frame
+- Ping expansion: radius += 600 * dt; mark dead when radius > 240
+
+Interactions:
+- Movement vs walls: Arcade collide player with wall layer; same for sentries
+- Player vs beacons: if distance < 24 and not delivered, show prompt; on E, set delivered=true; deliveredCount++
+- Player vs exit: if exit.unlocked and overlap rectangle, trigger win
+- Player vs sentries: Arcade overlap -> lost
+- Hearing:
+  - When Space pressed, create wave and set ping.cooldown
+  - For each sentry: if distance(sentry, ping.origin) <= hearingRadius at ping creation time, sentry enters pursue mode targeting ping tile; set pursueUntil = now + 2.5
+
+Progression:
+- Start: deliveredCount=0; exit.unlocked=false
+- On deliveredCount==3: exit.unlocked=true
+- Win: player reaches exit before timeRemaining <= 0
+- Lose: timeRemaining <= 0 or caught
+
+Audio (optional but recommended):
+- Soft ping sound on Space (volume 0.6)
+- Low hum for sentry alert (0.4)
+- Delivery chime (0.7)
+- Win/lose stingers
+
+## 8. Game Flow
+- Load:
+  - Preload assets (minimal shapes can be generated via Graphics; otherwise load simple sprites)
+  - Create tilemap and layers
+  - Create player at spawn (60, 60)
+  - Create sentries and set patrols
+  - Place beacons and exit (locked)
+  - Initialize UI and visibility arrays
+  - Show Title screen with “Press Space or Enter to Start”
+- Start main:
+  - On start input, state=’playing’, timeRemaining=300, controls enabled
+- During play:
+  - Update movement, collisions
+  - Handle ping input: create wave if cooldown <= 0; increment pingsUsed
+  - Expand active waves; update tile lastSeenTime for tiles within wave radius and for tiles in player halo
+  - Sentries: patrol or pursue depending on mode; update paths; move; check collisions with player
+  - Beacons: check delivery prompt and input E
+  - Exit: unlock when deliveredCount==3; check overlap for win
+  - UI: update timer, icons, cooldown bar
+  - Timer: decrement; if <= 0, lose
+- End conditions:
+  - Win: state='won'; freeze entities; fade out darkness; show end screen with stats and “R: Retry” / “Enter: Title”
+  - Lose (caught or time): state='lost'; show reason, “R: Retry”
+- Post-end:
+  - Retry resets map state, timers, deliveries, sentries
+  - Title returns to initial prompt
+
+## 9. Pseudocode
+
+Initialization:
+// Boot/Preload
+onPreload():
+  load tilemap (JSON or embedded layout)
+  load minimal sprites or plan to draw with Graphics
+  load sounds (optional)
+
+// Create
+onCreate():
+  createTilemapAndLayers()
+  wallsLayer.setCollisionByProperty({collides: true})
+  createPlayer(spawnX=60, spawnY=60)
+  createSentries()
+  createBeacons()
+  createExit(900, 60, unlocked=false)
+  initVisibilityArray(cols=32, rows=18, default=-Infinity)
+  ping = { activeWaves: [], cooldown: 0 }
+  gameState = 'title'
+  deliveredCount = 0
+  timeRemaining = 300
+  pingsUsed = 0
+  setupUI()
+  setupInput()
+
+createSentries():
+  sentries = []
+  for each sentry config:
+    s = {
+      sprite: addTriangleSprite(pos),
+      mode: 'patrol',
+      waypoints: [...],
+      wpIndex: 0,
+      targetTile: null,
+      path: [],
+      pathIndex: 0,
+      lastHeardPingPos: null,
+      pursueUntil: 0,
+      recomputeTimer: 0
+    }
+    enableArcadePhysics(s.sprite)
+    s.sprite.setCollideWorldBounds(true)
+    sentries.push(s)
+
+createBeacons():
+  beacons = [
+    {pos:(180,90), delivered:false, color:#ffda6b},
+    {pos:(780,330), delivered:false, color:#84ffd2},
+    {pos:(300,420), delivered:false, color:#ffa0c3}
+  ]
+
+setupUI():
+  drawTopBar()
+  timerText = addText(12,10,"05:00")
+  pkgIcons = create3Icons(420,10)
+  cooldownBar = {bgRect at (840,10), fillRect at same, width 100}
+  prompts = { deliver: hidden }
+
+// Input bindings
+setupInput():
+  cursors = this.input.keyboard.createCursorKeys()
+  wasd = this.input.keyboard.addKeys('W,A,S,D')
+  keySpace = this.input.keyboard.addKey(SPACE)
+  keyE = this.input.keyboard.addKey(E)
+  keyR = this.input.keyboard.addKey(R)
+  keyEnter = this.input.keyboard.addKey(ENTER)
+
+Main loop/update:
+onUpdate(dt):
+  if gameState == 'title':
+    if keySpace.justDown or keyEnter.justDown: startGame()
+    return
+
+  if gameState not in ['playing']: 
+    if keyR.justDown: resetGame()
+    return
+
+  // Timer
+  timeRemaining -= dt
+  if timeRemaining <= 0: triggerLose('Time up')
+
+  // Movement input
+  moveX = (right/ D) - (left/ A)
+  moveY = (down/ S) - (up/ W)
+  normalize (moveX, moveY)
+  player.sprite.setVelocity(moveX * 120, moveY * 120)
+  physics.collide(player.sprite, wallsLayer)
+
+  // Ping input
+  if keySpace.isDown and ping.cooldown <= 0:
+    createPingWave(player.sprite.x, player.sprite.y)
+    ping.cooldown = 1.2
+    pingsUsed += 1
+    alertSentriesOfPing(player.sprite.x, player.sprite.y)
+
+  // Cooldown tick
+  ping.cooldown = max(0, ping.cooldown - dt)
+
+  // Update ping waves (expand and reveal)
+  for wave in ping.activeWaves:
+    if wave.alive:
+      wave.radius += 600 * dt
+      revealTilesWithinRadius(wave.originX, wave.originY, wave.radius, ringThickness=18)
+      if wave.radius > 240:
+        wave.alive = false
+  // Remove dead waves
+  ping.activeWaves = ping.activeWaves.filter(w => w.alive)
+
+  // Player halo reveal
+  revealTilesWithinRadius(player.sprite.x, player.sprite.y, 60, ringThickness=60) // full circle
+
+  // Sentries update
+  for s in sentries:
+    if s.mode == 'patrol':
+      patrolUpdate(s, dt)
+    else if s.mode == 'pursue':
+      pursueUpdate(s, dt)
+    // Collisions
+    physics.collide(s.sprite, wallsLayer)
+    if physics.overlap(s.sprite, player.sprite):
+      triggerLose('Caught')
+
+  // Beacons interaction
+  inRange = false
+  for b in beacons:
+    if not b.delivered:
+      if distance(player, b.pos) < 24:
+        inRange = true
+        if keyE.justDown:
+          b.delivered = true
+          deliveredCount += 1
+          updatePackageIcons()
+  showDeliverPrompt(inRange)
+
+  // Exit logic
+  if deliveredCount == 3 and not exit.unlocked:
+    exit.unlocked = true
+    setExitColor(unlockedColor)
+  if exit.unlocked and rectOverlap(player.sprite, exit.rect):
+    triggerWin()
+
+  // Render darkness overlay using mask/graphics
+  renderVisibilityOverlay()
+
+Key functions:
+
+startGame():
+  gameState = 'playing'
+  timeRemaining = 300
+  deliveredCount = 0
+  pingsUsed = 0
+  resetMapAndEntities()
+  hideTitleScreen()
+
+resetGame():
+  stopAllSounds()
+  destroyAndRecreateEntities()
+  gameState = 'playing'
+  timeRemaining = 300
+  deliveredCount = 0
+  pingsUsed = 0
+  ping.activeWaves = []
+  ping.cooldown = 0
+  clearVisibilityArray(-Infinity)
+
+triggerWin():
+  gameState = 'won'
+  freezeEntities()
+  fadeOutOverlayToAlpha(0.5 over 0.5s)
+  showEndScreen("Delivered in " + formatTime(300 - timeRemaining) + " with " + pingsUsed + " pings")
+
+triggerLose(reason):
+  gameState = 'lost'
+  freezeEntities()
+  showEndScreen("Failed: " + reason + "\nPress R to Retry")
+
+createPingWave(x,y):
+  wave = {originX:x, originY:y, radius:0, alive:true, startedAt:now}
+  ping.activeWaves.push(wave)
+  playSound('ping')
+
+alertSentriesOfPing(x,y):
+  for s in sentries:
+    if distance(s.sprite, (x,y)) <= 300:
+      s.mode = 'pursue'
+      s.lastHeardPingPos = (x,y)
+      s.pursueUntil = now + 2.5
+      s.recomputeTimer = 0
+      s.path = computePath(s.sprite.position, s.lastHeardPingPos)
+      s.pathIndex = 0
+
+patrolUpdate(s, dt):
+  target = s.waypoints[s.wpIndex]
+  moveTowards(s.sprite, target, sSpeed=80)
+  if distance(s.sprite, target) < 8:
+    s.wpIndex = (s.wpIndex + 1) % len(s.waypoints)
+  // small idle pause optional
+
+pursueUpdate(s, dt):
+  if now > s.pursueUntil:
+    s.mode = 'patrol'
+    return
+  s.recomputeTimer -= dt
+  if s.recomputeTimer <= 0:
+    s.recomputeTimer = 0.5
+    s.path = computePath(s.sprite.position, s.lastHeardPingPos)
+    s.pathIndex = 0
+  followPath(s, dt)
+
+followPath(s, dt):
+  if s.path is empty:
+    moveTowards(s.sprite, s.lastHeardPingPos, sSpeed=80)
+    return
+  node = s.path[s.pathIndex]
+  moveTowards(s.sprite, tileCenter(node), sSpeed=80)
+  if closeTo(s.sprite, tileCenter(node), 6):
+    s.pathIndex += 1
+    if s.pathIndex >= len(s.path):
+      // reached target tile; wait or switch back to patrol on timeout
+
+computePath(fromPos, toPos):
+  fromTile = worldToTile(fromPos)
+  toTile = worldToTile(toPos)
+  return AStarGrid(wallsCollisionGrid, fromTile, toTile)
+
+revealTilesWithinRadius(cx, cy, radius, ringThickness):
+  // Convert a bounding box of tiles around the circle
+  minCol = clamp(floor((cx - radius)/30), 0, cols-1)
+  maxCol = clamp(floor((cx + radius)/30), 0, cols-1)
+  minRow = clamp(floor((cy - radius)/30), 0, rows-1)
+  maxRow = clamp(floor((cy + radius)/30), 0, rows-1)
+  for col in minCol..maxCol:
+    for row in minRow..maxRow:
+      tx, ty = tileCenter(col,row)
+      d = distance((tx,ty), (cx,cy))
+      if d <= radius and (ringThickness >= radius or (radius - d) <= ringThickness):
+        lastSeenTime[col][row] = now
+
+renderVisibilityOverlay():
+  // Using a Graphics overlay drawn each frame:
+  overlay.clear()
+  overlay.fillStyle(0x000000, 0.92) // base darkness
+  overlay.fillRect(0,0,960,540)
+  // Carve holes where tiles are recently seen
+  for each tile where now - lastSeenTime[col][row] <= 1.2 OR within player halo:
+    alpha = clamp(1 - (now - lastSeenTime[col][row]) / 1.2, 0, 1)
+    // Draw a slightly larger transparent rect over tile to simulate reveal
+    overlay.fillStyle(0x000000, 0) // Use blend mode ERASE if available
+    overlay.fillRect(col*30, row*30, 30, 30)
+  // Player halo explicit
+  drawEraseCircle(overlay, player.x, player.y, 60)
+
+updateUI():
+  timerText.setText(formatTime(timeRemaining))
+  cooldownFillWidth = 100 * (1 - ping.cooldown / 1.2)
+  setCooldownBarWidth(cooldownFillWidth)
+  updatePackageIconsColors()
+
+formatTime(t):
+  t = max(0, floor(t))
+  m = floor(t/60)
+  s = t % 60
+  return zeroPad(m)+":"+zeroPad(s)
+
+Notes for Phaser specifics:
+- For the darkness effect, use a Graphics object with blendMode = ERASE on WebGL or a BitmapMask. Approach:
+  - Create a full-screen black rectangle sprite (darkness)
+  - Create a Graphics “masker”
+  - Each frame, masker.clear(); draw filled circles/rects where visibility should be; set darknessSprite.mask = new BitmapMask(masker) or reuse existing to avoid allocations
+- For pathfinding, implement simple A* on the tile grid:
+  - Nodes = walkable tiles (not colliding)
+  - Heuristic = Manhattan distance
+  - Neighbors = 4-directional
+  - Early-out when open set empty or iterations > cap (e.g., 2000) to avoid hitches
+- Use Arcade Physics for simple collision and velocity-based movement
+- Keep assets minimal (generated shapes) to ship quickly

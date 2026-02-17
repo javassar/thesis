@@ -1,0 +1,49 @@
+1) Bold: Folded Streets
+- Description: Guide a tiny courier through a paper city by literally folding the world. Align bridges, overlap alleys, and crease buildings to create shortcuts while avoiding ink hazards and paper-thin patrols. Folds persist until you unfold, forcing you to manage a limited number of creases at once.
+- Core mechanic: Click-and-drag to create origami-style folds that snap landmarks together; limited fold slots and crease angles.
+- Unique hook: Spatial puzzles built from persistent topological changes—overlaps can both solve and create hazards, turning the map into a living origami toy.
+
+2) Bold: Laundry Rush
+- Description: Run a chaotic laundromat where customers, stains, and storms all collide. Sort garments, choose cycles, pre-treat stains, and avoid tragic red-sock-in-whites disasters while chasing combo tips.
+- Core mechanic: Drag-and-drop items into machines with timers; queue optimization and quick mini-games for special stains.
+- Unique hook: Dynamic daily modifiers (weather, events, fabric trends) reshape the puzzle flow, while garment physics create comedic pile-ups you must untangle quickly.
+
+3) Bold: Star Tune: Frequency Frontier
+- Description: As a deep-space operator, you communicate with aliens by coaxing clean signals from cosmic noise. Sculpt waveforms to match living languages, dodge interference fields, and decipher patterns before the window closes.
+- Core mechanic: Real-time tuning of amplitude, frequency, and phase; lock-on rhythm checks; spectrogram alignment puzzles.
+- Unique hook: A hybrid of rhythm and signal-processing puzzles where you “play” a radio—visual wave sculpting feels tactile and musical.
+
+4) Bold: Shadow Courier
+- Description: Deliver secret letters through a city where you can move only in the shadows. Rotate time like a dial to swing lamppost shadows, bridge gaps, and slip past vigilant constables.
+- Core mechanic: Dual control: one axis moves the messenger, the other scrubs the time-of-day to rotate and stretch shadows; line-of-sight stealth.
+- Unique hook: Time as a physical tool—light direction is your level geometry editor, turning stealth into a rhythmic shadow dance.
+
+5) Bold: Bee the Planner
+- Description: Orchestrate a day’s foraging for a quirky hive. Draw pre-flight routes, then watch bees brave winds, spiders, and competing hives while you tweak plans between days.
+- Core mechanic: Pre-planned path drawing with next-day iteration; resource management via nectar colors and stamina.
+- Unique hook: Pollen color mixing back at the hive unlocks distinct upgrades, encouraging creative route palettes shaped by shifting weather patterns.
+
+6) Bold: Ghosts on Tap
+- Description: Tend bar at a liminal lounge where patrons are dead and their stories are stiff. Mix spirits by balancing flavors mapped to emotions, unlocking memories that calm, rile, or reveal.
+- Core mechanic: Timed pouring, ingredient sliders, and garnish sequencing guided by conversational clues.
+- Unique hook: Narrative alchemy—your drink subtly alters a ghost’s mood sprite and dialogue, creating cozy, melancholic micro-arcs in quick sessions.
+
+7) Bold: Polar Shift
+- Description: A tight 2D platformer where changing your color toggles gravity for matching platforms and hazards. Chain flips mid-air, slingshot off fields, and outsmart foes who invert when you do.
+- Core mechanic: Two-button polarity swap affecting platforms, enemies, and collectibles; momentum-based traversal.
+- Unique hook: Global polarity ties platforming and enemy AI into one elegant switch, generating emergent chase-and-escape setpieces.
+
+8) Bold: Museum Heist: Lines Only
+- Description: Plan a heist by drawing a single continuous line that becomes your thief’s path. As the museum runs on cyclical patrols and lasers, timing gadgets triggers at intersections of your line.
+- Core mechanic: Pre-draw route with limited ink; playback execution with chance to “stitch” small corrective segments between runs.
+- Unique hook: One-line constraint turns stealth into route artistry—composition, timing, and geometry all live on your sketch.
+
+9) Bold: Echo Grotto
+- Description: Explore a pitch-dark cave using sound to glimpse the world. Ping walls to reveal outlines for a heartbeat, then leap before the vision fades as creatures sing back, reshaping the map.
+- Core mechanic: Emitting adjustable sound pulses that temporarily render nearby geometry; material-specific echoes and frequency-based creature reactions.
+- Unique hook: Platforming by sonar—level knowledge is transient and musical, making navigation a rhythmic memory game.
+
+10) Bold: Paperwork Panic
+- Description: Survive a day at a ridiculous bureaucracy counter where rules change every minute. Stamp, sort, and staple forms that contradict themselves, all while a supervisor barks new directives.
+- Core mechanic: Rapid rule parsing and pattern-matching under time pressure; multi-tool desk interactions with escalating exceptions.
+- Unique hook: Cascading rule combos and playful meta-instructions (“validate only invalid validations”) create hilarious, frantic logic puzzles in bite-sized shifts.

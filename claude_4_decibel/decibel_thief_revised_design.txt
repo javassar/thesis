@@ -1,0 +1,2194 @@
+================================================================================
+                       DECIBEL THIEF — REVISED
+              Critical Review & Redesigned Implementation
+================================================================================
+
+
+################################################################################
+# CRITICAL REVIEW OF ORIGINAL DESIGN
+################################################################################
+
+The original Decibel Thief concept has a genuinely creative PREMISE — your
+mastery dismantles the thing you're mastering — but an honest evaluation
+reveals that the premise is doing all the creative heavy lifting while the
+actual GAMEPLAY is not creative at all.
+
+DIAGNOSIS: THE MECHANIC IS GENERIC
+
+Strip away the narrative framing, the evocative prose about "devouring
+silence," and the thematic descriptions, and what is the player actually
+doing? Pressing arrow keys when colored dots reach a target zone. That is
+a radial Dance Dance Revolution. The notes-from-four-directions-toward-
+center pattern is one of the most well-worn structures in rhythm gaming.
+
+The design document sells the emotional journey beautifully, but that
+journey exists in the WRITING, not in the MECHANICS. A player wouldn't
+feel "the bittersweet tension of consuming something beautiful" — they'd
+feel "I'm playing a rhythm game and the music is getting quieter." The
+gap between intended experience and likely actual experience is the
+design's central flaw.
+
+SPECIFIC SHORTCOMINGS:
+
+1. Zero player agency. The player makes no decisions. Which instrument
+   gets silenced first is determined entirely by which colored notes
+   happen to appear. The player cannot choose a target, plan a strategy,
+   or express any preference. They just react.
+
+2. The core mechanic doesn't embody the theme. "Press arrow when dot
+   arrives" has no meaningful connection to "stealing sound." You could
+   reskin this as catching falling fruit and the gameplay would be
+   identical. The theme is wallpaper, not architecture.
+
+3. Passive spatial design. The player sits frozen at screen center for
+   five minutes. There's no movement, no exploration, no spatial
+   reasoning. The world is something that happens TO the player, not
+   something the player moves THROUGH.
+
+4. The "inverse difficulty curve" is less interesting than it sounds.
+   In practice, it means the timing windows get tighter — standard
+   difficulty scaling. The fact that audio cues diminish is novel, but
+   the player's experience is just "this is getting harder," which is
+   what every game does.
+
+5. No fail state means no stakes. The time ending is framed as
+   intentional, but functionally, the player can zone out and still
+   "complete" the game. Without real tension, the emotional arc collapses.
+
+WHAT WOULD MAKE IT GENUINELY CREATIVE?
+
+The premise — "you are a creature that feeds on sound, and eating makes
+the world emptier" — is strong. The problem is that it needs a mechanic
+where SOUND IS THE GAMEPLAY, not just the backdrop. The player should
+interact with sound spatially, strategically, and consequentially.
+
+The revised design transforms Decibel Thief from a rhythm game with a
+creative narrative into an action-stealth game where sound IS the world:
+light, danger, navigation, and reward all at once.
+
+
+################################################################################
+# STAGE 1: GAME DESIGN (REVISED)
+################################################################################
+
+
+## 1. Title & Hook
+
+Title: DECIBEL THIEF
+
+Pitch: You're a silence creature hunting living instruments in a world
+where sound is light — and every voice you devour makes the darkness
+grow.
+
+
+## 2. Core Insight
+
+Central question: What do you become when you've consumed everything
+that made the world worth navigating?
+
+Sound in this game is not a soundtrack. It IS the world. Each instrument
+is a living entity that emits light proportional to its volume. The
+player can only SEE in areas near sound. Devouring an instrument removes
+a light source, making the world darker and harder to navigate — but
+also removing that instrument's unique hazards. The player must
+constantly weigh: do I want safety (silence) or visibility (sound)?
+
+Why it matters: It captures a real human paradox. We consume the things
+we love — finishing the book, binging the show, mastering the challenge
+— and each completion makes our world a little emptier. This game makes
+that dynamic tangible: you literally need the things you're destroying.
+
+
+## 3. Mechanic-Theme Integration
+
+Primary mechanic: The player controls a small creature with free 2D
+movement (WASD/arrows). They navigate a dark arena where four instrument
+creatures roam, each emitting light and musical sound. To absorb an
+instrument's energy, the player enters its lit zone and performs timed
+"feed" actions (pressing SPACE when beat-pulses align with a visual
+ring). But each instrument also produces hazards unique to its musical
+character — the bass creates shockwaves, the percussion drops beat-
+synced mines, etc.
+
+How the mechanic embodies the theme: This isn't rhythm as wallpaper.
+Sound is literally your light source — you navigate BY it. The
+instruments you're hunting are the only reason you can see. Silencing
+one genuinely changes how you play: fewer hazards but also less
+visibility. The strategic choice of target order IS the theme: you're
+deciding which part of the world to erase first, and each choice
+reshapes your experience. The mechanic and theme are architecturally
+fused, not just aesthetically linked.
+
+
+## 4. Player Journey
+
+OPENING (0:00 - 0:20):
+Title card on black: "DECIBEL THIEF." Below: "WASD to move. SPACE to
+feed. Hunt the sound. Become the silence." Press SPACE to start.
+
+The screen blooms. Four pools of colored light appear, each pulsing with
+its own rhythm. The music fades in — four layers, warm and alive. The
+player's creature (a small dark wisp with faintly glowing edges) spawns
+at center. The entire arena is visible only through the overlapping
+halos of the four instruments. Between the lit zones: pure black.
+
+The player moves experimentally. The creature is fast and fluid. They
+notice each lit zone has a colored orb at its heart — the instrument
+creature — slowly drifting in a patrol pattern. Music is louder near
+each source and softer far away. The world feels alive.
+
+FIRST MINUTE (0:20 - 1:20):
+The player approaches one instrument — say, the Percussion (lime green).
+When they enter its halo, they see beat-synced mines appearing and
+detonating in rhythm. They dodge between explosions and reach the
+creature. A pulsing ring appears around the player: visible waves
+travel outward on each beat. The player presses SPACE when a wave
+reaches the ring's edge. Three successful timed feeds reduce the
+Percussion creature's size/brightness. But the mines keep coming.
+
+The player learns: I have to dodge hazards AND time my feeds. It's
+challenging but the timing windows are forgiving. After 6 successful
+feeds, the Percussion creature flickers and goes silent. Its light
+fades. Its mines stop. The lime quadrant of the arena goes dark.
+
+The music now has a hole. Three instruments remain.
+
+MINUTES 2-3 (1:20 - 3:00):
+The player pushes toward a second target. They notice: the remaining
+three instruments are slightly louder now and their lit zones pulse a
+bit wider — as if compensating for the loss. Their hazards are denser.
+The Bass (magenta) sends out deeper shockwaves. The Melody (cyan) fires
+seeking notes more frequently. The Harmony (gold) fog is thicker.
+
+The player chooses their next target strategically. The Bass shockwaves
+are making it hard to stay near any creature long enough to feed, so
+maybe silencing the Bass next makes sense. Or the Melody's seeking
+notes are annoying — kill that one. Each player will develop their
+own strategy based on which hazards they find most disruptive.
+
+A second instrument falls silent. The arena is now half-dark. Two pools
+of light remain, their music exposed and lonely without the other
+voices. The player's creature has grown slightly and glows brighter —
+visibly swollen with stolen sound.
+
+MINUTES 3-4 (3:00 - 4:15):
+Two instruments remain, now loud and aggressive. Their hazards overlap
+in the lit zones. The player must be precise and creative: dodge a
+shockwave INTO a feed window, weave between seeking notes to reach the
+Harmony creature. The tighter arenas make each approach feel like a
+miniature stealth-action puzzle.
+
+A third instrument is silenced. Now only one remains. The arena is
+almost completely dark — a single pool of colored light in a void.
+The music is a solo voice. Exposed. Fragile.
+
+FINAL MINUTE (4:15 - 5:00):
+The last instrument is bright and intense. Its hazards are at maximum
+density. But the player only needs to dodge ONE type of attack now. The
+arena is a single spotlight in darkness. The player circles in, feeds,
+dodges, feeds. Each successful feed visibly dims the last light.
+
+The final feed. The last note cuts. Total darkness. Total silence.
+
+ENDING:
+A pause. Then the player's creature — now the only light source in the
+world — begins to glow. Brighter. Brighter. It pulses once, and light
+ripples outward from it in all four instrument colors, illuminating
+the entire arena for one brief, beautiful moment. Then it contracts
+to a single point and a new, delicate melody plays — something the
+player has never heard. Built from fragments of the four consumed
+instruments, recombined into something new.
+
+Text fades in: "You ate the world. Now you are the music."
+
+Score, stats, and replay prompt appear.
+
+The emotion: not triumph, not guilt — transformation. You didn't
+destroy the music. You became it.
+
+
+## 5. Game Elements
+
+PLAYER CREATURE ("The Wisp"):
+  A dark circle (radius 8px) with a soft animated glow edge. Moves
+  freely in all 8 directions via WASD. Movement speed: 200px/s.
+  Slight drift/deceleration when input stops (not instant halt).
+  The creature emits a very faint personal light radius (~30px) so the
+  player can always barely see their immediate surroundings. This
+  light grows as instruments are consumed:
+    0 silenced: 30px radius, dim purple glow
+    1 silenced: 40px, slightly brighter
+    2 silenced: 55px, mixed color glow
+    3 silenced: 75px, bright warm glow
+    4 silenced: 100px, brilliant white (ending sequence)
+  The creature can be knocked back by hazards but cannot be killed.
+  Taking a hit stuns the player for 400ms (no movement, visual flash)
+  and cancels any in-progress feed. Getting hit 3 times in 8 seconds
+  triggers a brief "overwhelmed" state where the creature shrinks for
+  2 seconds and cannot feed. This is the fail-pressure — not death,
+  but lost time in a time-limited game.
+
+INSTRUMENT CREATURES (4 total):
+  Each is a colored orb (radius 18px) with a distinctive visual pulse.
+  They patrol slowly within their quadrant of the arena in a gentle
+  figure-8 or circular drift pattern (speed: 30px/s). Each has a
+  light halo radiating outward.
+
+  MELODY (Cyan, 0x00e5ff):
+    Visual: bright cyan orb with small orbiting note-shaped particles
+    Patrol zone: upper-left quadrant
+    Light radius: 180px (soft-edged circular gradient)
+    Sound: square-wave lead synth, 8-note melodic phrase
+    Hazard: SEEKING NOTES — small cyan projectiles (~6px) that spawn
+      every 2 beats, drift toward the player at 80px/s with slight
+      homing. They persist for 3 seconds then fade. Player must dodge
+      or outmaneuver them. On hit: knockback + stun.
+
+  BASS (Magenta, 0xff00aa):
+    Visual: large magenta orb that expands and contracts with deep pulse
+    Patrol zone: lower-right quadrant
+    Light radius: 160px (dense, warm-tinted)
+    Sound: sine-wave bass, 4-note pattern
+    Hazard: SHOCKWAVES — concentric expanding rings that radiate outward
+      from the Bass creature every 2 beats. Ring speed: 150px/s.
+      Ring width: 12px. Player must jump between rings (time movement
+      to pass through gaps) or stay very close to the source (inside
+      the first ring's radius). On hit: strong knockback.
+
+  HARMONY (Gold, 0xffd700):
+    Visual: warm gold orb with a hazy, shimmering aura
+    Patrol zone: upper-right quadrant
+    Light radius: 200px (widest but dimmest — atmospheric)
+    Sound: triangle-wave sustained chords, changing every 4 beats
+    Hazard: DISTORTION FOG — patches of golden haze that drift slowly
+      within the Harmony's light zone. Fog patches spawn every 3 beats,
+      last 4 seconds, radius 40px. When the player is inside fog:
+      movement speed halved, feed-ring timing becomes erratic (visual
+      wobble makes timing harder, but doesn't change actual window).
+      Not directly damaging — a soft hazard that makes other hazards
+      more dangerous by slowing you.
+
+  PERCUSSION (Lime, 0x88ff00):
+    Visual: sharp-edged lime orb that flashes on the beat
+    Patrol zone: lower-left quadrant
+    Light radius: 140px (harsh, strobing slightly on beat)
+    Sound: noise-burst kick/hi-hat pattern
+    Hazard: BEAT MINES — small lime circles (radius 10px) placed at
+      the Percussion creature's position every beat. Mines arm after
+      0.5 seconds (visual indicator: they stop blinking and go solid).
+      Armed mines detonate if the player touches them or after 4
+      seconds. Detonation: expanding lime ring (radius 50px) that
+      stuns on contact. Player must navigate through mine fields
+      carefully.
+
+  When an instrument is silenced:
+    - Its creature fades out over 1.5 seconds (shrinks and dims)
+    - Its light halo fades with it
+    - Its hazards cease immediately (existing ones fade over 0.5s)
+    - Remaining instruments get 25% louder and their light radius
+      grows by 15% per silenced instrument. Hazard frequency
+      increases by 20% per silenced instrument.
+
+FEED MECHANIC (visual elements):
+  When the player is within 50px of an instrument creature, the FEED
+  RING appears:
+    - A ring around the player (radius 35px), thin white outline
+    - Beat-synced PULSE WAVES: visible rings that emanate from the
+      instrument creature outward, passing through the player's
+      position. These are concentric circles expanding at the speed
+      of the beat, colored to match the instrument.
+    - The feed ring has a SWEET SPOT indicator: a brief brightening
+      of the ring when a pulse wave crosses it.
+    - Player presses SPACE when the sweet spot lights up.
+    - Success: ring flashes, player absorbs a unit, creature shrinks
+      slightly, satisfying chime sound.
+    - Mistimed: dull thud, no progress, 0.5s cooldown before next
+      attempt.
+
+  Feed quota per instrument (how many successful feeds to silence it):
+    First target:  8 feeds
+    Second target: 7 feeds
+    Third target:  6 feeds
+    Fourth target: 5 feeds
+  (Decreasing quotas compensate for increasing hazard intensity.)
+
+ARENA:
+  800x600 play area. The background is PURE BLACK (#000000) — the
+  default state of the world is darkness. All visibility comes from:
+    - Instrument creature light halos (primary)
+    - Player creature's personal glow (small, growing)
+    - Hazard effects (provide brief flickers of illumination)
+    - Feed ring pulses (when actively feeding)
+
+  There are no walls or platforms. The arena wraps at edges (exit
+  right, enter left; exit top, enter bottom) — this allows the player
+  to use wraparound movement to approach instruments from unexpected
+  angles, and prevents cornering.
+
+  Subtle visual: a faint grid of dots (alpha 0.03, spacing 40px)
+  visible only within lit zones, giving a sense of space and movement.
+
+UI / HUD:
+  All HUD elements float at top of screen, high depth, with dark
+  background pill shapes for readability.
+
+  Top-left:
+    "STOLEN: [score]" — white text, 18px
+    Below: four small colored circles (8px) representing each
+    instrument. Filled when active, hollow outline when silenced.
+    This shows the player which instruments remain at a glance.
+
+  Top-right:
+    Timer: "X:XX" counting up, white text, 18px
+    Below: "FEEDS: [current count] / [quota]" — only visible when
+    near an instrument (shows progress toward current target)
+
+  Bottom-center (first 10 seconds only, then fades):
+    "WASD: move | SPACE: feed when near a sound | Hunt all four"
+
+TITLE SCREEN:
+  Black background. Four colored lights drift slowly, far apart.
+  "DECIBEL THIEF" in white, 48px, center. Subtitle below.
+  Controls listed. "Press SPACE to begin" pulsing.
+
+ENDING SCREEN:
+  After final silence: 2-second darkness.
+  Player creature glows up, releases colored light ripple.
+  New melody plays (pentatonic generative sequence).
+  "You ate the world. Now you are the music."
+  Score, stats, replay prompt.
+
+TIMEOUT ENDING:
+  If 5:00 is reached with instruments remaining:
+  Remaining instruments slowly dim and fade on their own.
+  "Some sounds can't be caught. They leave on their own."
+  Score displayed. Replay prompt.
+
+
+## 6. Rules & Systems
+
+WHAT THE PLAYER CAN DO:
+  - Move in 8 directions with WASD (or arrow keys)
+  - Press SPACE to feed when within range of an instrument creature
+    and when a beat-pulse aligns with the feed ring
+  - Choose which instrument to approach (strategic movement)
+  - Choose when to engage/retreat (risk management)
+
+HOW THE GAME RESPONDS:
+
+  Movement: The creature accelerates to 200px/s in the input direction.
+  When input releases, the creature decelerates over 150ms (slight
+  drift). Movement respects wraparound at all 4 screen edges.
+
+  Entering a lit zone: The grid dots become visible. The player can
+  see the instrument creature, its hazards, and the surrounding area.
+  Music from that instrument grows louder the closer the player gets
+  (volume scales with proximity).
+
+  Feed attempt: Only possible within 50px of an instrument. Visual
+  ring appears automatically. SPACE pressed during sweet-spot window
+  (±180ms for first target, tightening by 20ms per subsequent phase):
+    - Success: score +15, feed counter increments, instrument creature
+      shrinks by (1/quota) of its original size, chime SFX, brief
+      particle burst
+    - Mistimed: thud SFX, 0.5s cooldown (ring greys out briefly)
+    - SPACE outside range: nothing happens (no penalty for mashing
+      in empty space — avoids frustrating new players)
+
+  Taking a hit from any hazard:
+    - Player knocked back 60px in the opposite direction
+    - 400ms stun (creature flashes red, no input accepted)
+    - Any active feed sequence interrupted (ring disappears)
+    - Hit counter increments. If 3 hits within 8 seconds:
+      "Overwhelmed" state for 2 seconds (creature shrinks, glows red,
+      cannot feed, movement slowed to 100px/s). Overwhelm counter
+      resets after the 2 seconds.
+
+  Instrument silenced: (triggered when feed counter reaches quota)
+    - That creature plays a descending tone and shrinks to nothing
+      over 1.5s
+    - Its light fades, its quadrant goes dark
+    - All its active hazards fade over 0.5s
+    - Remaining instruments: volume +25%, light radius +15%, hazard
+      frequency +20% (compounding per silenced instrument)
+    - Player's personal glow radius increases
+    - Score bonus: +100 × instruments_remaining (first kill = +300,
+      second = +200, third = +100, fourth = +50, rewarding speed)
+    - Feed quota for next target is set (8, 7, 6, 5)
+    - Phase counter increments
+
+  PROGRESSION:
+
+  Phase 1 (4 instruments): Relaxed. Hazards are sparse, timing generous.
+    Player explores, learns hazard types, picks first target.
+    Feed window: ±180ms. Hazards at base frequency.
+
+  Phase 2 (3 instruments): Moderate. Remaining instruments 25% more
+    intense. One quadrant is dark — slightly less safe navigation.
+    Feed window: ±160ms.
+
+  Phase 3 (2 instruments): Tense. Arena is half-dark. Two bright,
+    aggressive instruments. Their hazard zones may overlap in the
+    middle, creating crossfire danger zones.
+    Feed window: ±140ms.
+
+  Phase 4 (1 instrument): Focused. A single spotlight in the void.
+    Maximum hazard density from one source. The player's glow is now
+    large enough to navigate independently, but the final instrument
+    is fierce.
+    Feed window: ±120ms.
+
+  TIME LIMIT: 5:00 (300 seconds). Displayed as elapsed time counting
+  up. If 5:00 is reached, timeout ending triggers.
+
+SCORING:
+  Successful feed: +15 points
+  Instrument silenced: +100 × remaining instruments (300, 200, 100, 50)
+  Completion bonus: +(300 - elapsed_seconds) × 2 (rewards speed)
+  No penalty for getting hit (time loss IS the penalty)
+
+  The scoring encourages aggressive play — get in, feed fast, take
+  some hits, silence instruments quickly.
+
+
+################################################################################
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN (REVISED)
+################################################################################
+
+
+## 7. Technical Specification
+
+**DISPLAY**
+  Canvas: 800 × 600 pixels
+  Background: #000000 (pure black)
+  Scale: Phaser.Scale.FIT, Phaser.Scale.CENTER_BOTH
+  Physics: Arcade, gravity 0 (top-down game)
+  No camera scrolling (fixed 800×600 arena)
+
+**COLOR PALETTE**
+  Background:         #000000
+  Grid dots:          #ffffff at alpha 0.03
+  Player body:        #1a1a2e
+  Player glow start:  #6622aa (0 silenced)
+  Player glow end:    #ffffff (4 silenced)
+  Melody (UP):        #00e5ff (cyan)
+  Bass (DOWN):        #ff00aa (magenta)
+  Harmony (RIGHT):    #ffd700 (gold)
+  Percussion (LEFT):  #88ff00 (lime)
+  Stun flash:         #ff2222
+  Feed ring:          #ffffff at alpha 0.6
+  HUD background:     #000000 at alpha 0.5
+  HUD text primary:   #ffffff
+  HUD text secondary: #888899
+
+**PLAYER CREATURE**
+  Position: starts at (400, 300)
+  Body: filled circle, radius 8px, color #1a1a2e, depth 40
+  Glow: filled circle behind body, depth 39
+    Radius: 30 + (instrumentsSilenced × 17)   → 30, 47, 64, 81, 98
+    Color: interpolates #6622aa → #ffffff over 4 phases
+    Alpha: 0.25
+    Drawn using a radial gradient texture (generated in preload):
+      center = glow color at alpha 0.25, edge = same color at alpha 0.0
+  Light radius (illumination): same as glow radius
+  Movement speed: 200 px/s
+  Deceleration: velocity *= 0.85 each frame when no input (at 60fps)
+  Stun state: 400ms of no input, creature flashes red 3 times
+  Overwhelmed state: 2000ms, speed halved, red tint, cannot feed
+
+  Wraparound: if x < -8: x = 808; if x > 808: x = -8 (same for y
+  with bounds -8 and 608)
+
+**INSTRUMENT CREATURES (4 total)**
+  All share: filled circle, depth 30, with light halo behind at depth 5
+
+  MELODY — "melody"
+    Color: #00e5ff
+    Radius: 18px (shrinks as fed: radius = 18 × (1 - feedProgress))
+    Patrol center: (200, 150) — upper-left zone
+    Patrol pattern: figure-8, half-width 80px, half-height 60px,
+      speed 0.4 rad/s
+    Light halo radius: 180px (base), grows 15% per silenced OTHER
+      instrument
+    Light texture: radial gradient, center = instrument color at
+      alpha 0.12, edge = alpha 0.0
+    Sound: square oscillator, 8-note phrase [440,494,523,587,523,494,
+      440,392], each note = 1 beat
+    Gain base: 0.10
+
+    Hazard — SEEKING NOTES:
+      Spawn: every 2 beats (base). +20% freq per silenced instrument.
+      Appearance: small cyan filled circle, 6px radius
+      Behavior: spawns at instrument position, accelerates toward
+        player at 80px/s with gentle homing (turns toward player at
+        1.5 rad/s max). Persists 3 seconds then fades (alpha → 0
+        over 300ms, then destroyed).
+      On player contact: knockback 60px away from note, stun 400ms,
+        note destroyed.
+      Max concurrent: 5 (older ones fade if limit reached)
+
+  BASS — "bass"
+    Color: #ff00aa
+    Radius: 18px
+    Patrol center: (600, 450) — lower-right zone
+    Patrol pattern: slow circle, radius 60px, speed 0.3 rad/s
+    Light halo radius: 160px (base)
+    Sound: sine oscillator, 4-note phrase [110,130.8,146.8,130.8],
+      each note = 2 beats
+    Gain base: 0.15
+
+    Hazard — SHOCKWAVES:
+      Spawn: every 2 beats (base).
+      Appearance: expanding unfilled circle ring, magenta, line width
+        12px, starting radius 20px.
+      Behavior: expands outward at 150px/s. Fades alpha from 0.8 to
+        0.0 as it reaches light-halo edge. Destroyed when alpha < 0.05.
+      On player contact (player center within ring ± 8px):
+        knockback 80px outward from ring center, stun 400ms.
+      Note: player is safe if INSIDE the ring (closer to bass than
+        ring radius) or OUTSIDE the ring. Only the ring line itself
+        damages. This creates a dodge rhythm — stay close or time
+        movement between rings.
+
+  HARMONY — "harmony"
+    Color: #ffd700
+    Radius: 18px
+    Patrol center: (600, 150) — upper-right zone
+    Patrol pattern: gentle drift, random walk within 70px of center,
+      speed 20px/s, direction changes every 2-4 seconds
+    Light halo radius: 200px (base) — widest, dimmest
+    Sound: triangle oscillator, 4-chord roots [330,349,392,349],
+      each chord = 4 beats
+    Gain base: 0.08
+
+    Hazard — DISTORTION FOG:
+      Spawn: every 3 beats (base). Spawns at random position within
+        80px of Harmony creature.
+      Appearance: filled circle, gold, radius 40px, alpha 0.15.
+        Gentle scale pulse (0.95x to 1.05x over 1s, looping).
+      Behavior: stationary. Persists 4 seconds then fades (alpha → 0
+        over 500ms).
+      On player overlap: player speed reduced to 100px/s. Feed ring
+        visuals wobble (cosmetic — ring oscillates ±3px in radius,
+        making visual timing harder, but actual timing window unchanged).
+      NOT directly damaging. Does not cause stun or knockback.
+      Max concurrent: 4.
+
+  PERCUSSION — "percussion"
+    Color: #88ff00
+    Radius: 18px
+    Patrol center: (200, 450) — lower-left zone
+    Patrol pattern: sharp zigzag within 70px box, speed 40px/s,
+      direction changes every 1-2 seconds (erratic, jittery feel)
+    Light halo radius: 140px (base) — smallest, brightest per area
+    Sound: noise bursts. Kick (100ms) on beats 1,3. Hi-hat (50ms)
+      every beat.
+    Gain base: 0.12
+
+    Hazard — BEAT MINES:
+      Spawn: every beat (base), placed at Percussion creature's current
+        position.
+      Appearance: small lime filled circle, radius 10px. Blinks
+        (alpha 0.4/0.8 toggle every 200ms) for first 0.5s. Then goes
+        solid (alpha 0.9) = armed.
+      Behavior: stationary. Armed mines detonate if:
+        (a) player center comes within 14px, OR
+        (b) 4 seconds elapse after spawn.
+      Detonation: expanding lime ring from mine position, max radius
+        50px, expansion speed 200px/s. Ring is 6px thick. Contact
+        with player during expansion: knockback 50px, stun 400ms.
+        Mine and ring destroyed after ring reaches max radius.
+      Max concurrent: 12 (oldest auto-detonates if limit reached).
+
+**FEED RING (appears when player is within 50px of instrument)**
+  Ring around player: unfilled circle, white, radius 35px, line
+    width 2px, alpha 0.6, depth 45.
+  Beat-pulse waves: concentric circles expanding outward from the
+    instrument creature. One wave per beat. Wave = unfilled circle
+    in instrument color, line width 2px, alpha 0.5. Expands at
+    rate calibrated so it crosses the feed ring exactly on-beat.
+    Wave expansion speed = (distance from instrument to player) /
+    beat_interval. Waves fade after passing the feed ring.
+  Sweet spot: when a wave's radius is within ±6px of overlapping
+    the feed ring, the feed ring brightens to alpha 1.0 and line
+    width 3px. This is the visual cue.
+  SPACE pressed during sweet spot: SUCCESS.
+  SPACE pressed outside sweet spot: MISTIMED.
+  After success: 0.3s before next feed possible (prevents spam).
+  After mistime: 0.5s cooldown (ring greys, alpha 0.2).
+
+  Timing windows (how many ms the sweet spot is "open"):
+    Phase 1: ±180ms
+    Phase 2: ±160ms
+    Phase 3: ±140ms
+    Phase 4: ±120ms
+
+  Feed progress per instrument:
+    First instrument targeted:  8 feeds to silence
+    Second: 7
+    Third:  6
+    Fourth: 5
+
+**LIGHT / VISIBILITY SYSTEM**
+  This is the most important visual system. The arena is BLACK. Things
+  are only visible within lit zones.
+
+  Implementation approach: Use a dark overlay technique.
+    1. All game objects are drawn normally on the game layer.
+    2. A darkness layer (depth 80) covers the entire screen — a
+       filled black rectangle at alpha 0.95.
+    3. "Light" is created by punching holes in the darkness layer
+       using blend modes or by drawing the darkness as a render
+       texture with circular cutouts at each light source.
+
+  Practical Phaser implementation:
+    Use a RenderTexture (800×600) as the darkness layer.
+    Each frame:
+      - Fill the RenderTexture with black (alpha 0.95)
+      - For each active light source (instrument halos + player glow),
+        draw a "light cookie" texture (radial gradient: white center,
+        transparent edge) onto the RenderTexture using ERASE blend mode.
+        This punches a soft-edged hole in the darkness.
+    Light sources:
+      - Each instrument: position = creature position, radius = halo radius
+      - Player: position = player position, radius = glow radius
+      - Hazard flashes: brief small lights at impact positions (radius 30px,
+        duration 100ms)
+
+  Light cookie textures (generated in preload):
+    Create several sizes (32px, 64px, 128px, 256px, 512px diameter).
+    Each: white filled circle with radial alpha falloff. Center alpha 1.0,
+    edge alpha 0.0. Use Phaser Graphics to draw concentric circles with
+    decreasing alpha, then generateTexture.
+
+**GRID DOTS**
+  40px spacing, covering full 800×600 (21 × 16 = 336 dots).
+  Each dot: 2px filled circle, white, alpha 0.03, depth 1.
+  These are always drawn but only visible through the darkness
+  cutouts. They give spatial orientation within lit zones.
+
+**HUD**
+  All HUD elements at depth 100 (above darkness layer).
+
+  Score pill — top-left (16, 12):
+    Background: rounded rect, 160×28, #000000 alpha 0.5
+    Text: "STOLEN: 0" — Arial 16px, #ffffff, left-aligned at (24, 18)
+
+  Instrument indicators — below score pill (16, 46):
+    Four circles in a row, 8px radius each, spacing 24px
+    Colors: cyan, magenta, gold, lime (in order)
+    Active: filled. Silenced: stroke only (unfilled), alpha 0.3.
+
+  Timer — top-right (784, 12), right-aligned:
+    Background: rounded rect, 80×28
+    Text: "0:00" — Arial 16px, #ffffff
+
+  Feed progress — top-right (784, 46), only visible when feeding:
+    Text: "FEEDS: 0 / 8" — Arial 13px, #888899
+
+  Controls hint — bottom-center (400, 580), fades after 8 seconds:
+    "WASD: move | SPACE: feed near a sound | Silence all four"
+    Arial 13px, #555566, centered
+
+**AUDIO (Web Audio API, synthesized)**
+  Master gain node → destination. Volume 0.7.
+  Per-instrument gain nodes → master gain.
+
+  Each instrument uses scheduled OscillatorNodes (see original spec
+  for scheduling pattern). The key addition:
+
+  Proximity volume: each instrument gain is modulated by distance
+  from the player.
+    distToPlayer = distance(player, instrument)
+    proximityFactor = 1.0 - clamp(distToPlayer / 400, 0, 0.85)
+    instrumentGain.gain.value = baseGain × proximityFactor × aliveMultiplier
+  aliveMultiplier: ramps to 0 over 1.5s when silenced.
+
+  Volume boost per silenced instrument: baseGain increases by 25%
+  (compounding) for remaining instruments.
+
+  SFX:
+    Feed success: sine 880Hz, 80ms, gain 0.12, exponential decay
+    Feed mistime: noise 60ms, gain 0.06, low-pass 300Hz
+    Hit taken: noise 100ms, gain 0.1, + sine 220Hz 100ms
+    Instrument silenced: descending tone sweep 440→110Hz over 1.5s,
+      triangle wave, gain 0.15→0
+
+**INPUT**
+  WASD or Arrow Keys: 8-directional movement (diagonals allowed)
+    W/Up: accelerate y = -200
+    S/Down: accelerate y = +200
+    A/Left: accelerate x = -200
+    D/Right: accelerate x = +200
+    Diagonal: both axes at ±141 (200/√2, normalized)
+  SPACE: feed action (keydown only, not held)
+
+  Input disabled during: stun (400ms) and overwhelmed (2000ms) states
+  for movement. SPACE always disabled during feed cooldown.
+
+**STATE VARIABLES**
+  // Player
+  playerX, playerY: float, start (400, 300)
+  playerVelX, playerVelY: float, start 0
+  playerGlowRadius: int, start 30
+  playerStunTimer: float, start 0 (counts down)
+  playerOverwhelmed: boolean, start false
+  playerOverwhelmTimer: float, start 0
+  hitTimestamps: array of timestamps, max 3, for 8-second window check
+  isFeeding: boolean, start false
+  feedTarget: reference to instrument or null
+  feedCooldownTimer: float, start 0
+
+  // Instruments (object per instrument)
+  instruments[dir].x, .y: float (patrol position)
+  instruments[dir].alive: boolean, start true
+  instruments[dir].feedCount: int, start 0
+  instruments[dir].currentQuota: int (set per phase)
+  instruments[dir].baseRadius: 18
+  instruments[dir].lightRadius: float (base value)
+  instruments[dir].hazardTimer: float (counts beats for hazard spawn)
+  instruments[dir].patrolAngle: float, start 0
+
+  // Game state
+  score: int, start 0
+  instrumentsSilenced: int, start 0
+  silenceOrder: array, records which instrument was silenced in what order
+  currentPhase: int, start 1
+  elapsedTime: float, start 0
+  gameActive: boolean
+  beatAccumulator: float, start 0
+  currentBPM: 100 (constant — the BPM doesn't change, only feed windows
+    and hazard density scale with phase)
+
+  // Hazards
+  seekingNotes: array of {x, y, vx, vy, lifetime, sprite}
+  shockwaves: array of {x, y, radius, alpha, sprite}
+  fogPatches: array of {x, y, lifetime, sprite}
+  beatMines: array of {x, y, age, armed, sprite}
+
+  // Timing
+  beatInterval: 600ms (100 BPM throughout)
+  feedWindows: [180, 160, 140, 120] ms per phase
+
+**TIMING CONSTANTS**
+  BPM: 100 (fixed) → beat interval = 600ms
+  Player speed: 200 px/s
+  Player deceleration: 0.85× per frame
+  Stun duration: 400ms
+  Overwhelm duration: 2000ms
+  Overwhelm trigger: 3 hits within 8000ms
+  Feed success cooldown: 300ms
+  Feed mistime cooldown: 500ms
+  Instrument fade on silence: 1500ms
+  Hazard fade on silence: 500ms
+  Game time limit: 300000ms (5:00)
+  Controls hint fade: 8000ms
+  End sequence delay: 2000ms
+  Light ripple duration: 1500ms
+
+  Instrument patrol speeds: Melody 0.4 rad/s, Bass 0.3 rad/s,
+    Harmony ~20px/s random, Percussion ~40px/s zigzag
+
+  Hazard base intervals (in beats):
+    Seeking notes: every 2 beats
+    Shockwaves: every 2 beats
+    Fog patches: every 3 beats
+    Beat mines: every 1 beat
+  Hazard frequency multiplier: 1.0 + (0.2 × instrumentsSilenced)
+    applied to remaining instruments
+
+**INTERACTIONS**
+
+  Player ↔ Seeking notes: overlap check (circle-circle, player r=8,
+    note r=6, trigger distance=14). On overlap: apply knockback vector
+    (player position - note position, normalized × 60), start stun
+    timer, destroy note, log hit timestamp.
+
+  Player ↔ Shockwaves: ring intersection check. Player collides if
+    abs(distPlayerToRingCenter - ringRadius) < (ringWidth/2 + playerRadius)
+    = abs(dist - ringRadius) < 14. On collision: knockback = normalized
+    vector from ring center to player × 80, stun, log hit.
+
+  Player ↔ Fog patches: overlap check (circle-circle, fog r=40). On
+    overlap: set playerInFog = true. Effect: speed cap at 100px/s,
+    feed ring wobble active.
+
+  Player ↔ Beat mines: proximity check, dist < 14px (mine r=10 +
+    player r=8 with margin). If mine is armed: trigger detonation.
+    Mine detonation ring: same ring check as shockwave but expanding
+    faster (200px/s) to max 50px.
+
+  Player ↔ Instrument (feed range): dist < 50px. Activates feed ring.
+    On SPACE during sweet spot: feed success. On SPACE outside: mistime.
+
+**PROGRESSION / ENDING**
+
+  Silence order tracking: when instrument silenced, push its key to
+  silenceOrder array. Feed quotas assigned based on silenceOrder.length:
+    silenceOrder.length == 0: next quota = 8
+    silenceOrder.length == 1: next quota = 7
+    silenceOrder.length == 2: next quota = 6
+    silenceOrder.length == 3: next quota = 5
+
+  Good ending trigger: instrumentsSilenced == 4
+    → completion bonus = max(0, (300 - floor(elapsedTime/1000))) × 2
+    → finalScore = score + completion bonus
+    → play ending sequence
+
+  Timeout trigger: elapsedTime >= 300000
+    → finalScore = score (no bonus)
+    → play timeout ending
+
+
+## 8. Game Flow
+
+1. BOOT SCENE:
+   Generate all textures:
+     - Player body circle (16×16, dark)
+     - Glow cookie textures at 5 sizes (64,96,128,180,256 diameter)
+     - Instrument body circles (4 colors, 36×36)
+     - Light cookie textures (256,320,400,512 diameter, for halos)
+     - Note projectile (12×12, cyan)
+     - Shockwave ring (1×1 — will be drawn via graphics each frame)
+     - Fog patch (80×80, gold, alpha gradient)
+     - Mine (20×20, lime)
+     - Particle (6×6, white)
+     - Grid dot (4×4, white)
+   Initialize AudioContext (suspended).
+   Transition to TitleScene.
+
+2. TITLE SCENE:
+   - Black background
+   - Four colored orbs at quadrant positions, pulsing gently
+   - Title text, subtitle, controls, start prompt
+   - On SPACE: resume AudioContext, fade to GameScene
+
+3. GAME SCENE — INIT:
+   - Reset all state variables
+   - Place grid dots (336 of them, depth 1)
+   - Create 4 instrument creatures at patrol centers
+   - Create player at center
+   - Create darkness RenderTexture (depth 80)
+   - Create HUD elements (depth 100)
+   - Start 4 audio instrument loops via Web Audio scheduling
+   - Set gameActive = true
+   - Start controls hint fade timer (8s)
+
+4. GAME SCENE — MAIN LOOP (each frame):
+   a) If not gameActive: return
+   b) Advance elapsedTime by delta. Check timeout (>= 300000).
+   c) Process player input:
+      - Read WASD/arrow states
+      - Calculate velocity (0 if stunned/overwhelmed)
+      - Apply velocity: playerX += velX × (delta/1000)
+      - Apply deceleration if no input: vel *= 0.85
+      - Apply wraparound
+   d) Update beat timer:
+      - beatAccumulator += delta
+      - If beatAccumulator >= beatInterval: onBeat(), subtract interval
+   e) Update instrument patrols: move each alive instrument along its
+      patrol path
+   f) Update all hazards:
+      - Seeking notes: move toward player with homing, check lifetime,
+        check collision with player
+      - Shockwaves: expand radius, check collision, fade alpha, destroy
+        when alpha < 0.05
+      - Fog patches: decrement lifetime, check player overlap, destroy
+        when expired
+      - Beat mines: increment age, arm at 0.5s, check player proximity
+        (armed only), auto-detonate at 4s, manage detonation rings
+   g) Update feed system:
+      - Check if player is within 50px of any alive instrument
+      - If yes and not already feeding: activate feed ring, set
+        feedTarget
+      - If feeding: update beat-pulse waves (expand from instrument
+        toward player), check sweet-spot alignment, process SPACE input
+      - If moved out of range: deactivate feed ring
+   h) Update audio proximity volumes for each instrument
+   i) Update darkness layer:
+      - Fill RenderTexture with black
+      - For each light source: draw light cookie with ERASE blend
+   j) Update HUD: score, timer, feed progress, instrument indicators
+   k) Check stun/overwhelm timers: decrement, clear when expired
+   l) Clean up destroyed hazard objects
+
+5. onBeat() function:
+   - For each alive instrument: check if this beat should spawn hazard
+     (based on hazard interval and frequency multiplier). If yes, call
+     spawnHazard(type, instrument).
+   - Pulse player creature slightly (tween scale 1.0 → 1.08 → 1.0,
+     80ms)
+   - If player is feeding: spawn new beat-pulse wave from feedTarget
+
+6. GOOD ENDING:
+   - gameActive = false
+   - Clear all hazards with fade
+   - Hide HUD
+   - 2000ms delay
+   - Player glow expands rapidly to radius 400 (fills screen)
+   - At max expansion: spawn colored light ripples outward (concentric
+     rings in all 4 instrument colors, expanding and fading)
+   - Play generative melody (random pentatonic notes, sine waves, one
+     every 200ms for 3 seconds)
+   - Glow contracts to normal
+   - Display ending text, score (with completion bonus), stats
+   - "Press SPACE to play again"
+
+7. TIMEOUT ENDING:
+   - gameActive = false
+   - Fade remaining instrument audio over 3000ms
+   - Fade remaining light halos over 3000ms
+   - Clear hazards
+   - Display timeout text, score (no bonus), stats
+   - "Press SPACE to play again"
+
+
+## 9. Pseudocode
+
+=== BOOT SCENE ===
+
+class BootScene:
+  preload():
+    g = this.make.graphics({add: false})
+
+    // Player body
+    g.fillStyle(0x1a1a2e)
+    g.fillCircle(8, 8, 8)
+    g.generateTexture('player_body', 16, 16)
+
+    // Light cookie textures (radial gradient circles for visibility)
+    // These will be used to "erase" darkness
+    for each size in [64, 96, 128, 180, 256, 320, 400, 512]:
+      g.clear()
+      steps = 20
+      for i in 0..steps:
+        alpha = 1.0 - (i / steps)
+        radius = (size/2) * (i / steps)
+        g.fillStyle(0xffffff, alpha * alpha) // quadratic falloff
+        g.fillCircle(size/2, size/2, (size/2) - radius)
+      g.generateTexture('light_' + size, size, size)
+
+    // Instrument bodies (4 colors)
+    for each {name, color} in instruments:
+      g.clear()
+      g.fillStyle(color)
+      g.fillCircle(18, 18, 18)
+      g.generateTexture('inst_' + name, 36, 36)
+
+    // Hazard textures
+    g.clear(); g.fillStyle(0x00e5ff)
+    g.fillCircle(6, 6, 6)
+    g.generateTexture('seeking_note', 12, 12)
+
+    g.clear(); g.fillStyle(0xffd700, 0.15)
+    g.fillCircle(40, 40, 40)
+    g.generateTexture('fog_patch', 80, 80)
+
+    g.clear(); g.fillStyle(0x88ff00)
+    g.fillCircle(10, 10, 10)
+    g.generateTexture('mine', 20, 20)
+
+    // Particle
+    g.clear(); g.fillStyle(0xffffff)
+    g.fillCircle(3, 3, 3)
+    g.generateTexture('particle', 6, 6)
+
+    g.destroy()
+
+  create():
+    this.game.audioCtx = new AudioContext()
+    this.scene.start('TitleScene')
+
+
+=== TITLE SCENE ===
+
+class TitleScene:
+  create():
+    cx = 400; cy = 300
+
+    // Background orbs (representing instruments, drifting)
+    orbData = [
+      {x: 200, y: 150, color: 0x00e5ff},
+      {x: 600, y: 450, color: 0xff00aa},
+      {x: 600, y: 150, color: 0xffd700},
+      {x: 200, y: 450, color: 0x88ff00}
+    ]
+    this.orbs = []
+    for each od in orbData:
+      orb = this.add.circle(od.x, od.y, 14, od.color, 0.4)
+      this.tweens.add({targets: orb, alpha: 0.15, duration: 1500,
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'})
+      this.orbs.push(orb)
+
+    // Title
+    this.add.text(cx, 100, 'DECIBEL THIEF', {
+      fontFamily: 'Arial Black, sans-serif', fontSize: '44px',
+      color: '#ffffff', stroke: '#000', strokeThickness: 4
+    }).setOrigin(0.5)
+
+    // Subtitle
+    this.add.text(cx, 155, 'Consume the music. Embrace the silence.', {
+      fontFamily: 'Arial', fontSize: '16px', color: '#888899'
+    }).setOrigin(0.5)
+
+    // Controls
+    controlLines = [
+      'WASD or Arrow Keys — Move',
+      'SPACE — Feed (when near a sound)',
+      '',
+      'Approach the glowing creatures.',
+      'Time your feed to their beat.',
+      'Silence them all before time runs out.'
+    ]
+    this.add.text(cx, 310, controlLines.join('\n'), {
+      fontFamily: 'Arial', fontSize: '15px', color: '#aaaaaa',
+      align: 'center', lineSpacing: 6
+    }).setOrigin(0.5)
+
+    // Start prompt
+    startText = this.add.text(cx, 510, 'Press SPACE to begin', {
+      fontFamily: 'Arial', fontSize: '22px', color: '#ffffff'
+    }).setOrigin(0.5)
+    this.tweens.add({targets: startText, alpha: 0.3, duration: 900,
+      yoyo: true, repeat: -1})
+
+    this.input.keyboard.once('keydown-SPACE', () => {
+      this.game.audioCtx.resume()
+      this.cameras.main.fadeOut(600, 0, 0, 0)
+      this.cameras.main.once('camerafadeoutcomplete', () =>
+        this.scene.start('GameScene'))
+    })
+
+
+=== GAME SCENE ===
+
+class GameScene:
+
+  CONFIG = {
+    PLAYER_SPEED: 200,
+    PLAYER_RADIUS: 8,
+    DECEL: 0.85,
+    STUN_MS: 400,
+    OVERWHELM_MS: 2000,
+    OVERWHELM_HITS: 3,
+    OVERWHELM_WINDOW: 8000,
+    FEED_RANGE: 50,
+    FEED_RING_RADIUS: 35,
+    FEED_SUCCESS_COOLDOWN: 300,
+    FEED_FAIL_COOLDOWN: 500,
+    BPM: 100,
+    BEAT_MS: 600,
+    GAME_TIME_MS: 300000,
+    FEED_WINDOWS: [180, 160, 140, 120],  // ms, indexed by phase-1
+    FEED_QUOTAS: [8, 7, 6, 5],           // indexed by silenceOrder.length
+    HAZARD_FREQ_MULT_PER_SILENCE: 0.2,
+    VOLUME_BOOST_PER_SILENCE: 0.25,
+    LIGHT_BOOST_PER_SILENCE: 0.15,
+    INSTRUMENTS: {
+      melody:     {color: 0x00e5ff, cx: 200, cy: 150, lightR: 180,
+                   patrolType: 'figure8', patrolW: 80, patrolH: 60,
+                   patrolSpeed: 0.4, gain: 0.10},
+      bass:       {color: 0xff00aa, cx: 600, cy: 450, lightR: 160,
+                   patrolType: 'circle', patrolR: 60,
+                   patrolSpeed: 0.3, gain: 0.15},
+      harmony:    {color: 0xffd700, cx: 600, cy: 150, lightR: 200,
+                   patrolType: 'random', patrolR: 70,
+                   patrolSpeed: 20, gain: 0.08},
+      percussion: {color: 0x88ff00, cx: 200, cy: 450, lightR: 140,
+                   patrolType: 'zigzag', patrolR: 70,
+                   patrolSpeed: 40, gain: 0.12}
+    }
+  }
+
+  init():
+    this.score = 0
+    this.instrumentsSilenced = 0
+    this.silenceOrder = []
+    this.currentPhase = 1
+    this.elapsedTime = 0
+    this.gameActive = false
+    this.beatAccumulator = 0
+    this.beatCount = 0
+
+    this.playerVelX = 0
+    this.playerVelY = 0
+    this.stunTimer = 0
+    this.overwhelmed = false
+    this.overwhelmTimer = 0
+    this.hitTimestamps = []
+    this.isFeeding = false
+    this.feedTarget = null
+    this.feedCooldown = 0
+    this.feedPulseWaves = []
+
+    this.instruments = {}
+    this.seekingNotes = []
+    this.shockwaves = []
+    this.fogPatches = []
+    this.beatMines = []
+    this.mineDetonations = []
+    this.playerInFog = false
+
+  create():
+    C = this.CONFIG
+    cx = 400; cy = 300
+
+    // Grid dots
+    for x in 0..800 step 40:
+      for y in 0..600 step 40:
+        this.add.circle(x, y, 1.5, 0xffffff, 0.03).setDepth(1)
+
+    // Initialize instruments
+    for each [name, cfg] in C.INSTRUMENTS:
+      inst = {
+        name: name,
+        alive: true,
+        x: cfg.cx, y: cfg.cy,
+        config: cfg,
+        feedCount: 0,
+        quota: C.FEED_QUOTAS[0],
+        patrolAngle: 0,
+        hazardBeatCounter: 0,
+        sprite: this.add.image(cfg.cx, cfg.cy, 'inst_' + name)
+          .setDepth(30),
+        lightSprite: this.add.image(cfg.cx, cfg.cy,
+          closestLightTexture(cfg.lightR * 2))
+          .setDepth(5).setAlpha(0.12).setTint(cfg.color),
+        gainNode: null  // set in initAudio
+      }
+      this.instruments[name] = inst
+
+    // Player
+    this.playerGlow = this.add.image(cx, cy,
+      closestLightTexture(60))  // 30px radius → 60 diameter
+      .setDepth(39).setAlpha(0.25).setTint(0x6622aa)
+    this.playerBody = this.add.circle(cx, cy, C.PLAYER_RADIUS,
+      0x1a1a2e).setDepth(40)
+    this.playerX = cx
+    this.playerY = cy
+
+    // Darkness overlay (RenderTexture)
+    this.darkness = this.add.renderTexture(0, 0, 800, 600)
+      .setDepth(80)
+    // We'll redraw this every frame
+
+    // Feed ring (initially hidden)
+    this.feedRingGraphics = this.add.graphics().setDepth(45)
+    this.feedRingVisible = false
+
+    // HUD (depth 100, above darkness)
+    this.scoreText = this.add.text(24, 18, 'STOLEN: 0', {
+      fontFamily: 'Arial', fontSize: '16px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3
+    }).setDepth(100)
+
+    // Instrument indicator dots
+    this.indicatorDots = {}
+    dotX = 24
+    for each name in ['melody','bass','harmony','percussion']:
+      color = C.INSTRUMENTS[name].color
+      dot = this.add.circle(dotX, 50, 6, color).setDepth(100)
+      this.indicatorDots[name] = dot
+      dotX += 24
+
+    this.timerText = this.add.text(776, 18, '0:00', {
+      fontFamily: 'Arial', fontSize: '16px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(1, 0).setDepth(100)
+
+    this.feedProgressText = this.add.text(776, 46, '', {
+      fontFamily: 'Arial', fontSize: '13px', color: '#888899'
+    }).setOrigin(1, 0).setDepth(100).setAlpha(0)
+
+    this.controlsHint = this.add.text(400, 580,
+      'WASD: move | SPACE: feed near a sound | Silence all four', {
+      fontFamily: 'Arial', fontSize: '13px', color: '#555566'
+    }).setOrigin(0.5).setDepth(100)
+    this.tweens.add({targets: this.controlsHint, alpha: 0,
+      delay: 8000, duration: 1000})
+
+    // Input
+    this.keys = this.input.keyboard.addKeys({
+      w: 'W', a: 'A', s: 'S', d: 'D',
+      up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT',
+      space: 'SPACE'
+    })
+
+    // Audio
+    this.initAudio()
+
+    // Start
+    this.cameras.main.fadeIn(600)
+    this.gameActive = true
+
+  // ------ AUDIO ------
+
+  initAudio():
+    ctx = this.game.audioCtx
+    this.masterGain = ctx.createGain()
+    this.masterGain.gain.value = 0.7
+    this.masterGain.connect(ctx.destination)
+
+    beatDur = 60 / this.CONFIG.BPM  // 0.6 seconds
+
+    for each [name, inst] in this.instruments:
+      gainNode = ctx.createGain()
+      gainNode.gain.value = inst.config.gain
+      gainNode.connect(this.masterGain)
+      inst.gainNode = gainNode
+
+    // Schedule melody (square wave, 8-note phrase)
+    this.scheduleMelody(ctx, beatDur)
+    // Schedule bass (sine wave, 4-note phrase, 2 beats each)
+    this.scheduleBass(ctx, beatDur)
+    // Schedule harmony (triangle wave, 4 chords, 4 beats each)
+    this.scheduleHarmony(ctx, beatDur)
+    // Schedule percussion (noise bursts)
+    this.schedulePercussion(ctx, beatDur)
+
+  scheduleMelody(ctx, beatDur):
+    notes = [440, 494, 523, 587, 523, 494, 440, 392]
+    startTime = ctx.currentTime + 0.1
+    gainNode = this.instruments.melody.gainNode
+    for rep in 0..49:  // 50 repetitions × 8 notes × 0.6s = 240s
+      for i in 0..7:
+        t = startTime + (rep * 8 + i) * beatDur
+        osc = ctx.createOscillator()
+        osc.type = 'square'
+        osc.frequency.value = notes[i]
+        env = ctx.createGain()
+        env.gain.setValueAtTime(1.0, t)
+        env.gain.exponentialRampToValueAtTime(0.01, t + beatDur * 0.9)
+        osc.connect(env).connect(gainNode)
+        osc.start(t); osc.stop(t + beatDur)
+
+  scheduleBass(ctx, beatDur):
+    notes = [110, 130.8, 146.8, 130.8]
+    startTime = ctx.currentTime + 0.1
+    gainNode = this.instruments.bass.gainNode
+    for rep in 0..59:
+      for i in 0..3:
+        t = startTime + (rep * 8 + i * 2) * beatDur
+        osc = ctx.createOscillator()
+        osc.type = 'sine'
+        osc.frequency.value = notes[i]
+        env = ctx.createGain()
+        env.gain.setValueAtTime(1.0, t)
+        env.gain.exponentialRampToValueAtTime(0.01, t + beatDur * 1.9)
+        osc.connect(env).connect(gainNode)
+        osc.start(t); osc.stop(t + beatDur * 2)
+
+  scheduleHarmony(ctx, beatDur):
+    roots = [330, 349, 392, 349]
+    startTime = ctx.currentTime + 0.1
+    gainNode = this.instruments.harmony.gainNode
+    for rep in 0..18:
+      for i in 0..3:
+        t = startTime + (rep * 16 + i * 4) * beatDur
+        osc = ctx.createOscillator()
+        osc.type = 'triangle'
+        osc.frequency.value = roots[i]
+        env = ctx.createGain()
+        env.gain.setValueAtTime(1.0, t)
+        env.gain.setValueAtTime(0.8, t + beatDur * 3.8)
+        env.gain.linearRampToValueAtTime(0.01, t + beatDur * 4)
+        osc.connect(env).connect(gainNode)
+        osc.start(t); osc.stop(t + beatDur * 4)
+
+  schedulePercussion(ctx, beatDur):
+    gainNode = this.instruments.percussion.gainNode
+    startTime = ctx.currentTime + 0.1
+    // Create noise buffer
+    bufferSize = ctx.sampleRate * 0.1
+    noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+    data = noiseBuffer.getChannelData(0)
+    for i in 0..bufferSize: data[i] = Math.random() * 2 - 1
+
+    for beat in 0..499:
+      t = startTime + beat * beatDur
+      // Hi-hat every beat
+      hihat = ctx.createBufferSource()
+      hihat.buffer = noiseBuffer
+      hhFilter = ctx.createBiquadFilter()
+      hhFilter.type = 'highpass'; hhFilter.frequency.value = 5000
+      hhEnv = ctx.createGain()
+      hhEnv.gain.setValueAtTime(0.5, t)
+      hhEnv.gain.exponentialRampToValueAtTime(0.01, t + 0.05)
+      hihat.connect(hhFilter).connect(hhEnv).connect(gainNode)
+      hihat.start(t); hihat.stop(t + 0.05)
+
+      // Kick on beats 0, 2 of each 4-beat bar
+      if beat % 2 == 0:
+        kick = ctx.createBufferSource()
+        kick.buffer = noiseBuffer
+        kFilter = ctx.createBiquadFilter()
+        kFilter.type = 'lowpass'; kFilter.frequency.value = 150
+        kEnv = ctx.createGain()
+        kEnv.gain.setValueAtTime(1.0, t)
+        kEnv.gain.exponentialRampToValueAtTime(0.01, t + 0.1)
+        kick.connect(kFilter).connect(kEnv).connect(gainNode)
+        kick.start(t); kick.stop(t + 0.1)
+
+  // ------ MAIN UPDATE ------
+
+  update(time, delta):
+    if not this.gameActive: return
+
+    C = this.CONFIG
+    dt = delta / 1000  // seconds
+
+    // Timers
+    this.elapsedTime += delta
+    if this.elapsedTime >= C.GAME_TIME_MS:
+      this.triggerTimeoutEnding()
+      return
+
+    if this.stunTimer > 0: this.stunTimer -= delta
+    if this.feedCooldown > 0: this.feedCooldown -= delta
+    if this.overwhelmed:
+      this.overwhelmTimer -= delta
+      if this.overwhelmTimer <= 0:
+        this.overwhelmed = false
+        this.playerBody.clearTint()
+
+    // ---- PLAYER MOVEMENT ----
+    inputX = 0; inputY = 0
+    if not stunned and not overwhelmed:
+      if this.keys.a.isDown or this.keys.left.isDown: inputX -= 1
+      if this.keys.d.isDown or this.keys.right.isDown: inputX += 1
+      if this.keys.w.isDown or this.keys.up.isDown: inputY -= 1
+      if this.keys.s.isDown or this.keys.down.isDown: inputY += 1
+
+    if inputX != 0 or inputY != 0:
+      mag = sqrt(inputX*inputX + inputY*inputY)
+      speed = overwhelmed ? 100 : C.PLAYER_SPEED
+      this.playerVelX = (inputX / mag) * speed
+      this.playerVelY = (inputY / mag) * speed
+    else:
+      this.playerVelX *= C.DECEL
+      this.playerVelY *= C.DECEL
+      if abs(this.playerVelX) < 1: this.playerVelX = 0
+      if abs(this.playerVelY) < 1: this.playerVelY = 0
+
+    this.playerX += this.playerVelX * dt
+    this.playerY += this.playerVelY * dt
+
+    // Wraparound
+    if this.playerX < -8: this.playerX = 808
+    if this.playerX > 808: this.playerX = -8
+    if this.playerY < -8: this.playerY = 608
+    if this.playerY > 608: this.playerY = -8
+
+    this.playerBody.setPosition(this.playerX, this.playerY)
+    this.playerGlow.setPosition(this.playerX, this.playerY)
+
+    // ---- BEAT TRACKING ----
+    this.beatAccumulator += delta
+    if this.beatAccumulator >= C.BEAT_MS:
+      this.beatAccumulator -= C.BEAT_MS
+      this.onBeat()
+
+    // ---- UPDATE INSTRUMENTS (patrol) ----
+    for each [name, inst] in this.instruments:
+      if not inst.alive: continue
+      this.updatePatrol(inst, dt)
+      inst.sprite.setPosition(inst.x, inst.y)
+      inst.lightSprite.setPosition(inst.x, inst.y)
+
+      // Proximity volume
+      dist = distance(this.playerX, this.playerY, inst.x, inst.y)
+      proxFactor = 1.0 - clamp(dist / 400, 0, 0.85)
+      boostMult = 1.0 + (this.instrumentsSilenced * C.VOLUME_BOOST_PER_SILENCE)
+      targetGain = inst.config.gain * proxFactor * boostMult
+      // Smooth transition
+      inst.gainNode.gain.linearRampToValueAtTime(
+        targetGain, this.game.audioCtx.currentTime + 0.05)
+
+    // ---- UPDATE HAZARDS ----
+    this.updateSeekingNotes(dt)
+    this.updateShockwaves(dt)
+    this.updateFogPatches(dt)
+    this.updateBeatMines(dt)
+    this.updateMineDetonations(dt)
+
+    // ---- FEED SYSTEM ----
+    this.playerInFog = false  // reset each frame, set by fog check
+    this.updateFeedSystem(dt)
+
+    // ---- FEED INPUT (SPACE) ----
+    if Phaser.Input.Keyboard.JustDown(this.keys.space):
+      this.attemptFeed()
+
+    // ---- DARKNESS LAYER ----
+    this.updateDarkness()
+
+    // ---- HUD ----
+    this.scoreText.setText('STOLEN: ' + this.score)
+    mins = floor(this.elapsedTime / 60000)
+    secs = floor((this.elapsedTime % 60000) / 1000)
+    this.timerText.setText(mins + ':' + (secs < 10 ? '0' : '') + secs)
+
+  // ------ BEAT ------
+
+  onBeat():
+    C = this.CONFIG
+    this.beatCount++
+
+    // Pulse player
+    this.tweens.add({targets: [this.playerBody, this.playerGlow],
+      scaleX: 1.08, scaleY: 1.08, duration: 80, yoyo: true})
+
+    // Spawn hazards
+    freqMult = 1.0 + this.instrumentsSilenced * C.HAZARD_FREQ_MULT_PER_SILENCE
+    for each [name, inst] in this.instruments:
+      if not inst.alive: continue
+      inst.hazardBeatCounter++
+
+      switch name:
+        case 'melody':
+          interval = max(1, floor(2 / freqMult))
+          if inst.hazardBeatCounter % interval == 0:
+            this.spawnSeekingNote(inst)
+        case 'bass':
+          interval = max(1, floor(2 / freqMult))
+          if inst.hazardBeatCounter % interval == 0:
+            this.spawnShockwave(inst)
+        case 'harmony':
+          interval = max(1, floor(3 / freqMult))
+          if inst.hazardBeatCounter % interval == 0:
+            this.spawnFogPatch(inst)
+        case 'percussion':
+          // Every beat (frequency mult reduces via mine lifetime instead)
+          this.spawnBeatMine(inst)
+
+    // Feed pulse wave (if feeding)
+    if this.isFeeding and this.feedTarget:
+      this.spawnFeedPulseWave()
+
+  // ------ PATROL MOVEMENT ------
+
+  updatePatrol(inst, dt):
+    cfg = inst.config
+    switch cfg.patrolType:
+      case 'figure8':
+        inst.patrolAngle += cfg.patrolSpeed * dt
+        inst.x = cfg.cx + sin(inst.patrolAngle) * cfg.patrolW
+        inst.y = cfg.cy + sin(inst.patrolAngle * 2) * cfg.patrolH
+      case 'circle':
+        inst.patrolAngle += cfg.patrolSpeed * dt
+        inst.x = cfg.cx + cos(inst.patrolAngle) * cfg.patrolR
+        inst.y = cfg.cy + sin(inst.patrolAngle) * cfg.patrolR
+      case 'random':
+        // Slow drift toward random target within range
+        if not inst.driftTarget or distance(inst.x, inst.y,
+            inst.driftTarget.x, inst.driftTarget.y) < 5:
+          angle = random() * 2 * PI
+          r = random() * cfg.patrolR
+          inst.driftTarget = {
+            x: cfg.cx + cos(angle) * r,
+            y: cfg.cy + sin(angle) * r
+          }
+        dx = inst.driftTarget.x - inst.x
+        dy = inst.driftTarget.y - inst.y
+        d = distance(0, 0, dx, dy)
+        if d > 0:
+          inst.x += (dx/d) * cfg.patrolSpeed * dt
+          inst.y += (dy/d) * cfg.patrolSpeed * dt
+      case 'zigzag':
+        if not inst.zigDir or inst.zigTimer <= 0:
+          inst.zigDir = {x: (random()-0.5)*2, y: (random()-0.5)*2}
+          mag = distance(0,0,inst.zigDir.x,inst.zigDir.y)
+          inst.zigDir.x /= mag; inst.zigDir.y /= mag
+          inst.zigTimer = 1000 + random() * 1000  // 1-2 seconds
+        inst.zigTimer -= dt * 1000
+        newX = inst.x + inst.zigDir.x * cfg.patrolSpeed * dt
+        newY = inst.y + inst.zigDir.y * cfg.patrolSpeed * dt
+        // Clamp to patrol range
+        if distance(newX, newY, cfg.cx, cfg.cy) < cfg.patrolR:
+          inst.x = newX; inst.y = newY
+        else:
+          inst.zigTimer = 0  // force new direction
+
+  // ------ HAZARD SPAWNERS ------
+
+  spawnSeekingNote(inst):
+    if this.seekingNotes.length >= 5: return
+    note = {
+      x: inst.x, y: inst.y,
+      vx: 0, vy: 0,
+      lifetime: 3000,
+      sprite: this.add.image(inst.x, inst.y, 'seeking_note').setDepth(25)
+    }
+    this.seekingNotes.push(note)
+
+  spawnShockwave(inst):
+    wave = {
+      cx: inst.x, cy: inst.y,
+      radius: 20, alpha: 0.8,
+      graphics: this.add.graphics().setDepth(22)
+    }
+    this.shockwaves.push(wave)
+
+  spawnFogPatch(inst):
+    if this.fogPatches.length >= 4: return
+    angle = random() * 2 * PI
+    r = random() * 80
+    fog = {
+      x: inst.x + cos(angle) * r,
+      y: inst.y + sin(angle) * r,
+      lifetime: 4000,
+      sprite: this.add.image(0, 0, 'fog_patch').setDepth(20)
+        .setPosition(inst.x + cos(angle)*r, inst.y + sin(angle)*r)
+        .setAlpha(0.15)
+    }
+    this.fogPatches.push(fog)
+
+  spawnBeatMine(inst):
+    if this.beatMines.length >= 12:
+      oldest = this.beatMines.shift()
+      this.detonateMine(oldest)
+    mine = {
+      x: inst.x, y: inst.y,
+      age: 0, armed: false,
+      sprite: this.add.image(inst.x, inst.y, 'mine').setDepth(21)
+    }
+    this.beatMines.push(mine)
+
+  // ------ HAZARD UPDATES ------
+
+  updateSeekingNotes(dt):
+    for each note in this.seekingNotes:
+      note.lifetime -= dt * 1000
+      if note.lifetime <= 0:
+        note.sprite.destroy(); mark for removal; continue
+
+      // Homing toward player
+      dx = this.playerX - note.x
+      dy = this.playerY - note.y
+      targetAngle = atan2(dy, dx)
+      currentAngle = atan2(note.vy, note.vx)
+      // Rotate toward target at max 1.5 rad/s
+      angleDiff = normalizeAngle(targetAngle - currentAngle)
+      turnRate = 1.5 * dt
+      newAngle = currentAngle + clamp(angleDiff, -turnRate, turnRate)
+      speed = 80
+      note.vx = cos(newAngle) * speed
+      note.vy = sin(newAngle) * speed
+      note.x += note.vx * dt
+      note.y += note.vy * dt
+      note.sprite.setPosition(note.x, note.y)
+
+      // Collision with player
+      if distance(note.x, note.y, this.playerX, this.playerY) < 14:
+        this.hitPlayer(note.x, note.y, 60)
+        note.sprite.destroy(); mark for removal
+
+    // Remove dead notes
+    this.seekingNotes = this.seekingNotes.filter(n => not marked)
+
+  updateShockwaves(dt):
+    for each wave in this.shockwaves:
+      wave.radius += 150 * dt
+      wave.alpha -= 0.4 * dt
+
+      // Redraw ring
+      wave.graphics.clear()
+      if wave.alpha > 0.05:
+        wave.graphics.lineStyle(12, 0xff00aa, wave.alpha)
+        wave.graphics.strokeCircle(wave.cx, wave.cy, wave.radius)
+      else:
+        wave.graphics.destroy(); mark for removal; continue
+
+      // Collision: player within ring band
+      playerDist = distance(this.playerX, this.playerY, wave.cx, wave.cy)
+      if abs(playerDist - wave.radius) < 14:
+        this.hitPlayer(wave.cx, wave.cy, 80)
+
+    this.shockwaves = this.shockwaves.filter(w => not marked)
+
+  updateFogPatches(dt):
+    for each fog in this.fogPatches:
+      fog.lifetime -= dt * 1000
+      if fog.lifetime <= 0:
+        this.tweens.add({targets: fog.sprite, alpha: 0, duration: 500,
+          onComplete: () => fog.sprite.destroy()})
+        mark for removal; continue
+      // Check player overlap
+      if distance(this.playerX, this.playerY, fog.x, fog.y) < 48:
+        this.playerInFog = true
+
+    this.fogPatches = this.fogPatches.filter(f => not marked)
+
+  updateBeatMines(dt):
+    for each mine in this.beatMines:
+      mine.age += dt * 1000
+      if mine.age > 500 and not mine.armed:
+        mine.armed = true
+        mine.sprite.setAlpha(0.9)  // stop blinking
+      if not mine.armed:
+        // Blink
+        mine.sprite.setAlpha(mine.age % 400 < 200 ? 0.4 : 0.8)
+      if mine.age > 4000:
+        this.detonateMine(mine); continue
+      if mine.armed:
+        if distance(this.playerX, this.playerY, mine.x, mine.y) < 18:
+          this.detonateMine(mine)
+
+    this.beatMines = this.beatMines.filter(m => not m.detonated)
+
+  detonateMine(mine):
+    mine.detonated = true
+    mine.sprite.destroy()
+    det = {
+      cx: mine.x, cy: mine.y,
+      radius: 0, maxRadius: 50,
+      graphics: this.add.graphics().setDepth(23)
+    }
+    this.mineDetonations.push(det)
+
+  updateMineDetonations(dt):
+    for each det in this.mineDetonations:
+      det.radius += 200 * dt
+      alpha = 1.0 - (det.radius / det.maxRadius)
+      det.graphics.clear()
+      if det.radius < det.maxRadius:
+        det.graphics.lineStyle(6, 0x88ff00, alpha)
+        det.graphics.strokeCircle(det.cx, det.cy, det.radius)
+        // Player collision
+        playerDist = distance(this.playerX, this.playerY, det.cx, det.cy)
+        if abs(playerDist - det.radius) < 14:
+          this.hitPlayer(det.cx, det.cy, 50)
+      else:
+        det.graphics.destroy(); mark for removal
+
+    this.mineDetonations = this.mineDetonations.filter(d => not marked)
+
+  // ------ PLAYER HIT ------
+
+  hitPlayer(sourceX, sourceY, knockbackDist):
+    if this.stunTimer > 0: return  // invulnerable during stun
+
+    // Knockback
+    dx = this.playerX - sourceX
+    dy = this.playerY - sourceY
+    d = distance(0, 0, dx, dy)
+    if d > 0:
+      this.playerVelX = (dx/d) * knockbackDist / 0.4  // dissipates over stun
+      this.playerVelY = (dy/d) * knockbackDist / 0.4
+
+    // Stun
+    this.stunTimer = this.CONFIG.STUN_MS
+    this.playerBody.setFillStyle(0xff2222)  // flash red
+    this.time.delayedCall(this.CONFIG.STUN_MS, () =>
+      this.playerBody.setFillStyle(0x1a1a2e))
+
+    // Cancel feed
+    if this.isFeeding: this.cancelFeed()
+
+    // Hit sound
+    this.playHitSFX()
+
+    // Overwhelm check
+    now = this.elapsedTime
+    this.hitTimestamps.push(now)
+    this.hitTimestamps = this.hitTimestamps.filter(t =>
+      now - t < this.CONFIG.OVERWHELM_WINDOW)
+    if this.hitTimestamps.length >= this.CONFIG.OVERWHELM_HITS:
+      this.overwhelmed = true
+      this.overwhelmTimer = this.CONFIG.OVERWHELM_MS
+      this.playerBody.setFillStyle(0xff2222)
+      this.hitTimestamps = []
+
+  // ------ FEED SYSTEM ------
+
+  updateFeedSystem(dt):
+    // Find closest alive instrument within range
+    closestInst = null
+    closestDist = Infinity
+    for each [name, inst] in this.instruments:
+      if not inst.alive: continue
+      d = distance(this.playerX, this.playerY, inst.x, inst.y)
+      if d < this.CONFIG.FEED_RANGE and d < closestDist:
+        closestInst = inst
+        closestDist = d
+
+    if closestInst and not this.overwhelmed:
+      if not this.isFeeding or this.feedTarget != closestInst:
+        this.startFeed(closestInst)
+      this.drawFeedRing(closestInst)
+      this.feedProgressText.setAlpha(1)
+      this.feedProgressText.setText(
+        'FEEDS: ' + closestInst.feedCount + ' / ' + closestInst.quota)
+    else:
+      if this.isFeeding: this.cancelFeed()
+      this.feedRingGraphics.clear()
+      this.feedProgressText.setAlpha(0)
+
+    // Update feed pulse waves
+    for each wave in this.feedPulseWaves:
+      wave.radius += wave.speed * dt
+      wave.alpha -= 1.5 * dt
+      if wave.alpha <= 0:
+        wave.graphics.destroy(); mark for removal
+      else:
+        wave.graphics.clear()
+        wave.graphics.lineStyle(2, wave.color, wave.alpha)
+        wave.graphics.strokeCircle(this.playerX, this.playerY, wave.radius)
+
+    this.feedPulseWaves = this.feedPulseWaves.filter(w => not marked)
+
+  startFeed(inst):
+    this.isFeeding = true
+    this.feedTarget = inst
+
+  cancelFeed():
+    this.isFeeding = false
+    this.feedTarget = null
+    this.feedRingGraphics.clear()
+    // Clear pulse waves
+    for each w in this.feedPulseWaves: w.graphics.destroy()
+    this.feedPulseWaves = []
+
+  drawFeedRing(inst):
+    this.feedRingGraphics.clear()
+    // Check if sweet spot is active (any pulse wave near ring radius)
+    sweetSpot = false
+    for each wave in this.feedPulseWaves:
+      if abs(wave.radius - this.CONFIG.FEED_RING_RADIUS) < 6:
+        sweetSpot = true; break
+
+    lineWidth = sweetSpot ? 3 : 2
+    alpha = sweetSpot ? 1.0 : 0.5
+    wobble = this.playerInFog ? sin(this.elapsedTime * 0.01) * 3 : 0
+    this.feedRingGraphics.lineStyle(lineWidth, 0xffffff, alpha)
+    this.feedRingGraphics.strokeCircle(
+      this.playerX, this.playerY,
+      this.CONFIG.FEED_RING_RADIUS + wobble)
+
+  spawnFeedPulseWave():
+    if not this.feedTarget: return
+    dist = distance(this.playerX, this.playerY,
+      this.feedTarget.x, this.feedTarget.y)
+    // Wave starts at radius 0 (at instrument) and needs to reach
+    // FEED_RING_RADIUS in one beat
+    speed = dist / (this.CONFIG.BEAT_MS / 1000)  // but relative to player...
+    // Actually: wave is drawn centered on player. It starts at radius =
+    // (distance to instrument) and SHRINKS toward FEED_RING_RADIUS.
+    // Simpler: wave starts at radius 0 and expands. Sweet spot is when
+    // radius = FEED_RING_RADIUS.
+    wave = {
+      radius: 0,
+      speed: this.CONFIG.FEED_RING_RADIUS / (this.CONFIG.BEAT_MS / 1000),
+      alpha: 0.5,
+      color: this.feedTarget.config.color,
+      graphics: this.add.graphics().setDepth(44)
+    }
+    this.feedPulseWaves.push(wave)
+
+  attemptFeed():
+    if not this.isFeeding or not this.feedTarget: return
+    if this.feedCooldown > 0: return
+    if this.overwhelmed: return
+
+    // Check sweet spot
+    phase = this.currentPhase
+    windowMs = this.CONFIG.FEED_WINDOWS[phase - 1]
+    // Sweet spot is when any pulse wave's radius is close to FEED_RING_RADIUS
+    hit = false
+    for each wave in this.feedPulseWaves:
+      // Convert radius proximity to time proximity
+      radiusDiff = abs(wave.radius - this.CONFIG.FEED_RING_RADIUS)
+      timeDiff = (radiusDiff / wave.speed) * 1000  // ms
+      if timeDiff <= windowMs:
+        hit = true
+        wave.graphics.destroy(); mark wave for removal
+        break
+
+    if hit:
+      this.onFeedSuccess()
+    else:
+      this.onFeedMistime()
+
+  onFeedSuccess():
+    inst = this.feedTarget
+    inst.feedCount++
+    this.score += 15
+
+    // Visual feedback
+    this.emitParticles(this.playerX, this.playerY, inst.config.color, 8)
+    this.feedRingGraphics.lineStyle(4, inst.config.color, 1.0)
+    this.feedRingGraphics.strokeCircle(this.playerX, this.playerY,
+      this.CONFIG.FEED_RING_RADIUS)
+
+    // Shrink instrument
+    progress = inst.feedCount / inst.quota
+    newScale = 1.0 - progress * 0.8
+    this.tweens.add({targets: inst.sprite,
+      scaleX: newScale, scaleY: newScale, duration: 200})
+
+    // SFX
+    this.playFeedSFX()
+
+    // Cooldown
+    this.feedCooldown = this.CONFIG.FEED_SUCCESS_COOLDOWN
+
+    // Check if silenced
+    if inst.feedCount >= inst.quota:
+      this.silenceInstrument(inst)
+
+  onFeedMistime():
+    this.feedCooldown = this.CONFIG.FEED_FAIL_COOLDOWN
+    // Grey flash on ring
+    this.feedRingGraphics.clear()
+    this.feedRingGraphics.lineStyle(2, 0x444444, 0.3)
+    this.feedRingGraphics.strokeCircle(this.playerX, this.playerY,
+      this.CONFIG.FEED_RING_RADIUS)
+    this.playMistimeSFX()
+
+  // ------ SILENCE INSTRUMENT ------
+
+  silenceInstrument(inst):
+    inst.alive = false
+    this.silenceOrder.push(inst.name)
+    this.instrumentsSilenced++
+
+    // Score bonus
+    remaining = 4 - this.instrumentsSilenced
+    this.score += 100 * (remaining + 1)  // 300, 200, 100, 50... wait
+    // Actually: bonus = 100 * (4 - silenceOrder.length + 1) at time of kill
+    // 1st kill: 4 instruments were alive, 3 remain → bonus = 300
+    // Simplified: bonus = (4 - this.instrumentsSilenced + 1) * 100
+    // After increment: instrumentsSilenced is 1,2,3,4
+    // So bonus = (5 - this.instrumentsSilenced) * 100 → 400,300,200,100
+    // Let's use: bonus = (5 - this.instrumentsSilenced) * 75
+    // Actually let's stick with spec: +100 × remaining instruments
+    remainingCount = 4 - this.instrumentsSilenced
+    this.score += 100 * max(1, remainingCount + 1)
+
+    // Cancel feed
+    this.cancelFeed()
+
+    // Fade audio
+    inst.gainNode.gain.linearRampToValueAtTime(
+      0, this.game.audioCtx.currentTime + 1.5)
+
+    // Fade visuals
+    this.tweens.add({targets: [inst.sprite, inst.lightSprite],
+      alpha: 0, scaleX: 0.1, scaleY: 0.1, duration: 1500,
+      onComplete: () => {
+        inst.sprite.destroy()
+        inst.lightSprite.destroy()
+      }
+    })
+
+    // Update indicator dot
+    this.indicatorDots[inst.name].setAlpha(0.2)
+    this.indicatorDots[inst.name].setFillStyle(0x333333)
+
+    // Clear this instrument's hazards
+    this.clearHazardsFor(inst.name)
+
+    // Grow player glow
+    newGlowR = 30 + this.instrumentsSilenced * 17
+    glowTexName = closestLightTexture(newGlowR * 2)
+    this.playerGlow.setTexture(glowTexName)
+    // Update glow color (interpolate toward white)
+    t = this.instrumentsSilenced / 4
+    glowColor = lerpColor(0x6622aa, 0xffffff, t)
+    this.playerGlow.setTint(glowColor)
+
+    // Update phase
+    this.currentPhase = this.instrumentsSilenced + 1
+    // Set quotas for remaining instruments
+    nextQuota = this.CONFIG.FEED_QUOTAS[
+      min(this.instrumentsSilenced, this.CONFIG.FEED_QUOTAS.length - 1)]
+    for each [name, otherInst] in this.instruments:
+      if otherInst.alive:
+        otherInst.feedCount = 0
+        otherInst.quota = nextQuota
+        // Boost light radius
+        boost = 1 + this.instrumentsSilenced * this.CONFIG.LIGHT_BOOST_PER_SILENCE
+        newLightR = otherInst.config.lightR * boost
+        newTexName = closestLightTexture(newLightR * 2)
+        otherInst.lightSprite.setTexture(newTexName)
+
+    // Silence SFX
+    this.playSilenceSFX()
+
+    // Screen flash
+    this.cameras.main.flash(400, 255, 255, 255, false, null, null, 0.15)
+
+    // Check win
+    if this.instrumentsSilenced >= 4:
+      this.triggerGoodEnding()
+
+  clearHazardsFor(instName):
+    switch instName:
+      case 'melody':
+        for each n in this.seekingNotes:
+          this.tweens.add({targets: n.sprite, alpha:0, duration:500,
+            onComplete: () => n.sprite.destroy()})
+        this.seekingNotes = []
+      case 'bass':
+        for each w in this.shockwaves:
+          w.graphics.destroy()
+        this.shockwaves = []
+      case 'harmony':
+        for each f in this.fogPatches:
+          this.tweens.add({targets: f.sprite, alpha:0, duration:500,
+            onComplete: () => f.sprite.destroy()})
+        this.fogPatches = []
+      case 'percussion':
+        for each m in this.beatMines:
+          m.sprite.destroy()
+        this.beatMines = []
+        for each d in this.mineDetonations:
+          d.graphics.destroy()
+        this.mineDetonations = []
+
+  // ------ DARKNESS ------
+
+  updateDarkness():
+    this.darkness.fill(0x000000, 0.95)
+
+    // Erase (punch holes) for each light source
+    for each [name, inst] in this.instruments:
+      if not inst.alive: continue
+      boost = 1 + this.instrumentsSilenced * this.CONFIG.LIGHT_BOOST_PER_SILENCE
+      r = inst.config.lightR * boost
+      texName = closestLightTexture(r * 2)
+      this.darkness.erase(texName,
+        inst.x - r, inst.y - r)  // positioned at top-left of texture
+
+    // Player glow
+    glowR = 30 + this.instrumentsSilenced * 17
+    texName = closestLightTexture(glowR * 2)
+    this.darkness.erase(texName,
+      this.playerX - glowR, this.playerY - glowR)
+
+  // ------ ENDINGS ------
+
+  triggerGoodEnding():
+    this.gameActive = false
+    this.cancelFeed()
+
+    // Fade HUD
+    this.tweens.add({targets: [this.scoreText, this.timerText,
+      this.feedProgressText], alpha: 0, duration: 800})
+
+    // 2 seconds of dark silence
+    this.time.delayedCall(2000, () => {
+      // Player glow expands to fill screen
+      this.tweens.add({
+        targets: this.playerGlow,
+        scaleX: 12, scaleY: 12, alpha: 0.6,
+        duration: 1500, ease: 'Sine.easeIn',
+        onComplete: () => {
+          // Colored ripples
+          this.spawnEndingRipples()
+          // Contract
+          this.tweens.add({
+            targets: this.playerGlow,
+            scaleX: 1, scaleY: 1, alpha: 0.3,
+            duration: 1000, ease: 'Sine.easeOut',
+            onComplete: () => this.showEndingText(true)
+          })
+        }
+      })
+      // Play generative ending melody
+      this.playEndingMelody()
+    })
+
+  spawnEndingRipples():
+    colors = [0x00e5ff, 0xff00aa, 0xffd700, 0x88ff00]
+    for i in 0..3:
+      this.time.delayedCall(i * 300, () => {
+        g = this.add.graphics().setDepth(85)
+        radius = 0
+        timer = this.time.addEvent({delay: 16, loop: true, callback: () => {
+          radius += 4
+          alpha = 1.0 - radius / 500
+          g.clear()
+          if alpha > 0:
+            g.lineStyle(3, colors[i], alpha)
+            g.strokeCircle(this.playerX, this.playerY, radius)
+          else:
+            g.destroy(); timer.remove()
+        }})
+      })
+
+  playEndingMelody():
+    ctx = this.game.audioCtx
+    pitches = [523, 587, 659, 784, 880]  // C5 pentatonic
+    for i in 0..14:
+      t = ctx.currentTime + i * 0.2
+      freq = pitches[floor(random() * pitches.length)]
+      osc = ctx.createOscillator()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      env = ctx.createGain()
+      env.gain.setValueAtTime(0.06, t)
+      env.gain.exponentialRampToValueAtTime(0.001, t + 0.4)
+      osc.connect(env).connect(this.masterGain)
+      osc.start(t); osc.stop(t + 0.4)
+
+  triggerTimeoutEnding():
+    this.gameActive = false
+    this.cancelFeed()
+
+    // Fade remaining audio
+    for each [name, inst] in this.instruments:
+      if inst.alive:
+        inst.gainNode.gain.linearRampToValueAtTime(
+          0, this.game.audioCtx.currentTime + 3.0)
+        this.tweens.add({targets: [inst.sprite, inst.lightSprite],
+          alpha: 0, duration: 3000})
+
+    // Clear hazards
+    this.clearAllHazards()
+
+    this.tweens.add({targets: [this.scoreText, this.timerText],
+      alpha: 0, duration: 1000})
+
+    this.time.delayedCall(3500, () => this.showEndingText(false))
+
+  showEndingText(isGoodEnding):
+    // Remove darkness for ending screen
+    this.darkness.setAlpha(0)
+
+    cx = 400
+
+    if isGoodEnding:
+      completionBonus = max(0, (300 - floor(this.elapsedTime/1000))) * 2
+      finalScore = this.score + completionBonus
+      mainText = 'You ate the world. Now you are the music.'
+    else:
+      finalScore = this.score
+      mainText = "Some sounds can't be caught.\nThey leave on their own."
+
+    t1 = this.add.text(cx, 240, mainText, {
+      fontFamily: 'Arial', fontSize: '26px', color: '#ffffff',
+      align: 'center', stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setAlpha(0).setDepth(100)
+    this.tweens.add({targets: t1, alpha: 1, duration: 1200})
+
+    t2 = this.add.text(cx, 320, 'STOLEN: ' + finalScore, {
+      fontFamily: 'Arial', fontSize: '22px', color: '#ffd700',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setAlpha(0).setDepth(100)
+    this.tweens.add({targets: t2, alpha: 1, duration: 1000, delay: 600})
+
+    elapsed = this.formatTime(this.elapsedTime)
+    silenced = this.instrumentsSilenced
+    t3 = this.add.text(cx, 365,
+      'Silenced: ' + silenced + '/4  |  Time: ' + elapsed, {
+      fontFamily: 'Arial', fontSize: '14px', color: '#888899'
+    }).setOrigin(0.5).setAlpha(0).setDepth(100)
+    this.tweens.add({targets: t3, alpha: 1, duration: 1000, delay: 1000})
+
+    restartText = this.add.text(cx, 480, 'Press SPACE to play again', {
+      fontFamily: 'Arial', fontSize: '18px', color: '#ffffff'
+    }).setOrigin(0.5).setAlpha(0).setDepth(100)
+    this.tweens.add({targets: restartText, alpha: 1, delay: 1800,
+      duration: 800})
+    this.tweens.add({targets: restartText, alpha: 0.3,
+      delay: 3000, duration: 900, yoyo: true, repeat: -1})
+
+    this.input.keyboard.once('keydown-SPACE', () => {
+      this.masterGain.gain.linearRampToValueAtTime(
+        0, this.game.audioCtx.currentTime + 0.1)
+      this.scene.start('GameScene')
+    })
+
+  // ------ SFX ------
+
+  playFeedSFX():
+    ctx = this.game.audioCtx
+    osc = ctx.createOscillator(); osc.type = 'sine'
+    osc.frequency.value = 880
+    env = ctx.createGain()
+    env.gain.setValueAtTime(0.12, ctx.currentTime)
+    env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+    osc.connect(env).connect(this.masterGain)
+    osc.start(); osc.stop(ctx.currentTime + 0.08)
+
+  playMistimeSFX():
+    ctx = this.game.audioCtx
+    // low noise thud
+    buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate)
+    d = buf.getChannelData(0)
+    for i in 0..d.length: d[i] = (random()*2-1)
+    src = ctx.createBufferSource(); src.buffer = buf
+    filt = ctx.createBiquadFilter(); filt.type='lowpass'
+    filt.frequency.value = 300
+    env = ctx.createGain()
+    env.gain.setValueAtTime(0.06, ctx.currentTime)
+    env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06)
+    src.connect(filt).connect(env).connect(this.masterGain)
+    src.start(); src.stop(ctx.currentTime + 0.06)
+
+  playHitSFX():
+    ctx = this.game.audioCtx
+    // noise + low tone
+    buf = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate)
+    d = buf.getChannelData(0)
+    for i in 0..d.length: d[i] = (random()*2-1)
+    src = ctx.createBufferSource(); src.buffer = buf
+    env = ctx.createGain()
+    env.gain.setValueAtTime(0.1, ctx.currentTime)
+    env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
+    src.connect(env).connect(this.masterGain)
+    src.start(); src.stop(ctx.currentTime + 0.1)
+
+  playSilenceSFX():
+    ctx = this.game.audioCtx
+    osc = ctx.createOscillator(); osc.type = 'triangle'
+    osc.frequency.setValueAtTime(440, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 1.5)
+    env = ctx.createGain()
+    env.gain.setValueAtTime(0.15, ctx.currentTime)
+    env.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5)
+    osc.connect(env).connect(this.masterGain)
+    osc.start(); osc.stop(ctx.currentTime + 1.5)
+
+  // ------ UTILITIES ------
+
+  emitParticles(x, y, color, count):
+    for i in 0..count-1:
+      p = this.add.circle(x, y, 2.5, color).setDepth(50)
+      angle = random() * 2 * PI
+      dist = 20 + random() * 40
+      this.tweens.add({targets: p,
+        x: x + cos(angle)*dist, y: y + sin(angle)*dist,
+        alpha: 0, duration: 350 + random()*200,
+        onComplete: () => p.destroy()})
+
+  formatTime(ms):
+    m = floor(ms / 60000)
+    s = floor((ms % 60000) / 1000)
+    return m + ':' + (s < 10 ? '0' : '') + s
+
+  clearAllHazards():
+    for each n in this.seekingNotes: n.sprite.destroy()
+    this.seekingNotes = []
+    for each w in this.shockwaves: w.graphics.destroy()
+    this.shockwaves = []
+    for each f in this.fogPatches: f.sprite.destroy()
+    this.fogPatches = []
+    for each m in this.beatMines: m.sprite.destroy()
+    this.beatMines = []
+    for each d in this.mineDetonations: d.graphics.destroy()
+    this.mineDetonations = []
+
+  // Helper: pick closest pre-generated light texture
+  closestLightTexture(diameter):
+    sizes = [64, 96, 128, 180, 256, 320, 400, 512]
+    best = sizes[0]
+    for s in sizes:
+      if s >= diameter: return 'light_' + s
+    return 'light_512'
+
+
+================================================================================
+                         END OF REVISED DOCUMENT
+================================================================================

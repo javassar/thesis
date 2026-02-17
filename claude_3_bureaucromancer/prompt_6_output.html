@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bureaucromancer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+  #game-container { width: 800px; height: 600px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="game-container"></div>
+<script>
+// ============================================================
+// DATA POOLS
+// ============================================================
+const NAMES = ["Gerald","Brenda","Thok","Mildred","Xargroth","Susan",
+  "Blorp","Kevin","Aaaaron","Dreadmaw","Patricia","Skullface",
+  "Trevor","Griselda","Bungus","Morticia","Chad"];
+
+const CRIMES = [
+  "Oozing in a No-Ooze Zone",
+  "Unauthorized Haunting",
+  "Loitering with Malicious Intent",
+  "Possession of an Unlicensed Wand",
+  "Disturbing the Arcane Peace",
+  "Tax Evasion (Spectral Income)",
+  "Excessive Moaning After 10pm",
+  "Identity Theft (Shapeshifting)",
+  "Unlawful Combustion",
+  "Trespassing in the Royal Pantry",
+  "Public Intoxication (Mana Potions)",
+  "Resisting Banishment"
+];
+
+const ITEMS_WEAPON = ["a rusty sword","a cursed dagger","a spiked club","a crossbow","a suspiciously sharp stick"];
+const ITEMS_FOOD = ["a suspicious sandwich","a wheel of cheese","a bag of enchanted crisps","a half-eaten pie"];
+const ITEMS_OTHER = ["nothing","a small cat","a library book (overdue)","a signed confession","a bouquet of flowers","a counterfeit spell license","a family photo","a rubber duck"];
+const ALL_ITEMS = [...ITEMS_WEAPON, ...ITEMS_FOOD, ...ITEMS_OTHER];
+
+function isWeapon(item) { return ITEMS_WEAPON.includes(item); }
+function isFood(item) { return ITEMS_FOOD.includes(item); }
+
+const SPECIES_BY_WAVE = { 1:['Slime'], 2:['Slime','Ghost'], 3:['Slime','Ghost','Imp'], 4:['Slime','Ghost','Imp','Wraith'], 5:['Dragon'] };
+const PATIENCE_BY_WAVE = { 1:15, 2:13, 3:11, 4:9, 5:30 };
+const CASES_PER_WAVE = { 1:4, 2:5, 3:6, 4:6, 5:1 };
+
+function streakMultiplier(streak) {
+  if (streak >= 10) return 3.0;
+  if (streak >= 6) return 2.0;
+  if (streak >= 3) return 1.5;
+  return 1.0;
+}
+
+// ============================================================
+// MONSTER DIALOGUE
+// ============================================================
+const MONSTER_ARRIVAL = {
+  Slime: [
+    "Blorb blorb... is this the right office?",
+    "I've been waiting in line for THREE CENTURIES.",
+    "*wet squelching noises*",
+    "Hi! I brought my form 27-B! Oh wait, I dissolved it.",
+    "Do you validate parking? I parked in a storm drain.",
+    "Sorry about the trail. I'll... I can't clean it up actually."
+  ],
+  Ghost: [
+    "BOO! ...Sorry, force of habit.",
+    "I filed a complaint in 1847. Any updates?",
+    "I'm not haunting, I'm VISITING. There's a difference.",
+    "Can you see me? Not everyone can see me.",
+    "I died doing my taxes. The irony is not lost on me.",
+    "*phases through the desk accidentally* Oops."
+  ],
+  Imp: [
+    "Look, whatever they told you, I was framed.",
+    "I demand to see your supervisor's supervisor!",
+    "Is this going to take long? I have arson at four.",
+    "I KNOW MY RIGHTS. I have... rights, right?",
+    "This office smells like justice. Disgusting.",
+    "*sets a small fire on your desk* ...That was already there."
+  ],
+  Wraith: [
+    "...",
+    "The void between worlds has better customer service.",
+    "I exist in seventeen dimensions. NONE of them have this form.",
+    "Your mortal bureaucracy amuses me. Proceed.",
+    "I have gazed into eternity. It was less boring than this.",
+    "*ominous whispering that turns out to be humming a pop song*"
+  ],
+  Dragon: [
+    "DO YOU KNOW WHO I AM?!",
+    "I will INCINERATE this entire— is that a number system? ...Fine. I'll wait."
+  ]
+};
+
+const MONSTER_REACTIONS = {
+  Slime: {
+    APPROVE: ["Wait, I'm actually being banished?! But I just— *splat*", "BLORB!!", "At least the portal looks warm..."],
+    DENY: ["Oh thank glob! I mean— blorb!", "I KNEW I was harmless! Take THAT, Gerald!", "Back to the storm drain!"],
+    REDIRECT: ["MORE paperwork?! *dejected squelch*", "Spectral Affairs? But I'm not even spectral!", "Fine. FINE. Where's the other office?"]
+  },
+  Ghost: {
+    APPROVE: ["Banished?! But I've been here for— well, I guess that's the problem.", "Tell my wife I— actually she's also dead. Never mind.", "Not AGAIN."],
+    DENY: ["Oh! How lovely. I'll just... float along then.", "FREEDOM! *accidentally phases through the floor*", "The system works! Sometimes!"],
+    REDIRECT: ["Another department? I've been to SEVEN departments today!", "Spectral Affairs... that's in building 13, right?", "Can I at least get a receipt for my time?"]
+  },
+  Imp: {
+    APPROVE: ["You'll REGRET this! My cousin is a LAWYER!", "CURSE THIS BUREAUCRACY!", "I'll be back! With PAPERWORK!"],
+    DENY: ["Ha! SUCK IT, establishment! ...I mean, thank you.", "I told you I was innocent! Mostly!", "Now if you'll excuse me, I have entirely legal business to attend to."],
+    REDIRECT: ["Redirect THIS! *kicks a small flame at the desk*", "Another line?! ANOTHER LINE?!", "Fine. But I'm filing a COMPLAINT about this complaint."]
+  },
+  Wraith: {
+    APPROVE: ["So be it. *fades dramatically*", "The void reclaims what was always its own...", "Typical."],
+    DENY: ["...Acceptable.", "Your mercy is noted. It changes nothing.", "*vanishes, leaving behind a faint smell of existential dread*"],
+    REDIRECT: ["You redirect ME? I who have traversed—fine. Which way?", "Another mortal office. Joy.", "I'll remember this. For eternity. Literally."]
+  },
+  Dragon: {
+    APPROVE: ["FINALLY someone with sense! Wait— banishment?! WHAT?!", "You dare—! *gets pulled into portal mid-sentence*"],
+    DENY: ["...Really? I mean— *cough* — OF COURSE. I am clearly no threat.", "Smart choice. Very smart. *smoke from nostrils*"],
+    REDIRECT: ["You want me to go to ANOTHER OFFICE?! I will BURN—", "Large Affairs?! I'm not LARGE, I'm MAJESTIC!"]
+  }
+};
+
+const MONSTER_IMPATIENCE = {
+  Slime: ["*bubbles nervously*", "*starts oozing faster*", "Is there a problem...?", "*AGGRESSIVE SQUELCHING*"],
+  Ghost: ["*taps incorporeal foot*", "I have literally ALL of eternity but THIS is testing me.", "BOO. BOO I SAY.", "*starts flickering angrily*"],
+  Imp: ["Tick tock, bureaucrat.", "*tail lashes impatiently*", "I will SET this DESK on FIRE.", "THAT'S IT, WHERE'S YOUR MANAGER?!"],
+  Wraith: ["...", "*ominous intensifies*", "Your delay displeases the void.", "*reality warps slightly around edges*"],
+  Dragon: ["*smoke curls from nostrils*", "*talons tap the floor, cracking tiles*", "I am growing... impatient.", "DECIDE OR I DECIDE FOR YOU."]
+};
+
+const WAVE_FLAVOR = [
+  null, // wave 0
+  "Morning shift. Coffee's cold. First applicants are lining up. Mostly slimes today — messy, but straightforward.",
+  "The ghosts have started showing up. Management just sent new regulations. Naturally, they contradict the old ones.",
+  "Imps. Wonderful. Also, someone in Regulatory Affairs got 'creative' with the exception clauses. Good luck.",
+  "Wraiths are phasing through the walls. Three new regulations. One of them only applies on even-numbered cases. Of course.",
+  null // wave 5 gets special treatment
+];
+
+function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function weightedChoice(weights) {
+  const entries = Object.entries(weights);
+  const total = entries.reduce((s, e) => s + e[1], 0);
+  let r = Math.random() * total;
+  for (const [val, w] of entries) { r -= w; if (r <= 0) return val; }
+  return entries[entries.length - 1][0];
+}
+
+// ============================================================
+// SOUND SYNTHESIS
+// ============================================================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function playStampSound() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(80, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + 0.15);
+  // Add a noise burst for the "thud"
+  const bufSize = ctx.sampleRate * 0.05;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.2, ctx.currentTime);
+  ng.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+  noise.connect(ng).connect(ctx.destination);
+  noise.start(); noise.stop(ctx.currentTime + 0.05);
+}
+
+function playCorrectSound() {
+  const ctx = getAudioCtx();
+  [523, 659, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.1);
+    gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + i * 0.1 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.25);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(ctx.currentTime + i * 0.1); osc.stop(ctx.currentTime + i * 0.1 + 0.25);
+  });
+}
+
+function playWrongSound() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(200, ctx.currentTime);
+  osc.frequency.linearRampToValueAtTime(100, ctx.currentTime + 0.3);
+  gain.gain.setValueAtTime(0.15, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + 0.35);
+}
+
+function playTickSound() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 1200;
+  gain.gain.setValueAtTime(0.08, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.04);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + 0.04);
+}
+
+function playNewRegSound() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(440, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.12, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + 0.2);
+}
+
+function playDragonRoar() {
+  const ctx = getAudioCtx();
+  // Low rumble
+  const osc1 = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(60, ctx.currentTime);
+  osc1.frequency.linearRampToValueAtTime(40, ctx.currentTime + 0.8);
+  gain1.gain.setValueAtTime(0.2, ctx.currentTime);
+  gain1.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.3);
+  gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+  osc1.connect(gain1).connect(ctx.destination);
+  osc1.start(); osc1.stop(ctx.currentTime + 0.8);
+  // Noise burst
+  const bufSize = ctx.sampleRate * 0.6;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2);
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.15, ctx.currentTime);
+  ng.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+  noise.connect(ng).connect(ctx.destination);
+  noise.start(); noise.stop(ctx.currentTime + 0.6);
+}
+
+// ============================================================
+// REGULATION GENERATION
+// ============================================================
+function generateRegulationsForWave(waveNum, existingRegs) {
+  const newRegs = [];
+  let regIdCounter = existingRegs.length; // default reg is id 0
+
+  if (waveNum === 1) {
+    newRegs.push({
+      id: regIdCounter++,
+      text: "All Slime creatures are APPROVED for banishment.",
+      type: 'species',
+      condition: (m) => m.species === 'Slime',
+      verdict: 'APPROVE',
+      exceptionTarget: null,
+      active: true,
+      wave: 1,
+      isEmergency: false
+    });
+  } else if (waveNum === 2) {
+    const sizeThreshold = randomChoice([3, 4, 5]);
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Creatures smaller than " + sizeThreshold + "ft are DENIED — too small to be a threat.",
+      type: 'size',
+      condition: (m) => m.size < sizeThreshold,
+      verdict: 'DENY',
+      exceptionTarget: null,
+      active: true, wave: 2, isEmergency: false
+    });
+    newRegs.push({
+      id: regIdCounter++,
+      text: "All Ghost-type creatures are REDIRECTED to Spectral Affairs.",
+      type: 'species',
+      condition: (m) => m.species === 'Ghost',
+      verdict: 'REDIRECT',
+      exceptionTarget: null,
+      active: true, wave: 2, isEmergency: false
+    });
+  } else if (waveNum === 3) {
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Any creature carrying a weapon is APPROVED regardless of other status.",
+      type: 'item',
+      condition: (m) => isWeapon(m.item),
+      verdict: 'APPROVE',
+      exceptionTarget: null,
+      active: true, wave: 3, isEmergency: false
+    });
+    // Exception targeting a redirect rule
+    const allRegs = [...existingRegs, ...newRegs];
+    const redirectReg = allRegs.find(r => r.active && r.verdict === 'REDIRECT');
+    if (redirectReg) {
+      newRegs.push({
+        id: regIdCounter++,
+        text: "EXCEPTION: Regulation " + redirectReg.id + " does not apply if the creature is carrying food.",
+        type: 'exception',
+        condition: (m) => isFood(m.item),
+        verdict: null,
+        exceptionTarget: redirectReg.id,
+        active: true, wave: 3, isEmergency: false
+      });
+    }
+    // Repeal one wave 1 regulation
+    const wave1Active = existingRegs.filter(r => r.wave === 1 && r.active);
+    if (wave1Active.length > 0) {
+      randomChoice(wave1Active).active = false;
+    }
+  } else if (waveNum === 4) {
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Neutral-aligned creatures larger than 6ft are APPROVED.",
+      type: 'conditional',
+      condition: (m) => m.alignment === 'Neutral' && m.size > 6,
+      verdict: 'APPROVE',
+      exceptionTarget: null,
+      active: true, wave: 4, isEmergency: false
+    });
+    // Even-case exception targeting a wave 2 or 3 non-exception reg
+    const allRegs = [...existingRegs, ...newRegs];
+    const targetCandidates = allRegs.filter(r => r.active && r.type !== 'exception' && r.type !== 'meta' && r.type !== 'default' && (r.wave === 2 || r.wave === 3));
+    if (targetCandidates.length > 0) {
+      const targetReg = randomChoice(targetCandidates);
+      newRegs.push({
+        id: regIdCounter++,
+        text: "EXCEPTION: Regulation " + targetReg.id + " does not apply on even-numbered cases.",
+        type: 'exception',
+        condition: (m) => m.caseNumber % 2 === 0,
+        verdict: null,
+        exceptionTarget: targetReg.id,
+        active: true, wave: 4, isEmergency: false
+      });
+    }
+    newRegs.push({
+      id: regIdCounter++,
+      text: "Creatures with Good alignment are DENIED — no threat detected.",
+      type: 'alignment',
+      condition: (m) => m.alignment === 'Good',
+      verdict: 'DENY',
+      exceptionTarget: null,
+      active: true, wave: 4, isEmergency: false
+    });
+  } else if (waveNum === 5) {
+    newRegs.push({
+      id: regIdCounter++,
+      text: "EMERGENCY: All Dragons are APPROVED for immediate banishment.",
+      type: 'species',
+      condition: (m) => m.species === 'Dragon',
+      verdict: 'APPROVE',
+      exceptionTarget: null,
+      active: true, wave: 5, isEmergency: true
+    });
+    newRegs.push({
+      id: regIdCounter++,
+      text: "EMERGENCY: Creatures over 30ft require REDIRECT to Dept. of Large Affairs.",
+      type: 'size',
+      condition: (m) => m.size > 30,
+      verdict: 'REDIRECT',
+      exceptionTarget: null,
+      active: true, wave: 5, isEmergency: true
+    });
+    newRegs.push({
+      id: regIdCounter++,
+      text: "EMERGENCY: Emergency Regulations are advisory only and DO NOT override standard regulations.",
+      type: 'meta',
+      condition: (m) => true,
+      verdict: null,
+      exceptionTarget: null,
+      active: true, wave: 5, isEmergency: true
+    });
+  }
+
+  return newRegs;
+}
+
+// ============================================================
+// MONSTER GENERATION
+// ============================================================
+function generateMonster(wave, caseNumber, allRegulations) {
+  if (wave === 5) {
+    return {
+      name: "Scorchthrax the Unburnable",
+      species: 'Dragon',
+      size: randomInt(35, 50),
+      alignment: randomChoice(['Neutral', 'Evil']),
+      item: randomChoice(ALL_ITEMS),
+      crime: "Grand Arson & Unlicensed Flight",
+      caseNumber: caseNumber,
+      patienceMax: 30,
+      patienceRemaining: 30
+    };
+  }
+
+  const species = randomChoice(SPECIES_BY_WAVE[wave]);
+  const size = randomInt(1, 12);
+  const alignWeights = {
+    'Slime': { Good: 0.2, Neutral: 0.5, Evil: 0.3 },
+    'Ghost': { Good: 0.3, Neutral: 0.4, Evil: 0.3 },
+    'Imp':   { Good: 0.1, Neutral: 0.3, Evil: 0.6 },
+    'Wraith':{ Good: 0.15, Neutral: 0.35, Evil: 0.5 }
+  };
+  const alignment = weightedChoice(alignWeights[species] || { Neutral: 1 });
+
+  let monster = {
+    name: randomChoice(NAMES),
+    species: species,
+    size: size,
+    alignment: alignment,
+    item: randomChoice(ALL_ITEMS),
+    crime: randomChoice(CRIMES),
+    caseNumber: caseNumber,
+    patienceMax: PATIENCE_BY_WAVE[wave],
+    patienceRemaining: PATIENCE_BY_WAVE[wave]
+  };
+
+  // 30% chance to force conflicting attributes after wave 2
+  if (wave >= 3 && Math.random() < 0.3) {
+    monster = forceConflictingAttributes(monster, allRegulations);
+  }
+
+  return monster;
+}
+
+function forceConflictingAttributes(monster, allRegulations) {
+  // Try up to 20 random combos to find one that triggers 2+ regs with different verdicts
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const test = {
+      ...monster,
+      size: randomInt(1, 12),
+      alignment: randomChoice(['Good', 'Neutral', 'Evil']),
+      item: randomChoice(ALL_ITEMS)
+    };
+    const activeRegs = allRegulations.filter(r => r.active && r.type !== 'exception' && r.type !== 'meta' && r.type !== 'default');
+    const matching = activeRegs.filter(r => r.condition(test));
+    const verdicts = new Set(matching.map(r => r.verdict));
+    if (verdicts.size >= 2) {
+      return test;
+    }
+  }
+  return monster;
+}
+
+// ============================================================
+// VERDICT RESOLUTION
+// ============================================================
+function resolveVerdict(monster, allRegulations) {
+  const activeRegs = allRegulations.filter(r => r.active);
+
+  // Step 1: exceptions
+  const exceptions = activeRegs.filter(r => r.type === 'exception' && r.condition(monster));
+  const disabledIds = new Set(exceptions.map(e => e.exceptionTarget));
+
+  // Step 2: check for emergency advisory meta rule
+  const hasEmergencyAdvisory = activeRegs.some(r => r.type === 'meta' && r.wave === 5 && r.active);
+
+  // Step 3: collect applicable verdict rules
+  const applicableRegs = [];
+  for (const reg of activeRegs) {
+    if (reg.type === 'exception' || reg.type === 'meta' || reg.type === 'default') continue;
+    if (disabledIds.has(reg.id)) continue;
+    if (!reg.condition(monster)) continue;
+    let effectivePriority = reg.id;
+    if (hasEmergencyAdvisory && reg.isEmergency) {
+      effectivePriority = 0;
+    }
+    applicableRegs.push({ reg, effectivePriority });
+  }
+
+  // Step 4: resolve
+  if (applicableRegs.length === 0) {
+    return { verdict: 'DENY', reason: 'Default rule: no regulation applies.' };
+  }
+
+  applicableRegs.sort((a, b) => b.effectivePriority - a.effectivePriority);
+  const winner = applicableRegs[0];
+  let reason = 'Regulation ' + winner.reg.id;
+  if (applicableRegs.length > 1) {
+    reason += ' (overrides Reg ' + applicableRegs[1].reg.id + ')';
+  }
+  return { verdict: winner.reg.verdict, reason };
+}
+
+// ============================================================
+// SCENES
+// ============================================================
+
+class BootScene extends Phaser.Scene {
+  constructor() { super('BootScene'); }
+
+  create() {
+    this.generateTextures();
+    this.scene.start('TitleScene');
+  }
+
+  generateTextures() {
+    // Slime
+    let g = this.make.graphics({ add: false });
+    g.fillStyle(0x44cc44);
+    g.fillEllipse(30, 50, 50, 35);
+    g.fillStyle(0xffffff);
+    g.fillCircle(20, 42, 5);
+    g.fillCircle(38, 42, 5);
+    g.fillStyle(0x000000);
+    g.fillCircle(21, 43, 3);
+    g.fillCircle(39, 43, 3);
+    g.generateTexture('slimeTex', 60, 80);
+    g.destroy();
+
+    // Ghost
+    g = this.make.graphics({ add: false });
+    g.fillStyle(0xaaccff);
+    g.fillCircle(30, 25, 20);
+    g.fillRect(10, 25, 40, 30);
+    // wavy bottom
+    g.fillCircle(15, 55, 6);
+    g.fillCircle(30, 55, 6);
+    g.fillCircle(45, 55, 6);
+    g.fillStyle(0xffffff);
+    g.fillEllipse(22, 22, 8, 10);
+    g.fillEllipse(38, 22, 8, 10);
+    g.fillStyle(0x222266);
+    g.fillCircle(23, 23, 3);
+    g.fillCircle(39, 23, 3);
+    g.generateTexture('ghostTex', 60, 80);
+    g.destroy();
+
+    // Imp
+    g = this.make.graphics({ add: false });
+    g.fillStyle(0xdd4444);
+    g.fillRect(15, 20, 30, 45);
+    // horns
+    g.fillTriangle(18, 20, 15, 8, 22, 20);
+    g.fillTriangle(42, 20, 45, 8, 38, 20);
+    // arms
+    g.fillRect(8, 30, 7, 20);
+    g.fillRect(45, 30, 7, 20);
+    // eyes
+    g.fillStyle(0xffff00);
+    g.fillCircle(25, 32, 4);
+    g.fillCircle(35, 32, 4);
+    g.generateTexture('impTex', 60, 80);
+    g.destroy();
+
+    // Wraith
+    g = this.make.graphics({ add: false });
+    g.fillStyle(0x9944cc);
+    g.fillTriangle(30, 5, 5, 75, 55, 75);
+    g.fillStyle(0xffffff);
+    g.fillRect(18, 30, 8, 3);
+    g.fillRect(34, 30, 8, 3);
+    g.generateTexture('wraithTex', 60, 80);
+    g.destroy();
+
+    // Dragon
+    g = this.make.graphics({ add: false });
+    g.fillStyle(0xcc6600);
+    g.fillTriangle(55, 10, 10, 110, 100, 110);
+    g.fillStyle(0x884400);
+    g.fillTriangle(30, 15, 20, 0, 40, 25);
+    g.fillTriangle(80, 15, 70, 0, 90, 25);
+    g.fillStyle(0xffaa00);
+    g.fillTriangle(55, 60, 30, 110, 80, 110);
+    g.fillStyle(0xff2200);
+    g.fillCircle(40, 45, 6);
+    g.fillCircle(70, 45, 6);
+    g.generateTexture('dragonTex', 110, 130);
+    g.destroy();
+
+    // Particle
+    g = this.make.graphics({ add: false });
+    g.fillStyle(0xffffff);
+    g.fillCircle(4, 4, 4);
+    g.generateTexture('particle', 8, 8);
+    g.destroy();
+  }
+}
+
+class TitleScene extends Phaser.Scene {
+  constructor() { super('TitleScene'); }
+
+  create() {
+    this.cameras.main.fadeIn(500);
+    const cx = 400;
+    this.add.rectangle(400, 300, 800, 600, 0x1a1008);
+
+    this.add.text(cx, 100, "BUREAUCROMANCER", {
+      fontFamily: 'Arial Black, Arial', fontSize: '44px', color: '#ffcc44',
+      stroke: '#442200', strokeThickness: 8
+    }).setOrigin(0.5);
+
+    this.add.text(cx, 150, "Department of Magical Monster Processing", {
+      fontFamily: 'Arial', fontSize: '16px', color: '#ccaa77'
+    }).setOrigin(0.5);
+
+    const premise = "Monsters threaten the realm. Each one arrives at your desk with a case file. Read the regulations. Read the case. Stamp your verdict.\n\nThe rules WILL change. When they conflict, newer rules override older ones — unless they don't. Good luck.";
+    this.add.text(cx, 250, premise, {
+      fontFamily: 'Arial', fontSize: '15px', color: '#aa9977', align: 'center',
+      wordWrap: { width: 550 }, lineSpacing: 4
+    }).setOrigin(0.5);
+
+    this.add.rectangle(cx, 390, 400, 110, 0x2a2010).setStrokeStyle(1, 0x554422);
+    const controls = [
+      "[A] APPROVE — Banish the creature",
+      "[D] DENY — Creature is harmless, let it go",
+      "[R] REDIRECT — Wrong department, send it away"
+    ];
+    controls.forEach((line, i) => {
+      this.add.text(cx, 350 + i * 28, line, {
+        fontFamily: 'Arial', fontSize: '14px', color: '#88cc88'
+      }).setOrigin(0.5);
+    });
+
+    this.add.text(cx, 460, "When rules conflict, the NEWEST regulation wins.", {
+      fontFamily: 'Arial', fontSize: '13px', color: '#ccaa44', fontStyle: 'italic'
+    }).setOrigin(0.5);
+
+    const startText = this.add.text(cx, 540, "Press SPACE or Click to Begin Your Shift", {
+      fontFamily: 'Arial', fontSize: '20px', color: '#ffffff'
+    }).setOrigin(0.5);
+    this.tweens.add({ targets: startText, alpha: 0.3, yoyo: true, repeat: -1, duration: 800 });
+
+    const startGame = () => {
+      this.cameras.main.fadeOut(500);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('GameScene'));
+    };
+    this.input.keyboard.once('keydown-SPACE', startGame);
+    this.input.once('pointerdown', startGame);
+  }
+}
+
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+
+  init() {
+    this.reputation = 100;
+    this.score = 0;
+    this.casesProcessed = 0;
+    this.casesCorrect = 0;
+    this.casesMisfiled = 0;
+    this.streak = 0;
+    this.bestStreak = 0;
+    this.gameTime = 300.0;
+    this.currentWave = 0;
+    this.currentCaseNumber = 0;
+    this.allRegulations = [];
+    this.currentMonster = null;
+    this.correctVerdict = null;
+    this.correctReason = "";
+    this.waitingForNextCase = true;
+    this.bossPhase = false;
+    this.gameOver = false;
+    this.gameWon = false;
+    this.casesThisWave = 0;
+    this.waveTransitioning = false;
+    this.caseFileTexts = [];
+    this.regulationCards = [];
+    this.monsterSprite = null;
+    this.monsterIdleTween = null;
+    this.DEPTHS = { BG:0, BOARD:5, CARDS:10, CASEFILE:15, MONSTER:20, BUTTONS:25, UI:30, OVERLAY:50, TOOLTIP:60 };
+    this.speechBubble = null;
+    this.speechBubbleBg = null;
+    this.speechBubbleTimer = null;
+    this.dragonVignette = null;
+    this.impatienceLevel = 0;
+    this.lastTickTime = 0;
+    this.stampMarkObjects = [];
+  }
+
+  create() {
+    this.cameras.main.fadeIn(500);
+    const D = this.DEPTHS;
+
+    // Background
+    this.add.rectangle(400, 300, 800, 600, 0x2a1a0a).setDepth(D.BG);
+    // Bulletin board
+    this.add.rectangle(122, 282, 225, 470, 0xb8956a).setStrokeStyle(2, 0x7a6040).setDepth(D.BOARD);
+    this.add.text(122, 52, "ACTIVE REGULATIONS", {
+      fontFamily: 'Arial', fontSize: '12px', fontStyle: 'bold', color: '#442200'
+    }).setOrigin(0.5).setDepth(D.CARDS);
+    // Case file area
+    this.caseFileBg = this.add.rectangle(405, 252, 320, 395, 0xf5e6c8).setStrokeStyle(2, 0xa08050).setDepth(D.BG + 1);
+    // Monster window
+    this.add.rectangle(685, 225, 210, 340, 0x4a4a5a).setStrokeStyle(3, 0x333344).setDepth(D.BG + 1);
+    // Stamp tray
+    this.add.rectangle(415, 555, 340, 70, 0x6a4a14).setStrokeStyle(1, 0x443010).setDepth(D.BG + 1);
+    // UI bar
+    this.add.rectangle(400, 20, 800, 40, 0x1a1008).setDepth(D.UI - 1);
+
+    // Stamp buttons
+    const buttons = [
+      { key: 'APPROVE', x: 310, label: 'APPROVE', shortcut: '[A]', bgColor: 0x338833, hoverColor: 0x44aa44, labelColor: '#ffffff', scColor: '#aaffaa', fontSize: '14px' },
+      { key: 'DENY', x: 415, label: 'DENY', shortcut: '[D]', bgColor: 0x883333, hoverColor: 0xaa4444, labelColor: '#ffffff', scColor: '#ffaaaa', fontSize: '14px' },
+      { key: 'REDIRECT', x: 520, label: 'REDIRECT', shortcut: '[R]', bgColor: 0x888833, hoverColor: 0xaaaa44, labelColor: '#222200', scColor: '#aaaa66', fontSize: '13px' }
+    ];
+    this.stampButtons = {};
+    buttons.forEach(btn => {
+      const bg = this.add.rectangle(btn.x, 548, 95, 48, btn.bgColor).setStrokeStyle(2, 0x222222)
+        .setDepth(D.BUTTONS).setInteractive({ useHandCursor: true });
+      bg.setData('baseColor', btn.bgColor);
+      bg.setData('hoverColor', btn.hoverColor);
+      const label = this.add.text(btn.x, 541, btn.label, {
+        fontFamily: 'Arial', fontSize: btn.fontSize, fontStyle: 'bold', color: btn.labelColor
+      }).setOrigin(0.5).setDepth(D.BUTTONS + 1);
+      const sc = this.add.text(btn.x, 561, btn.shortcut, {
+        fontFamily: 'Arial', fontSize: '10px', color: btn.scColor
+      }).setOrigin(0.5).setDepth(D.BUTTONS + 1);
+
+      const btnGroup = { bg, label, sc };
+      this.stampButtons[btn.key] = btnGroup;
+
+      bg.on('pointerover', () => {
+        this.tweens.add({ targets: [bg, label, sc], scaleX: 1.05, scaleY: 1.05, duration: 100 });
+      });
+      bg.on('pointerout', () => {
+        this.tweens.add({ targets: [bg, label, sc], scaleX: 1.0, scaleY: 1.0, duration: 100 });
+      });
+      bg.on('pointerdown', () => this.handleStamp(btn.key));
+    });
+
+    // Keyboard input
+    this.input.keyboard.on('keydown-A', () => this.handleStamp('APPROVE'));
+    this.input.keyboard.on('keydown-D', () => this.handleStamp('DENY'));
+    this.input.keyboard.on('keydown-R', () => this.handleStamp('REDIRECT'));
+
+    // UI texts
+    this.add.text(16, 12, "REPUTATION:", {
+      fontFamily: 'Arial', fontSize: '13px', fontStyle: 'bold', color: '#ccaa77'
+    }).setDepth(D.UI);
+    this.repBarBg = this.add.rectangle(195, 19, 150, 18, 0x332211).setStrokeStyle(1, 0x554422).setDepth(D.UI);
+    this.repBarFill = this.add.rectangle(121, 11, 148, 16, 0x44cc44).setOrigin(0, 0).setDepth(D.UI + 1);
+    this.timerText = this.add.text(400, 12, "SHIFT: 5:00", {
+      fontFamily: 'Arial', fontSize: '16px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 2
+    }).setOrigin(0.5, 0).setDepth(D.UI);
+    this.casesText = this.add.text(570, 6, "CASES: 0", {
+      fontFamily: 'Arial', fontSize: '12px', color: '#ccaa77'
+    }).setDepth(D.UI);
+    this.streakText = this.add.text(570, 22, "STREAK: 0", {
+      fontFamily: 'Arial', fontSize: '12px', color: '#ffffff'
+    }).setDepth(D.UI);
+
+    // Patience timer graphics
+    this.patienceGraphics = this.add.graphics().setDepth(D.MONSTER + 1);
+
+    // Default regulation
+    this.allRegulations.push({
+      id: 0,
+      text: "DEFAULT: If no regulation applies, the case is DENIED.",
+      type: 'default',
+      condition: () => false,
+      verdict: 'DENY',
+      exceptionTarget: null,
+      active: true,
+      wave: 0,
+      isEmergency: false
+    });
+    this.renderRegulationCard(this.allRegulations[0]);
+
+    // Start wave 1
+    this.startWave(1);
+  }
+
+  startWave(waveNum) {
+    this.currentWave = waveNum;
+    this.casesThisWave = 0;
+    this.waveTransitioning = true;
+    this.waitingForNextCase = true;
+
+    const D = this.DEPTHS;
+    let bannerText, bannerColor;
+    if (waveNum === 5) {
+      bannerText = "EMERGENCY SESSION: THE DRAGON FILING";
+      bannerColor = '#ff4444';
+    } else {
+      bannerText = "WAVE " + waveNum;
+      bannerColor = '#ffdd44';
+    }
+
+    const bannerBg = this.add.rectangle(400, 250, 520, 50, 0x000000, 0.7).setDepth(D.OVERLAY - 1);
+    const banner = this.add.text(400, 250, bannerText, {
+      fontFamily: 'Arial', fontSize: (waveNum === 5 ? '24px' : '22px'), fontStyle: 'bold', color: bannerColor,
+      stroke: '#000000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(D.OVERLAY);
+
+    // Dragon encounter: dramatic effects
+    if (waveNum === 5) {
+      this.cameras.main.shake(500, 0.01);
+      playDragonRoar();
+      // Red vignette overlay
+      this.dragonVignette = this.add.rectangle(400, 300, 800, 600, 0xff0000, 0.08).setDepth(D.BG + 0.5);
+      // Pulsing vignette
+      this.tweens.add({ targets: this.dragonVignette, alpha: 0.03, yoyo: true, repeat: -1, duration: 2000 });
+    }
+
+    // Generate new regulations
+    const newRegs = generateRegulationsForWave(waveNum, this.allRegulations);
+
+    // Handle repeals visually — show strikethrough then collapse
+    const repealedRegs = this.allRegulations.filter(r => !r.active && !r.visuallyRepealed);
+    repealedRegs.forEach(r => {
+      r.visuallyRepealed = true;
+      const cardEntry = this.regulationCards.find(c => c.reg.id === r.id);
+      if (cardEntry) {
+        cardEntry.card.setAlpha(0.4);
+        cardEntry.textObj.setAlpha(0.4);
+        const bounds = cardEntry.card;
+        const line = this.add.line(0, 0, bounds.x - 107, bounds.y - 22, bounds.x + 107, bounds.y + 22, 0xcc2222, 1).setLineWidth(2).setDepth(D.CARDS + 2);
+        // Collapse after showing strikethrough
+        this.time.delayedCall(1200, () => {
+          this.tweens.add({ targets: [cardEntry.card, cardEntry.textObj, line], alpha: 0, duration: 300, onComplete: () => {
+            cardEntry.card.destroy();
+            cardEntry.textObj.destroy();
+            line.destroy();
+            const idx = this.regulationCards.indexOf(cardEntry);
+            if (idx !== -1) this.regulationCards.splice(idx, 1);
+            this.repositionCards();
+          }});
+        });
+      }
+    });
+
+    // Flavor text between waves
+    let totalDelay = 1500;
+    const flavor = WAVE_FLAVOR[waveNum];
+    if (flavor) {
+      const flavorText = this.add.text(400, 310, flavor, {
+        fontFamily: 'Arial', fontSize: '13px', fontStyle: 'italic', color: '#998866',
+        wordWrap: { width: 480 }, align: 'center',
+        stroke: '#000000', strokeThickness: 2
+      }).setOrigin(0.5).setDepth(D.OVERLAY).setAlpha(0);
+      this.tweens.add({ targets: flavorText, alpha: 1, duration: 500, delay: 300 });
+      this.time.delayedCall(totalDelay + 500, () => {
+        this.tweens.add({ targets: flavorText, alpha: 0, duration: 400, onComplete: () => flavorText.destroy() });
+      });
+      totalDelay += 1500;
+    }
+
+    newRegs.forEach((reg, i) => {
+      this.time.delayedCall(totalDelay + i * 800, () => {
+        this.allRegulations.push(reg);
+        this.renderRegulationCard(reg);
+        playNewRegSound();
+      });
+    });
+    totalDelay += newRegs.length * 800 + 1000;
+
+    this.time.delayedCall(totalDelay, () => {
+      this.tweens.add({
+        targets: [banner, bannerBg], alpha: 0, duration: 300,
+        onComplete: () => { banner.destroy(); bannerBg.destroy(); }
+      });
+      this.waveTransitioning = false;
+
+      // Show conflict tip on first wave 2 transition
+      if (waveNum === 2) {
+        const tip = this.add.text(400, 470, "TIP: When rules conflict, the NEWEST regulation takes priority.", {
+          fontFamily: 'Arial', fontSize: '13px', color: '#ffdd44', fontStyle: 'italic',
+          stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5).setDepth(D.OVERLAY);
+        this.time.delayedCall(4000, () => {
+          this.tweens.add({ targets: tip, alpha: 0, duration: 500, onComplete: () => tip.destroy() });
+        });
+      }
+
+      this.loadNextCase();
+    });
+  }
+
+  loadNextCase() {
+    if (this.gameOver) return;
+
+    if (this.casesThisWave >= CASES_PER_WAVE[this.currentWave]) {
+      if (this.currentWave < 5) {
+        this.startWave(this.currentWave + 1);
+      }
+      return;
+    }
+
+    this.currentCaseNumber += 1;
+    this.casesThisWave += 1;
+
+    this.currentMonster = generateMonster(this.currentWave, this.currentCaseNumber, this.allRegulations);
+    const result = resolveVerdict(this.currentMonster, this.allRegulations);
+    this.correctVerdict = result.verdict;
+    this.correctReason = result.reason;
+
+    // Display monster
+    const texKey = this.currentMonster.species.toLowerCase() + 'Tex';
+    this.monsterSprite = this.add.sprite(685, 225, texKey).setDepth(this.DEPTHS.MONSTER).setAlpha(0);
+    if (this.currentMonster.species === 'Dragon') {
+      this.monsterSprite.setScale(0);
+      this.cameras.main.shake(400, 0.015);
+      this.time.delayedCall(200, () => playDragonRoar());
+      this.tweens.add({ targets: this.monsterSprite, alpha: 1, scaleX: 1.2, scaleY: 1.2, duration: 800, ease: 'Bounce.easeOut' });
+      // Fire particles
+      this.time.delayedCall(400, () => this.emitParticles(685, 225, 0xff4400, 30));
+    } else {
+      this.tweens.add({ targets: this.monsterSprite, alpha: (this.currentMonster.species === 'Ghost' ? 0.7 : 1), duration: 400 });
+    }
+    this.currentMonster.sprite = this.monsterSprite;
+    this.startMonsterIdleAnimation();
+
+    // Display case file
+    this.displayCaseFile(this.currentMonster);
+
+    this.currentMonster.patienceRemaining = this.currentMonster.patienceMax;
+    this.impatienceLevel = 0;
+    this.lastTickTime = 0;
+    this.waitingForNextCase = false;
+
+    // Arrival dialogue
+    const arrivalLines = MONSTER_ARRIVAL[this.currentMonster.species];
+    if (arrivalLines) {
+      this.time.delayedCall(500, () => {
+        this.showSpeechBubble(randomChoice(arrivalLines), 3000);
+      });
+    }
+  }
+
+  startMonsterIdleAnimation() {
+    if (this.monsterIdleTween) { this.monsterIdleTween.stop(); this.monsterIdleTween = null; }
+    const sprite = this.monsterSprite;
+    const species = this.currentMonster.species;
+
+    if (species === 'Slime') {
+      this.monsterIdleTween = this.tweens.add({
+        targets: sprite, scaleY: 1.1, yoyo: true, repeat: -1, duration: 600, ease: 'Sine.easeInOut'
+      });
+    } else if (species === 'Ghost') {
+      this.monsterIdleTween = this.tweens.add({
+        targets: sprite, y: sprite.y - 6, angle: 3, yoyo: true, repeat: -1, duration: 1200, ease: 'Sine.easeInOut'
+      });
+    } else if (species === 'Imp') {
+      this.monsterIdleTween = this.tweens.add({
+        targets: sprite, x: sprite.x + 3, yoyo: true, repeat: -1, duration: 400, ease: 'Sine.easeInOut'
+      });
+    } else if (species === 'Wraith') {
+      this.monsterIdleTween = this.tweens.add({
+        targets: sprite, angle: 4, alpha: 0.6, yoyo: true, repeat: -1, duration: 2000, ease: 'Sine.easeInOut'
+      });
+    } else if (species === 'Dragon') {
+      this.monsterIdleTween = this.tweens.add({
+        targets: sprite, scaleX: 1.23, scaleY: 1.23, yoyo: true, repeat: -1, duration: 1500, ease: 'Sine.easeInOut'
+      });
+    }
+  }
+
+  displayCaseFile(monster) {
+    this.clearCaseFile();
+
+    const baseX = 260;
+    const baseY = 70;
+    const lineH = 28;
+    const style = { fontFamily: 'Arial', fontSize: '14px', color: '#332200' };
+    const D = this.DEPTHS;
+
+    const lines = [
+      { text: "CASE #" + monster.caseNumber, style: { fontFamily: 'Arial', fontSize: '17px', fontStyle: 'bold', color: '#442200' }, centered: true },
+      { text: "————————————————————", style: { fontFamily: 'Arial', fontSize: '12px', color: '#aa9060' }, centered: false },
+      { text: "NAME: " + monster.name, style },
+      { text: "SPECIES: " + monster.species, style },
+      { text: "SIZE: " + monster.size + "ft", style },
+      { text: "ALIGNMENT: " + monster.alignment, style },
+      { text: "ITEM: " + monster.item, style },
+      { text: "————————————————————", style: { fontFamily: 'Arial', fontSize: '12px', color: '#aa9060' }, centered: false },
+      { text: "ALLEGED CRIME:", style: { fontFamily: 'Arial', fontSize: '13px', fontStyle: 'bold', color: '#332200' } },
+      { text: monster.crime, style: { fontFamily: 'Arial', fontSize: '13px', fontStyle: 'italic', color: '#554422', wordWrap: { width: 290 } } }
+    ];
+
+    lines.forEach((line, i) => {
+      const targetY = baseY + i * lineH;
+      const x = line.centered ? 405 : baseX;
+      const origin = line.centered ? 0.5 : 0;
+      const t = this.add.text(x, 620 + i * lineH, line.text, line.style)
+        .setOrigin(origin, 0).setDepth(D.CASEFILE);
+      this.caseFileTexts.push(t);
+      this.tweens.add({ targets: t, y: targetY, duration: 400, ease: 'Back.easeOut', delay: i * 30 });
+    });
+  }
+
+  clearCaseFile() {
+    this.caseFileTexts.forEach(t => {
+      this.tweens.add({ targets: t, y: 620, duration: 300, onComplete: () => t.destroy() });
+    });
+    this.caseFileTexts = [];
+    this.patienceGraphics.clear();
+    this.clearSpeechBubble();
+    this.clearStampMarks();
+  }
+
+  handleStamp(verdict) {
+    if (this.waitingForNextCase || this.gameOver || !this.currentMonster) return;
+    this.waitingForNextCase = true;
+
+    // Stop idle animation and clear patience ring immediately
+    if (this.monsterIdleTween) { this.monsterIdleTween.stop(); this.monsterIdleTween = null; }
+    this.patienceGraphics.clear();
+
+    // Sound + stamp mark
+    playStampSound();
+    this.showStampMark(verdict);
+    this.clearSpeechBubble();
+
+    // Button press animation
+    const btnGroup = this.stampButtons[verdict];
+    if (btnGroup) {
+      this.tweens.add({
+        targets: [btnGroup.bg, btnGroup.label, btnGroup.sc],
+        scaleX: 0.92, scaleY: 0.92, duration: 80, yoyo: true, ease: 'Sine.easeOut'
+      });
+    }
+
+    if (verdict === this.correctVerdict) {
+      this.handleCorrect(verdict);
+    } else {
+      this.handleIncorrect(verdict);
+    }
+  }
+
+  handleCorrect(verdict) {
+    const multiplier = streakMultiplier(this.streak);
+    const earned = Math.floor(10 * multiplier);
+    this.score += earned;
+    this.streak += 1;
+    if (this.streak > this.bestStreak) this.bestStreak = this.streak;
+    this.reputation = Math.min(100, this.reputation + 3);
+    this.casesProcessed += 1;
+    this.casesCorrect += 1;
+
+    this.time.delayedCall(100, () => playCorrectSound());
+    this.showResultOverlay("CORRECT", '#44cc44', "+" + earned + " pts", '#88ff88', true);
+
+    // Reaction dialogue
+    const reactions = MONSTER_REACTIONS[this.currentMonster.species];
+    if (reactions && reactions[verdict]) {
+      this.time.delayedCall(300, () => this.showSpeechBubble(randomChoice(reactions[verdict]), 1200));
+    }
+
+    // Monster exit
+    const sprite = this.currentMonster.sprite;
+    if (verdict === 'APPROVE') {
+      this.emitParticles(685, 225, this.monsterColor(this.currentMonster.species), 20);
+      this.tweens.add({ targets: sprite, alpha: 0, scaleX: 1.5, scaleY: 1.5, duration: 300, onComplete: () => sprite.destroy() });
+    } else if (verdict === 'DENY') {
+      this.tweens.add({ targets: sprite, x: 850, duration: 600, ease: 'Sine.easeIn', onComplete: () => sprite.destroy() });
+    } else {
+      this.tweens.add({ targets: sprite, x: 900, alpha: 0, duration: 400, onComplete: () => sprite.destroy() });
+    }
+
+    this.updateUI();
+
+    // Check if this was the dragon
+    if (this.currentWave === 5) {
+      this.triggerWin();
+      return;
+    }
+
+    this.time.delayedCall(1500, () => {
+      this.clearCaseFile();
+      this.currentMonster = null;
+      this.loadNextCase();
+    });
+  }
+
+  handleIncorrect(verdict) {
+    this.streak = 0;
+    this.reputation -= 15;
+    this.casesMisfiled += 1;
+    this.casesProcessed += 1;
+
+    this.time.delayedCall(100, () => playWrongSound());
+    const explanation = "Correct: " + this.correctVerdict + " — " + this.correctReason;
+    this.showResultOverlay("MISFILED", '#cc4444', explanation, '#ffaaaa', false);
+    this.cameras.main.shake(200, 0.008);
+
+    const sprite = this.currentMonster.sprite;
+    this.tweens.add({ targets: sprite, x: 850, angle: -10, duration: 500, onComplete: () => sprite.destroy() });
+
+    this.updateUI();
+
+    if (this.reputation <= 0) {
+      this.reputation = 0;
+      this.updateUI();
+      this.time.delayedCall(1500, () => this.triggerLoss("FIRED FOR GROSS INCOMPETENCE"));
+      return;
+    }
+
+    // Check if this was the dragon (wrong answer)
+    if (this.currentWave === 5) {
+      this.time.delayedCall(2000, () => this.triggerDragonWrongEnd());
+      return;
+    }
+
+    this.time.delayedCall(2000, () => {
+      this.clearCaseFile();
+      this.currentMonster = null;
+      this.loadNextCase();
+    });
+  }
+
+  handleTimeout() {
+    if (this.waitingForNextCase || this.gameOver) return;
+    this.waitingForNextCase = true;
+    if (this.monsterIdleTween) { this.monsterIdleTween.stop(); this.monsterIdleTween = null; }
+    this.patienceGraphics.clear();
+    this.streak = 0;
+    this.reputation -= 10;
+    this.casesMisfiled += 1;
+    this.casesProcessed += 1;
+
+    this.showResultOverlay("CASE EXPIRED", '#ccaa22', "", '', false);
+    this.cameras.main.shake(150, 0.005);
+
+    const sprite = this.currentMonster.sprite;
+    this.tweens.add({ targets: sprite, x: 850, duration: 500, onComplete: () => sprite.destroy() });
+
+    this.updateUI();
+
+    if (this.reputation <= 0) {
+      this.reputation = 0;
+      this.updateUI();
+      this.time.delayedCall(1500, () => this.triggerLoss("FIRED FOR GROSS INCOMPETENCE"));
+      return;
+    }
+
+    if (this.currentWave === 5) {
+      this.time.delayedCall(1500, () => this.triggerDragonWrongEnd());
+      return;
+    }
+
+    this.time.delayedCall(1500, () => {
+      this.clearCaseFile();
+      this.currentMonster = null;
+      this.loadNextCase();
+    });
+  }
+
+  showResultOverlay(mainText, mainColor, subText, subColor, isCorrect) {
+    const D = this.DEPTHS;
+    const symbol = isCorrect ? '\u2713 ' : (mainText === 'CASE EXPIRED' ? '\u23F1 ' : '\u2717 ');
+    const bg = this.add.rectangle(400, 300, 460, 110, 0x000000, 0.6).setDepth(D.OVERLAY - 1);
+    const main = this.add.text(400, 290, symbol + mainText, {
+      fontFamily: 'Arial', fontSize: '34px', fontStyle: 'bold', color: mainColor,
+      stroke: '#000000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(D.OVERLAY).setScale(2);
+    this.tweens.add({ targets: main, scaleX: 1, scaleY: 1, duration: 350, ease: 'Bounce.easeOut' });
+
+    let sub = null;
+    if (subText && subText !== '') {
+      sub = this.add.text(400, 335, subText, {
+        fontFamily: 'Arial', fontSize: '14px', color: subColor,
+        wordWrap: { width: 420 }, align: 'center'
+      }).setOrigin(0.5).setDepth(D.OVERLAY);
+    }
+
+    const holdTime = isCorrect ? 700 : 1800;
+    this.time.delayedCall(holdTime, () => {
+      this.tweens.add({ targets: main, alpha: 0, duration: 400, onComplete: () => main.destroy() });
+      this.tweens.add({ targets: bg, alpha: 0, duration: 400, onComplete: () => bg.destroy() });
+      if (sub) this.tweens.add({ targets: sub, alpha: 0, duration: 400, onComplete: () => sub.destroy() });
+    });
+  }
+
+  updateUI() {
+    // Reputation bar
+    const fraction = Math.max(0, this.reputation) / 100;
+    const targetWidth = Math.max(1, fraction * 148);
+    this.tweens.add({ targets: this.repBarFill, displayWidth: targetWidth, duration: 300 });
+    if (this.reputation >= 70) this.repBarFill.fillColor = 0x44cc44;
+    else if (this.reputation >= 40) this.repBarFill.fillColor = 0xcccc22;
+    else this.repBarFill.fillColor = 0xcc4444;
+
+    this.casesText.setText("CASES: " + this.casesProcessed);
+    this.streakText.setText("STREAK: " + this.streak);
+    if (this.streak >= 10) this.streakText.setColor('#ff4444');
+    else if (this.streak >= 6) this.streakText.setColor('#ffaa44');
+    else if (this.streak >= 3) this.streakText.setColor('#ffdd44');
+    else this.streakText.setColor('#ffffff');
+  }
+
+  drawPatienceRing(remaining, max) {
+    this.patienceGraphics.clear();
+    const frac = Math.max(0, remaining / max);
+    let color;
+    if (frac > 0.5) color = 0x44cc44;
+    else if (frac > 0.25) color = 0xcccc22;
+    else color = 0xcc2222;
+
+    let alpha = 1.0;
+    if (frac < 0.25) {
+      alpha = 0.5 + 0.5 * Math.abs(Math.sin(this.time.now / 150));
+    }
+
+    // Background ring
+    this.patienceGraphics.lineStyle(6, 0x333333, 0.3);
+    this.patienceGraphics.beginPath();
+    this.patienceGraphics.arc(685, 225, 100, 0, Math.PI * 2);
+    this.patienceGraphics.strokePath();
+
+    // Remaining ring
+    if (frac > 0) {
+      this.patienceGraphics.lineStyle(6, color, alpha);
+      this.patienceGraphics.beginPath();
+      const startAngle = -Math.PI / 2;
+      this.patienceGraphics.arc(685, 225, 100, startAngle, startAngle + frac * Math.PI * 2, false);
+      this.patienceGraphics.strokePath();
+    }
+  }
+
+  update(time, delta) {
+    if (this.gameOver) return;
+    if (this.waveTransitioning) return;
+
+    // Timer
+    this.gameTime -= delta / 1000;
+    if (this.gameTime <= 0) {
+      this.gameTime = 0;
+      this.triggerLoss("SHIFT OVER — CASES REMAIN UNFILED");
+      return;
+    }
+    const minutes = Math.floor(this.gameTime / 60);
+    const seconds = Math.floor(this.gameTime % 60);
+    this.timerText.setText("SHIFT: " + minutes + ":" + String(seconds).padStart(2, '0'));
+
+    // Patience timer
+    if (this.currentMonster && !this.waitingForNextCase) {
+      this.currentMonster.patienceRemaining -= delta / 1000;
+      this.drawPatienceRing(this.currentMonster.patienceRemaining, this.currentMonster.patienceMax);
+
+      // Impatience dialogue
+      const frac = this.currentMonster.patienceRemaining / this.currentMonster.patienceMax;
+      const impLines = MONSTER_IMPATIENCE[this.currentMonster.species];
+      if (impLines) {
+        let newLevel = 0;
+        if (frac < 0.2) newLevel = 3;
+        else if (frac < 0.4) newLevel = 2;
+        else if (frac < 0.6) newLevel = 1;
+        if (newLevel > this.impatienceLevel) {
+          this.impatienceLevel = newLevel;
+          const lineIndex = Math.min(newLevel - 1, impLines.length - 1);
+          this.showSpeechBubble(impLines[lineIndex], 2000);
+        }
+      }
+
+      // Tick sound when patience is low
+      if (frac < 0.25 && this.time.now - this.lastTickTime > 500) {
+        playTickSound();
+        this.lastTickTime = this.time.now;
+      }
+
+      if (this.currentMonster.patienceRemaining <= 0) {
+        this.handleTimeout();
+      }
+    }
+  }
+
+  triggerWin() {
+    this.gameOver = true;
+    this.gameWon = true;
+    if (this.dragonVignette) { this.dragonVignette.destroy(); this.dragonVignette = null; }
+    const D = this.DEPTHS;
+
+    const stampResult = this.add.text(400, 280, this.correctVerdict, {
+      fontFamily: 'Arial Black, Arial', fontSize: '60px', color: '#ff2222',
+      stroke: '#440000', strokeThickness: 8
+    }).setOrigin(0.5).setDepth(D.OVERLAY).setScale(3);
+    this.tweens.add({ targets: stampResult, scaleX: 1, scaleY: 1, duration: 500, ease: 'Bounce.easeOut' });
+
+    // Confetti
+    for (let i = 0; i < 60; i++) {
+      const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffdd44, 0xff44ff, 0x44ffff];
+      const p = this.add.circle(400 + randomInt(-300, 300), 300 + randomInt(-200, 200),
+        randomInt(3, 6), randomChoice(colors)).setDepth(D.OVERLAY);
+      this.tweens.add({ targets: p, y: p.y - randomInt(100, 300), alpha: 0,
+        duration: randomInt(800, 1500), onComplete: () => p.destroy() });
+    }
+
+    this.time.delayedCall(800, () => {
+      this.add.text(400, 380, "THE REALM IS SAFE.", {
+        fontFamily: 'Arial', fontSize: '20px', color: '#ffcc44',
+        stroke: '#000000', strokeThickness: 3
+      }).setOrigin(0.5).setDepth(D.OVERLAY);
+    });
+
+    this.cameras.main.shake(300, 0.02);
+
+    this.time.delayedCall(3000, () => {
+      this.cameras.main.fadeOut(500);
+      this.cameras.main.once('camerafadeoutcomplete', () =>
+        this.scene.start('EndScene', {
+          won: true, score: this.score, casesProcessed: this.casesProcessed,
+          casesCorrect: this.casesCorrect, casesMisfiled: this.casesMisfiled,
+          bestStreak: this.bestStreak, dragonCorrect: true
+        })
+      );
+    });
+  }
+
+  triggerDragonWrongEnd() {
+    this.gameOver = true;
+    this.gameWon = true;
+    if (this.dragonVignette) { this.dragonVignette.destroy(); this.dragonVignette = null; }
+    const D = this.DEPTHS;
+
+    this.add.text(400, 300, "The dragon eats the paperwork...", {
+      fontFamily: 'Arial', fontSize: '22px', color: '#ffaa44',
+      stroke: '#000000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(D.OVERLAY);
+
+    this.time.delayedCall(2500, () => {
+      this.cameras.main.fadeOut(500);
+      this.cameras.main.once('camerafadeoutcomplete', () =>
+        this.scene.start('EndScene', {
+          won: true, score: this.score, casesProcessed: this.casesProcessed,
+          casesCorrect: this.casesCorrect, casesMisfiled: this.casesMisfiled,
+          bestStreak: this.bestStreak, dragonCorrect: false
+        })
+      );
+    });
+  }
+
+  triggerLoss(message) {
+    this.gameOver = true;
+    if (this.dragonVignette) { this.dragonVignette.destroy(); this.dragonVignette = null; }
+    const D = this.DEPTHS;
+
+    this.add.rectangle(400, 300, 800, 600, 0xff0000, 0.35).setDepth(D.OVERLAY - 1);
+    this.add.text(400, 300, message, {
+      fontFamily: 'Arial', fontSize: '26px', fontStyle: 'bold', color: '#ff4444',
+      stroke: '#000000', strokeThickness: 6
+    }).setOrigin(0.5).setDepth(D.OVERLAY);
+
+    this.cameras.main.shake(300, 0.015);
+
+    this.time.delayedCall(2500, () => {
+      this.cameras.main.fadeOut(500);
+      this.cameras.main.once('camerafadeoutcomplete', () =>
+        this.scene.start('EndScene', {
+          won: false, score: this.score, casesProcessed: this.casesProcessed,
+          casesCorrect: this.casesCorrect, casesMisfiled: this.casesMisfiled,
+          bestStreak: this.bestStreak, dragonCorrect: false
+        })
+      );
+    });
+  }
+
+  renderRegulationCard(reg) {
+    const D = this.DEPTHS;
+    // Calculate Y position by summing actual heights of existing cards
+    let yPos = 70;
+    for (const c of this.regulationCards) {
+      yPos += (c.card.height || 30) + 3;
+    }
+
+    // Create text first to measure height
+    let displayText = reg.id === 0 ? reg.text : ("REG " + reg.id + ": " + reg.text);
+    const textObj = this.add.text(18, yPos + 2, displayText, {
+      fontFamily: 'Arial', fontSize: '10px', color: '#332200',
+      wordWrap: { width: 210 }
+    }).setDepth(D.CARDS + 1);
+
+    const cardHeight = Math.max(30, textObj.height + 6);
+    const card = this.add.rectangle(122, yPos + cardHeight / 2, 215, cardHeight, 0xfffef0)
+      .setStrokeStyle(1, 0xaa9060).setDepth(D.CARDS);
+
+    // Entrance animation
+    card.setAlpha(0);
+    textObj.setAlpha(0);
+    this.tweens.add({ targets: card, alpha: 1, duration: 400, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: textObj, alpha: 1, duration: 400 });
+
+    // Glow effect
+    const glow = this.add.rectangle(122, yPos + cardHeight / 2, 219, cardHeight + 4, 0xffff88, 0.4).setDepth(D.CARDS - 1);
+    this.tweens.add({ targets: glow, alpha: 0, duration: 1000, onComplete: () => glow.destroy() });
+
+    // Hover
+    card.setInteractive();
+    card.on('pointerover', () => {
+      card.setScale(1.08); textObj.setScale(1.08);
+      card.setDepth(D.TOOLTIP); textObj.setDepth(D.TOOLTIP + 1);
+    });
+    card.on('pointerout', () => {
+      card.setScale(1.0); textObj.setScale(1.0);
+      card.setDepth(D.CARDS); textObj.setDepth(D.CARDS + 1);
+    });
+
+    this.regulationCards.push({ reg, card, textObj });
+  }
+
+  repositionCards() {
+    let yPos = 70;
+    for (const entry of this.regulationCards) {
+      const cardHeight = entry.card.height;
+      const newCardY = yPos + cardHeight / 2;
+      const newTextY = yPos + 2;
+      this.tweens.add({ targets: entry.card, y: newCardY, duration: 300, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: entry.textObj, y: newTextY, duration: 300, ease: 'Sine.easeInOut' });
+      yPos += cardHeight + 3;
+    }
+  }
+
+  emitParticles(x, y, color, count) {
+    const D = this.DEPTHS;
+    for (let i = 0; i < count; i++) {
+      const p = this.add.circle(x + randomInt(-10, 10), y + randomInt(-10, 10),
+        randomInt(2, 5), color).setDepth(D.OVERLAY);
+      this.tweens.add({
+        targets: p, x: p.x + randomInt(-100, 100), y: p.y + randomInt(-100, 80),
+        alpha: 0, duration: randomInt(500, 1200), onComplete: () => p.destroy()
+      });
+    }
+  }
+
+  monsterColor(species) {
+    const colors = { Slime: 0x44cc44, Ghost: 0xaaccff, Imp: 0xdd4444, Wraith: 0x9944cc, Dragon: 0xcc6600 };
+    return colors[species] || 0xffffff;
+  }
+
+  showSpeechBubble(text, duration) {
+    this.clearSpeechBubble();
+    const D = this.DEPTHS;
+    const x = 685;
+    const y = 120;
+    const textObj = this.add.text(x, y, text, {
+      fontFamily: 'Arial', fontSize: '11px', color: '#222222',
+      wordWrap: { width: 170 }, align: 'center'
+    }).setOrigin(0.5).setDepth(D.MONSTER + 3);
+    const bw = Math.max(textObj.width + 16, 60);
+    const bh = textObj.height + 12;
+    const bg = this.add.graphics().setDepth(D.MONSTER + 2);
+    bg.fillStyle(0xffffff, 0.92);
+    bg.fillRoundedRect(x - bw / 2, y - bh / 2, bw, bh, 8);
+    // tail
+    bg.fillTriangle(x - 6, y + bh / 2, x + 6, y + bh / 2, x, y + bh / 2 + 10);
+    bg.lineStyle(1, 0x888888, 0.6);
+    bg.strokeRoundedRect(x - bw / 2, y - bh / 2, bw, bh, 8);
+
+    this.speechBubble = textObj;
+    this.speechBubbleBg = bg;
+
+    // Entrance pop
+    textObj.setScale(0); bg.setScale(0);
+    this.tweens.add({ targets: textObj, scaleX: 1, scaleY: 1, duration: 200, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: bg, scaleX: 1, scaleY: 1, duration: 200, ease: 'Back.easeOut' });
+
+    if (duration > 0) {
+      if (this.speechBubbleTimer) this.speechBubbleTimer.remove();
+      this.speechBubbleTimer = this.time.delayedCall(duration, () => this.clearSpeechBubble());
+    }
+  }
+
+  clearSpeechBubble() {
+    if (this.speechBubble) { this.speechBubble.destroy(); this.speechBubble = null; }
+    if (this.speechBubbleBg) { this.speechBubbleBg.destroy(); this.speechBubbleBg = null; }
+  }
+
+  showStampMark(verdict) {
+    const D = this.DEPTHS;
+    const colors = { APPROVE: '#338833', DENY: '#883333', REDIRECT: '#886633' };
+    const bgColors = { APPROVE: 0x338833, DENY: 0x883333, REDIRECT: 0x886633 };
+    const angle = randomInt(-15, 15);
+
+    // Stamp rectangle background
+    const sx = 405, sy = 380;
+    const stampBg = this.add.rectangle(sx, sy, 180, 50, bgColors[verdict], 0.2)
+      .setStrokeStyle(3, bgColors[verdict], 0.7).setAngle(angle).setDepth(D.CASEFILE + 1);
+    const stampText = this.add.text(sx, sy, verdict, {
+      fontFamily: 'Arial Black, Arial', fontSize: '28px', fontStyle: 'bold', color: colors[verdict]
+    }).setOrigin(0.5).setAngle(angle).setAlpha(0.7).setDepth(D.CASEFILE + 2);
+
+    // Slam animation
+    stampBg.setScale(3); stampText.setScale(3);
+    this.tweens.add({ targets: stampBg, scaleX: 1, scaleY: 1, duration: 150, ease: 'Cubic.easeOut' });
+    this.tweens.add({ targets: stampText, scaleX: 1, scaleY: 1, duration: 150, ease: 'Cubic.easeOut' });
+
+    this.stampMarkObjects.push(stampBg, stampText);
+  }
+
+  clearStampMarks() {
+    this.stampMarkObjects.forEach(obj => obj.destroy());
+    this.stampMarkObjects = [];
+  }
+}
+
+class EndScene extends Phaser.Scene {
+  constructor() { super('EndScene'); }
+
+  init(data) {
+    this.won = data.won;
+    this.finalScore = data.score;
+    this.casesProcessed = data.casesProcessed;
+    this.casesCorrect = data.casesCorrect;
+    this.casesMisfiled = data.casesMisfiled;
+    this.bestStreak = data.bestStreak;
+    this.dragonCorrect = data.dragonCorrect;
+  }
+
+  create() {
+    this.cameras.main.fadeIn(500);
+    const cx = 400;
+    this.add.rectangle(400, 300, 800, 600, 0x1a1008);
+
+    this.add.text(cx, 70, "PERFORMANCE REVIEW", {
+      fontFamily: 'Arial Black, Arial', fontSize: '34px', color: '#ffcc44',
+      stroke: '#442200', strokeThickness: 6
+    }).setOrigin(0.5);
+
+    let statusText, statusColor;
+    if (this.won && this.dragonCorrect) {
+      statusText = "STATUS: REALM SAVED \u2713";
+      statusColor = '#44ff44';
+    } else if (this.won) {
+      statusText = "STATUS: REALM SAVED (WITH RESERVATIONS)";
+      statusColor = '#cccc44';
+    } else {
+      statusText = "STATUS: SEE MANAGEMENT";
+      statusColor = '#ff4444';
+    }
+    this.add.text(cx, 130, statusText, {
+      fontFamily: 'Arial', fontSize: '22px', fontStyle: 'bold', color: statusColor,
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5);
+
+    const stats = [
+      "Cases Seen: " + this.casesProcessed,
+      "Correct Filings: " + this.casesCorrect,
+      "Misfilings: " + this.casesMisfiled,
+      "Best Streak: " + this.bestStreak,
+      "Final Score: " + this.finalScore
+    ];
+    stats.forEach((stat, i) => {
+      this.add.text(cx, 200 + i * 38, stat, {
+        fontFamily: 'Arial', fontSize: '20px', color: '#ccaa77',
+        stroke: '#000000', strokeThickness: 2
+      }).setOrigin(0.5);
+    });
+
+    let rank;
+    if (this.finalScore >= 350) rank = "\u2B50 Arcane Auditor General \u2B50";
+    else if (this.finalScore >= 200) rank = "Senior Bureaucromancer";
+    else if (this.finalScore >= 100) rank = "Junior Clerk";
+    else rank = "Intern (Probationary)";
+
+    this.add.text(cx, 390, rank, {
+      fontFamily: 'Arial', fontSize: '26px', fontStyle: 'bold', color: '#ffdd00',
+      stroke: '#443300', strokeThickness: 4
+    }).setOrigin(0.5);
+
+    const restartText = this.add.text(cx, 520, "Press SPACE to Work Another Shift", {
+      fontFamily: 'Arial', fontSize: '20px', color: '#ffffff'
+    }).setOrigin(0.5);
+    this.tweens.add({ targets: restartText, alpha: 0.3, yoyo: true, repeat: -1, duration: 800 });
+
+    const restart = () => {
+      this.cameras.main.fadeOut(500);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('GameScene'));
+    };
+    this.input.keyboard.once('keydown-SPACE', restart);
+    this.input.once('pointerdown', restart);
+  }
+}
+
+// ============================================================
+// PHASER CONFIG
+// ============================================================
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  parent: 'game-container',
+  backgroundColor: '#2a1a0a',
+  scene: [BootScene, TitleScene, GameScene, EndScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  }
+};
+
+const game = new Phaser.Game(config);
+</script>
+</body>
+</html>

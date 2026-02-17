@@ -1,0 +1,3 @@
+**Reviewing creative game ideas**
+
+I need to evaluate our creativity and consider revising it to be more innovative. While the current game, Echo Chambers, is creative, it does use familiar mechanics. I want to critique it and come up with a revision that's both imaginative and feasible in Phaser, keeping the time constraints and 2D aspects in mind. I could also explore earlier ideas like Shadow Ink or Time Twins, seeing if we can add fresh twists to enhance creativity.

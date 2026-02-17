@@ -1,0 +1,3 @@
+**Exploring creative game mechanics**
+
+I need to critique and revise to become more creative. While Echo Runner's echo mechanic is common, I'm considering other ideas from my initial list. For instance, Umbra Courier involves shadows that become solid, and Paper Siege focuses on folding paper, while Whisper Town allows for timeline eavesdropping. Murmuration centers on flocking sliders. Each needs to be feasible in Phaser 2D, with a distinct ending in about five minutes. Let's see what works best!

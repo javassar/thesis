@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Cartographer's Eraser</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a14;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #game-container {
+            border: 2px solid #333;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+    <div id="game-container"></div>
+    <script>
+// ============================================================
+// THE CARTOGRAPHER'S ERASER
+// ============================================================
+
+const GRID_COLS = 20;
+const GRID_ROWS = 15;
+const TILE_SIZE = 40;
+
+const MAP = [
+    // Each sub-array is a row of 20 terrain codes
+    // Row 0
+    ['F','F','F','F','F','P','P','F','F','F','F','F','P','P','F','F','F','F','F','F'],
+    // Row 1
+    ['F','F','P','P','D','D','D','P','F','F','F','F','P','D','D','D','P','P','F','F'],
+    // Row 2 (C1 at col3, C2 at col12)
+    ['P','P','P','C','D','P','P','P','F','F','P','P','C','D','P','P','P','F','F','F'],
+    // Row 3
+    ['P','A','A','A','D','P','P','R','R','F','P','A','A','D','P','P','M','M','F','F'],
+    // Row 4
+    ['F','A','A','P','D','P','P','R','P','P','P','A','P','D','P','P','M','M','P','F'],
+    // Row 5 (col 7 bridge over river)
+    ['F','P','P','P','D','D','D','D','D','D','D','D','D','D','D','P','P','P','P','F'],
+    // Row 6 (col 6 road south to Ironhearth)
+    ['F','F','P','P','P','P','D','R','P','P','P','P','P','P','D','P','F','F','F','F'],
+    // Row 7
+    ['P','P','P','M','M','P','D','R','P','P','M','P','P','P','D','P','P','F','F','F'],
+    // Row 8
+    ['P','P','M','M','P','P','D','R','R','P','M','P','P','P','D','P','P','P','P','P'],
+    // Row 9 (C3 at col6, extended road east to col14)
+    ['P','P','P','P','P','P','C','D','D','D','D','D','D','D','D','D','P','P','P','P'],
+    // Row 10 (col 8 road connecting rows 9-11)
+    ['F','P','A','A','A','P','P','P','D','P','P','P','P','P','P','D','P','P','P','F'],
+    // Row 11
+    ['F','P','A','A','P','D','D','D','D','P','P','P','A','A','A','D','P','P','F','F'],
+    // Row 12 (C4 at col4, C5 at col14)
+    ['F','P','P','P','C','D','P','P','D','D','D','D','A','A','C','D','P','F','F','F'],
+    // Row 13
+    ['F','F','P','P','P','P','P','P','P','P','P','P','P','A','P','P','P','F','F','F'],
+    // Row 14
+    ['F','F','F','F','F','F','P','P','P','P','P','P','P','P','F','F','F','F','F','F'],
+];
+
+const CITY_INFO = [
+    { col: 3,  row: 2,  name: 'Ashenveil',   pop: 400 },
+    { col: 12, row: 2,  name: 'Willowmere',  pop: 350 },
+    { col: 6,  row: 9,  name: 'Ironhearth',  pop: 500 },
+    { col: 4,  row: 12, name: 'Duskhollow',  pop: 300 },
+    { col: 14, row: 12, name: 'Thornwall',   pop: 450 },
+];
+
+const TERRAIN_MAP = {
+    P: 'plains', F: 'forest', M: 'mountain', R: 'river',
+    D: 'road', A: 'farmland', C: 'city'
+};
+
+const TERRAIN_COLORS = {
+    plains:   { fill: 0x7CAA5A, border: 0x6B9A4E },
+    forest:   { fill: 0x2D5A27, border: 0x245020 },
+    mountain: { fill: 0x7A6B5D, border: 0x6B5C4E },
+    river:    { fill: 0x4A7FB5, border: 0x3D6E9E },
+    road:     { fill: 0xA89070, border: 0x988060 },
+    farmland: { fill: 0xC8A951, border: 0xB89841 },
+    city:     { fill: 0xD4943A, border: 0xC4842A },
+};
+
+// ============================================================
+// BOOT SCENE - Generate Textures
+// ============================================================
+class BootScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'BootScene' });
+    }
+
+    create() {
+        // Generate detailed tile textures for each terrain type
+        for (const [terrain, colors] of Object.entries(TERRAIN_COLORS)) {
+            const g = this.make.graphics({ x: 0, y: 0, add: false });
+            // Base tile with border
+            g.fillStyle(colors.border);
+            g.fillRect(0, 0, 40, 40);
+            g.fillStyle(colors.fill);
+            g.fillRect(1, 1, 38, 38);
+
+            // Terrain-specific details
+            if (terrain === 'forest') {
+                const trees = [[10, 20], [24, 16], [17, 30], [30, 26], [8, 10]];
+                for (const [tx, ty] of trees) {
+                    g.fillStyle(0x1A4020);
+                    g.fillTriangle(tx, ty - 7, tx - 4, ty + 1, tx + 4, ty + 1);
+                    g.fillStyle(0x286030);
+                    g.fillTriangle(tx, ty - 10, tx - 3, ty - 3, tx + 3, ty - 3);
+                    g.fillStyle(0x3A2515);
+                    g.fillRect(tx - 1, ty + 1, 2, 3);
+                }
+            } else if (terrain === 'mountain') {
+                g.fillStyle(0x6B5C4E);
+                g.fillTriangle(20, 4, 5, 34, 35, 34);
+                g.fillStyle(0x8A7B6D);
+                g.fillTriangle(30, 10, 19, 32, 38, 32);
+                g.fillStyle(0xDDDDDD, 0.7);
+                g.fillTriangle(20, 4, 15, 13, 25, 13);
+                g.fillStyle(0xCCCCCC, 0.5);
+                g.fillTriangle(30, 10, 26, 16, 34, 16);
+            } else if (terrain === 'river') {
+                g.fillStyle(0x5A8FC5, 0.4);
+                g.fillRect(2, 9, 36, 2);
+                g.fillRect(4, 19, 32, 2);
+                g.fillRect(2, 29, 36, 2);
+                g.fillStyle(0x8ABFE5, 0.5);
+                g.fillCircle(10, 6, 1.5);
+                g.fillCircle(30, 15, 1);
+                g.fillCircle(8, 25, 1);
+                g.fillCircle(28, 34, 1.5);
+            } else if (terrain === 'road') {
+                g.fillStyle(0xC0A880, 0.5);
+                g.fillRect(4, 19, 5, 2);
+                g.fillRect(13, 19, 5, 2);
+                g.fillRect(22, 19, 5, 2);
+                g.fillRect(31, 19, 5, 2);
+                g.fillStyle(0xB8A080, 0.3);
+                g.fillCircle(8, 10, 1.5);
+                g.fillCircle(28, 30, 1.5);
+                g.fillCircle(18, 30, 1);
+            } else if (terrain === 'farmland') {
+                g.fillStyle(0xAA8830, 0.3);
+                for (let y = 6; y < 36; y += 5) {
+                    g.fillRect(3, y, 34, 1);
+                }
+                g.fillStyle(0x9A8030, 0.4);
+                for (let y = 8; y < 35; y += 5) {
+                    for (let x = 6; x < 35; x += 8) {
+                        g.fillCircle(x, y, 1);
+                    }
+                }
+            } else if (terrain === 'city') {
+                g.fillStyle(0xFFDDAA);
+                g.fillRect(7, 12, 8, 12);
+                g.fillRect(18, 8, 10, 16);
+                g.fillRect(13, 18, 6, 8);
+                g.fillRect(28, 16, 6, 10);
+                g.fillStyle(0xE0B870);
+                g.fillRect(7, 12, 8, 2);
+                g.fillRect(18, 8, 10, 2);
+                g.fillRect(28, 16, 6, 2);
+                g.fillStyle(0xFFEE99, 0.7);
+                g.fillRect(9, 17, 2, 2);
+                g.fillRect(12, 17, 2, 2);
+                g.fillRect(20, 12, 2, 2);
+                g.fillRect(24, 12, 2, 2);
+                g.fillRect(20, 17, 2, 2);
+                g.fillRect(30, 20, 2, 2);
+            } else if (terrain === 'plains') {
+                g.fillStyle(0x6B9A4E, 0.4);
+                g.fillCircle(8, 10, 1.5);
+                g.fillCircle(28, 8, 1);
+                g.fillCircle(15, 25, 1.5);
+                g.fillCircle(33, 22, 1);
+                g.fillCircle(10, 33, 1);
+                g.fillCircle(25, 32, 1.5);
+                g.fillCircle(20, 14, 1);
+            }
+
+            g.generateTexture('tile_' + terrain, 40, 40);
+            g.destroy();
+        }
+
+        // Fog overlay - textured with subtle variation
+        const fg = this.make.graphics({ x: 0, y: 0, add: false });
+        fg.fillStyle(0x3A3A4A);
+        fg.fillRect(0, 0, 40, 40);
+        fg.fillStyle(0x444455, 0.3);
+        fg.fillCircle(12, 10, 6);
+        fg.fillCircle(28, 25, 8);
+        fg.fillCircle(8, 30, 5);
+        fg.fillStyle(0x303040, 0.3);
+        fg.fillCircle(25, 8, 5);
+        fg.fillCircle(15, 28, 7);
+        fg.generateTexture('fog', 40, 40);
+        fg.destroy();
+
+        // Protection glow
+        const pg = this.make.graphics({ x: 0, y: 0, add: false });
+        pg.lineStyle(2, 0xFFD700, 1);
+        pg.strokeRect(1, 1, 38, 38);
+        pg.generateTexture('protection', 40, 40);
+        pg.destroy();
+
+        // Refugee dot
+        const rg = this.make.graphics({ x: 0, y: 0, add: false });
+        rg.fillStyle(0xE8D4B8);
+        rg.fillCircle(3, 3, 3);
+        rg.generateTexture('refugee', 6, 6);
+        rg.destroy();
+
+        // Hover highlight
+        const hg = this.make.graphics({ x: 0, y: 0, add: false });
+        hg.lineStyle(2, 0xFFFFFF, 0.3);
+        hg.strokeRect(1, 1, 38, 38);
+        hg.generateTexture('hover', 40, 40);
+        hg.destroy();
+
+        this.scene.start('GameScene');
+    }
+}
+
+// ============================================================
+// GAME SCENE
+// ============================================================
+class GameScene extends Phaser.Scene {
+    constructor() {
+        super({ key: 'GameScene' });
+    }
+
+    init() {
+        this.ink = 100;
+        this.fogTimer = 0;
+        this.fogWaveInterval = 3.0;
+        this.elapsedTime = 0;
+        this.totalPeopleSaved = 0;
+        this.citiesAlive = 5;
+        this.gamePhase = 'title';
+        this.fogActive = false;
+        this.protectedTiles = [];
+        this.refugees = [];
+        this.ghostTexts = [];
+        this.cityData = CITY_INFO.map(c => ({ ...c })); // copy so we can mutate pop
+    }
+
+    create() {
+        // Build the map
+        this.grid = [];
+        this.tileSprites = [];
+        this.fogSprites = [];
+        this.protectionSprites = [];
+
+        for (let col = 0; col < GRID_COLS; col++) {
+            this.grid[col] = [];
+            this.tileSprites[col] = [];
+            this.fogSprites[col] = [];
+            this.protectionSprites[col] = [];
+
+            for (let row = 0; row < GRID_ROWS; row++) {
+                const terrainChar = MAP[row][col];
+                const terrainType = TERRAIN_MAP[terrainChar];
+                const x = col * TILE_SIZE + TILE_SIZE / 2;
+                const y = row * TILE_SIZE + TILE_SIZE / 2;
+
+                // Tile sprite with random flips for visual variety
+                this.tileSprites[col][row] = this.add.image(x, y, 'tile_' + terrainType);
+                if (terrainType !== 'city' && terrainType !== 'road') {
+                    if (Math.random() > 0.5) this.tileSprites[col][row].setFlipX(true);
+                    if (Math.random() > 0.5) this.tileSprites[col][row].setFlipY(true);
+                }
+
+                // Fog overlay (invisible initially)
+                this.fogSprites[col][row] = this.add.image(x, y, 'fog').setAlpha(0).setDepth(10);
+
+                // Protection overlay (invisible initially)
+                this.protectionSprites[col][row] = this.add.image(x, y, 'protection').setAlpha(0).setDepth(15);
+
+                // Grid data
+                let cityIndex = -1;
+                for (let ci = 0; ci < CITY_INFO.length; ci++) {
+                    if (CITY_INFO[ci].col === col && CITY_INFO[ci].row === row) {
+                        cityIndex = ci;
+                        break;
+                    }
+                }
+
+                this.grid[col][row] = {
+                    terrain: terrainType,
+                    state: 'clear',
+                    protectionTimer: 0,
+                    fogAlpha: 0,
+                    cityIndex: cityIndex
+                };
+            }
+        }
+
+        // City labels
+        this.cityLabels = [];
+        this.cityPopLabels = [];
+        for (let i = 0; i < this.cityData.length; i++) {
+            const city = this.cityData[i];
+            const x = city.col * TILE_SIZE + TILE_SIZE / 2;
+            const y = city.row * TILE_SIZE + TILE_SIZE / 2;
+
+            const nameLabel = this.add.text(x, y - 24, city.name, {
+                fontFamily: 'Arial', fontSize: '11px', color: '#FFFFFF',
+                stroke: '#000000', strokeThickness: 2
+            }).setOrigin(0.5).setDepth(20);
+            this.cityLabels.push(nameLabel);
+
+            const popLabel = this.add.text(x, y + 24, 'Pop: ' + city.pop, {
+                fontFamily: 'Arial', fontSize: '9px', color: '#DDDDDD',
+                stroke: '#000000', strokeThickness: 2
+            }).setOrigin(0.5).setDepth(20);
+            this.cityPopLabels.push(popLabel);
+        }
+
+        // Hover highlight
+        this.hoverHighlight = this.add.image(-100, -100, 'hover').setDepth(25);
+
+        // HUD - top bar
+        this.add.rectangle(400, 14, 800, 28, 0x000000, 0.4).setDepth(50);
+        this.peopleSavedText = this.add.text(10, 6, 'People Saved: 0', {
+            fontFamily: 'Arial', fontSize: '13px', color: '#DDDDDD',
+            stroke: '#000000', strokeThickness: 2
+        }).setDepth(51);
+        this.citiesText = this.add.text(400, 6, 'Cities: 5 / 5', {
+            fontFamily: 'Arial', fontSize: '13px', fontStyle: 'bold', color: '#FFD700',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5, 0).setDepth(51);
+        this.timerText = this.add.text(750, 6, '5:00', {
+            fontFamily: 'Arial', fontSize: '13px', color: '#DDDDDD',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(1, 0).setDepth(51);
+
+        // Ink meter
+        this.add.rectangle(787, 300, 17, 562, 0x222222).setDepth(50).setStrokeStyle(1, 0x444444);
+        this.inkBarFill = this.add.rectangle(787, 580, 13, 540, 0x3366CC).setOrigin(0.5, 1).setDepth(51);
+        this.add.text(787, 18, 'INK', {
+            fontFamily: 'Arial', fontSize: '10px', fontStyle: 'bold', color: '#AAAAAA'
+        }).setOrigin(0.5).setDepth(52);
+        this.inkValueText = this.add.text(787, 590, '100', {
+            fontFamily: 'Arial', fontSize: '10px', color: '#DDDDDD',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5, 0).setDepth(52);
+
+        // Title overlay
+        this.titleGroup = this.add.group();
+        const titleBg = this.add.rectangle(400, 300, 800, 600, 0x000000, 0.5).setDepth(100);
+        const titleText = this.add.text(400, 180, "THE CARTOGRAPHER'S ERASER", {
+            fontFamily: 'Georgia', fontSize: '36px', color: '#FFD700',
+            stroke: '#000000', strokeThickness: 5
+        }).setOrigin(0.5).setDepth(100);
+        const subtitleText = this.add.text(400, 240, 'You cannot save it all.', {
+            fontFamily: 'Georgia', fontSize: '18px', color: '#CCCCCC'
+        }).setOrigin(0.5).setDepth(100);
+        const startText = this.add.text(400, 450, 'Click to Begin', {
+            fontFamily: 'Arial', fontSize: '22px', color: '#FFFFFF'
+        }).setOrigin(0.5).setDepth(100);
+        this.tweens.add({
+            targets: startText, alpha: 0.4, yoyo: true, repeat: -1, duration: 800
+        });
+        this.titleGroup.addMultiple([titleBg, titleText, subtitleText, startText]);
+
+        // Input
+        this.input.on('pointerdown', (pointer) => this.onPointerDown(pointer));
+        this.input.on('pointermove', (pointer) => this.onPointerMove(pointer));
+    }
+
+    onPointerDown(pointer) {
+        if (this.gamePhase === 'title') {
+            this.titleGroup.setVisible(false);
+            this.showInstructions();
+            this.gamePhase = 'instructions';
+            return;
+        }
+
+        if (this.gamePhase === 'instructions') {
+            this.instructionGroup.setVisible(false);
+            this.gamePhase = 'playing';
+            this.fogActive = true;
+            return;
+        }
+
+        if (this.gamePhase === 'results') {
+            this.scene.restart();
+            return;
+        }
+
+        if (this.gamePhase === 'playing') {
+            const col = Math.floor(pointer.x / TILE_SIZE);
+            const row = Math.floor(pointer.y / TILE_SIZE);
+            if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return;
+
+            const tile = this.grid[col][row];
+
+            if (tile.state === 'consumed') return;
+            if (tile.terrain === 'mountain' || tile.terrain === 'river') {
+                this.showTileReject(col, row, 'Cannot protect');
+                return;
+            }
+            if (tile.state === 'protected') {
+                this.showTileReject(col, row, 'Already protected');
+                return;
+            }
+            if (this.ink < 8) {
+                this.flashInkMeter();
+                return;
+            }
+
+            // Protect the tile
+            this.ink -= 8;
+            tile.state = 'protected';
+            tile.protectionTimer = 20.0;
+
+            // Remove existing entry if re-protecting
+            this.protectedTiles = this.protectedTiles.filter(pt => !(pt.col === col && pt.row === row));
+            this.protectedTiles.push({ col, row });
+
+            // Show protection glow
+            this.tweens.killTweensOf(this.protectionSprites[col][row]);
+            this.protectionSprites[col][row].setAlpha(0.8);
+            this.tweens.add({
+                targets: this.protectionSprites[col][row],
+                alpha: 0.5, yoyo: true, repeat: -1, duration: 1000
+            });
+        }
+    }
+
+    onPointerMove(pointer) {
+        const col = Math.floor(pointer.x / TILE_SIZE);
+        const row = Math.floor(pointer.y / TILE_SIZE);
+        if (col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS) {
+            this.hoverHighlight.setPosition(col * TILE_SIZE + TILE_SIZE / 2, row * TILE_SIZE + TILE_SIZE / 2);
+        } else {
+            this.hoverHighlight.setPosition(-100, -100);
+        }
+    }
+
+    showInstructions() {
+        this.instructionGroup = this.add.group();
+        const panel = this.add.rectangle(400, 290, 440, 260, 0x000000, 0.8).setDepth(100);
+        const t1 = this.add.text(400, 190, 'The fog is erasing your map.', {
+            fontFamily: 'Arial', fontSize: '20px', color: '#FFFFFF'
+        }).setOrigin(0.5).setDepth(100);
+        const t2 = this.add.text(400, 225, 'Click tiles to protect them with ink.', {
+            fontFamily: 'Arial', fontSize: '16px', color: '#CCCCCC'
+        }).setOrigin(0.5).setDepth(100);
+        const t3 = this.add.text(400, 255, 'Each protection costs 8 ink and lasts 20 seconds.', {
+            fontFamily: 'Arial', fontSize: '14px', color: '#CC9933'
+        }).setOrigin(0.5).setDepth(100);
+        const t4 = this.add.text(400, 280, 'Mountains and rivers resist ink \u2014 you cannot protect them.', {
+            fontFamily: 'Arial', fontSize: '14px', color: '#AAAAAA'
+        }).setOrigin(0.5).setDepth(100);
+        const t5 = this.add.text(400, 315, 'Save as many cities and refugees as you can.', {
+            fontFamily: 'Arial', fontSize: '16px', color: '#FFD700'
+        }).setOrigin(0.5).setDepth(100);
+        const t6 = this.add.text(400, 380, 'Click anywhere to begin', {
+            fontFamily: 'Arial', fontSize: '14px', color: '#AAAAAA'
+        }).setOrigin(0.5).setDepth(100);
+        this.instructionGroup.addMultiple([panel, t1, t2, t3, t4, t5, t6]);
+    }
+
+    getNeighbors4(col, row) {
+        const result = [];
+        if (col > 0) result.push({ col: col - 1, row });
+        if (col < GRID_COLS - 1) result.push({ col: col + 1, row });
+        if (row > 0) result.push({ col, row: row - 1 });
+        if (row < GRID_ROWS - 1) result.push({ col, row: row + 1 });
+        return result;
+    }
+
+    triggerFogWave() {
+        const tilesToConsume = [];
+
+        for (let col = 0; col < GRID_COLS; col++) {
+            for (let row = 0; row < GRID_ROWS; row++) {
+                const tile = this.grid[col][row];
+                if (tile.state === 'consumed' || tile.state === 'protected') continue;
+
+                const isEdge = (col === 0 || col === GRID_COLS - 1 || row === 0 || row === GRID_ROWS - 1);
+                let adjacentToFog = false;
+
+                const neighbors = this.getNeighbors4(col, row);
+                for (const n of neighbors) {
+                    if (this.grid[n.col][n.row].state === 'consumed') {
+                        adjacentToFog = true;
+                        break;
+                    }
+                }
+
+                if (isEdge || adjacentToFog) {
+                    let threshold = 0.30;
+                    if (tile.terrain === 'mountain' || tile.terrain === 'river') {
+                        threshold = 0.15;
+                    }
+                    if (Math.random() < threshold) {
+                        tilesToConsume.push({ col, row });
+                    }
+                }
+            }
+        }
+
+        for (const tc of tilesToConsume) {
+            this.consumeTile(tc.col, tc.row);
+        }
+
+        // Spawn refugees from surviving cities near fog
+        for (let i = 0; i < this.cityData.length; i++) {
+            const city = this.cityData[i];
+            if (this.grid[city.col][city.row].state === 'consumed') continue;
+
+            let hasFogNearby = false;
+            for (let dx = -3; dx <= 3 && !hasFogNearby; dx++) {
+                for (let dy = -3; dy <= 3 && !hasFogNearby; dy++) {
+                    const nc = city.col + dx;
+                    const nr = city.row + dy;
+                    if (nc >= 0 && nc < GRID_COLS && nr >= 0 && nr < GRID_ROWS) {
+                        if (this.grid[nc][nr].state === 'consumed') {
+                            hasFogNearby = true;
+                        }
+                    }
+                }
+            }
+
+            if (hasFogNearby && this.refugees.length < 40) {
+                this.spawnRefugee(city.col, city.row, i);
+            }
+        }
+    }
+
+    consumeTile(col, row) {
+        const tile = this.grid[col][row];
+        if (tile.state === 'consumed') return;
+        tile.state = 'consumed';
+
+        // Animate fog overlay
+        this.tweens.add({
+            targets: this.fogSprites[col][row],
+            alpha: 1.0, duration: 500
+        });
+
+        // Fog wisps - atmospheric particles drifting inward
+        for (let w = 0; w < 3; w++) {
+            const wx = col * TILE_SIZE + TILE_SIZE / 2 + (Math.random() - 0.5) * 30;
+            const wy = row * TILE_SIZE + TILE_SIZE / 2 + (Math.random() - 0.5) * 30;
+            const wisp = this.add.circle(wx, wy, 2 + Math.random() * 3, 0x555566, 0.5).setDepth(11);
+            this.tweens.add({
+                targets: wisp,
+                x: wisp.x + (Math.random() - 0.5) * 40,
+                y: wisp.y + (Math.random() - 0.5) * 40,
+                alpha: 0, scaleX: 0.3, scaleY: 0.3,
+                duration: 800 + Math.random() * 800,
+                onComplete: () => wisp.destroy()
+            });
+        }
+
+        // Kill any protection glow
+        this.tweens.killTweensOf(this.protectionSprites[col][row]);
+        this.protectionSprites[col][row].setAlpha(0);
+
+        // Check if city
+        if (tile.cityIndex >= 0) {
+            const ci = tile.cityIndex;
+            this.citiesAlive--;
+
+            const x = col * TILE_SIZE + TILE_SIZE / 2;
+            const y = row * TILE_SIZE + TILE_SIZE / 2;
+
+            // Ghost text
+            const ghost = this.add.text(x, y, this.cityData[ci].name, {
+                fontFamily: 'Arial', fontSize: '12px', color: '#AAAAAA'
+            }).setOrigin(0.5).setAlpha(0.7).setDepth(12);
+            const ghostSub = this.add.text(x, y + 14, '...gone', {
+                fontFamily: 'Arial', fontSize: '9px', color: '#AAAAAA'
+            }).setOrigin(0.5).setAlpha(0.7).setDepth(12);
+            this.tweens.add({ targets: ghost, alpha: 0.2, duration: 5000 });
+            this.tweens.add({ targets: ghostSub, alpha: 0.2, duration: 5000 });
+
+            // Hide city labels
+            this.cityLabels[ci].setVisible(false);
+            this.cityPopLabels[ci].setVisible(false);
+
+            // Re-pathfind refugees targeting this city
+            for (const ref of this.refugees) {
+                if (ref.active && ref.targetCityIndex === ci) {
+                    this.rePathfindRefugee(ref);
+                }
+            }
+        }
+
+        // Check if any refugee is on this tile
+        for (const ref of this.refugees) {
+            if (ref.active && ref.col === col && ref.row === row) {
+                this.loseRefugee(ref);
+            }
+        }
+    }
+
+    spawnRefugee(col, row, fromCityIndex) {
+        const target = this.findNearestSurvivingCity(col, row, fromCityIndex);
+        if (!target) return;
+
+        const path = this.findPathBFS(col, row, target.col, target.row);
+        if (!path || path.length === 0) return;
+
+        const x = col * TILE_SIZE + TILE_SIZE / 2;
+        const y = row * TILE_SIZE + TILE_SIZE / 2;
+        const sprite = this.add.image(x, y, 'refugee').setDepth(18);
+
+        const refugee = {
+            sprite, col, row,
+            targetCityIndex: target.index,
+            path, pathIndex: 0,
+            moveTimer: 1.0,
+            active: true
+        };
+        this.refugees.push(refugee);
+    }
+
+    findNearestSurvivingCity(fromCol, fromRow, excludeIndex) {
+        const queue = [{ col: fromCol, row: fromRow }];
+        const visited = new Set();
+        visited.add(fromCol + ',' + fromRow);
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            const neighbors = this.getNeighbors4(current.col, current.row);
+            for (const n of neighbors) {
+                const key = n.col + ',' + n.row;
+                if (visited.has(key)) continue;
+                const tile = this.grid[n.col][n.row];
+                if (tile.state === 'consumed') continue;
+                if (tile.terrain !== 'road' && tile.terrain !== 'city') continue;
+                visited.add(key);
+                if (tile.terrain === 'city' && tile.cityIndex !== excludeIndex && tile.cityIndex >= 0) {
+                    return { col: n.col, row: n.row, index: tile.cityIndex };
+                }
+                queue.push({ col: n.col, row: n.row });
+            }
+        }
+        return null;
+    }
+
+    findPathBFS(startCol, startRow, endCol, endRow) {
+        const queue = [{ col: startCol, row: startRow, path: [] }];
+        const visited = new Set();
+        visited.add(startCol + ',' + startRow);
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            if (current.col === endCol && current.row === endRow) {
+                return current.path;
+            }
+
+            const neighbors = this.getNeighbors4(current.col, current.row);
+            for (const n of neighbors) {
+                const key = n.col + ',' + n.row;
+                if (visited.has(key)) continue;
+                const tile = this.grid[n.col][n.row];
+                if (tile.state === 'consumed') continue;
+                if (tile.terrain !== 'road' && tile.terrain !== 'city') continue;
+                visited.add(key);
+                const newPath = current.path.concat([{ col: n.col, row: n.row }]);
+                if (n.col === endCol && n.row === endRow) return newPath;
+                queue.push({ col: n.col, row: n.row, path: newPath });
+            }
+        }
+        return null;
+    }
+
+    rePathfindRefugee(refugee) {
+        const newTarget = this.findNearestSurvivingCity(refugee.col, refugee.row, -1);
+        if (!newTarget) {
+            refugee.sprite.setTint(0x888888);
+            refugee.path = [];
+            return;
+        }
+        refugee.targetCityIndex = newTarget.index;
+        const newPath = this.findPathBFS(refugee.col, refugee.row, newTarget.col, newTarget.row);
+        if (!newPath) {
+            refugee.sprite.setTint(0x888888);
+            refugee.path = [];
+            return;
+        }
+        refugee.path = newPath;
+        refugee.pathIndex = 0;
+    }
+
+    loseRefugee(refugee) {
+        refugee.active = false;
+        this.tweens.add({
+            targets: refugee.sprite,
+            y: refugee.sprite.y - 15, alpha: 0, duration: 800,
+            onComplete: () => { if (refugee.sprite) refugee.sprite.destroy(); }
+        });
+    }
+
+    absorbRefugee(refugee, cityIndex) {
+        refugee.active = false;
+        this.cityData[cityIndex].pop += 50;
+        this.totalPeopleSaved += 50;
+        this.cityPopLabels[cityIndex].setText('Pop: ' + this.cityData[cityIndex].pop);
+
+        // Warm glow particle effect (simple: a brief flash)
+        const glow = this.add.circle(refugee.sprite.x, refugee.sprite.y, 8, 0xFFD700, 0.7).setDepth(19);
+        this.tweens.add({
+            targets: glow, alpha: 0, scaleX: 2, scaleY: 2, duration: 300,
+            onComplete: () => glow.destroy()
+        });
+        refugee.sprite.destroy();
+    }
+
+    flashInkMeter() {
+        const origColor = this.inkBarFill.fillColor;
+        this.inkBarFill.setFillStyle(0xFF0000);
+        this.time.delayedCall(100, () => {
+            this.inkBarFill.setFillStyle(origColor);
+            this.time.delayedCall(100, () => {
+                this.inkBarFill.setFillStyle(0xFF0000);
+                this.time.delayedCall(100, () => {
+                    this.inkBarFill.setFillStyle(origColor);
+                });
+            });
+        });
+    }
+
+    showTileReject(col, row, message) {
+        const x = col * TILE_SIZE + TILE_SIZE / 2;
+        const y = row * TILE_SIZE + TILE_SIZE / 2;
+        const text = this.add.text(x, y, message, {
+            fontFamily: 'Arial', fontSize: '10px', color: '#FF6666',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5).setDepth(30);
+        this.tweens.add({
+            targets: text, y: y - 20, alpha: 0, duration: 800,
+            onComplete: () => text.destroy()
+        });
+    }
+
+    showResults() {
+        this.gamePhase = 'results';
+
+        // Calculate stats
+        let landSaved = 0;
+        for (let col = 0; col < GRID_COLS; col++) {
+            for (let row = 0; row < GRID_ROWS; row++) {
+                if (this.grid[col][row].state !== 'consumed') {
+                    landSaved++;
+                }
+            }
+        }
+        const landPercent = Math.round(landSaved / 300 * 100);
+
+        const survivingCities = [];
+        for (let i = 0; i < this.cityData.length; i++) {
+            if (this.grid[this.cityData[i].col][this.cityData[i].row].state !== 'consumed') {
+                survivingCities.push(this.cityData[i]);
+                this.totalPeopleSaved += CITY_INFO[i].pop;
+            }
+        }
+
+        // Choose narrative
+        let narrative;
+        if (survivingCities.length === 5) {
+            narrative = 'Against all odds, the world endures. Every road, every field, every home \u2014 held against the dark.';
+        } else if (survivingCities.length >= 3) {
+            const names = survivingCities[0].name + ' and ' + survivingCities[1].name;
+            narrative = names + ' endure. The roads between them are well-worn with the footsteps of those who made it through. The rest is silence.';
+        } else if (survivingCities.length >= 1) {
+            narrative = survivingCities[0].name + ' stands alone, swollen with the memories of refugees who remember places the map no longer shows.';
+        } else {
+            narrative = 'The fog takes everything. But you tried. The ink stains on your fingers prove that you tried.';
+        }
+
+        // Display overlay
+        this.add.rectangle(400, 300, 500, 450, 0x000000, 0.8).setDepth(100);
+
+        this.add.text(400, 110, 'The World That Remains', {
+            fontFamily: 'Georgia', fontSize: '30px', color: '#FFD700',
+            stroke: '#000000', strokeThickness: 4
+        }).setOrigin(0.5).setDepth(101);
+
+        this.add.text(400, 190, 'Land Saved: ' + landPercent + '%', {
+            fontFamily: 'Arial', fontSize: '20px', color: '#FFFFFF'
+        }).setOrigin(0.5).setDepth(101);
+
+        this.add.text(400, 225, 'Cities Surviving: ' + survivingCities.length + ' of 5', {
+            fontFamily: 'Arial', fontSize: '20px', color: '#FFFFFF'
+        }).setOrigin(0.5).setDepth(101);
+
+        this.add.text(400, 260, 'People Saved: ' + this.totalPeopleSaved.toLocaleString() + ' of 2,000', {
+            fontFamily: 'Arial', fontSize: '20px', color: '#FFFFFF'
+        }).setOrigin(0.5).setDepth(101);
+
+        this.add.text(400, 350, narrative, {
+            fontFamily: 'Georgia', fontSize: '15px', color: '#CCCCCC',
+            wordWrap: { width: 420 }, align: 'center'
+        }).setOrigin(0.5).setDepth(101);
+
+        const restartPrompt = this.add.text(400, 490, 'Click to Remember Again', {
+            fontFamily: 'Arial', fontSize: '14px', color: '#AAAAAA'
+        }).setOrigin(0.5).setDepth(101);
+        this.tweens.add({
+            targets: restartPrompt, alpha: 0.4, yoyo: true, repeat: -1, duration: 800
+        });
+    }
+
+    update(time, delta) {
+        if (this.gamePhase !== 'playing' && this.gamePhase !== 'ending') return;
+
+        const deltaS = delta / 1000;
+
+        if (this.gamePhase === 'playing') {
+            this.elapsedTime += deltaS;
+
+            // Ink regen
+            this.ink = Math.min(this.ink + 3 * deltaS, 100);
+            const inkFillHeight = (this.ink / 100) * 540;
+            this.inkBarFill.setSize(13, inkFillHeight);
+            this.inkBarFill.setPosition(787, 580);
+
+            if (this.ink > 50) this.inkBarFill.setFillStyle(0x3366CC);
+            else if (this.ink > 25) this.inkBarFill.setFillStyle(0xCC9933);
+            else this.inkBarFill.setFillStyle(0xCC3333);
+
+            this.inkValueText.setText(Math.floor(this.ink).toString());
+
+            // Fog wave timing
+            if (this.fogActive) {
+                if (this.elapsedTime < 20) {
+                    // Grace period: no fog for first 20 seconds
+                    this.fogWaveInterval = 999;
+                } else if (this.elapsedTime < 150) {
+                    this.fogWaveInterval = 6.5;
+                } else if (this.elapsedTime < 240) {
+                    this.fogWaveInterval = 5.5;
+                } else if (this.elapsedTime < 280) {
+                    this.fogWaveInterval = 4.5;
+                } else {
+                    this.fogActive = false;
+                }
+
+                this.fogTimer += deltaS;
+                if (this.fogTimer >= this.fogWaveInterval) {
+                    this.triggerFogWave();
+                    this.fogTimer = 0;
+                }
+            }
+
+            // Protection timers
+            for (let i = this.protectedTiles.length - 1; i >= 0; i--) {
+                const pt = this.protectedTiles[i];
+                const tile = this.grid[pt.col][pt.row];
+                if (tile.state !== 'protected') {
+                    this.protectedTiles.splice(i, 1);
+                    continue;
+                }
+                tile.protectionTimer -= deltaS;
+                if (tile.protectionTimer <= 0) {
+                    tile.state = 'clear';
+                    tile.protectionTimer = 0;
+                    this.tweens.killTweensOf(this.protectionSprites[pt.col][pt.row]);
+                    this.tweens.add({
+                        targets: this.protectionSprites[pt.col][pt.row],
+                        alpha: 0, duration: 1000
+                    });
+                    this.protectedTiles.splice(i, 1);
+                }
+            }
+
+            // Refugees
+            for (let i = this.refugees.length - 1; i >= 0; i--) {
+                const ref = this.refugees[i];
+                if (!ref.active) {
+                    this.refugees.splice(i, 1);
+                    continue;
+                }
+                if (!ref.path || ref.path.length === 0) continue;
+
+                ref.moveTimer -= deltaS;
+                if (ref.moveTimer <= 0) {
+                    ref.moveTimer = 1.0;
+
+                    if (ref.pathIndex >= ref.path.length) {
+                        this.absorbRefugee(ref, ref.targetCityIndex);
+                        continue;
+                    }
+
+                    let nextStep = ref.path[ref.pathIndex];
+
+                    // Check if next tile is consumed
+                    if (this.grid[nextStep.col][nextStep.row].state === 'consumed') {
+                        this.rePathfindRefugee(ref);
+                        if (!ref.path || ref.path.length === 0) continue;
+                        nextStep = ref.path[0];
+                        ref.pathIndex = 0;
+                    }
+
+                    ref.col = nextStep.col;
+                    ref.row = nextStep.row;
+
+                    this.tweens.add({
+                        targets: ref.sprite,
+                        x: nextStep.col * TILE_SIZE + TILE_SIZE / 2,
+                        y: nextStep.row * TILE_SIZE + TILE_SIZE / 2,
+                        duration: 900
+                    });
+
+                    ref.pathIndex++;
+                }
+            }
+
+            // HUD
+            this.peopleSavedText.setText('People Saved: ' + this.totalPeopleSaved);
+            this.citiesText.setText('Cities: ' + this.citiesAlive + ' / 5');
+            const remaining = Math.max(0, 300 - this.elapsedTime);
+            const minutes = Math.floor(remaining / 60);
+            const seconds = Math.floor(remaining % 60);
+            this.timerText.setText(minutes + ':' + (seconds < 10 ? '0' : '') + seconds);
+
+            // Check end
+            if (this.elapsedTime >= 300) {
+                this.gamePhase = 'ending';
+                // Golden glow on surviving tiles
+                for (let col = 0; col < GRID_COLS; col++) {
+                    for (let row = 0; row < GRID_ROWS; row++) {
+                        if (this.grid[col][row].state !== 'consumed') {
+                            this.tileSprites[col][row].setTint(0xFFEEAA);
+                        }
+                    }
+                }
+                this.time.delayedCall(2000, () => this.showResults());
+            }
+        }
+    }
+}
+
+// ============================================================
+// PHASER CONFIG
+// ============================================================
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    parent: 'game-container',
+    backgroundColor: '#1A1A2E',
+    scene: [BootScene, GameScene],
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    }
+};
+
+const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>

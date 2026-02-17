@@ -1,0 +1,69 @@
+
+Edited file
+index.html
++26
+-0
+
+
+        this.objectiveText = this.add.text(420, 58, '', {
+          fontSize: '12px',
+          color: '#b9d6ff',
+          fontFamily: 'Courier New, monospace'
+        }).setOrigin(0.5, 0).setVisible(false);
+
+        this.muteText = this.add.text(720, 34, '', {
+        this.hudText.setVisible(true);
+        this.objectiveText.setVisible(true);
+        this.muteText.setVisible(true);
+        this.overlayText.setVisible(false);
+
+        if (index === 0) {
+          this.objectiveText.setText('Chord: hit C E G within 4 beats');
+        } else {
+          this.objectiveText.setText('Motif: hit colored notes on their beats');
+        }
+      }
+        }
+
+        if (this.movementIndex === 0 && this.requiredNotes) {
+          const chordY = 58;
+          const chordSpacing = 18;
+          const startX = barX + barWidth - chordSpacing * (this.requiredNotes.length - 1);
+          for (let i = 0; i < this.requiredNotes.length; i++) {
+            const note = this.requiredNotes[i];
+            const color = NOTE_COLORS[note] || 0xffffff;
+            const active = this.phraseNotesHit.has(note);
+            this.uiGfx.fillStyle(color, active ? 0.9 : 0.25);
+            this.uiGfx.fillCircle(startX + i * chordSpacing, chordY, 4);
+          }
+        }
+      }
+Worked for 4m 9s
+I ran a mental playtest and tightened the Movement I clarity by adding an explicit chord objective plus chord progress dots in the HUD so the reset condition makes sense.
+
+Playtest narrative (first-time casual player, thinking out loud):
+I see the title screen. I skim the subtitle and click. Okay, starfield, a pulsing beat circle top-left, and a small launcher on the left. I drag from the launcher and release. A white probe shoots out, curves around the planet, and I hear a bell when it crosses a ring. Nice. The phrase bar at the top starts filling for a couple beats, but then it suddenly resets even though I’m still hitting rings. Huh? I try again, launch a second probe, hear more notes, and it still resets after four beats. I’m not sure what I’m missing. Am I supposed to hit specific rings in a specific order? There’s no visual hint, so I’m guessing and getting frustrated. I keep flinging probes and eventually stumble into a phrase that clears, but it feels like luck because I don’t know the requirement.
+
+Confusion/issue flagged:
+
+I don’t understand why the phrase bar resets in Movement I, even when I hit rings.
+Playability issues and fixes:
+
+Issue: Phrase resets feel arbitrary in Movement I.
+Player view: “I’m hitting rings, but progress resets after four beats with no explanation.”
+Root cause: Movement I uses motif: [null, null, null, null], and there was no UI showing the additional “hit C/E/G within the phrase” rule. index.html
+Fix: Added an objective text line and chord progress dots that light as each required ring is hit. This makes the extra rule visible and explains the reset. index.html
+Changes made:
+
+index.html (objective text + chord dots in HUD for Movement I)
+Testing:
+
+Not run (mental simulation). Open index.html to verify the chord indicators resolve the confusion.
+If you want, I can also playtest the revised HUD flow and report how it feels.
+
+
+1 file changed
+Undo
+
+Review
+index.html

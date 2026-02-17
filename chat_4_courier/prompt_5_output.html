@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shadow Courier: Dial the Night</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0b0f14;
+      color: #e6eef7;
+      font-family: Verdana, sans-serif;
+      overflow: hidden;
+    }
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script>
+    const WIDTH = 960;
+    const HEIGHT = 540;
+
+    const COLORS = {
+      background: 0x0b0f14,
+      permanentDark: 0x0d1b2a,
+      shadow: 0x0d1b2a,
+      lamp: 0xf3b65a,
+      patrolLight: 0xffd38a,
+      tram: 0x1c2230,
+      headlight: 0xffc857,
+      player: 0xffffff,
+      playerOutline: 0x0d1b2a,
+      mailbox: 0x2c4a6f,
+      mailboxOutline: 0xf6c453,
+      uiText: '#e6eef7',
+      uiMuted: '#9fb3c8',
+      exposureBg: 0x2c3e50,
+      exposureFill: 0xff3864,
+      staminaFill: 0x2de2e6,
+      dial: 0x1f2a38
+    };
+
+    const DIAL_CENTER = { x: 860, y: 450 };
+    const DIAL_RADIUS = 48;
+    const DIAL_HANDLE_RADIUS = 6;
+    const DIAL_DRAG_RADIUS = 60;
+    const DIAL_MAX_ANGLE = Math.PI / 3;
+    const DIAL_TURN_THRESHOLD = Phaser.Math.DegToRad(5);
+    const DIAL_ROT_SPEED = Math.PI / 2;
+
+    const SHADOW_ECHO_THRESHOLD = Phaser.Math.DegToRad(10);
+    const SHADOW_ECHO_LIFE = 0.8;
+    const SHADOW_ECHO_EVENTS_MAX = 4;
+
+    const PLAYER_RADIUS = 8;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function formatTime(seconds) {
+      const s = Math.max(0, Math.floor(seconds));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${m}:${r.toString().padStart(2, '0')}`;
+    }
+
+    function distance(x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    class ShadowCourierScene extends Phaser.Scene {
+      constructor() {
+        super('ShadowCourier');
+      }
+
+      create() {
+        this.mode = 'title';
+        this.pointerWasDown = false;
+        this.draggingDial = false;
+        this.lastDt = 1 / 60;
+
+        this.worldGfx = this.add.graphics();
+        this.uiGfx = this.add.graphics();
+        this.overlayGfx = this.add.graphics();
+
+        this.createWorldData();
+        this.createUI();
+        this.resetAll();
+        this.showTitle();
+
+        this.keys = this.input.keyboard.addKeys({
+          w: Phaser.Input.Keyboard.KeyCodes.W,
+          a: Phaser.Input.Keyboard.KeyCodes.A,
+          s: Phaser.Input.Keyboard.KeyCodes.S,
+          d: Phaser.Input.Keyboard.KeyCodes.D,
+          up: Phaser.Input.Keyboard.KeyCodes.UP,
+          down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+          left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+          right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+          shift: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+          q: Phaser.Input.Keyboard.KeyCodes.Q,
+          e: Phaser.Input.Keyboard.KeyCodes.E,
+          r: Phaser.Input.Keyboard.KeyCodes.R,
+          enter: Phaser.Input.Keyboard.KeyCodes.ENTER
+        });
+
+      }
+
+      createWorldData() {
+        this.permanentDarkRects = [
+          new Phaser.Geom.Rectangle(140, 80, 220, 80),
+          new Phaser.Geom.Rectangle(420, 200, 120, 60),
+          new Phaser.Geom.Rectangle(700, 320, 200, 90)
+        ];
+
+        this.lampPosts = [
+          { x: 280, y: 200, length: 140, width: 26, shadowPoly: new Phaser.Geom.Polygon([]), shadowPoints: [] },
+          { x: 520, y: 160, length: 160, width: 26, shadowPoly: new Phaser.Geom.Polygon([]), shadowPoints: [] },
+          { x: 640, y: 260, length: 140, width: 26, shadowPoly: new Phaser.Geom.Polygon([]), shadowPoints: [] },
+          { x: 360, y: 360, length: 180, width: 26, shadowPoly: new Phaser.Geom.Polygon([]), shadowPoints: [] }
+        ];
+
+        this.patrols = [
+          {
+            p1: new Phaser.Math.Vector2(460, 100),
+            p2: new Phaser.Math.Vector2(460, 440),
+            pos: new Phaser.Math.Vector2(460, 100),
+            dir: 1,
+            speed: 70,
+            radius: 60,
+            t: 0,
+            length: 340
+          },
+          {
+            p1: new Phaser.Math.Vector2(740, 200),
+            p2: new Phaser.Math.Vector2(870, 200),
+            pos: new Phaser.Math.Vector2(740, 200),
+            dir: 1,
+            speed: 60,
+            radius: 55,
+            t: 0,
+            length: 130
+          }
+        ];
+
+        this.tram = {
+          active: false,
+          started: false,
+          x: 960,
+          y: 280,
+          speed: -320,
+          headlightRect: new Phaser.Geom.Rectangle(0, 0, 140, 60)
+        };
+
+        this.mailboxes = [
+          { x: 300, y: 120, radius: 14, delivered: false },
+          { x: 540, y: 320, radius: 14, delivered: false },
+          { x: 820, y: 120, radius: 14, delivered: false }
+        ];
+
+        this.startBox = { x: 90, y: 460, radius: 16 };
+      }
+
+      createUI() {
+        this.titleText = this.add.text(WIDTH / 2, HEIGHT / 2 - 80, 'Shadow Courier', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '36px',
+          color: COLORS.uiText
+        }).setOrigin(0.5);
+
+        this.subtitleText = this.add.text(WIDTH / 2, HEIGHT / 2 - 36, 'Dial the Night', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '18px',
+          color: COLORS.uiMuted
+        }).setOrigin(0.5);
+
+        this.playText = this.add.text(WIDTH / 2, HEIGHT / 2 + 12, 'Click to start', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '18px',
+          color: COLORS.uiText
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        this.playText.on('pointerdown', () => this.startGame());
+
+        this.titleHint = this.add.text(WIDTH / 2, HEIGHT / 2 + 46,
+          'Move with WASD. Rotate time with Q/E or the dial.', {
+            fontFamily: 'Verdana, sans-serif',
+            fontSize: '14px',
+            color: COLORS.uiMuted
+          }).setOrigin(0.5);
+
+        this.timerText = this.add.text(16, 12, 'Time: 5:00', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '16px',
+          color: COLORS.uiText
+        });
+
+        this.attemptsText = this.add.text(16, 36, 'Attempts: 3', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '16px',
+          color: COLORS.uiText
+        });
+
+        this.objectivesText = this.add.text(760, 12, 'Mailboxes: 0/3', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '16px',
+          color: COLORS.uiText
+        });
+
+        this.controlsText = this.add.text(16, 506,
+          'Move: WASD | Time: Q/E or drag dial | Sprint: Shift\nSpin dial fast to leave a shadow trail', {
+            fontFamily: 'Verdana, sans-serif',
+            fontSize: '14px',
+            color: COLORS.uiMuted
+          });
+
+        this.endTitle = this.add.text(WIDTH / 2, HEIGHT / 2 - 40, '', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '28px',
+          color: COLORS.uiText,
+          align: 'center'
+        }).setOrigin(0.5).setVisible(false);
+
+        this.endStats = this.add.text(WIDTH / 2, HEIGHT / 2 + 8, '', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '16px',
+          color: COLORS.uiMuted,
+          align: 'center'
+        }).setOrigin(0.5).setVisible(false);
+
+        this.retryText = this.add.text(WIDTH / 2 - 70, HEIGHT / 2 + 74, 'Retry', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '16px',
+          color: COLORS.uiText
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false);
+
+        this.quitText = this.add.text(WIDTH / 2 + 70, HEIGHT / 2 + 74, 'Quit', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '16px',
+          color: COLORS.uiText
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false);
+
+        this.retryText.on('pointerdown', () => {
+          if (this.mode === 'end') {
+            this.startGame();
+          }
+        });
+
+        this.quitText.on('pointerdown', () => {
+          if (this.mode === 'end') {
+            this.showTitle();
+          }
+        });
+      }
+
+      resetAll() {
+        this.timeRemaining = 300;
+        this.attemptsLeft = 3;
+        this.objectivesDelivered = 0;
+        this.mailboxes.forEach((box) => { box.delivered = false; });
+        this.player = {
+          x: this.startBox.x,
+          y: this.startBox.y,
+          radius: PLAYER_RADIUS,
+          speed: 110,
+          sprintSpeed: 160,
+          stamina: 2.0,
+          exposure: 0
+        };
+        this.dial = {
+          angle: 0
+        };
+        this.lastDialAngleForTurn = 0;
+        this.dialTurns = 0;
+        this.lastEchoAngle = 0;
+        this.exposureIncidents = 0;
+        this.highExposure = false;
+        this.footsteps = [];
+        this.footstepTimer = 0;
+        this.shadowEchoes = [];
+        this.pendingShadowEcho = false;
+        this.pendingEchoAngle = 0;
+        this.shadowEchoesUsed = 0;
+        this.tram.active = false;
+        this.tram.started = false;
+        this.tram.x = 960;
+        this.updateUITexts();
+      }
+
+      resetPlayerOnly() {
+        this.player.x = this.startBox.x;
+        this.player.y = this.startBox.y;
+        this.player.stamina = 2.0;
+        this.player.exposure = 0;
+        this.highExposure = false;
+        this.footsteps = [];
+        this.footstepTimer = 0;
+        this.shadowEchoes = [];
+        this.pendingShadowEcho = false;
+        this.lastEchoAngle = this.dial.angle;
+      }
+
+      showTitle() {
+        this.mode = 'title';
+        this.titleText.setVisible(true);
+        this.subtitleText.setVisible(true);
+        this.playText.setVisible(true);
+        this.titleHint.setVisible(true);
+        this.endTitle.setVisible(false);
+        this.endStats.setVisible(false);
+        this.retryText.setVisible(false);
+        this.quitText.setVisible(false);
+        this.timerText.setVisible(false);
+        this.attemptsText.setVisible(false);
+        this.objectivesText.setVisible(false);
+        this.controlsText.setVisible(true);
+      }
+
+      startGame() {
+        this.resetAll();
+        this.mode = 'play';
+        this.titleText.setVisible(false);
+        this.subtitleText.setVisible(false);
+        this.playText.setVisible(false);
+        this.titleHint.setVisible(false);
+        this.endTitle.setVisible(false);
+        this.endStats.setVisible(false);
+        this.retryText.setVisible(false);
+        this.quitText.setVisible(false);
+        this.timerText.setVisible(true);
+        this.attemptsText.setVisible(true);
+        this.objectivesText.setVisible(true);
+        this.controlsText.setVisible(true);
+      }
+
+      endSuccess() {
+        this.mode = 'end';
+        const timeLeft = formatTime(this.timeRemaining);
+        const lines = [
+          'Delivered 3/3',
+          `Time Left: ${timeLeft}`,
+          `Dial Turns: ${this.dialTurns}`,
+          `Shadow Echoes: ${this.shadowEchoesUsed}`,
+          `Exposure Incidents: ${this.exposureIncidents}`
+        ];
+        this.endTitle.setText('All mail delivered!');
+        this.endStats.setText(lines.join('\n'));
+        this.showEndOverlay();
+      }
+
+      endFail(reason) {
+        this.mode = 'end';
+        const timeLeft = formatTime(this.timeRemaining);
+        const causeMap = {
+          time: 'Time Up',
+          overexposed: 'Overexposed',
+          restart: 'Attempts Exhausted'
+        };
+        const cause = causeMap[reason] || 'Overexposed';
+        const attemptsUsed = 3 - this.attemptsLeft;
+        const lines = [
+          `Cause: ${cause}`,
+          `Attempts Used: ${attemptsUsed}`,
+          `Time Left: ${timeLeft}`,
+          `Dial Turns: ${this.dialTurns}`,
+          `Shadow Echoes: ${this.shadowEchoesUsed}`,
+          `Exposure Incidents: ${this.exposureIncidents}`
+        ];
+        this.endTitle.setText('Delivery failed');
+        this.endStats.setText(lines.join('\n'));
+        this.showEndOverlay();
+      }
+
+      showEndOverlay() {
+        this.endTitle.setVisible(true);
+        this.endStats.setVisible(true);
+        this.retryText.setVisible(true);
+        this.quitText.setVisible(true);
+        this.timerText.setVisible(false);
+        this.attemptsText.setVisible(false);
+        this.objectivesText.setVisible(false);
+        this.controlsText.setVisible(false);
+      }
+
+      updateUITexts() {
+        this.timerText.setText(`Time: ${formatTime(this.timeRemaining)}`);
+        this.attemptsText.setText(`Attempts: ${this.attemptsLeft}`);
+        this.objectivesText.setText(`Mailboxes: ${this.objectivesDelivered}/3`);
+      }
+
+      update(time, delta) {
+        const dt = Math.min(delta / 1000, 1 / 30);
+        this.lastDt = dt;
+        const pointer = this.input.activePointer;
+        const justDown = pointer.isDown && !this.pointerWasDown;
+        const justUp = !pointer.isDown && this.pointerWasDown;
+        this.pointerWasDown = pointer.isDown;
+
+        if (this.mode === 'title') {
+          if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+            this.startGame();
+            return;
+          }
+          this.updateDial(dt, pointer, justDown, justUp);
+          this.updateLampShadows();
+          this.updateShadowEchoes(dt);
+          this.renderScene(time / 1000);
+          return;
+        }
+
+        if (this.mode === 'end') {
+          this.updateLampShadows();
+          this.renderScene(time / 1000);
+          return;
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.r)) {
+          this.handleFail('restart');
+          this.updateLampShadows();
+          this.renderScene(time / 1000);
+          return;
+        }
+
+        this.timeRemaining -= dt;
+        if (this.timeRemaining <= 0) {
+          this.timeRemaining = 0;
+          this.endFail('time');
+          this.updateLampShadows();
+          this.renderScene(time / 1000);
+          return;
+        }
+
+        this.updateDial(dt, pointer, justDown, justUp);
+        this.updateLampShadows();
+        this.updateShadowEchoes(dt);
+        this.updatePatrols(dt);
+        this.updateTram(dt);
+        this.updatePlayer(dt);
+        if (this.updateExposure(dt)) {
+          this.renderScene(time / 1000);
+          return;
+        }
+        this.updateObjectives(time / 1000);
+        this.updateUITexts();
+        this.renderScene(time / 1000);
+      }
+
+      updateDial(dt, pointer, justDown, justUp) {
+        this.pendingShadowEcho = false;
+        if (justDown) {
+          const dist = distance(pointer.x, pointer.y, DIAL_CENTER.x, DIAL_CENTER.y);
+          if (dist <= DIAL_DRAG_RADIUS) {
+            this.draggingDial = true;
+          }
+        }
+        if (justUp) {
+          this.draggingDial = false;
+        }
+
+        const prevAngle = this.dial.angle;
+
+        if (this.draggingDial && pointer.isDown) {
+          const dx = pointer.x - DIAL_CENTER.x;
+          const dy = pointer.y - DIAL_CENTER.y;
+          let angle = Math.atan2(dx, -dy);
+          angle = clamp(angle, -DIAL_MAX_ANGLE, DIAL_MAX_ANGLE);
+          this.dial.angle = angle;
+        } else {
+          const qDown = this.keys.q.isDown;
+          const eDown = this.keys.e.isDown;
+          if (qDown && !eDown) {
+            this.dial.angle -= DIAL_ROT_SPEED * dt;
+          } else if (eDown && !qDown) {
+            this.dial.angle += DIAL_ROT_SPEED * dt;
+          }
+          this.dial.angle = clamp(this.dial.angle, -DIAL_MAX_ANGLE, DIAL_MAX_ANGLE);
+        }
+
+        const delta = Math.abs(this.dial.angle - this.lastDialAngleForTurn);
+        if (delta >= DIAL_TURN_THRESHOLD) {
+          this.dialTurns += 1;
+          this.lastDialAngleForTurn = this.dial.angle;
+        }
+
+        const echoDelta = Math.abs(this.dial.angle - this.lastEchoAngle);
+        if (this.mode === 'play' && echoDelta >= SHADOW_ECHO_THRESHOLD) {
+          this.pendingShadowEcho = true;
+          this.pendingEchoAngle = this.lastEchoAngle;
+          this.lastEchoAngle = this.dial.angle;
+        }
+
+        if (prevAngle !== this.dial.angle && this.mode === 'title') {
+          this.titleHint.setText('Rotate the dial to swing shadows. Click to start.');
+        }
+      }
+
+      updateLampShadows() {
+        const vectors = this.getShadowVectors(this.dial.angle);
+        this.lampPosts.forEach((post) => {
+          const points = this.buildShadowPoints(post, vectors);
+          post.shadowPoints = points;
+          post.shadowPoly.setTo([points[0].x, points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y]);
+        });
+
+        if (this.pendingShadowEcho) {
+          this.spawnShadowEcho(this.pendingEchoAngle);
+          this.pendingShadowEcho = false;
+        }
+      }
+
+      getShadowVectors(angle) {
+        const Lx = Math.sin(angle);
+        const Ly = -Math.cos(angle);
+        const Sx = -Lx;
+        const Sy = -Ly;
+        const Tx = -Sy;
+        const Ty = Sx;
+        return { Sx, Sy, Tx, Ty };
+      }
+
+      buildShadowPoints(post, vectors) {
+        const { Sx, Sy, Tx, Ty } = vectors;
+        const halfLength = post.length / 2;
+        const halfWidth = post.width / 2;
+        const cx = post.x + Sx * halfLength;
+        const cy = post.y + Sy * halfLength;
+        const sx = Sx * halfLength;
+        const sy = Sy * halfLength;
+        const wx = Tx * halfWidth;
+        const wy = Ty * halfWidth;
+
+        return [
+          { x: cx + wx + sx, y: cy + wy + sy },
+          { x: cx - wx + sx, y: cy - wy + sy },
+          { x: cx - wx - sx, y: cy - wy - sy },
+          { x: cx + wx - sx, y: cy + wy - sy }
+        ];
+      }
+
+      spawnShadowEcho(angle) {
+        const vectors = this.getShadowVectors(angle);
+        this.lampPosts.forEach((post) => {
+          const points = this.buildShadowPoints(post, vectors);
+          const poly = new Phaser.Geom.Polygon([
+            points[0].x, points[0].y,
+            points[1].x, points[1].y,
+            points[2].x, points[2].y,
+            points[3].x, points[3].y
+          ]);
+          this.shadowEchoes.push({
+            points,
+            poly,
+            life: 0,
+            maxLife: SHADOW_ECHO_LIFE
+          });
+        });
+        this.shadowEchoesUsed += 1;
+
+        const maxEchoes = SHADOW_ECHO_EVENTS_MAX * this.lampPosts.length;
+        if (this.shadowEchoes.length > maxEchoes) {
+          this.shadowEchoes.splice(0, this.shadowEchoes.length - maxEchoes);
+        }
+      }
+
+      updateShadowEchoes(dt) {
+        if (!this.shadowEchoes.length) return;
+        this.shadowEchoes.forEach((echo) => {
+          echo.life += dt;
+        });
+        this.shadowEchoes = this.shadowEchoes.filter((echo) => echo.life <= echo.maxLife);
+      }
+
+      updatePlayer(dt) {
+        const moveX = (this.keys.d.isDown || this.keys.right.isDown ? 1 : 0)
+          - (this.keys.a.isDown || this.keys.left.isDown ? 1 : 0);
+        const moveY = (this.keys.s.isDown || this.keys.down.isDown ? 1 : 0)
+          - (this.keys.w.isDown || this.keys.up.isDown ? 1 : 0);
+
+        let dirX = moveX;
+        let dirY = moveY;
+        const len = Math.sqrt(dirX * dirX + dirY * dirY);
+        if (len > 0) {
+          dirX /= len;
+          dirY /= len;
+        }
+
+        const wantsSprint = this.keys.shift.isDown && len > 0 && this.player.stamina > 0;
+        const speed = wantsSprint ? this.player.sprintSpeed : this.player.speed;
+
+        if (wantsSprint) {
+          this.player.stamina = Math.max(0, this.player.stamina - 1.0 * dt);
+        } else {
+          this.player.stamina = Math.min(2.0, this.player.stamina + 0.5 * dt);
+        }
+
+        this.player.x += dirX * speed * dt;
+        this.player.y += dirY * speed * dt;
+
+        this.player.x = clamp(this.player.x, this.player.radius, WIDTH - this.player.radius);
+        this.player.y = clamp(this.player.y, this.player.radius, HEIGHT - this.player.radius);
+
+        const inShadow = this.isPlayerInShadow() && !this.isPlayerInPatrolLight() && !this.isPlayerInHeadlight();
+        if (inShadow && len > 0.1) {
+          this.footstepTimer += dt;
+          if (this.footstepTimer >= 0.18) {
+            this.footstepTimer = 0;
+            this.footsteps.push({
+              x: this.player.x,
+              y: this.player.y,
+              life: 0,
+              maxLife: 0.7
+            });
+          }
+        } else {
+          this.footstepTimer = 0;
+        }
+
+        this.footsteps.forEach((step) => {
+          step.life += dt;
+        });
+        this.footsteps = this.footsteps.filter((step) => step.life <= step.maxLife);
+      }
+
+      updatePatrols(dt) {
+        this.patrols.forEach((patrol) => {
+          const pathLength = patrol.length;
+          const delta = (patrol.speed * dt) / pathLength;
+          patrol.t += patrol.dir * delta;
+          if (patrol.t >= 1) {
+            patrol.t = 1;
+            patrol.dir *= -1;
+          } else if (patrol.t <= 0) {
+            patrol.t = 0;
+            patrol.dir *= -1;
+          }
+          patrol.pos.x = Phaser.Math.Linear(patrol.p1.x, patrol.p2.x, patrol.t);
+          patrol.pos.y = Phaser.Math.Linear(patrol.p1.y, patrol.p2.y, patrol.t);
+        });
+      }
+
+      updateTram(dt) {
+        if (!this.tram.active && !this.tram.started && this.timeRemaining <= 210) {
+          this.tram.active = true;
+          this.tram.started = true;
+          this.tram.x = 960;
+        }
+        if (this.tram.active) {
+          this.tram.x += this.tram.speed * dt;
+          this.tram.headlightRect.x = this.tram.x - 140;
+          this.tram.headlightRect.y = this.tram.y - 30;
+          if (this.tram.x < -960) {
+            this.tram.active = false;
+          }
+        }
+      }
+
+      updateExposure(dt) {
+        const fullyInShadow = this.isPlayerFullyInShadow();
+        const inPatrol = this.isPlayerInPatrolLight();
+        const inHeadlight = this.isPlayerInHeadlight();
+        const inLit = !fullyInShadow || inPatrol || inHeadlight;
+
+        if (inLit) {
+          this.player.exposure = Math.min(100, this.player.exposure + 40 * dt);
+        } else {
+          this.player.exposure = Math.max(0, this.player.exposure - 60 * dt);
+        }
+
+        if (this.player.exposure >= 80 && !this.highExposure) {
+          this.exposureIncidents += 1;
+          this.highExposure = true;
+        }
+        if (this.player.exposure < 80) {
+          this.highExposure = false;
+        }
+
+        if (this.player.exposure >= 100) {
+          this.handleFail('overexposed');
+          return true;
+        }
+        return false;
+      }
+
+      updateObjectives(time) {
+        const currentIndex = this.objectivesDelivered;
+        if (currentIndex < 3) {
+          const box = this.mailboxes[currentIndex];
+          if (this.isTouchingMailbox(box)) {
+            box.delivered = true;
+            this.objectivesDelivered += 1;
+            this.updateUITexts();
+          }
+        }
+
+        if (this.objectivesDelivered === 3) {
+          if (distance(this.player.x, this.player.y, this.startBox.x, this.startBox.y)
+            <= this.player.radius + this.startBox.radius) {
+            this.endSuccess();
+          }
+        }
+
+      }
+
+      isTouchingMailbox(box) {
+        return distance(this.player.x, this.player.y, box.x, box.y) <= this.player.radius + box.radius;
+      }
+
+      getPlayerSamplePoints() {
+        const r = this.player.radius;
+        return [
+          { x: this.player.x, y: this.player.y },
+          { x: this.player.x + r, y: this.player.y },
+          { x: this.player.x - r, y: this.player.y },
+          { x: this.player.x, y: this.player.y + r },
+          { x: this.player.x, y: this.player.y - r }
+        ];
+      }
+
+      isPointInPermanentDark(x, y) {
+        return this.permanentDarkRects.some((rect) => Phaser.Geom.Rectangle.Contains(rect, x, y));
+      }
+
+      isPointInLampShadow(x, y) {
+        if (this.lampPosts.some((post) => Phaser.Geom.Polygon.Contains(post.shadowPoly, x, y))) {
+          return true;
+        }
+        return this.shadowEchoes.some((echo) => Phaser.Geom.Polygon.Contains(echo.poly, x, y));
+      }
+
+      isPointInShadow(x, y) {
+        return this.isPointInPermanentDark(x, y) || this.isPointInLampShadow(x, y);
+      }
+
+      isPlayerInPermanentDark() {
+        return this.isPointInPermanentDark(this.player.x, this.player.y);
+      }
+
+      isPlayerInLampShadow() {
+        return this.isPointInLampShadow(this.player.x, this.player.y);
+      }
+
+      isPlayerFullyInShadow() {
+        const samples = this.getPlayerSamplePoints();
+        return samples.every((point) => this.isPointInShadow(point.x, point.y));
+      }
+
+      isPlayerInShadow() {
+        return this.isPlayerFullyInShadow();
+      }
+
+      isPlayerInPatrolLight() {
+        return this.patrols.some((patrol) =>
+          distance(this.player.x, this.player.y, patrol.pos.x, patrol.pos.y) <= patrol.radius + this.player.radius
+        );
+      }
+
+      isPlayerInHeadlight() {
+        if (!this.tram.active) return false;
+        const circle = new Phaser.Geom.Circle(this.player.x, this.player.y, this.player.radius);
+        return Phaser.Geom.Intersects.CircleToRectangle(circle, this.tram.headlightRect);
+      }
+
+      handleFail(reason) {
+        this.attemptsLeft -= 1;
+        if (this.attemptsLeft > 0 && this.timeRemaining > 0) {
+          this.resetPlayerOnly();
+          this.updateUITexts();
+        } else {
+          this.endFail(reason);
+        }
+      }
+
+      renderScene(time) {
+        this.worldGfx.clear();
+        this.uiGfx.clear();
+        this.overlayGfx.clear();
+
+        this.drawPermanentDark();
+        this.drawShadowEchoes();
+        this.drawLampShadows();
+        this.drawLampPosts();
+        this.drawPatrolLights();
+        this.drawTram();
+        this.drawMailboxes(time);
+        this.drawFootsteps();
+        this.drawPlayer();
+        this.drawUI();
+
+        if (this.mode === 'end') {
+          this.overlayGfx.fillStyle(0x000000, 0.55);
+          this.overlayGfx.fillRect(0, 0, WIDTH, HEIGHT);
+        }
+      }
+
+      drawPermanentDark() {
+        this.worldGfx.fillStyle(COLORS.permanentDark, 0.9);
+        this.permanentDarkRects.forEach((rect) => {
+          this.worldGfx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        });
+      }
+
+      drawShadowEchoes() {
+        if (!this.shadowEchoes.length) return;
+        this.shadowEchoes.forEach((echo) => {
+          const t = 1 - echo.life / echo.maxLife;
+          this.worldGfx.fillStyle(0x243347, 0.35 * t);
+          this.worldGfx.fillPoints(echo.points, true);
+        });
+      }
+
+      drawLampShadows() {
+        this.worldGfx.fillStyle(COLORS.shadow, 0.85);
+        this.lampPosts.forEach((post) => {
+          if (post.shadowPoints.length > 0) {
+            this.worldGfx.fillPoints(post.shadowPoints, true);
+          }
+        });
+      }
+
+      drawLampPosts() {
+        this.lampPosts.forEach((post) => {
+          this.worldGfx.fillStyle(COLORS.lamp, 0.12);
+          this.worldGfx.fillCircle(post.x, post.y, 40);
+          this.worldGfx.fillStyle(COLORS.lamp, 0.2);
+          this.worldGfx.fillCircle(post.x, post.y, 22);
+          this.worldGfx.fillStyle(COLORS.lamp, 0.9);
+          this.worldGfx.fillCircle(post.x, post.y, 6);
+        });
+      }
+
+      drawPatrolLights() {
+        this.patrols.forEach((patrol) => {
+          this.worldGfx.fillStyle(COLORS.patrolLight, 0.25);
+          this.worldGfx.fillCircle(patrol.pos.x, patrol.pos.y, patrol.radius);
+          this.worldGfx.fillStyle(0xd4dce6, 1);
+          this.worldGfx.fillCircle(patrol.pos.x, patrol.pos.y, 6);
+        });
+      }
+
+      drawTram() {
+        if (!this.tram.active) return;
+        this.worldGfx.fillStyle(COLORS.tram, 0.9);
+        this.worldGfx.fillRect(this.tram.x, this.tram.y - 12, 960, 24);
+        this.worldGfx.fillStyle(COLORS.headlight, 0.35);
+        this.worldGfx.fillRect(this.tram.headlightRect.x, this.tram.headlightRect.y,
+          this.tram.headlightRect.width, this.tram.headlightRect.height);
+      }
+
+      drawMailboxes(time) {
+        const pulse = 0.6 + 0.4 * Math.sin(time * 3);
+        this.mailboxes.forEach((box, index) => {
+          const isTarget = index === this.objectivesDelivered;
+          const alpha = box.delivered ? 0.6 : (isTarget ? 0.95 : 0.8);
+          this.worldGfx.fillStyle(COLORS.mailbox, alpha + 0.15 * pulse);
+          this.worldGfx.fillCircle(box.x, box.y, box.radius + (box.delivered ? 0 : 1));
+          if (box.delivered) {
+            this.worldGfx.lineStyle(2, COLORS.mailboxOutline, 0.9);
+            this.worldGfx.strokeCircle(box.x, box.y, box.radius + 2);
+          } else if (isTarget) {
+            this.worldGfx.lineStyle(2, COLORS.mailboxOutline, 0.6 + 0.3 * pulse);
+            this.worldGfx.strokeCircle(box.x, box.y, box.radius + 4);
+          }
+          this.worldGfx.lineStyle(1, 0xffffff, 0.9);
+          this.worldGfx.beginPath();
+          this.worldGfx.moveTo(box.x - 5, box.y);
+          this.worldGfx.lineTo(box.x + 5, box.y);
+          this.worldGfx.strokePath();
+        });
+
+        this.worldGfx.fillStyle(0x325275, 0.9);
+        this.worldGfx.fillCircle(this.startBox.x, this.startBox.y, this.startBox.radius + 2);
+        this.worldGfx.lineStyle(2, COLORS.mailboxOutline, this.objectivesDelivered === 3 ? 0.9 : 0.4);
+        this.worldGfx.strokeCircle(this.startBox.x, this.startBox.y, this.startBox.radius + 3);
+        this.worldGfx.lineStyle(1, 0xffffff, 0.9);
+        this.worldGfx.beginPath();
+        this.worldGfx.moveTo(this.startBox.x - 6, this.startBox.y);
+        this.worldGfx.lineTo(this.startBox.x + 6, this.startBox.y);
+        this.worldGfx.strokePath();
+
+        this.worldGfx.fillStyle(0xffffff, 0.7);
+        this.worldGfx.fillRect(this.startBox.x - 10, this.startBox.y + 18, 20, 8);
+        this.worldGfx.fillStyle(0x0b0f14, 1);
+        this.worldGfx.fillRect(this.startBox.x - 8, this.startBox.y + 20, 16, 4);
+      }
+
+      drawFootsteps() {
+        if (this.footsteps.length === 0) return;
+        this.footsteps.forEach((step) => {
+          const t = 1 - step.life / step.maxLife;
+          this.worldGfx.fillStyle(0x1f3146, 0.4 * t);
+          this.worldGfx.fillCircle(step.x, step.y, 2 + 2 * (1 - t));
+        });
+      }
+
+      drawPlayer() {
+        if (this.mode === 'title') return;
+        this.worldGfx.lineStyle(2, COLORS.playerOutline, 0.9);
+        this.worldGfx.fillStyle(COLORS.player, 1);
+        this.worldGfx.fillCircle(this.player.x, this.player.y, this.player.radius);
+        this.worldGfx.fillStyle(COLORS.playerOutline, 0.9);
+        this.worldGfx.fillRect(this.player.x + 4, this.player.y + 1, 3, 4);
+      }
+
+      drawUI() {
+        if (this.mode === 'title') {
+          this.drawDial();
+          return;
+        }
+        if (this.mode === 'end') {
+          this.drawDial();
+          return;
+        }
+
+        this.uiGfx.fillStyle(COLORS.exposureBg, 0.9);
+        this.uiGfx.fillRect(280, 10, 400, 12);
+        this.uiGfx.fillStyle(COLORS.exposureFill, 0.9);
+        const exposureWidth = 400 * (this.player.exposure / 100);
+        this.uiGfx.fillRect(280, 10, exposureWidth, 12);
+
+        this.uiGfx.fillStyle(COLORS.exposureBg, 0.9);
+        this.uiGfx.fillRect(830, 400, 60, 8);
+        this.uiGfx.fillStyle(COLORS.staminaFill, 0.9);
+        const staminaWidth = 60 * (this.player.stamina / 2.0);
+        this.uiGfx.fillRect(830, 400, staminaWidth, 8);
+
+        this.drawDial();
+      }
+
+      drawDial() {
+        this.uiGfx.lineStyle(2, COLORS.dial, 0.9);
+        this.uiGfx.fillStyle(0x111820, 0.8);
+        this.uiGfx.fillCircle(DIAL_CENTER.x, DIAL_CENTER.y, DIAL_RADIUS);
+        this.uiGfx.strokeCircle(DIAL_CENTER.x, DIAL_CENTER.y, DIAL_RADIUS);
+
+        const handleX = DIAL_CENTER.x + Math.sin(this.dial.angle) * DIAL_RADIUS;
+        const handleY = DIAL_CENTER.y - Math.cos(this.dial.angle) * DIAL_RADIUS;
+        this.uiGfx.fillStyle(0xf5d06f, 0.9);
+        this.uiGfx.fillCircle(handleX, handleY, DIAL_HANDLE_RADIUS);
+
+        const iconX = DIAL_CENTER.x + Math.sin(this.dial.angle) * (DIAL_RADIUS + 12);
+        const iconY = DIAL_CENTER.y - Math.cos(this.dial.angle) * (DIAL_RADIUS + 12);
+        this.uiGfx.fillStyle(0xf5d06f, 0.9);
+        this.uiGfx.fillCircle(iconX, iconY, 6);
+        this.uiGfx.fillStyle(0x0b0f14, 0.9);
+        this.uiGfx.fillCircle(iconX + 2, iconY - 2, 4);
+
+        this.uiGfx.lineStyle(1, 0x2a384a, 0.8);
+        this.uiGfx.strokeCircle(DIAL_CENTER.x, DIAL_CENTER.y, DIAL_RADIUS + 12);
+      }
+    }
+
+    const config = {
+      type: Phaser.AUTO,
+      width: WIDTH,
+      height: HEIGHT,
+      parent: 'game-container',
+      backgroundColor: '#0b0f14',
+      scene: ShadowCourierScene
+    };
+
+    new Phaser.Game(config);
+  </script>
+</body>
+</html>

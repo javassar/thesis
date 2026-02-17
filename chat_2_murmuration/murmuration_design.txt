@@ -1,0 +1,437 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Murmuration: Conduct a living cloud of birds with indirect cues—coax the flock through shifting skies before nightfall.
+
+## 2. Core Insight
+- Central question: What does it feel like to guide, not command?
+- Why this matters: It reframes control as influence—players discover the joy (and limits) of gentle leadership, reading patterns and nudging a group instead of puppeting a single hero.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: You move a glowing “lure” with the mouse and pulse soft cues (attract/scare) while tuning two simple flocking weights (tightness and alignment). The birds follow their own rules; you shape conditions rather than dictate paths.
+- Embodying the theme: The flock’s emergent motion is the theme—instead of issuing orders, you set tone. Tightening the flock to slip a tunnel or loosening it to avoid a hawk turns ecology into instrument, making stewardship the play.
+
+## 4. Player Journey
+- Start: A dusk-lit panorama. A small flock orbits idly as “Move the glow to gather your flock” fades in. A large, warm sun icon top-center ticks down from 5:00.
+- First minute: Player moves the lure; birds arc toward it with a graceful delay. A simple ring gate appears with “Guide 30 birds through.” They learn to hold left-click to “call” (increases attraction), and tap right-click to “scatter” (briefly increases separation). Subtle on-screen sliders show Tighten/Align keys (Q/E, A/D).
+- Evolution over five minutes: Three sky sections, each a short vignette:
+  1) Narrow Arch: Teaches tightening. The player nudges the flock to compress and pass a rock arch (gate opens when a threshold of birds pass together).
+  2) Crosswinds: Rolling gusts push birds. The player learns to angle against flow and use brief scatter to avoid slow-rolling “hawk shadows” that sweep a lane.
+  3) Echo Canyon Finale: A long, resonant tunnel plus a “shape gate” that opens when the flock is both narrow enough and aligned for 1.5 seconds. This is the climax—balancing attraction and spacing while timing a hawk sweep.
+- Climax/turning point: The canyon gate pulses; the hawk shadow approaches. The player must hold the flock tight, sweep under the shadow, and time the pass so the shape gate condition holds.
+- Ending: Reaching the roost (glowing tree) pauses time; birds spiral in and roost as the glow dims. A soft count shows “Birds Home: X/Y.” If the five-minute sun timer expires or the flock drops below a minimum, the roost remains dark. The intended emotion: calm triumph and a sense of having guided something alive; on failure, a wistful “nearly.”
+
+## 5. Game Elements
+- Player “Lure”:
+  - A small, luminous mote following the mouse; expands when calling (left-click), shrinks and flickers when scattering (right-click).
+- Flock (Birds):
+  - 40–60 minimalist bird sprites/triangles with slight trailing motion lines. They don’t hard-follow; they steer based on cohesion, separation, alignment, and attraction to the lure.
+- Wind Fields:
+  - Visible as gently animated arrow wisps. In Crosswinds, bands push birds horizontally; in Canyon, eddies nudge upward/downward.
+- Hazards:
+  - Hawk Shadow: A soft, semi-transparent sweeping shape; contact causes a small subset of birds to peel away (lost) rather than gore or gore-like harm—keeps tone gentle.
+  - Cliffs/Walls: Simple solid silhouettes that birds avoid; contact temporarily stuns a bird (it flutters backward).
+- Gates:
+  - Ring Gate: Counts birds passing through within a 1.0s window; opens after N birds pass.
+  - Narrow Gate: A doorway that checks flock width threshold when birds pass a sensor line.
+  - Shape Gate (Final): Requires both “narrowness” (flock width below threshold) and “alignment” (average heading within ±θ degrees) sustained for 1.5s while centroid is inside gate zone.
+- Roost (Goal):
+  - Glowing tree silhouette on the far right; lights up as birds arrive.
+- UI:
+  - Timer (sun icon with 5:00 countdown).
+  - Birds counter: “Birds Home X/Y” during end; “Flock X alive” during play.
+  - Two sliders at bottom: Tightness (Separation Distance) and Alignment Strength, with labels and keys (Q/E, A/D).
+  - Brief contextual tips that fade after first exposure.
+- Screens:
+  - Title screen with minimal animation: “MURMURATION — Move mouse. Left-click call. Right-click scatter. Press Space to begin.”
+  - Main game scene (single scrollable sky panorama).
+  - Ending screen (Win/Loss) with counts and Restart prompt.
+
+## 6. Rules & Systems
+- Player can:
+  - Move lure (mouse position).
+  - Call (hold Left Mouse): temporarily increases attraction to lure, slightly increases alignment (birds try to face your direction).
+  - Scatter (tap/hold Right Mouse): temporarily increases separation, reduces attraction (to widen/avoid).
+  - Adjust global weights:
+    - Tightness (Q/E): modifies desired separation distance.
+    - Alignment (A/D): modifies alignment weight.
+- Flock behavior:
+  - Each bird updates velocity by summing:
+    - Cohesion: steer toward local neighbors’ average position.
+    - Separation: steer away if within separation radius.
+    - Alignment: steer toward neighbors’ average velocity.
+    - Lure Attraction: steer toward lure, stronger when calling.
+    - Wind: add ambient vector from field at its position.
+  - Speed is capped; slight smoothing creates elegant motion.
+- Environment response:
+  - Wind bands apply additive velocity; visible so players can anticipate.
+  - Hawk shadow sweeps across; birds inside lose confidence and may “peel away” (removed from flock) unless player scatters or guides under/around.
+- Progress/success:
+  - The camera pans right across three segments as gates open.
+  - To open each gate, satisfy its condition (ring count; narrow pass; shape gate sustained).
+  - Win when player brings flock centroid into roost area with at least a minimum number of birds (e.g., 24) before timer expires.
+- Failure:
+  - If timer reaches 0: “Night falls” loss.
+  - If flock drops below minimum survivors at any time: immediate loss (tone remains gentle).
+- Pacing:
+  - Soft tutorial in first screen with forgiving thresholds.
+  - Mid-screen introduces crosswinds and hawk.
+  - Final screen combines both with the shape gate.
+- Ending:
+  - Win: Roost glows; birds spiral-in; “Homeward” chime. Display survivors and time left.
+  - Loss: Sky darkens; birds drift off-screen; “The flock will try again at dawn.”
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Canvas: 960 x 540 px
+- Background: Gradient sky (top 0x1b2a49 to bottom 0x0d162b). Can be drawn once and used as texture.
+- Camera: Follows a target x position as gates open; scene width 3,000 px (three segments of ~1,000 px each).
+
+Elements:
+
+- Lure:
+  - Position: follows mouse with no smoothing (instant).
+  - Visual: circle radius base 6 px; when calling, pulse to 12 px with outer glow.
+  - Colors: base 0xFCE588; glow 0xFFD47E.
+- Birds:
+  - Count: 50 at start.
+  - Sprite: triangle 8 px long pointing in velocity direction (Graphics to texture).
+  - Physics: Custom (no Arcade collisions among birds; manual steering).
+  - Initial spawn: Random small circle around x=150, y=300 with small random velocities.
+  - Max speed: 120 px/s
+  - Acceleration clamp (steer force): 90 px/s^2
+- Wind Fields:
+  - Crosswinds band: Rect 1000x540 at segment 2; vector = (±40 px/s, 0), scrolling sign changes every 4 seconds.
+  - Canyon eddy: Rect 700x400 with Perlin-like vertical variation approximated by sin waves; vector field sampled per bird: (0, 20*sin((x+t)/140)).
+  - Visual: Semi-transparent arrows (alpha 0.2) with tweened offset.
+- Hazards:
+  - Hawk Shadow:
+    - Segment 2 and 3: Rect sweep 120 px tall spanning width of screen area.
+    - Path: moves horizontally at 140 px/s; y oscillates between two lanes (y=240 and y=340) switching every 3 seconds.
+    - Effect: If a bird overlaps the shadow rect, a peel-away chance 12% per 0.2s tick; on trigger, bird removed (count decreases).
+    - Visual: Soft black shape alpha 0.2 with wing silhouette.
+  - Cliffs/Walls:
+    - Static rects at edges of tunnels; birds steer away with a wall-avoidance vector (projected normal).
+- Gates:
+  - Gate 1 (Ring):
+    - Position: x=900, y=280, radius 70 px.
+    - Condition: Count birds entering ring within 1.0s rolling window. Target N=25. Progress ring fills accordingly.
+  - Gate 2 (Narrow):
+    - Door at x=1800, gap height 160 px; sensor line 40 px before door.
+    - Condition: When centroid within sensor window, computed flock width (maxX-minX of birds in window) < 180 px for 0.8s.
+  - Gate 3 (Shape Gate):
+    - Zone: x=2700..2780, y=260..320 (narrow canyon).
+    - Conditions (both required for 1.5s continuous):
+      - Width threshold: < 140 px
+      - Alignment: average heading angle within ±18 degrees of +X (moving right).
+- Roost:
+  - Position: x=2900, y=280; circle radius 80.
+  - Win trigger: centroid enters and at least survivors >= 24.
+
+Text/UI:
+- Title:
+  - “MURMURATION” centered y=160, font 48px, color 0xFFFFFF
+  - “Move mouse. Left-click call. Right-click scatter. Q/E Tighten. A/D Align. Press Space.” at y=240, size 20px, color 0xBBD4FF
+- HUD:
+  - Timer: top-center y=24, shows “05:00” countdown, font 28px, color 0xFFFFFF
+  - Flock count: top-left “Flock: 50” font 18px color 0xBBD4FF
+  - Sliders:
+    - Tightness: bottom-left label “Tightness” + bar 120 px; current value mapped
+    - Alignment: bottom-left below it label “Alignment” + bar 120 px
+- End:
+  - Win: “Birds Home: X/Y” center, size 32px white; “Press R to Restart” size 18px 0xFFD47E
+  - Loss: “Night falls. Birds home: X/Y” same styling.
+
+Input:
+- Mouse:
+  - Move: sets lure position
+  - Left Button held: callingActive = true (attractionBoost = +0.7), also alignmentBoost = +0.1
+  - Right Button held: scatterActive = true (separationBoost = +16 px to separation distance, and attraction dampened -0.5)
+- Keyboard:
+  - Q/E: decrease/increase separationBase (tightness) by 2 px per keypress (repeat when held), clamped 18–60 px
+  - A/D: decrease/increase alignmentWeight by 0.05 per press, clamped 0.0–0.8
+  - Space: start game from Title
+  - R: restart from End
+
+State:
+- gameState: "TITLE" | "PLAYING" | "ENDING"
+- timer: starts at 300.0 seconds (5 minutes)
+- birds: array of bird objects
+  - position (x, y), velocity (vx, vy)
+- lure: {x, y, callingActive, scatterActive}
+- weights:
+  - separationBase (default 34 px)
+  - alignmentWeight (default 0.35)
+  - cohesionWeight (fixed 0.22)
+  - attractionWeight (base 0.45; modified by calling/scatter)
+- windFields: list with sampling function per segment
+- hawkShadow: position, lane switching timer
+- progression:
+  - segmentIndex 1..3
+  - gate states: ringCountWindow, gate1Open, gate2Open, gate3Open, gate3HoldTimer
+- counts:
+  - totalBirdsStart = 50
+  - birdsAlive = dynamic
+  - birdsHome = at end
+
+Timing:
+- Update at ~60 FPS.
+- Neighbor radius: 80 px for cohesion/alignment; separation uses separationBase.
+- Gate 1 window: 1.0s rolling
+- Gate 2 hold: 0.8s
+- Gate 3 hold: 1.5s
+- Hawk lane swap interval: 3.0s
+
+Interactions:
+- Bird steering each frame:
+  - neighbors = birds within neighborRadius (excluding self)
+  - sepVec: sum of normalized away vectors for neighbors within separation radius; scaled by separation factor
+  - cohVec: toward neighbors’ average position
+  - aliVec: toward neighbors’ average velocity direction
+  - lureVec: toward lure (distance falloff; cap influence)
+  - windVec: sample wind(x, y)
+  - wallAvoid: project away from nearest wall if within 24 px
+  - accel = normalizeWeighted(sepVec, cohVec, aliVec, lureVec) + windVec + wallAvoid
+  - limit accel to steerMax; integrate velocity; clamp speed to maxSpeed; integrate position
+- Loss condition checks:
+  - If timer <= 0 -> End loss
+  - If birdsAlive < 18 (minimum) -> End loss
+- Segment transitions:
+  - Segment 1 starts open.
+  - When Gate 1 opens, camera pans to segment 2 and enables wind + hawk.
+  - When Gate 2 opens, camera pans to segment 3 (canyon).
+  - When Gate 3 opens, roost is just beyond; on centroid entering roost and birdsAlive >= 24 -> Win.
+
+Progression:
+- Gate thresholds tuned for 5-minute finish with light learning:
+  - Gate 1: 25 birds through in quick succession (relaxed).
+  - Gate 2: Width < 180 px for 0.8s while in sensor; hint text “Tighten (Q/E) to squeeze through.”
+  - Gate 3: Width < 140 px and alignment within ±18° for 1.5s; hint “Hold Call to steady, avoid the shadow.”
+
+## 8. Game Flow
+- On load:
+  - Show Title screen texts and light particle drift. Capture input handlers.
+- Start main experience:
+  - On Space: initialize state; spawn 50 birds near x=150; set timer=300; set segmentIndex=1; reset gates; position camera to segment 1; gameState="PLAYING".
+- During play (each frame):
+  - Update timer and HUD.
+  - Update input flags (calling/scatter, weight adjustments).
+  - Update hawk shadow position and lane timer (active only in segments 2 and 3).
+  - For each bird:
+    - Find local neighbors (spatial grid or naive O(n^2) acceptable for 50 at 60 FPS).
+    - Compute steering vectors and integrate motion.
+    - Apply wind and wall avoidance.
+    - If overlapping hawk shadow, roll peel-away chance; on success, remove bird and decrement birdsAlive.
+  - Evaluate gates:
+    - Gate 1: track birds crossing ring; open when hit N in window.
+    - On open, tween camera to segment 2; show tip once; enable crosswinds/hawk.
+    - Gate 2: compute flock width near sensor; hold timer to open; then tween camera to segment 3.
+    - Gate 3: check width and alignment; increment hold timer when conditions satisfied; open when hold reached.
+  - Roost check: if open and centroid enters, set birdsHome = birdsAlive; end with Win.
+  - Loss checks: if timer <= 0 or birdsAlive < 18, end with Loss.
+- End:
+  - Show Win or Loss screen with counts; pause updates for birds (or slow to 10% and fade).
+  - Wait for R to restart to Title.
+
+## 9. Pseudocode
+
+Initialization:
+- preload():
+  - (Optional) load bitmap font; else use web fonts.
+- create():
+  - set background gradient
+  - init input (mouse, keys Q,E,A,D,Space,R)
+  - build segments: static wall rects, wind field descriptors, gate positions, roost
+  - create HUD texts and sliders (hidden by default)
+  - create title texts (visible)
+  - set gameState="TITLE"
+
+startGame():
+- birds = []
+- for i in 1..50: spawnBirdAround(150, 300)
+- lure = {x: 150, y: 300, calling: false, scattering: false}
+- weights = {separationBase: 34, alignmentWeight: 0.35, cohesionWeight: 0.22, attractionBase: 0.45}
+- timer = 300
+- birdsAlive = 50
+- segmentIndex = 1
+- resetGateStates()
+- position camera to x=0..960
+- show HUD; hide Title
+- gameState="PLAYING"
+
+spawnBirdAround(cx, cy):
+- pos = random point within radius 40
+- vel = random unit * 40
+- bird = {x: cx+pos.x, y: cy+pos.y, vx: vel.x, vy: vel.y}
+- add to birds array
+
+update(time, delta):
+- if gameState == "TITLE":
+  - if Space pressed: startGame()
+  - return
+- if gameState == "ENDING":
+  - if R pressed: show Title; hide End; gameState="TITLE"
+  - return
+- dt = delta/1000
+- timer -= dt
+- readInput()
+- updateHawk(dt) if segmentIndex >= 2
+- updateBirds(dt)
+- evaluateGates(dt)
+- checkRoost()
+- checkLoss()
+- updateHUD()
+
+readInput():
+- lure.x = pointer.x; lure.y = pointer.y
+- lure.calling = pointer.leftButtonDown
+- lure.scattering = pointer.rightButtonDown
+- if Q justDown: separationBase = max(18, separationBase - 2)
+- if E justDown: separationBase = min(60, separationBase + 2)
+- if A justDown: alignmentWeight = max(0.0, alignmentWeight - 0.05)
+- if D justDown: alignmentWeight = min(0.8, alignmentWeight + 0.05)
+
+updateHawk(dt):
+- hawkTimer += dt
+- if laneSwapTimer >= 3.0: switch lane y; reset laneSwapTimer
+- hawk.x += hawkDir * 140 * dt
+- if hawk.x < camLeft-120 or hawk.x > camRight+120: hawkDir *= -1
+- hawkRect = {x: hawk.x-200, y: hawk.y-60, w: 400, h: 120}
+
+updateBirds(dt):
+- buildSpatialGrid(birds) // optional; or naive neighbors
+- for each bird:
+  - neighbors = getNeighbors(bird, radius=80)
+  - sep = Vector(0,0)
+  - coh = Vector(0,0)
+  - ali = Vector(0,0)
+  - if neighbors not empty:
+      - avgPos = average positions
+      - avgVel = normalize(average velocities)
+      - // Separation
+      - for n in neighbors:
+          d = distance(bird, n)
+          if d < separationBase + (lure.scattering ? 16 : 0):
+             sep += normalize(bird.pos - n.pos) * (1 - d / separationBase)
+      - coh = normalize(avgPos - bird.pos)
+      - ali = avgVel
+  - // Lure attraction
+  - attractWeight = 0.45 + (lure.calling ? 0.7 : 0) + (lure.scattering ? -0.5 : 0)
+  - lureVec = normalize(lure.pos - bird.pos)
+  - // Wind
+  - wind = sampleWind(bird.x, bird.y)
+  - // Wall avoidance
+  - wallAvoid = avoidWalls(bird)
+  - // Combine with weights
+  - accel = Vector(0,0)
+  - accel += sep * mapSepToWeight(separationBase) // e.g., 0.6 at tight, 1.2 at loose
+  - accel += coh * 0.22
+  - accel += ali * (alignmentWeight + (lure.calling ? 0.1 : 0))
+  - accel += lureVec * attractWeight
+  - accel += wind * 0.6
+  - accel += wallAvoid
+  - // Limit and integrate
+  - accel = clampLength(accel, 90)
+  - bird.vx += accel.x * dt
+  - bird.vy += accel.y * dt
+  - // Speed clamp
+  - speed = length(bird.vx, bird.vy)
+  - if speed > 120: scale (vx,vy) to 120
+  - bird.x += bird.vx * dt
+  - bird.y += bird.vy * dt
+  - // Clamp to scene bounds; slight bounce
+  - bird.x = clamp(bird.x, 0, sceneWidth)
+  - bird.y = clamp(bird.y, 40, 500)
+  - // Hawk effect
+  - if segmentIndex >= 2 and rectContains(hawkRect, bird.x, bird.y):
+      - bird.hawkTick += dt
+      - if bird.hawkTick >= 0.2:
+          - bird.hawkTick = 0
+          - if random() < 0.12:
+              - remove bird; birdsAlive--
+
+sampleWind(x,y):
+- if segmentIndex == 1: return (0,0)
+- if segmentIndex == 2:
+    - dir = (floor((timeNow/4)%2)==0) ? 1 : -1
+    - return (dir*40, 0)
+- if segmentIndex == 3:
+    - return (0, 20 * sin((x + timeNow*60)/140))
+
+avoidWalls(bird):
+- v = Vector(0,0)
+- for each wallRect near bird:
+    - if distance to rect edge < 24:
+        - n = outward normal from nearest edge
+        - v += n * 60
+- return v
+
+evaluateGates(dt):
+- // Gate 1 ring
+- if segmentIndex == 1 and not gate1Open:
+    - for each bird not previously counted:
+        - if insideCircle(bird, gate1Center, 70):
+            - add timestamp to ringEntries list
+    - prune ringEntries older than 1.0s
+    - if ringEntries.length >= 25:
+        - gate1Open = true
+        - tweenCameraToSegment(2)
+- // Gate 2 narrow
+- if segmentIndex == 2 and not gate2Open:
+    - if centroidX between sensorX-40 and sensorX+40:
+        - width = maxX - minX of birds within Y band around sensor (e.g., ±100 px)
+        - if width < 180:
+            - gate2Hold += dt
+          else:
+            - gate2Hold = max(0, gate2Hold - dt*0.5) // decay
+        - if gate2Hold >= 0.8:
+            - gate2Open = true
+            - tweenCameraToSegment(3)
+- // Gate 3 shape
+- if segmentIndex == 3 and not gate3Open:
+    - birdsInZone = birds within gate3 zone rect
+    - if birdsInZone.length > 0:
+        - width = maxX - minX of birdsInZone
+        - avgHeading = angle of average velocity vector (degrees)
+        - aligned = abs(avgHeading) <= 18 // toward +X ~ 0°
+        - if width < 140 and aligned:
+            - gate3Hold += dt
+          else:
+            - gate3Hold = max(0, gate3Hold - dt*0.5)
+        - if gate3Hold >= 1.5:
+            - gate3Open = true
+
+checkRoost():
+- if gate3Open:
+    - centroid = average of all birds’ positions
+    - if distance(centroid, roostCenter) <= 80:
+        - birdsHome = birdsAlive
+        - endGame(win=true)
+
+checkLoss():
+- if timer <= 0 or birdsAlive < 18:
+    - endGame(win=false)
+
+tweenCameraToSegment(seg):
+- targetX = (seg-1) * 960
+- smooth pan over 1.2s
+- segmentIndex = seg
+
+endGame(win):
+- gameState="ENDING"
+- hide HUD; show End text with birdsHome / total
+- stop hawk; optionally slow birds update or pause
+
+mapSepToWeight(sepBase):
+- Return 1.2 - clamp((sepBase-18)/(60-18),0,1)*0.8 // tighter = stronger separation correction
+
+Rendering notes (Phaser):
+- Use Graphics to draw triangles for birds each frame, or pre-render textures and rotate sprites by angle of velocity for performance.
+- Draw wind arrows as tiled sprites with low alpha.
+- HUD via dynamic text.
+- Use simple rectangles for walls; for avoidance, store rect bounds.

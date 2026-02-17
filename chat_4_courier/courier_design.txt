@@ -1,0 +1,306 @@
+# STAGE 1: GAME DESIGN (REVISED)
+
+## 1. Title & Hook
+Title: Shadow Courier: Dial the Night
+Hook: Sprint letters across a lamplit city where you move with one hand and rotate time with the other—swing streetlight shadows into bridges and blindspots to stay unseen.
+
+## 2. Core Insight
+- Central question/truth: Control over environment timing can be more powerful than speed—shaping when light falls creates paths that didn’t exist a heartbeat ago.
+- Why it matters: Players feel clever mastery as they “conduct” the world: safety and danger hinge on their timing, not raw dexterity, creating a satisfying flow of cause-and-effect.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Two-handed control—left hand moves the courier; right hand scrubs a time dial that rotates the global light direction, swinging pre-authored shadow panels from lamp posts.
+- Embodiment: The city’s geometry literally changes with time; “time” isn’t a clock UI, it’s a physical lever that bends darkness to your will, intrinsic to stealth rather than aesthetic.
+
+## 4. Player Journey
+- Start: A moody street corner with a glowing “START” postbox and three dim mailboxes visible down the block. A large on-screen dial invites turning; the player sees shadows swing as they twist it—instant “aha.”
+- First minute: The player delivers the first letter across a single boulevard by rotating a lamppost’s shadow to cover the crossing. They learn exposure: stand in light too long and a meter fills; in shadow it drains.
+- Evolution: Routes demand weaving between permanent dark alleys and timed crosswalks created by moving shadows. Patrolling constables carry tiny flashlight circles; the player must time dial turns so their shadow cover intersects patrol gaps.
+- Climax: For the last mailbox, the path requires a cascading combo: rotate the dial to line up two separate lamppost shadows in sequence while a tram headlight sweeps the street. A final sprint through a narrow corridor of darkness delivers the letter as the exposure meter teeters.
+- Ending: The player reaches the exit postbox after all deliveries. On success, a brief vignette of envelopes stamped “Delivered” appears. Emotion: a crisp, earned satisfaction—“I orchestrated the night.” On failure (timer or exposure), a poignant freeze with a single letter slipping from the courier’s hand—“One more try.”
+
+## 5. Game Elements
+- Player character: A small silhouette courier (12 px circle with tiny satchel tick) controlled with WASD/arrow keys; leaves soft footstep pips in shadow only.
+- Time Dial: A circular UI wheel bottom-right that the player rotates (Q/E or mouse drag). Angle controls global light direction; visual sun/moon icon sweeps the dial.
+- Lamp posts: Vertical poles emitting light; each has a dynamic shadow panel (long, thin rectangle) anchored at the pole base; panels rotate to stay opposite the current light direction.
+- Permanent dark zones: Alleyways and building overhangs—static dark rectangles safe from exposure.
+- Patrols: Two constables pacing simple routes; each emits a small circular flashlight (moving light zone).
+- Tram: A horizontal bar that slides once during the final minute, projecting a bright “headlight” rectangle ahead of it for a few seconds.
+- Mailboxes (objectives): Three numbered boxes that must be visited in order; they pulse faintly.
+- Start/Exit box: The starting postbox doubles as the exit once all letters are delivered.
+- Exposure meter: A horizontal bar at top-center; fills when in light, drains in shadow.
+- Timer: Countdown from 5:00.
+- UI overlays: Minimal hints, success/failure screen with stats (time left, exposure incidents, dial turns).
+
+Visual style:
+- Flat noir palette: deep blues and charcoal for streets, warm amber for lights, rich navy for shadows.
+- High contrast silhouettes; soft bloom on light sources.
+
+## 6. Rules & Systems
+- Player can:
+  - Move in 8 directions at a steady pace; Shift to sprint briefly (stamina-limited).
+  - Rotate time via Q/E (or drag the dial) to change global light direction from -60° to +60° relative to vertical.
+- Light and shadow:
+  - Global direction sets the orientation of each lamppost’s shadow panel; each panel is a rectangle positioned on the opposite side of its pole relative to light.
+  - Permanent dark zones are always safe.
+  - Patrol flashlights and tram headlights are independent local light sources; standing in them causes exposure regardless of global shadows.
+- Exposure:
+  - While any part of the courier overlaps a light zone (not in permanent dark or lamppost shadow), exposure increases at a fixed rate.
+  - While fully in shadow or permanent dark, exposure decreases at a faster rate.
+  - If exposure reaches 100%, instant fail for that attempt.
+- Objectives:
+  - Touch mailboxes 1→2→3 in order; each contact stamps “Delivered.”
+  - After mailbox 3, return to Start/Exit to finish.
+- Fail/success:
+  - Fail if exposure maxes or timer reaches 0. Up to 3 attempts in a 5-minute session.
+  - Succeed if all mailboxes are delivered and the exit is reached before time expires.
+- Difficulty evolution:
+  - Mailbox 1: Simple single lamppost crossing.
+  - Mailbox 2: Two lampposts in series plus a patrol.
+  - Mailbox 3: Multi-lamppost alignment with a tram headlight event.
+
+---
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN (REVISED)
+
+## 7. Technical Specification
+
+Display:
+- Canvas: 960 x 540; background #0B0F14.
+- World: Single screen, top-down.
+
+Elements (coordinates in pixels, origin top-left):
+
+Static geometry:
+- Streets (walkable): default background.
+- Permanent dark zones (filled navy #0D1B2A, alpha 0.9):
+  - Alley A: x=140, y=80, w=220, h=80
+  - Overhang B: x=420, y=200, w=120, h=60
+  - Alley C: x=700, y=320, w=200, h=90
+
+Lamp posts (each with dynamic shadow panel):
+- Post 1: at (280, 200), shadow length 140 px, width 26 px
+- Post 2: at (520, 160), shadow length 160 px, width 26 px
+- Post 3: at (640, 260), shadow length 140 px, width 26 px
+- Post 4: at (360, 360), shadow length 180 px, width 26 px
+- Visuals:
+  - Pole: small circle 8 px, light halo (radial gradient) for flavor; actual “light” computed via exposure zones, not blending.
+
+Time dial:
+- Angle range: -60° to +60° (converted to radians internally).
+- UI wheel center at (860, 450), radius 48 px; handle dot on rim indicating current angle.
+- Sun/Moon icon rotates along rim.
+
+Patrols:
+- Constable A: patrol path between (460, 100) and (460, 440), speed 70 px/s; flashlight radius 60 px
+- Constable B: patrol path between (740, 200) and (870, 200), speed 60 px/s; flashlight radius 55 px
+
+Tram event:
+- Tram sprite: rectangle 960x24 moving along y=280 from x=960 to x=-960 (passes once).
+- Headlight rectangle: 140x60 placed in front of tram (to its left while moving), offset 100 px; active only during the tram’s movement (approx 6 seconds).
+- Tram starts at t = 3:30 remaining.
+
+Objectives:
+- Start/Exit postbox: circle at (90, 460), radius 16.
+- Mailbox 1: circle at (300, 120), radius 14.
+- Mailbox 2: circle at (540, 320), radius 14.
+- Mailbox 3: circle at (820, 120), radius 14.
+- Colors: neutral blue fill with white icon; “Delivered” gives a gold outline.
+
+Player:
+- Circle radius 8 px, color #FFFFFF with subtle navy outline; speed 110 px/s; sprint speed 160 px/s.
+- Stamina: max 2.0 s sprint; recharges at 0.5x rate while not sprinting.
+
+Exposure system:
+- ExposureMax: 100 units
+- ExposureChange:
+  - In light: +40 units/second
+  - In shadow (lamp or permanent dark): -60 units/second (clamped to [0,100])
+- Detection space:
+  - Light zones considered “lit”:
+    - Global ambient: default lit everywhere EXCEPT inside any shadow panel polygon OR permanent dark rectangle.
+    - Patrol lights: circles; always lit regardless of shadow panels.
+    - Tram headlight: rectangle; always lit regardless of shadow panels.
+
+Timer and attempts:
+- timeRemaining: 300 seconds
+- attemptsLeft: 3
+
+UI Text:
+- Font: Verdana
+- Timer top-left (16, 12): “Time: 5:00”
+- Attempts (16, 36): “Attempts: 3”
+- Exposure bar: top-center, rect at (280, 10), size (400x12), background #2C3E50, fill color #FF3864
+- Stamina bar: above dial, small bar (860-30, 400, 60x8), fill #2DE2E6
+- Objectives text top-right (760, 12): “Mailboxes: 0/3”
+- Controls hint bottom-left (16, 506): “Move: WASD | Time: Q/E or drag dial | Sprint: Shift”
+
+Sounds (optional):
+- Soft tick when rotating dial, footstep thumps only in shadow, exposure warning ping at >=80, delivery chime, tram rumble.
+
+Input:
+- Keyboard:
+  - WASD/Arrows: movement
+  - Shift: sprint
+  - Q/E: rotate time by -/+. Q = -60° direction; E = +60°. Held keys rotate at 90°/second, clamped to range.
+  - R: restart attempt (consumes 1 attempt immediately)
+- Mouse:
+  - Drag on dial within 60 px of dial center to set angle directly based on cursor angle; clamped to range.
+- Esc: pause (optional)
+
+State (key variables):
+- mode: 'title' | 'play' | 'end'
+- timeRemaining: float
+- attemptsLeft: int
+- objectivesDelivered: int (0..3)
+- player: {x, y, vx, vy, speed, sprinting: bool, stamina, exposure}
+- dial: {angleRad, targetAngleRad (for smoothing optional)}
+- lampPosts: array of {x, y, length, width, shadowPoly: Phaser.Geom.Polygon}
+- permanentDarkRects: array of rects
+- patrols: each {p1, p2, pos, dir, speed, flashlightRadius}
+- tram: {active: bool, x, y=280, speed= -320 px/s, headlightRect, startedAt}
+- flags: {mail1Delivered, mail2Delivered, mail3Delivered}
+- collisions: helper arrays for current-frame shadow polygons etc.
+
+Timing:
+- Update at 60 FPS
+- Exposure updates every frame based on classification of player position
+- Stamina drain when sprinting: 1.0 stamina/sec; recharge 0.5/sec non-sprinting
+
+Interactions/Logic:
+- Shadow panel computation:
+  - For each lamp post at (px, py), with dialAngle a (0 rad = pointing right, but we’ll define 0 as up for clarity):
+    - Light direction unit vector L = (sin(a), -cos(a)) where a in [-π/3, π/3], with a=0 meaning light from top to bottom.
+    - Shadow direction S = -L
+    - Build rectangle polygon with:
+      - Base center at (px, py)
+      - Long axis along S with half-length = length/2
+      - Width orthogonal with half-width = width/2
+    - Compute four corners:
+      - Center of shadow = baseCenter + S * (length/2)
+      - Tangent T = perpendicular(S) normalized
+      - Corners = center ± T*halfWidth ± S*halfLength (properly ordered)
+  - Store polygons for point-in-polygon tests.
+- Exposure classification:
+  - InPermanentDark = pointInAnyRect(player, permanentDarkRects)
+  - InLampShadow = pointInAnyPolygon(player, lampPosts[i].shadowPoly)
+  - InPatrolLight = any(distance(player, patrol.pos) <= flashlightRadius)
+  - InTramHeadlight = pointInRect(player, tram.headlightRect) if tram.active
+  - InLit = (!InPermanentDark && !InLampShadow) || InPatrolLight || InTramHeadlight
+- Objective ordering:
+  - Only next mailbox counts as deliverable. Touch within radius to mark delivered and increment objectivesDelivered.
+
+Progression/Ending:
+- Win when objectivesDelivered==3 and player overlaps Start/Exit
+- Lose when exposure >= 100 or timeRemaining <= 0 or attemptsLeft < 0 (after decrement on fail)
+
+## 8. Game Flow
+- Load:
+  - Title screen with logo, Play button, minimal instructions.
+- Start:
+  - Initialize state; mode='play'; fade in city; highlight Start and Mailbox 1.
+- During play:
+  - Continually update dial angle from input; recompute shadow polygons.
+  - Move player; apply sprint if stamina > 0; update stamina.
+  - Move patrols along ping-pong paths; update tram when t<=3:30 triggers it once.
+  - Compute exposure based on light classification; update exposure bar.
+  - Detect mailbox touches in order; on delivery, show chime and update count; highlight next target.
+  - If exposure hits 100: attemptsLeft--; if attemptsLeft >=1 and time remains, reset to Start (exposure=0, stamina full, objectives persist); otherwise go to end fail.
+  - If timer hits 0: immediate end fail.
+  - If all delivered and exit touched: end success.
+- End:
+  - Success screen: “Delivered 3/3” with time left, total dial turns (count changes in angle > 5°), exposure incidents.
+  - Fail screen: cause (“Overexposed” or “Time Up”), attempts used. Buttons: Retry (restarts full run), Quit (title).
+
+## 9. Pseudocode
+
+Initialization:
+- create()
+  - Set background, initialize mode='title'
+  - Build static rects for permanent dark zones
+  - Define lampPosts with {x,y,length,width}; precreate graphics objects and polygon placeholders
+  - Define patrols A/B with endpoints, set pos=p1, dir=1
+  - Define tram inactive with x=960
+  - Define objectives (start/exit and mailboxes) with delivered flags false
+  - Initialize player at Start with exposure=0, stamina=2.0
+  - Initialize dial.angleRad=0
+  - Setup UI texts and bars
+  - Setup input handlers for keys and dial dragging
+
+Update loop:
+- update(dt):
+  - If mode=='title': wait for Play click → resetAll(), mode='play'
+  - If mode!='play': return
+  - timeRemaining -= dt; if timeRemaining<=0 → endFail('time')
+  - Handle input:
+    - Move vector from WASD; normalize; speed = base or sprint if Shift and stamina>0
+    - player.x += vx * speed * dt; player.y += vy * speed * dt; clamp to canvas
+    - If sprinting: stamina = max(0, stamina - 1.0*dt) else stamina = min(2.0, stamina + 0.5*dt)
+    - Dial:
+      - If Q pressed: dial.angleRad = clamp(angle - 90°/s * dt, -π/3, π/3)
+      - If E pressed: dial.angleRad = clamp(angle + 90°/s * dt, -π/3, π/3)
+      - If dragging on dial: set angle to clamped atan2(mouseY-centerY, mouseX-centerX) mapped to [-π/3, π/3] with 0 aligned upwards
+  - Update lamp post shadow polygons:
+    - For each post:
+      - L = (sin(angle), -cos(angle)); S = -L; T = perp(S).normalize()
+      - Compute corners and set polygon points
+  - Update patrols:
+    - For each patrol:
+      - pos += dir * speed * dt along line p1<->p2
+      - If exceeded endpoint: dir *= -1; clamp pos
+  - Update tram:
+    - If !tram.active and timeRemaining <= 210 (3:30 left): tram.active = true; tram.x = 960
+    - If tram.active:
+      - tram.x += speed * dt
+      - If tram.x < -960: tram.active=false
+      - headlightRect positioned at (tram.x - 140, tram.y - 30) with size (140x60)
+  - Compute light classification:
+    - inPerm = anyRectContains(player)
+    - inLampShadow = anyPolygonContains(player)
+    - inPatrol = any(distance(player, patrol.pos) <= patrol.radius)
+    - inHeadlight = tram.active && pointInRect(player, headlightRect)
+    - inLit = (!inPerm && !inLampShadow) || inPatrol || inHeadlight
+  - Update exposure:
+    - If inLit: player.exposure = min(100, exposure + 40*dt)
+    - Else: player.exposure = max(0, exposure - 60*dt)
+    - If exposure >= 100: handleFail('exposure')
+  - Objectives:
+    - If objectivesDelivered==0 and touching(Mail1): mark delivered; objectivesDelivered=1
+    - Else if ==1 and touching(Mail2): delivered; objectivesDelivered=2
+    - Else if ==2 and touching(Mail3): delivered; objectivesDelivered=3
+    - If objectivesDelivered==3 and touching(Start/Exit): endSuccess()
+  - Render:
+    - Draw permanent dark rects
+    - Draw lamp posts and their shadow polygons (filled navy, alpha 0.85)
+    - Draw patrols and flashlight circles (soft yellow fill alpha 0.25)
+    - Draw tram and headlight when active
+    - Draw player
+    - Update UI: timer text, attempts, exposure bar width = 400*(exposure/100), stamina bar, objectives text, dial wheel/handle
+
+Helper functions:
+- resetAll():
+  - timeRemaining=300; attemptsLeft=3; objectivesDelivered=0
+  - player to Start, exposure=0, stamina=2
+  - clear delivery flags
+  - tram.active=false
+  - dial.angleRad=0
+- handleFail(reason):
+  - attemptsLeft -= 1
+  - If attemptsLeft > 0 and timeRemaining > 0:
+    - Reset player position, exposure=0, stamina=2; keep delivered progress
+  - Else:
+    - endFail(reason)
+- endSuccess():
+  - mode='end'
+  - Show success overlay; stop updates except for idle visuals
+- endFail(cause):
+  - mode='end'
+  - Show failure overlay with cause and stats
+- pointInAnyPolygon(p, polys): loop Phaser.Geom.Polygon.Contains(poly, pX, pY)
+- anyRectContains(p, rects): basic AABB checks
+- touching(circleObj): distance(player, obj.center) <= player.radius + obj.radius
+
+Notes for Phaser:
+- Use Phaser.Graphics to render dynamic polygons each frame (clear+fill)
+- For performance, there are few polygons and circles; 60 FPS is fine
+- All collisions are analytic; no physics bodies required
+- Keep draw order: ground → dark zones → lamp shadows → patrol light circles (alpha) → tram headlight → objectives → player → UI

@@ -1,0 +1,1776 @@
+================================================================================
+                         DÉJÀ VU DUNGEON - GAME DESIGN DOCUMENT
+================================================================================
+
+## 1. TITLE & HOOK
+
+Title: Déjà Vu Dungeon
+
+Hook: A puzzle-platformer where completing each room creates a "ghost" that 
+replays your past actions. Solve puzzles by cooperating with yourself across 
+time—hold switches for your future self, create stepping stones, and orchestrate 
+increasingly complex temporal choreography.
+
+Tagline: "Your past is your only ally."
+
+================================================================================
+
+## 2. CORE INSIGHT
+
+Central Question: What if you could be your own partner?
+
+The Truth This Game Explores: We often wish we could be in two places at once, 
+or that we had help when we're alone. This game literalizes that desire—but with 
+a twist: the help you receive is only as good as the help you planned to give. 
+Success requires thinking ahead, considering your future self's needs, and 
+trusting that your past actions will come through.
+
+Why This Matters to Players:
+- Creates a unique "aha" moment when players realize their past recording is 
+  now helping them
+- Encourages metacognition—players must think about thinking
+- Delivers satisfying "I'm so clever" moments when a plan comes together
+- The mechanic naturally teaches patience and planning
+- Provides the emotional satisfaction of cooperation in a single-player game
+
+================================================================================
+
+## 3. MECHANIC-THEME INTEGRATION
+
+Primary Mechanic: Recording & Replay
+- The player completes puzzle rooms using standard platformer controls
+- Upon reaching a room's exit, the player's movement from that room is recorded
+- When the player enters the NEXT room, a ghost replays the previous room's 
+  recording simultaneously
+- Ghosts can interact with the environment (press switches, block lasers) but 
+  cannot interact with the current player directly
+
+How the Mechanic Embodies the Theme:
+This is not a time-travel game with time travel painted on top. The mechanic IS 
+the theme:
+
+1. PAST ACTIONS HAVE CONSEQUENCES: Every move you make in Room N will play out 
+   in Room N+1. Sloppy play creates a sloppy helper. Precise play creates a 
+   precise ally. The game teaches that present choices echo into the future.
+
+2. SELF-RELIANCE THROUGH SELF-COOPERATION: The only help available comes from 
+   yourself. This creates a unique emotional register—you can't blame a bad 
+   partner, only your past decisions.
+
+3. PLANNING AS GAMEPLAY: The actual puzzle-solving happens in your mind BEFORE 
+   you act. The physical execution is confirming your theory. This mirrors how 
+   real problem-solving works.
+
+4. TRUST IN YOURSELF: Later levels require trusting that your past recording 
+   will be in the right place at the right time. This creates genuine tension 
+   and catharsis.
+
+================================================================================
+
+## 4. COMPLETE GAME STRUCTURE
+
+Total Play Time: ~5 minutes
+Number of Rooms: 7 (including tutorial and finale)
+Rooms are connected linearly; completing one advances to the next.
+
+### ROOM 0: "AWAKENING" (Tutorial - No Ghost)
+Purpose: Teach basic controls
+Duration: ~20 seconds
+Layout: Simple left-to-right corridor with a small gap to jump
+Elements: 
+  - Player start on left
+  - Small pit (2 tiles wide)
+  - Exit door on right
+Challenge: Just reach the exit
+Ghost from this room: Will appear in Room 1
+
+### ROOM 1: "ECHO" (First Ghost Introduction)
+Purpose: Show that ghosts exist and replay your actions
+Duration: ~30 seconds
+Layout: Two-level room with a pressure plate
+Elements:
+  - Player start on upper platform (left)
+  - Ghost from Room 0 appears on lower level (left)
+  - Pressure plate on lower level (center)
+  - Locked door blocking upper path
+  - Exit on upper right
+Challenge: Player needs ghost to step on pressure plate (which it will do 
+automatically since it's retracing Room 0's path, which was a straight walk)
+The "aha": Players realize their past movement opened the door
+
+### ROOM 2: "HOLDFAST" (Intentional Ghost Action)
+Purpose: Teach that you must PLAN for future ghost utility
+Duration: ~45 seconds
+Layout: Single level with timed door
+Elements:
+  - Player start on left
+  - Ghost from Room 1 appears on left (same position)
+  - Pressure plate near center (door stays open only while pressed)
+  - Door blocking path
+  - Exit on right
+Challenge: In Room 1, the player probably just rushed to the exit. Now their 
+ghost does the same—not helpful! Player must complete this room by standing on 
+the plate themselves, then reaching the exit. Their CURRENT playthrough becomes 
+the useful ghost for Room 3.
+Lesson: "I need to think about what my future self will need"
+
+### ROOM 3: "FAITH" (Trust the Ghost)
+Purpose: Execute a plan that requires trusting your past recording
+Duration: ~45 seconds
+Layout: Two parallel paths with interdependent switches
+Elements:
+  - Player start on upper path (left)
+  - Ghost from Room 2 appears on lower path (left)
+  - Upper path has a locked door
+  - Lower path has a pressure plate that opens upper door
+  - Upper path has a pressure plate that opens exit (lower right)
+  - Exit on lower path (right)
+Challenge: Ghost walks along lower path, steps on plate, opens player's door. 
+Player walks upper path, steps on plate, opens exit for... the ghost? No—the 
+player must reach the exit. Timing matters: player must wait for ghost to 
+trigger their door, then quickly traverse to hit the lower plate while ghost 
+can still reach exit area.
+Lesson: Cooperation requires timing and trust
+
+### ROOM 4: "COMMUNION" (Two Ghosts)
+Purpose: Introduce multi-ghost coordination
+Duration: ~60 seconds
+Layout: Three-level room (bottom, middle, top)
+Elements:
+  - Player starts on top level (left)
+  - Ghost A (from Room 3) appears on middle level (left)
+  - Ghost B (from Room 2) appears on bottom level (left)
+  - Two pressure plates (one on middle, one on bottom)
+  - Double-locked door (needs BOTH plates pressed)
+  - Exit on top right
+Challenge: Both ghosts need to stand on their respective plates simultaneously. 
+But Ghost B was recorded back in Room 2, when the player didn't know about this 
+room. By luck or by design, Ghost B might work—or this room teaches that the 
+ghosts from 2 rooms ago are less reliable.
+Solution: Ghost A (more recent, more intentionally planned) handles middle 
+plate. Ghost B (from Room 2, when player stood on a plate) might help with 
+bottom—or player may need to retry Room 3 with better planning.
+
+### ROOM 5: "CONVERGENCE" (Precise Timing)
+Purpose: Require frame-precise cooperation
+Duration: ~60 seconds
+Layout: Central room with moving laser beam
+Elements:
+  - Player starts on left
+  - Ghost A (from Room 4) appears on left
+  - Rotating laser beam in center (instant reset on touch)
+  - Laser has a gap/shield that blocks part of the beam
+  - Pressure plate that temporarily stops laser rotation
+  - Exit on right
+Challenge: Player must time their movement through the laser gap. Ghost A 
+pressing the plate freezes the laser—but only if Ghost A's recording presses 
+it at the right time. Player must have moved through Room 4 with THIS room's 
+timing in mind.
+Lesson: Long-term planning pays off
+
+### ROOM 6: "REUNION" (Finale)
+Purpose: Combine all mechanics for a satisfying conclusion
+Duration: ~60 seconds
+Layout: Large room with all previous elements
+Elements:
+  - Player starts on left (top level)
+  - Ghost A (from Room 5) on middle-left
+  - Ghost B (from Room 4) on bottom-left  
+  - Ghost C (from Room 3) on far-left platform
+  - Three plates controlling: door to exit, moving platform, laser gate
+  - Central pit requiring moving platform
+  - Laser gate before exit
+  - Glowing exit portal (not a door)
+Challenge: Orchestra of ghosts—each one must trigger their element at roughly 
+the right time for the player to navigate through.
+Ending: Upon reaching the exit, all ghosts converge on the exit point and 
+merge with the player in a flash of light. Text appears: "You were never alone."
+
+================================================================================
+
+## 5. TECHNICAL SPECIFICATION
+
+### DISPLAY SPECIFICATIONS
+
+Canvas Dimensions: 800 x 600 pixels
+Background Color: #1a1a2e (dark blue-purple)
+Scaling: None (fixed size, centered in browser window)
+
+Tile Size: 40 x 40 pixels
+Grid: 20 columns x 15 rows
+
+### COLOR PALETTE
+
+Background:        #1a1a2e (dark blue-purple)
+Walls/Platforms:   #4a4e69 (muted purple-gray)
+Player:            #00d9ff (bright cyan)
+Ghost (most recent): #00d9ff at 50% opacity
+Ghost (older):     #00d9ff at 30% opacity
+Ghost (oldest):    #00d9ff at 20% opacity
+Pressure Plate (inactive): #5c5c5c (gray)
+Pressure Plate (active):   #00ff88 (bright green)
+Door (locked):     #ff6b6b (coral red)
+Door (open):       #ff6b6b at 30% opacity
+Exit Portal:       #ffd700 (gold) with pulsing glow
+Laser Beam:        #ff0044 (bright red)
+Moving Platform:   #8b5cf6 (purple)
+UI Text:           #ffffff (white)
+UI Subtext:        #aaaaaa (light gray)
+
+### FONTS
+
+Primary Font: 'Courier New', monospace
+Title Size: 32px
+UI Size: 18px
+Hint Size: 14px
+
+### UI LAYOUT
+
+Room Title: Centered horizontally, Y = 30px
+Room Hint: Centered horizontally, Y = 560px (shown for 3 seconds at room start)
+Ghost Counter: Top-right corner, X = 750 (right-aligned), Y = 30px
+  Format: "GHOSTS: [number]"
+Timer: Top-left corner, X = 20, Y = 30px
+  Format: "TIME: [M:SS]"
+Reset Prompt: Bottom-right, X = 780 (right-aligned), Y = 580px
+  Text: "[R] RESET ROOM"
+
+### GAME ELEMENT SIZES
+
+Player: 32 x 32 pixels (centered in movement, with 4px padding from tile edges)
+Ghost: 32 x 32 pixels (same as player)
+Pressure Plate: 40 x 10 pixels (sits on floor of tile, Y-offset +30 within tile)
+Door: 40 x 80 pixels (2 tiles tall)
+Exit Portal: 40 x 80 pixels (2 tiles tall) with particle effects
+Laser Beam: 4 pixels wide, length varies by room
+Moving Platform: 80 x 16 pixels (2 tiles wide)
+Wall Tile: 40 x 40 pixels
+
+### PLAYER SPECIFICATIONS
+
+Horizontal Speed: 200 pixels/second
+Jump Velocity: -400 pixels/second (upward)
+Gravity: 1000 pixels/second²
+Max Fall Speed: 600 pixels/second
+Horizontal Acceleration: 2000 pixels/second² (snappy controls)
+Horizontal Deceleration: 2000 pixels/second² (quick stop)
+
+Player can jump if:
+  - Standing on solid ground (velocity.y == 0 AND touching floor)
+  - Has not jumped in last 100ms (jump buffer prevention)
+
+### GHOST SPECIFICATIONS
+
+Ghosts replay recorded inputs, not positions (allows physics consistency)
+Ghost Recording Structure:
+  {
+    timestamp: milliseconds since room start,
+    input: {
+      left: boolean,
+      right: boolean,
+      jump: boolean (true only on frame jump initiated)
+    }
+  }
+
+Recording Sample Rate: Every frame (60fps target)
+Ghost Playback: Read inputs at matching timestamps, apply to ghost physics
+Ghost-Environment Interaction: Ghosts trigger pressure plates (collision-based)
+Ghost-Player Interaction: None (ghosts are intangible to player)
+Ghost-Ghost Interaction: None (ghosts pass through each other)
+
+### INPUT SPECIFICATIONS
+
+Movement Left:   A key OR Left Arrow
+Movement Right:  D key OR Right Arrow  
+Jump:            W key OR Up Arrow OR Spacebar
+Reset Room:      R key
+Pause:           Escape key (shows pause menu)
+
+Mouse: Not used during gameplay
+Touch: Not supported (laptop-optimized)
+
+### GAME STATE VARIABLES
+
+Global State:
+  currentRoomIndex: integer (0-6), initial = 0
+  totalPlayTime: float (seconds), initial = 0
+  ghostRecordings: array of arrays, initial = [[]] 
+    (index = room where recorded, contains input frames)
+  gamePhase: enum {PLAYING, PAUSED, ROOM_TRANSITION, GAME_COMPLETE}, initial = PLAYING
+
+Room State (reset each room):
+  roomTime: float (seconds since room start), initial = 0
+  playerPosition: {x: float, y: float}, initial = room-specific spawn point
+  playerVelocity: {x: float, y: float}, initial = {x: 0, y: 0}
+  playerInputs: array of input records, initial = []
+  ghostStates: array of {position, velocity, recordingIndex}, initial = derived from ghostRecordings
+  pressurePlatesActive: array of booleans, initial = [false, ...] per room
+  doorsOpen: array of booleans, initial = [false, ...] per room
+  laserAngle: float (radians), initial = room-specific
+  platformPosition: float, initial = room-specific
+
+### WIN/LOSE CONDITIONS
+
+Room Complete (advance to next room):
+  playerCollider.intersects(exitPortalBounds) == true
+
+Room Failed (reset current room):
+  playerPosition.y > canvasHeight + 50 (fell off screen)
+  OR playerCollider.intersects(laserCollider) == true
+
+Game Complete:
+  currentRoomIndex == 6 AND playerCollider.intersects(exitPortalBounds) == true
+
+There is no "game over" state. Players can retry rooms infinitely.
+
+### TIMING VALUES
+
+Room Transition Duration: 1000ms (fade out 500ms, fade in 500ms)
+Pressure Plate Activation Delay: 0ms (instant)
+Door Open/Close Animation: 300ms
+Laser Rotation Speed: 45 degrees/second (Room 5)
+Laser Freeze Duration: 2000ms when plate pressed
+Moving Platform Speed: 100 pixels/second
+Moving Platform Range: 160 pixels (4 tiles)
+Exit Portal Pulse Rate: 1000ms per cycle
+Hint Text Display Duration: 3000ms
+Victory Screen Delay: 500ms after final room complete
+
+### ROOM LAYOUTS (Detailed Tile Maps)
+
+Coordinate System: (0,0) at top-left, X increases right, Y increases down
+Tile positions given as (column, row) where each tile is 40x40 pixels
+Pixel position = (column * 40, row * 40)
+
+Legend:
+  W = Wall
+  . = Empty (air)
+  P = Player Spawn
+  G = Ghost Spawn (uses same relative position as player spawn from recorded room)
+  B = Pressure Plate
+  D = Door (2 tiles tall, this marks top)
+  E = Exit Portal (2 tiles tall, this marks top)
+  L = Laser Emitter
+  M = Moving Platform Path Start
+  - = Platform (thin, can stand on)
+
+#### ROOM 0: "AWAKENING"
+Dimensions: 20x15 tiles
+
+Row 0:  WWWWWWWWWWWWWWWWWWWW
+Row 1:  W..................W
+Row 2:  W..................W
+Row 3:  W..................W
+Row 4:  W..................W
+Row 5:  W..................W
+Row 6:  W..................W
+Row 7:  W..................W
+Row 8:  W..................W
+Row 9:  W..................W
+Row 10: W..................W
+Row 11: W.P..........E.....W
+Row 12: WWWWWWWW..WWWWWWWWWW
+Row 13: WWWWWWWW..WWWWWWWWWW
+Row 14: WWWWWWWWWWWWWWWWWWWW
+
+Player Spawn: (2, 11) -> pixel (80, 440)
+Exit: (13, 11) -> pixel (520, 440)
+Hint Text: "ARROW KEYS or WASD to move. SPACE or UP to jump."
+
+#### ROOM 1: "ECHO"
+Row 0:  WWWWWWWWWWWWWWWWWWWW
+Row 1:  W..................W
+Row 2:  W..................W
+Row 3:  W..................W
+Row 4:  W..................W
+Row 5:  W.P..........D.E...W
+Row 6:  WWWWWWWWWWWWWWWWWWWW
+Row 7:  W..................W
+Row 8:  W..................W
+Row 9:  W..................W
+Row 10: W..................W
+Row 11: W.G.......B........W
+Row 12: WWWWWWWWWWWWWWWWWWWW
+Row 13: WWWWWWWWWWWWWWWWWWWW
+Row 14: WWWWWWWWWWWWWWWWWWWW
+
+Player Spawn: (2, 5) -> pixel (80, 200)
+Ghost Spawn: (2, 11) -> pixel (80, 440)
+Pressure Plate: (10, 11) -> pixel (400, 440)
+Door: (13, 5) -> pixel (520, 200), controlled by Plate 0
+Exit: (15, 5) -> pixel (600, 200)
+Hint Text: "Watch your echo. It remembers."
+
+Door Logic: door[0].open = pressurePlates[0].active
+
+#### ROOM 2: "HOLDFAST"
+Row 0:  WWWWWWWWWWWWWWWWWWWW
+Row 1:  W..................W
+Row 2:  W..................W
+Row 3:  W..................W
+Row 4:  W..................W
+Row 5:  W..................W
+Row 6:  W..................W
+Row 7:  W..................W
+Row 8:  W..................W
+Row 9:  W..................W
+Row 10: W..................W
+Row 11: W.PG......B...D..E.W
+Row 12: WWWWWWWWWWWWWWWWWWWW
+Row 13: WWWWWWWWWWWWWWWWWWWW
+Row 14: WWWWWWWWWWWWWWWWWWWW
+
+Player Spawn: (2, 11) -> pixel (80, 440)
+Ghost Spawn: (3, 11) -> pixel (120, 440) [offset so they don't overlap]
+Pressure Plate: (10, 11) -> pixel (400, 440)
+Door: (14, 11) -> pixel (560, 440), controlled by Plate 0
+Exit: (17, 11) -> pixel (680, 440)
+Hint Text: "This door needs someone to hold it. Plan ahead."
+
+Door Logic: door[0].open = pressurePlates[0].active (only while pressed)
+
+#### ROOM 3: "FAITH"
+Row 0:  WWWWWWWWWWWWWWWWWWWW
+Row 1:  W..................W
+Row 2:  W..................W
+Row 3:  W..................W
+Row 4:  W..................W
+Row 5:  W.P.......D....B...W
+Row 6:  WWWWWWWWWWWWWWWWWWWW
+Row 7:  W..................W
+Row 8:  W..................W
+Row 9:  W..................W
+Row 10: W..................W
+Row 11: W.G.......B....D.E.W
+Row 12: WWWWWWWWWWWWWWWWWWWW
+Row 13: WWWWWWWWWWWWWWWWWWWW
+Row 14: WWWWWWWWWWWWWWWWWWWW
+
+Player Spawn: (2, 5) -> pixel (80, 200)
+Ghost Spawn: (2, 11) -> pixel (80, 440)
+Pressure Plate 0: (10, 11) -> pixel (400, 440) — controls upper door
+Pressure Plate 1: (15, 5) -> pixel (600, 200) — controls lower door
+Door 0: (10, 5) -> pixel (400, 200)
+Door 1: (15, 11) -> pixel (600, 440)
+Exit: (17, 11) -> pixel (680, 440)
+Hint Text: "Work together. Trust the timing."
+
+Door Logic: 
+  door[0].open = pressurePlates[0].active (ghost presses for player)
+  door[1].open = pressurePlates[1].active (player presses for exit access)
+
+#### ROOM 4: "COMMUNION"
+Row 0:  WWWWWWWWWWWWWWWWWWWW
+Row 1:  W..................W
+Row 2:  W.P............D.E.W
+Row 3:  WWWWWW.......WWWWWWW
+Row 4:  W..................W
+Row 5:  W..................W
+Row 6:  W.G...B............W
+Row 7:  WWWWWWWWWWW..WWWWWWW
+Row 8:  W..................W
+Row 9:  W..................W
+Row 10: W..................W
+Row 11: W.G...B............W
+Row 12: WWWWWWWWWWWWWWWWWWWW
+Row 13: WWWWWWWWWWWWWWWWWWWW
+Row 14: WWWWWWWWWWWWWWWWWWWW
+
+Player Spawn: (2, 2) -> pixel (80, 80)
+Ghost A Spawn (from Room 3): (2, 6) -> pixel (80, 240)
+Ghost B Spawn (from Room 2): (2, 11) -> pixel (80, 440)
+Pressure Plate 0: (6, 6) -> pixel (240, 240)
+Pressure Plate 1: (6, 11) -> pixel (240, 440)
+Door: (15, 2) -> pixel (600, 80), requires BOTH plates
+Exit: (17, 2) -> pixel (680, 80)
+Hint Text: "Two echoes, two plates. Both must agree."
+
+Door Logic: door[0].open = pressurePlates[0].active AND pressurePlates[1].active
+
+#### ROOM 5: "CONVERGENCE"
+Row 0:  WWWWWWWWWWWWWWWWWWWW
+Row 1:  W..................W
+Row 2:  W..................W
+Row 3:  W..................W
+Row 4:  W..................W
+Row 5:  W..................W
+Row 6:  W..................W
+Row 7:  W..................W
+Row 8:  W..................W
+Row 9:  W..................W
+Row 10: W..................W
+Row 11: W.PG....B..L.....E.W
+Row 12: WWWWWWWWWWWWWWWWWWWW
+Row 13: WWWWWWWWWWWWWWWWWWWW
+Row 14: WWWWWWWWWWWWWWWWWWWW
+
+Player Spawn: (2, 11) -> pixel (80, 440)
+Ghost Spawn: (3, 11) -> pixel (120, 440)
+Pressure Plate: (8, 11) -> pixel (320, 440) — freezes laser
+Laser Emitter: (11, 11) -> pixel (440, 440)
+Exit: (17, 11) -> pixel (680, 440)
+Hint Text: "The light burns. Freeze it with perfect timing."
+
+Laser Configuration:
+  - Emits from (440, 440) upward
+  - Rotates clockwise at 45 degrees/second
+  - Sweep range: -90 degrees (up) to -30 degrees (upper-right)
+  - Has a "safe gap" of 20 degrees where no beam exists
+  - Beam length: 400 pixels
+  - When plate is pressed: rotation freezes for 2 seconds
+
+Laser Collider: Line segment from emitter to (emitterX + cos(angle)*400, emitterY + sin(angle)*400)
+
+#### ROOM 6: "REUNION" (Finale)
+Row 0:  WWWWWWWWWWWWWWWWWWWW
+Row 1:  W..................W
+Row 2:  W.P..D.....M.....E.W
+Row 3:  WWWWWWW....WWWWW.WWW
+Row 4:  W..................W
+Row 5:  W..................W
+Row 6:  WG....B..L.........W
+Row 7:  WWWWWWWWWWW..WWWWWWW
+Row 8:  W..................W
+Row 9:  W..................W
+Row 10: W.G...B............W
+Row 11: WWWWWWWWWWWWWWWWWWWW
+Row 12: W.G...B............W
+Row 13: WWWWWWWWWWWWWWWWWWWW
+Row 14: WWWWWWWWWWWWWWWWWWWW
+
+Player Spawn: (2, 2) -> pixel (80, 80)
+Ghost A Spawn (from Room 5): (1, 6) -> pixel (40, 240)
+Ghost B Spawn (from Room 4): (2, 10) -> pixel (80, 400)
+Ghost C Spawn (from Room 3): (2, 12) -> pixel (80, 480)
+Pressure Plate 0: (6, 6) -> pixel (240, 240) — freezes laser
+Pressure Plate 1: (6, 10) -> pixel (240, 400) — controls door
+Pressure Plate 2: (6, 12) -> pixel (240, 480) — controls moving platform
+Door: (5, 2) -> pixel (200, 80)
+Moving Platform Start: (11, 2) -> pixel (440, 80), moves right to pixel (600, 80)
+Laser Emitter: (9, 6) -> pixel (360, 240), points right, sweeps up/down
+Exit: (17, 2) -> pixel (680, 80)
+Hint Text: "Everything you've learned. Everyone you've been."
+
+Logic:
+  door[0].open = pressurePlates[1].active
+  laser.frozen = pressurePlates[0].active
+  platform.moving = pressurePlates[2].active
+
+Moving Platform:
+  - When plate active: moves right at 100px/sec until reaching X=600
+  - When plate inactive: moves left at 100px/sec until reaching X=440
+  - Player can stand on platform
+
+### VISUAL EFFECTS
+
+Player Sprite: Solid rectangle with slight glow (shadow blur = 10, color = player color)
+Ghost Sprite: Same shape as player but with lower opacity and no glow
+Pressure Plate: Depresses visually when active (Y offset +5 pixels)
+Door Opening: Slides upward over 300ms
+Exit Portal: 
+  - Pulsing glow (opacity oscillates 0.7 to 1.0)
+  - Particle effect: Small squares float upward, color = gold at varying opacity
+  - 8 particles, respawn when reaching Y < portal.top - 40
+Laser Beam:
+  - 4px wide line
+  - Slight glow effect (shadow blur = 8, color = laser color)
+  - When frozen: flickers (opacity alternates 0.8 and 1.0 every 100ms)
+Moving Platform:
+  - Subtle pulsing glow when active
+Room Transition:
+  - Fade to black (500ms)
+  - Fade from black (500ms)
+Victory Effect:
+  - All ghosts move toward player position over 1000ms
+  - Flash of white (200ms)
+  - Fade to victory screen
+
+### VICTORY SCREEN
+
+Background: #1a1a2e
+Centered Text Line 1: "YOU WERE NEVER ALONE" (32px, gold #ffd700)
+Centered Text Line 2: [blank line]
+Centered Text Line 3: "Time: [M:SS]" (18px, white)
+Centered Text Line 4: "Rooms: 7" (18px, white)
+Centered Text Line 5: [blank line]
+Centered Text Line 6: "Press SPACE to reflect" (14px, gray, pulsing opacity)
+
+Pressing SPACE returns to Room 0 (full game reset).
+
+### AUDIO SPECIFICATIONS (Described for Synthesis)
+
+Note: All sounds to be generated via Web Audio API synthesis, not audio files.
+
+1. Player Jump: Short ascending tone
+   - Type: Square wave
+   - Start frequency: 200Hz
+   - End frequency: 400Hz
+   - Duration: 100ms
+   - Volume: 0.3
+
+2. Player Land: Soft thud
+   - Type: Noise burst (white noise)
+   - Duration: 50ms
+   - Volume: 0.2
+   - Filter: Low-pass at 200Hz
+
+3. Pressure Plate Activate: Positive chime
+   - Type: Sine wave
+   - Frequencies: 440Hz then 554Hz then 659Hz (A4, C#5, E5 - A major chord)
+   - Each note: 80ms
+   - Volume: 0.25
+
+4. Pressure Plate Deactivate: Descending tone
+   - Type: Sine wave
+   - Start frequency: 400Hz
+   - End frequency: 200Hz
+   - Duration: 150ms
+   - Volume: 0.2
+
+5. Door Open: Sliding sound
+   - Type: Filtered noise sweep
+   - Duration: 300ms
+   - Filter: Band-pass, center sweeps 200Hz to 800Hz
+   - Volume: 0.3
+
+6. Ghost Spawn: Ethereal whoosh
+   - Type: Sine wave with vibrato
+   - Frequency: 300Hz with ±50Hz vibrato at 8Hz
+   - Duration: 400ms
+   - Fade in over 100ms, fade out over 300ms
+   - Volume: 0.2
+
+7. Laser Hum (continuous while active):
+   - Type: Sawtooth wave
+   - Frequency: 80Hz
+   - Volume: 0.15
+   - Slight vibrato (±5Hz at 4Hz)
+
+8. Laser Hit (player death):
+   - Type: Noise burst + descending square wave
+   - Duration: 300ms
+   - Square wave: 600Hz to 100Hz
+   - Volume: 0.4
+
+9. Exit Portal Ambient (continuous):
+   - Type: Layered sine waves
+   - Frequencies: 220Hz, 330Hz, 440Hz (A3, E4, A4)
+   - Volume: 0.1 each, pulsing with portal glow
+   - Filter: Gentle low-pass at 1000Hz
+
+10. Room Complete:
+    - Type: Ascending arpeggio
+    - Notes: C5, E5, G5, C6 (sine waves)
+    - Each note: 100ms
+    - Volume: 0.3
+
+11. Victory Fanfare:
+    - Full chord swell: C major (C4, E4, G4, C5)
+    - Duration: 2000ms
+    - Volume: 0.4, fade out over last 1000ms
+
+================================================================================
+
+## 6. IMPLEMENTATION PSEUDOCODE
+
+### MAIN GAME STRUCTURE
+
+```
+// ==================== CONFIGURATION ====================
+
+CONFIG = {
+  width: 800,
+  height: 600,
+  backgroundColor: 0x1a1a2e,
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 1000 },
+      debug: false
+    }
+  },
+  scene: [BootScene, GameScene, VictoryScene]
+}
+
+COLORS = {
+  background: 0x1a1a2e,
+  wall: 0x4a4e69,
+  player: 0x00d9ff,
+  plateInactive: 0x5c5c5c,
+  plateActive: 0x00ff88,
+  doorLocked: 0xff6b6b,
+  exitPortal: 0xffd700,
+  laser: 0xff0044,
+  platform: 0x8b5cf6
+}
+
+TILE_SIZE = 40
+
+PLAYER_CONFIG = {
+  speed: 200,
+  jumpVelocity: -400,
+  acceleration: 2000,
+  deceleration: 2000,
+  maxFallSpeed: 600
+}
+
+// ==================== BOOT SCENE ====================
+
+class BootScene extends Phaser.Scene {
+  constructor() {
+    super('BootScene')
+  }
+  
+  create() {
+    // Initialize global game state
+    this.registry.set('currentRoom', 0)
+    this.registry.set('totalTime', 0)
+    this.registry.set('ghostRecordings', [])
+    
+    // Generate synthesized sounds
+    this.createSounds()
+    
+    // Start game
+    this.scene.start('GameScene')
+  }
+  
+  createSounds() {
+    // Use Web Audio API to create all sound effects
+    // Store references in registry for access by other scenes
+    
+    audioContext = new AudioContext()
+    
+    // Define sound generators as functions that play when called
+    sounds = {
+      jump: function() { /* square wave 200->400Hz, 100ms */ },
+      land: function() { /* noise burst, 50ms */ },
+      plateOn: function() { /* A major arpeggio */ },
+      plateOff: function() { /* descending tone */ },
+      doorOpen: function() { /* filtered noise sweep */ },
+      ghostSpawn: function() { /* sine with vibrato */ },
+      laserHit: function() { /* noise + descending square */ },
+      roomComplete: function() { /* ascending arpeggio */ },
+      victory: function() { /* C major swell */ }
+    }
+    
+    this.registry.set('sounds', sounds)
+    this.registry.set('audioContext', audioContext)
+  }
+}
+
+// ==================== GAME SCENE ====================
+
+class GameScene extends Phaser.Scene {
+  constructor() {
+    super('GameScene')
+  }
+  
+  create() {
+    // Get current room index
+    this.currentRoom = this.registry.get('currentRoom')
+    this.ghostRecordings = this.registry.get('ghostRecordings')
+    
+    // Room time tracking
+    this.roomTime = 0
+    this.currentRecording = []
+    
+    // Create room based on currentRoom index
+    this.createRoom(this.currentRoom)
+    
+    // Setup input
+    this.cursors = this.input.keyboard.createCursorKeys()
+    this.wasd = this.input.keyboard.addKeys({
+      up: 'W', down: 'S', left: 'A', right: 'D',
+      space: 'SPACE', reset: 'R', pause: 'ESC'
+    })
+    
+    // UI elements
+    this.createUI()
+    
+    // Show hint text
+    this.showHint(ROOMS[this.currentRoom].hint)
+    
+    // Spawn ghosts from previous recordings
+    this.spawnGhosts()
+    
+    // Room transition fade-in
+    this.cameras.main.fadeIn(500)
+  }
+  
+  createRoom(roomIndex) {
+    room = ROOMS[roomIndex]
+    
+    // Create tilemap from room layout
+    this.walls = this.physics.add.staticGroup()
+    
+    for row = 0 to 14:
+      for col = 0 to 19:
+        if room.layout[row][col] == 'W':
+          wall = this.walls.create(col * 40 + 20, row * 40 + 20, null)
+          wall.setDisplaySize(40, 40)
+          wall.setTint(COLORS.wall)
+    
+    // Create player
+    spawnPos = room.playerSpawn
+    this.player = this.physics.add.sprite(spawnPos.x, spawnPos.y, null)
+    this.player.setDisplaySize(32, 32)
+    this.player.setTint(COLORS.player)
+    this.player.setCollideWorldBounds(false)
+    this.player.setMaxVelocity(PLAYER_CONFIG.speed, PLAYER_CONFIG.maxFallSpeed)
+    
+    // Player-wall collision
+    this.physics.add.collider(this.player, this.walls)
+    
+    // Create pressure plates
+    this.pressurePlates = []
+    for each plateData in room.pressurePlates:
+      plate = this.add.rectangle(plateData.x, plateData.y, 40, 10, COLORS.plateInactive)
+      plate.setData('active', false)
+      plate.setData('controlsIndex', plateData.controls)
+      this.pressurePlates.push(plate)
+    
+    // Create doors
+    this.doors = []
+    for each doorData in room.doors:
+      door = this.add.rectangle(doorData.x, doorData.y + 40, 40, 80, COLORS.doorLocked)
+      this.physics.add.existing(door, true)
+      door.setData('open', false)
+      door.setData('openCondition', doorData.condition)
+      door.setData('originalY', doorData.y + 40)
+      this.doors.push(door)
+    
+    // Create exit portal
+    exitPos = room.exitPosition
+    this.exitPortal = this.add.rectangle(exitPos.x, exitPos.y + 40, 40, 80, COLORS.exitPortal)
+    this.exitPortal.setAlpha(0.8)
+    this.exitParticles = []
+    this.createExitParticles()
+    
+    // Create laser if present
+    if room.laser:
+      this.laser = {
+        x: room.laser.x,
+        y: room.laser.y,
+        angle: room.laser.startAngle,
+        frozen: false,
+        freezeTimer: 0
+      }
+      this.laserGraphics = this.add.graphics()
+    
+    // Create moving platform if present
+    if room.movingPlatform:
+      this.movingPlatform = this.add.rectangle(
+        room.movingPlatform.x, 
+        room.movingPlatform.y, 
+        80, 16, 
+        COLORS.platform
+      )
+      this.physics.add.existing(this.movingPlatform, true)
+      this.movingPlatform.setData('startX', room.movingPlatform.x)
+      this.movingPlatform.setData('endX', room.movingPlatform.x + 160)
+      this.movingPlatform.setData('active', false)
+      this.physics.add.collider(this.player, this.movingPlatform)
+    
+    // Door collisions
+    for each door in this.doors:
+      this.physics.add.collider(this.player, door)
+  }
+  
+  spawnGhosts() {
+    this.ghosts = []
+    room = ROOMS[this.currentRoom]
+    
+    for i = 0 to room.ghostSpawns.length - 1:
+      ghostSpawn = room.ghostSpawns[i]
+      recordingIndex = ghostSpawn.fromRoom
+      
+      if recordingIndex < this.ghostRecordings.length:
+        recording = this.ghostRecordings[recordingIndex]
+        
+        // Create ghost sprite
+        ghost = this.physics.add.sprite(ghostSpawn.x, ghostSpawn.y, null)
+        ghost.setDisplaySize(32, 32)
+        ghost.setTint(COLORS.player)
+        
+        // Set opacity based on how old the recording is
+        age = this.currentRoom - recordingIndex
+        opacity = Math.max(0.2, 0.5 - (age - 1) * 0.15)
+        ghost.setAlpha(opacity)
+        
+        ghost.setData('recording', recording)
+        ghost.setData('playbackIndex', 0)
+        ghost.setMaxVelocity(PLAYER_CONFIG.speed, PLAYER_CONFIG.maxFallSpeed)
+        
+        // Ghost-wall collision
+        this.physics.add.collider(ghost, this.walls)
+        
+        // Ghost-door collision
+        for each door in this.doors:
+          this.physics.add.collider(ghost, door)
+        
+        // Ghost-platform collision if exists
+        if this.movingPlatform:
+          this.physics.add.collider(ghost, this.movingPlatform)
+        
+        this.ghosts.push(ghost)
+        
+        // Play ghost spawn sound
+        this.registry.get('sounds').ghostSpawn()
+  }
+  
+  createUI() {
+    // Room title
+    this.titleText = this.add.text(400, 30, ROOMS[this.currentRoom].name, {
+      fontFamily: 'Courier New',
+      fontSize: '24px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0.5)
+    
+    // Ghost counter
+    ghostCount = this.ghosts ? this.ghosts.length : 0
+    this.ghostCountText = this.add.text(780, 30, 'GHOSTS: ' + ghostCount, {
+      fontFamily: 'Courier New',
+      fontSize: '18px',
+      color: '#ffffff'
+    }).setOrigin(1, 0.5)
+    
+    // Timer
+    this.timerText = this.add.text(20, 30, 'TIME: 0:00', {
+      fontFamily: 'Courier New',
+      fontSize: '18px',
+      color: '#ffffff'
+    }).setOrigin(0, 0.5)
+    
+    // Reset prompt
+    this.resetText = this.add.text(780, 580, '[R] RESET ROOM', {
+      fontFamily: 'Courier New',
+      fontSize: '14px',
+      color: '#aaaaaa'
+    }).setOrigin(1, 0.5)
+  }
+  
+  showHint(hintText) {
+    hint = this.add.text(400, 560, hintText, {
+      fontFamily: 'Courier New',
+      fontSize: '14px',
+      color: '#aaaaaa'
+    }).setOrigin(0.5, 0.5)
+    
+    // Fade out after 3 seconds
+    this.time.delayedCall(3000, () => {
+      this.tweens.add({
+        targets: hint,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => hint.destroy()
+      })
+    })
+  }
+  
+  createExitParticles() {
+    // Create 8 particle rectangles that float upward
+    for i = 0 to 7:
+      particle = this.add.rectangle(
+        this.exitPortal.x + Phaser.Math.Between(-15, 15),
+        this.exitPortal.y + Phaser.Math.Between(0, 60),
+        4, 4,
+        COLORS.exitPortal
+      )
+      particle.setAlpha(Phaser.Math.FloatBetween(0.3, 0.8))
+      particle.setData('baseY', this.exitPortal.y + 60)
+      this.exitParticles.push(particle)
+  }
+  
+  update(time, delta) {
+    deltaSeconds = delta / 1000
+    this.roomTime += deltaSeconds
+    
+    // Update total time
+    totalTime = this.registry.get('totalTime') + deltaSeconds
+    this.registry.set('totalTime', totalTime)
+    
+    // Update timer display
+    minutes = Math.floor(totalTime / 60)
+    seconds = Math.floor(totalTime % 60)
+    this.timerText.setText('TIME: ' + minutes + ':' + (seconds < 10 ? '0' : '') + seconds)
+    
+    // Handle input
+    this.handleInput()
+    
+    // Record player input
+    this.recordInput()
+    
+    // Update ghosts
+    this.updateGhosts()
+    
+    // Update pressure plates
+    this.updatePressurePlates()
+    
+    // Update doors
+    this.updateDoors()
+    
+    // Update laser if present
+    if this.laser:
+      this.updateLaser(deltaSeconds)
+    
+    // Update moving platform if present
+    if this.movingPlatform:
+      this.updateMovingPlatform(deltaSeconds)
+    
+    // Update exit portal visual
+    this.updateExitPortal()
+    
+    // Check win/lose conditions
+    this.checkConditions()
+    
+    // Check reset key
+    if Phaser.Input.Keyboard.JustDown(this.wasd.reset):
+      this.resetRoom()
+  }
+  
+  handleInput() {
+    // Horizontal movement
+    if this.cursors.left.isDown or this.wasd.left.isDown:
+      this.player.setAccelerationX(-PLAYER_CONFIG.acceleration)
+    else if this.cursors.right.isDown or this.wasd.right.isDown:
+      this.player.setAccelerationX(PLAYER_CONFIG.acceleration)
+    else:
+      // Decelerate
+      if this.player.body.velocity.x > 0:
+        this.player.setAccelerationX(-PLAYER_CONFIG.deceleration)
+        if this.player.body.velocity.x < 0:
+          this.player.setVelocityX(0)
+          this.player.setAccelerationX(0)
+      else if this.player.body.velocity.x < 0:
+        this.player.setAccelerationX(PLAYER_CONFIG.deceleration)
+        if this.player.body.velocity.x > 0:
+          this.player.setVelocityX(0)
+          this.player.setAccelerationX(0)
+      else:
+        this.player.setAccelerationX(0)
+    
+    // Clamp horizontal velocity
+    this.player.setVelocityX(
+      Phaser.Math.Clamp(this.player.body.velocity.x, -PLAYER_CONFIG.speed, PLAYER_CONFIG.speed)
+    )
+    
+    // Jump
+    jumpPressed = this.cursors.up.isDown or this.wasd.up.isDown or this.wasd.space.isDown
+    onGround = this.player.body.blocked.down or this.player.body.touching.down
+    
+    if jumpPressed and onGround:
+      this.player.setVelocityY(PLAYER_CONFIG.jumpVelocity)
+      this.registry.get('sounds').jump()
+  }
+  
+  recordInput() {
+    inputFrame = {
+      timestamp: this.roomTime * 1000, // milliseconds
+      left: this.cursors.left.isDown or this.wasd.left.isDown,
+      right: this.cursors.right.isDown or this.wasd.right.isDown,
+      jump: Phaser.Input.Keyboard.JustDown(this.cursors.up) or 
+            Phaser.Input.Keyboard.JustDown(this.wasd.up) or
+            Phaser.Input.Keyboard.JustDown(this.wasd.space)
+    }
+    this.currentRecording.push(inputFrame)
+  }
+  
+  updateGhosts() {
+    for each ghost in this.ghosts:
+      recording = ghost.getData('recording')
+      playbackTime = this.roomTime * 1000
+      
+      // Find the input frame for current time
+      playbackIndex = ghost.getData('playbackIndex')
+      
+      // Advance to correct frame
+      while playbackIndex < recording.length - 1 and 
+            recording[playbackIndex + 1].timestamp <= playbackTime:
+        playbackIndex++
+      
+      ghost.setData('playbackIndex', playbackIndex)
+      
+      if playbackIndex < recording.length:
+        frame = recording[playbackIndex]
+        
+        // Apply horizontal movement
+        if frame.left:
+          ghost.setAccelerationX(-PLAYER_CONFIG.acceleration)
+        else if frame.right:
+          ghost.setAccelerationX(PLAYER_CONFIG.acceleration)
+        else:
+          // Deceleration logic same as player
+          if ghost.body.velocity.x > 0:
+            ghost.setAccelerationX(-PLAYER_CONFIG.deceleration)
+            if ghost.body.velocity.x < 0:
+              ghost.setVelocityX(0)
+              ghost.setAccelerationX(0)
+          else if ghost.body.velocity.x < 0:
+            ghost.setAccelerationX(PLAYER_CONFIG.deceleration)
+            if ghost.body.velocity.x > 0:
+              ghost.setVelocityX(0)
+              ghost.setAccelerationX(0)
+          else:
+            ghost.setAccelerationX(0)
+        
+        ghost.setVelocityX(
+          Phaser.Math.Clamp(ghost.body.velocity.x, -PLAYER_CONFIG.speed, PLAYER_CONFIG.speed)
+        )
+        
+        // Apply jump
+        onGround = ghost.body.blocked.down or ghost.body.touching.down
+        if frame.jump and onGround:
+          ghost.setVelocityY(PLAYER_CONFIG.jumpVelocity)
+  }
+  
+  updatePressurePlates() {
+    for each plate in this.pressurePlates:
+      plateBounds = plate.getBounds()
+      wasActive = plate.getData('active')
+      nowActive = false
+      
+      // Check player overlap
+      playerBounds = this.player.getBounds()
+      if Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, plateBounds):
+        // Check if player is above plate (feet touching)
+        if this.player.body.blocked.down and 
+           Math.abs(this.player.y + 16 - plate.y) < 20:
+          nowActive = true
+      
+      // Check ghost overlaps
+      for each ghost in this.ghosts:
+        ghostBounds = ghost.getBounds()
+        if Phaser.Geom.Intersects.RectangleToRectangle(ghostBounds, plateBounds):
+          if ghost.body.blocked.down and 
+             Math.abs(ghost.y + 16 - plate.y) < 20:
+            nowActive = true
+      
+      plate.setData('active', nowActive)
+      
+      // Update visual
+      if nowActive:
+        plate.setFillStyle(COLORS.plateActive)
+        plate.setY(plate.y + 5) // Depress
+      else:
+        plate.setFillStyle(COLORS.plateInactive)
+        // Reset Y position handled by checking original position
+      
+      // Play sounds
+      if nowActive and not wasActive:
+        this.registry.get('sounds').plateOn()
+      else if not nowActive and wasActive:
+        this.registry.get('sounds').plateOff()
+  }
+  
+  updateDoors() {
+    for each door in this.doors:
+      condition = door.getData('openCondition')
+      shouldBeOpen = this.evaluateCondition(condition)
+      wasOpen = door.getData('open')
+      
+      if shouldBeOpen and not wasOpen:
+        // Open door (animate up)
+        door.setData('open', true)
+        door.body.enable = false
+        this.tweens.add({
+          targets: door,
+          y: door.getData('originalY') - 80,
+          alpha: 0.3,
+          duration: 300
+        })
+        this.registry.get('sounds').doorOpen()
+      
+      else if not shouldBeOpen and wasOpen:
+        // Close door (animate down)
+        door.setData('open', false)
+        door.body.enable = true
+        this.tweens.add({
+          targets: door,
+          y: door.getData('originalY'),
+          alpha: 1,
+          duration: 300
+        })
+  }
+  
+  evaluateCondition(condition) {
+    // Condition is a string like "plate0" or "plate0 AND plate1"
+    if condition contains "AND":
+      parts = condition.split(" AND ")
+      result = true
+      for each part in parts:
+        plateIndex = parseInt(part.replace("plate", ""))
+        result = result AND this.pressurePlates[plateIndex].getData('active')
+      return result
+    else:
+      plateIndex = parseInt(condition.replace("plate", ""))
+      return this.pressurePlates[plateIndex].getData('active')
+  }
+  
+  updateLaser(deltaSeconds) {
+    // Check if frozen
+    if this.laser.frozen:
+      this.laser.freezeTimer -= deltaSeconds
+      if this.laser.freezeTimer <= 0:
+        this.laser.frozen = false
+    else:
+      // Rotate laser
+      this.laser.angle += 45 * (Math.PI / 180) * deltaSeconds // 45 deg/sec in radians
+      
+      // Clamp to sweep range (-90 to -30 degrees, or -PI/2 to -PI/6)
+      if this.laser.angle > -Math.PI / 6:
+        this.laser.angle = -Math.PI / 2 // Reset to start of sweep
+    
+    // Check if pressure plate freezes laser
+    room = ROOMS[this.currentRoom]
+    if room.laser.controlPlate !== undefined:
+      if this.pressurePlates[room.laser.controlPlate].getData('active'):
+        this.laser.frozen = true
+        this.laser.freezeTimer = 2.0 // 2 second freeze
+    
+    // Draw laser
+    this.laserGraphics.clear()
+    this.laserGraphics.lineStyle(4, COLORS.laser, this.laser.frozen ? 0.8 : 1.0)
+    
+    endX = this.laser.x + Math.cos(this.laser.angle) * 400
+    endY = this.laser.y + Math.sin(this.laser.angle) * 400
+    
+    this.laserGraphics.beginPath()
+    this.laserGraphics.moveTo(this.laser.x, this.laser.y)
+    this.laserGraphics.lineTo(endX, endY)
+    this.laserGraphics.strokePath()
+    
+    // Store for collision detection
+    this.laser.endX = endX
+    this.laser.endY = endY
+  }
+  
+  updateMovingPlatform(deltaSeconds) {
+    room = ROOMS[this.currentRoom]
+    controlPlate = room.movingPlatform.controlPlate
+    active = this.pressurePlates[controlPlate].getData('active')
+    
+    startX = this.movingPlatform.getData('startX')
+    endX = this.movingPlatform.getData('endX')
+    currentX = this.movingPlatform.x
+    
+    if active:
+      // Move right
+      newX = currentX + 100 * deltaSeconds
+      if newX > endX:
+        newX = endX
+      this.movingPlatform.setX(newX)
+      this.movingPlatform.body.updateFromGameObject()
+    else:
+      // Move left
+      newX = currentX - 100 * deltaSeconds
+      if newX < startX:
+        newX = startX
+      this.movingPlatform.setX(newX)
+      this.movingPlatform.body.updateFromGameObject()
+  }
+  
+  updateExitPortal() {
+    // Pulse effect
+    pulsePhase = (this.roomTime * 1000) % 1000 / 1000 // 0 to 1
+    opacity = 0.7 + 0.3 * Math.sin(pulsePhase * Math.PI * 2)
+    this.exitPortal.setAlpha(opacity)
+    
+    // Update particles
+    for each particle in this.exitParticles:
+      particle.y -= 30 * (1/60) // Move up
+      
+      // Reset when too high
+      if particle.y < this.exitPortal.y - 60:
+        particle.y = particle.getData('baseY')
+        particle.x = this.exitPortal.x + Phaser.Math.Between(-15, 15)
+        particle.setAlpha(Phaser.Math.FloatBetween(0.3, 0.8))
+  }
+  
+  checkConditions() {
+    // Check exit collision
+    playerBounds = this.player.getBounds()
+    exitBounds = this.exitPortal.getBounds()
+    
+    if Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, exitBounds):
+      this.completeRoom()
+      return
+    
+    // Check fell off screen
+    if this.player.y > 650:
+      this.resetRoom()
+      return
+    
+    // Check laser collision
+    if this.laser:
+      // Line-rectangle intersection
+      playerBounds = this.player.getBounds()
+      laserLine = new Phaser.Geom.Line(
+        this.laser.x, this.laser.y,
+        this.laser.endX, this.laser.endY
+      )
+      
+      if Phaser.Geom.Intersects.LineToRectangle(laserLine, playerBounds):
+        this.registry.get('sounds').laserHit()
+        this.resetRoom()
+        return
+  }
+  
+  completeRoom() {
+    // Save recording for this room
+    recordings = this.registry.get('ghostRecordings')
+    recordings[this.currentRoom] = this.currentRecording
+    this.registry.set('ghostRecordings', recordings)
+    
+    // Play completion sound
+    this.registry.get('sounds').roomComplete()
+    
+    // Check if game complete
+    if this.currentRoom >= 6:
+      // Transition to victory
+      this.cameras.main.fadeOut(500, 0, 0, 0)
+      this.time.delayedCall(500, () => {
+        this.scene.start('VictoryScene')
+      })
+    else:
+      // Advance to next room
+      this.registry.set('currentRoom', this.currentRoom + 1)
+      
+      // Transition
+      this.cameras.main.fadeOut(500, 0, 0, 0)
+      this.time.delayedCall(500, () => {
+        this.scene.restart()
+      })
+  }
+  
+  resetRoom() {
+    // Reset without saving recording
+    this.scene.restart()
+  }
+}
+
+// ==================== VICTORY SCENE ====================
+
+class VictoryScene extends Phaser.Scene {
+  constructor() {
+    super('VictoryScene')
+  }
+  
+  create() {
+    // Play victory fanfare
+    this.registry.get('sounds').victory()
+    
+    // Background
+    this.cameras.main.setBackgroundColor(0x1a1a2e)
+    
+    // Fade in
+    this.cameras.main.fadeIn(500)
+    
+    // Title
+    this.add.text(400, 200, 'YOU WERE NEVER ALONE', {
+      fontFamily: 'Courier New',
+      fontSize: '32px',
+      color: '#ffd700'
+    }).setOrigin(0.5, 0.5)
+    
+    // Stats
+    totalTime = this.registry.get('totalTime')
+    minutes = Math.floor(totalTime / 60)
+    seconds = Math.floor(totalTime % 60)
+    
+    this.add.text(400, 300, 'Time: ' + minutes + ':' + (seconds < 10 ? '0' : '') + seconds, {
+      fontFamily: 'Courier New',
+      fontSize: '18px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0.5)
+    
+    this.add.text(400, 340, 'Rooms: 7', {
+      fontFamily: 'Courier New',
+      fontSize: '18px',
+      color: '#ffffff'
+    }).setOrigin(0.5, 0.5)
+    
+    // Restart prompt (pulsing)
+    this.restartText = this.add.text(400, 450, 'Press SPACE to reflect', {
+      fontFamily: 'Courier New',
+      fontSize: '14px',
+      color: '#aaaaaa'
+    }).setOrigin(0.5, 0.5)
+    
+    this.tweens.add({
+      targets: this.restartText,
+      alpha: 0.3,
+      duration: 800,
+      yoyo: true,
+      repeat: -1
+    })
+    
+    // Input
+    this.input.keyboard.on('keydown-SPACE', () => {
+      // Full reset
+      this.registry.set('currentRoom', 0)
+      this.registry.set('totalTime', 0)
+      this.registry.set('ghostRecordings', [])
+      this.scene.start('GameScene')
+    })
+  }
+}
+
+// ==================== ROOM DATA ====================
+
+ROOMS = [
+  // Room 0: Awakening
+  {
+    name: "AWAKENING",
+    hint: "ARROW KEYS or WASD to move. SPACE or UP to jump.",
+    layout: [
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWW..WWWWWWWWWW",
+      "WWWWWWWW..WWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW"
+    ],
+    playerSpawn: { x: 100, y: 440 },
+    ghostSpawns: [],
+    pressurePlates: [],
+    doors: [],
+    exitPosition: { x: 540, y: 400 }
+  },
+  
+  // Room 1: Echo
+  {
+    name: "ECHO",
+    hint: "Watch your echo. It remembers.",
+    layout: [
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW"
+    ],
+    playerSpawn: { x: 100, y: 200 },
+    ghostSpawns: [
+      { x: 100, y: 440, fromRoom: 0 }
+    ],
+    pressurePlates: [
+      { x: 420, y: 475, controls: 0 }
+    ],
+    doors: [
+      { x: 540, y: 160, condition: "plate0" }
+    ],
+    exitPosition: { x: 620, y: 160 }
+  },
+  
+  // Room 2: Holdfast
+  {
+    name: "HOLDFAST",
+    hint: "This door needs someone to hold it. Plan ahead.",
+    layout: [
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW"
+    ],
+    playerSpawn: { x: 100, y: 440 },
+    ghostSpawns: [
+      { x: 140, y: 440, fromRoom: 1 }
+    ],
+    pressurePlates: [
+      { x: 420, y: 475, controls: 0 }
+    ],
+    doors: [
+      { x: 580, y: 400, condition: "plate0" }
+    ],
+    exitPosition: { x: 700, y: 400 }
+  },
+  
+  // Room 3: Faith
+  {
+    name: "FAITH",
+    hint: "Work together. Trust the timing.",
+    layout: [
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW"
+    ],
+    playerSpawn: { x: 100, y: 200 },
+    ghostSpawns: [
+      { x: 100, y: 440, fromRoom: 2 }
+    ],
+    pressurePlates: [
+      { x: 420, y: 475, controls: 0 },
+      { x: 620, y: 235, controls: 1 }
+    ],
+    doors: [
+      { x: 420, y: 160, condition: "plate0" },
+      { x: 620, y: 400, condition: "plate1" }
+    ],
+    exitPosition: { x: 700, y: 400 }
+  },
+  
+  // Room 4: Communion
+  {
+    name: "COMMUNION",
+    hint: "Two echoes, two plates. Both must agree.",
+    layout: [
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "WWWWWW.......WWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWW..WWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW"
+    ],
+    playerSpawn: { x: 100, y: 80 },
+    ghostSpawns: [
+      { x: 100, y: 240, fromRoom: 3 },
+      { x: 100, y: 440, fromRoom: 2 }
+    ],
+    pressurePlates: [
+      { x: 260, y: 275, controls: 0 },
+      { x: 260, y: 475, controls: 1 }
+    ],
+    doors: [
+      { x: 620, y: 40, condition: "plate0 AND plate1" }
+    ],
+    exitPosition: { x: 700, y: 40 }
+  },
+  
+  // Room 5: Convergence
+  {
+    name: "CONVERGENCE",
+    hint: "The light burns. Freeze it with perfect timing.",
+    layout: [
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW"
+    ],
+    playerSpawn: { x: 100, y: 440 },
+    ghostSpawns: [
+      { x: 140, y: 440, fromRoom: 4 }
+    ],
+    pressurePlates: [
+      { x: 340, y: 475, controls: 0 }
+    ],
+    doors: [],
+    exitPosition: { x: 700, y: 400 },
+    laser: {
+      x: 460,
+      y: 440,
+      startAngle: -Math.PI / 2,
+      controlPlate: 0
+    }
+  },
+  
+  // Room 6: Reunion
+  {
+    name: "REUNION",
+    hint: "Everything you've learned. Everyone you've been.",
+    layout: [
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "W..................W",
+      "WWWWWWW....WWWWW.WWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWW..WWWWWWW",
+      "W..................W",
+      "W..................W",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "W..................W",
+      "WWWWWWWWWWWWWWWWWWWW",
+      "WWWWWWWWWWWWWWWWWWWW"
+    ],
+    playerSpawn: { x: 100, y: 80 },
+    ghostSpawns: [
+      { x: 60, y: 240, fromRoom: 5 },
+      { x: 100, y: 400, fromRoom: 4 },
+      { x: 100, y: 480, fromRoom: 3 }
+    ],
+    pressurePlates: [
+      { x: 260, y: 275, controls: 0 },
+      { x: 260, y: 435, controls: 1 },
+      { x: 260, y: 515, controls: 2 }
+    ],
+    doors: [
+      { x: 220, y: 40, condition: "plate1" }
+    ],
+    exitPosition: { x: 700, y: 40 },
+    laser: {
+      x: 380,
+      y: 240,
+      startAngle: 0,
+      controlPlate: 0
+    },
+    movingPlatform: {
+      x: 460,
+      y: 80,
+      controlPlate: 2
+    }
+  }
+]
+
+// ==================== INITIALIZATION ====================
+
+window.onload = function() {
+  game = new Phaser.Game(CONFIG)
+}
+```
+
+================================================================================
+
+## 7. IMPLEMENTATION NOTES
+
+### Sound Generation Reference (Web Audio API)
+
+For generating the synthesized sounds, use the following Web Audio API patterns:
+
+SQUARE WAVE SWEEP (for jump):
+```javascript
+osc = audioContext.createOscillator()
+osc.type = 'square'
+osc.frequency.setValueAtTime(200, audioContext.currentTime)
+osc.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1)
+gain = audioContext.createGain()
+gain.gain.setValueAtTime(0.3, audioContext.currentTime)
+gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
+osc.connect(gain).connect(audioContext.destination)
+osc.start()
+osc.stop(audioContext.currentTime + 0.1)
+```
+
+NOISE BURST (for land):
+```javascript
+bufferSize = audioContext.sampleRate * 0.05
+buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate)
+data = buffer.getChannelData(0)
+for i = 0 to bufferSize: data[i] = Math.random() * 2 - 1
+source = audioContext.createBufferSource()
+source.buffer = buffer
+filter = audioContext.createBiquadFilter()
+filter.type = 'lowpass'
+filter.frequency.value = 200
+gain = audioContext.createGain()
+gain.gain.setValueAtTime(0.2, audioContext.currentTime)
+source.connect(filter).connect(gain).connect(audioContext.destination)
+source.start()
+```
+
+ARPEGGIO (for plate activation, room complete):
+```javascript
+notes = [440, 554, 659] // or [523, 659, 784, 1047] for room complete
+notes.forEach((freq, i) => {
+  osc = audioContext.createOscillator()
+  osc.type = 'sine'
+  osc.frequency.value = freq
+  gain = audioContext.createGain()
+  startTime = audioContext.currentTime + i * 0.08
+  gain.gain.setValueAtTime(0.25, startTime)
+  gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.08)
+  osc.connect(gain).connect(audioContext.destination)
+  osc.start(startTime)
+  osc.stop(startTime + 0.08)
+})
+```
+
+### Critical Implementation Details
+
+1. GHOST PHYSICS CONSISTENCY: Ghosts must use the same physics values as the 
+   player. Record inputs, not positions, to ensure deterministic replay.
+
+2. COLLISION LAYERS: 
+   - Player collides with: walls, closed doors, moving platform
+   - Ghosts collide with: walls, closed doors, moving platform
+   - Player does NOT collide with: ghosts, open doors, exit portal
+   - Ghosts do NOT collide with: player, other ghosts
+
+3. DOOR STATE: Doors in this game are "hold" doors—they only stay open while 
+   the plate is pressed. When the condition becomes false, the door closes.
+
+4. RECORDING STRUCTURE: Each room's recording is stored at ghostRecordings[roomIndex].
+   When spawning ghosts, check if the recording exists before creating the ghost.
+
+5. FRAME TIMING: Use delta time for all physics. Store recording timestamps in 
+   milliseconds for precise playback synchronization.
+
+6. Z-ORDERING (draw order from back to front):
+   - Background
+   - Exit portal particles
+   - Exit portal
+   - Walls
+   - Pressure plates
+   - Doors
+   - Moving platform
+   - Laser
+   - Ghosts (oldest first, newest last)
+   - Player
+   - UI
+
+================================================================================
+
+END OF DOCUMENT
+================================================================================

@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moth & Flame</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+  #game-container { width: 800px; height: 600px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="game-container"></div>
+<script>
+// =============================================
+// CONSTANTS
+// =============================================
+const WORLD_W = 800, WORLD_H = 12000;
+const START_Y = 11400, MOON_Y = 200;
+const GRAVITY = 30;
+const H_SPEED = 180;
+const MAX_VX = 200, MAX_VY = 250;
+const LOW_STAMINA_SPEED_MULT = 0.6;
+const RAIN_SPEED_MULT = 0.7;
+const RAIN_GRAVITY_MULT = 1.5;
+const STAMINA_MAX = 100;
+const STAMINA_PASSIVE_REGEN = 0.5;
+
+// NPC constants
+const NPC_FREE = 0, NPC_FOLLOWER = 1, NPC_TRAPPED = 2, NPC_SCATTERING = 3;
+const NPC_FOLLOW_THRESHOLD = 0.4;
+const NPC_ATTRACT_RADIUS = 200;
+const NPC_FOLLOW_LERP = 0.03;
+const NPC_MAX_FOLLOWERS = 3;
+const NPC_TRAP_RADIUS = 150;
+const NPC_SCATTER_SPEED = 20;
+const NPC_SCATTER_DURATION = 3.0;
+const NPC_BLACKOUT_CHECK_RADIUS = 300;
+const NPC_ORBIT_SPEED = 1.5 * Math.PI;
+const NPC_DRIFT_SPEED = 5;
+const NPC_SINE_AMP = 30;
+const NPC_SINE_PERIOD = 4.0;
+
+// Flight path constants
+const PATH_RECORD_INTERVAL = 0.2;
+const PATH_DRAW_RATE = 150;
+const STATE_NEUTRAL = 0, STATE_NEAR_LIGHT = 1, STATE_MESMERIZED = 2;
+const STATE_IN_MOONBEAM = 3, STATE_IN_RAIN = 4;
+const STATE_COLORS = [0x5566aa, 0xcc8844, 0xffcc22, 0x99aacc, 0x667788];
+
+// Blackout zone
+const BLACKOUT_TOP = 3500, BLACKOUT_BOTTOM = 4400;
+
+// Depth layers
+const DEPTH = {
+  BACKGROUND_STARS: 0,
+  SILHOUETTES: 5,
+  MOON_GLOW: 8,
+  MOONBEAMS: 10,
+  RAIN_BG: 12,
+  LIGHT_GLOWS: 15,
+  LIGHT_CORES: 20,
+  NPC_MOTHS: 22,
+  RAIN_DROPS: 25,
+  MOTH_TRAIL: 35,
+  MOTH_GLOW: 39,
+  MOTH: 40,
+  STAMINA_ARC: 41,
+  DEP_VIGNETTE: 90,
+  ALTITUDE_BAR: 95,
+  FLIGHT_PATH: 85,
+  UI_TEXT: 96
+};
+
+// Light type definitions
+const LIGHT_TYPES = {
+  streetlamp: { pullRadius: 120, pullStrength: 30, coreRadius: 25, baseRecharge: 15, depRate: 0.008, color: 0xffdd88, glowSize: 60 },
+  porch:      { pullRadius: 100, pullStrength: 25, coreRadius: 20, baseRecharge: 12, depRate: 0.006, color: 0xffcc66, glowSize: 45 },
+  neon:       { pullRadius: 160, pullStrength: 50, coreRadius: 30, baseRecharge: 25, depRate: 0.015, color: 0xff66aa, glowSize: 70 },
+  bonfire:    { pullRadius: 200, pullStrength: 70, coreRadius: 40, baseRecharge: 35, depRate: 0.020, color: 0xff8833, glowSize: 90 },
+  spotlight:  { pullRadius: 180, pullStrength: 60, coreRadius: 35, baseRecharge: 30, depRate: 0.018, color: 0xffffaa, glowSize: 80 }
+};
+
+function lerp(a, b, t) { return a + (b - a) * Math.min(1, Math.max(0, t)); }
+function dist(x1, y1, x2, y2) { return Math.sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)); }
+function lerpColor(c1, c2, t) {
+  const r1 = (c1>>16)&0xff, g1 = (c1>>8)&0xff, b1 = c1&0xff;
+  const r2 = (c2>>16)&0xff, g2 = (c2>>8)&0xff, b2 = c2&0xff;
+  const r = Math.round(r1+(r2-r1)*t), g = Math.round(g1+(g2-g1)*t), b = Math.round(b1+(b2-b1)*t);
+  return (r<<16)|(g<<8)|b;
+}
+function formatTime(s) {
+  const m = Math.floor(s/60);
+  const sec = Math.floor(s%60);
+  return m + ':' + (sec<10?'0':'') + sec;
+}
+
+// =============================================
+// BOOT SCENE
+// =============================================
+class BootScene extends Phaser.Scene {
+  constructor() { super('BootScene'); }
+  preload() {
+    // Generate moth texture (16x16)
+    const mg = this.make.graphics({x:0,y:0,add:false});
+    mg.fillStyle(0xd4c5a9, 1);
+    mg.fillCircle(8, 8, 4); // body
+    mg.fillStyle(0xc8b898, 0.8);
+    mg.fillEllipse(3, 6, 6, 8); // left wing
+    mg.fillEllipse(13, 6, 6, 8); // right wing
+    mg.generateTexture('moth', 16, 16);
+    mg.destroy();
+
+    // Generate NPC moth texture (12x8)
+    const ng = this.make.graphics({x:0,y:0,add:false});
+    ng.fillStyle(0xaabbcc, 0.6);
+    ng.fillCircle(6, 4, 2); // body
+    ng.fillEllipse(2, 3, 4, 3); // left wing
+    ng.fillEllipse(10, 3, 4, 3); // right wing
+    ng.generateTexture('npcMoth', 12, 8);
+    ng.destroy();
+
+    // Generate a soft glow texture (32x32)
+    const gg = this.make.graphics({x:0,y:0,add:false});
+    for (let i = 16; i > 0; i--) {
+      const a = (i/16) * 0.3;
+      gg.fillStyle(0xffffff, a);
+      gg.fillCircle(16, 16, i);
+    }
+    gg.generateTexture('glow', 32, 32);
+    gg.destroy();
+
+    // Generate raindrop texture
+    const rg = this.make.graphics({x:0,y:0,add:false});
+    rg.fillStyle(0x6688aa, 0.5);
+    rg.fillRect(0, 0, 1, 4);
+    rg.generateTexture('raindrop', 1, 4);
+    rg.destroy();
+
+    // Pixel texture for particles/misc
+    const pg = this.make.graphics({x:0,y:0,add:false});
+    pg.fillStyle(0xffffff, 1);
+    pg.fillRect(0, 0, 2, 2);
+    pg.generateTexture('pixel', 2, 2);
+    pg.destroy();
+  }
+  create() {
+    this.scene.start('TitleScene');
+  }
+}
+
+// =============================================
+// TITLE SCENE
+// =============================================
+class TitleScene extends Phaser.Scene {
+  constructor() { super('TitleScene'); }
+  create() {
+    this.cameras.main.setBackgroundColor('#0a0a1a');
+    const cx = 400, cy = 300;
+
+    // Moon illustration
+    const moonGfx = this.add.graphics();
+    moonGfx.fillStyle(0xddeeff, 0.15);
+    moonGfx.fillCircle(cx, 120, 60);
+    moonGfx.fillStyle(0xddeeff, 0.3);
+    moonGfx.fillCircle(cx, 120, 35);
+    moonGfx.fillStyle(0xeef4ff, 0.5);
+    moonGfx.fillCircle(cx, 120, 20);
+
+    // Moth silhouette
+    const mothGfx = this.add.graphics();
+    mothGfx.fillStyle(0xd4c5a9, 0.6);
+    mothGfx.fillCircle(cx, 380, 6);
+    mothGfx.fillEllipse(cx - 8, 376, 10, 14);
+    mothGfx.fillEllipse(cx + 8, 376, 10, 14);
+
+    // Light illustration below moth
+    const lightGfx = this.add.graphics();
+    lightGfx.fillStyle(0xffdd88, 0.15);
+    lightGfx.fillCircle(cx, 460, 40);
+    lightGfx.fillStyle(0xffdd88, 0.3);
+    lightGfx.fillCircle(cx, 460, 20);
+
+    // Title text
+    this.add.text(cx - 90, cy - 40, 'Moth', {
+      fontFamily: 'Georgia, serif', fontSize: '48px', color: '#6688bb'
+    });
+    this.add.text(cx + 10, cy - 40, '&', {
+      fontFamily: 'Georgia, serif', fontSize: '48px', color: '#cccccc'
+    });
+    this.add.text(cx + 40, cy - 40, 'Flame', {
+      fontFamily: 'Georgia, serif', fontSize: '48px', color: '#cc9944'
+    });
+
+    // Instructions
+    const start = this.add.text(cx, cy + 60, 'Press SPACE to begin', {
+      fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#888899'
+    }).setOrigin(0.5);
+
+    this.tweens.add({ targets: start, alpha: 0.3, duration: 1500, yoyo: true, repeat: -1 });
+
+    // Ambient drifting particles
+    for (let i = 0; i < 15; i++) {
+      const p = this.add.image(
+        100 + Math.random() * 600, 80 + Math.random() * 450, 'pixel'
+      ).setAlpha(Math.random() * 0.12 + 0.04).setTint(0xddeeff).setScale(0.4);
+      const startY = p.y;
+      this.tweens.add({
+        targets: p,
+        y: startY - 30 - Math.random() * 40,
+        alpha: 0,
+        duration: 5000 + Math.random() * 4000,
+        repeat: -1,
+        delay: Math.random() * 4000,
+        onRepeat: () => {
+          p.x = 100 + Math.random() * 600;
+          p.y = 80 + Math.random() * 450;
+          p.setAlpha(Math.random() * 0.12 + 0.04);
+        }
+      });
+    }
+
+    this.input.keyboard.once('keydown-SPACE', () => {
+      this.cameras.main.fadeOut(800, 10, 10, 26);
+      this.time.delayedCall(800, () => this.scene.start('GameScene'));
+    });
+  }
+}
+
+// =============================================
+// GAME SCENE
+// =============================================
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+
+  init() {
+    this.dependency = 0;
+    this.stamina = STAMINA_MAX;
+    this.isMesmerized = false;
+    this.mesmerizeTimer = 0;
+    this.mesmerizeLight = null;
+    this.mesmerizeAngle = 0;
+    this.flapCooldown = 0;
+    this.gameTime = 0;
+    this.timeInArtificialLight = 0;
+    this.timeInMoonlight = 0;
+    this.timeInRain = 0;
+    this.timesMesmerized = 0;
+    this.inRain = false;
+    this.insideAnyLight = false;
+    this.insideAnyMoonbeam = false;
+    this.gameOver = false;
+    this.reachedZone4 = false;
+    this.emptyStaminaTimer = 0;
+
+    // NPC
+    this.npcMoths = [];
+    this.mothsFollowing = 0;
+    this.mothsTrapped = 0;
+
+    // Flight path
+    this.flightPath = [];
+    this.pathRecordTimer = PATH_RECORD_INTERVAL;
+  }
+
+  create() {
+    this.cameras.main.setBackgroundColor('#0a0a1a');
+    this.cameras.main.fadeIn(800);
+
+    // World bounds
+    this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
+
+    // Create stars
+    this.createStars();
+
+    // Create silhouettes
+    this.createSilhouettes();
+
+    // Create moon
+    this.createMoon();
+
+    // Create moonbeams
+    this.createMoonbeams();
+
+    // Create lights
+    this.createLights();
+
+    // Create rain
+    this.createRainColumns();
+
+    // Create moth
+    this.createMoth();
+
+    // Create NPC moths
+    this.createNPCMoths();
+
+    // Camera
+    this.cameras.main.startFollow(this.moth, true, 0.1, 0.1);
+    this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
+
+    // UI (fixed to camera)
+    this.createUI();
+
+    // Controls
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    // Instructions text
+    this.instructionText = this.add.text(400, 11300,
+      'Reach the moon.\nSPACE to flap. Arrows to steer.\nWatch your stamina (blue arc). Rest near lights to recharge.', {
+      fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#8899aa',
+      align: 'center'
+    }).setOrigin(0.5).setDepth(DEPTH.UI_TEXT);
+
+    this.pathRecordTimer = PATH_RECORD_INTERVAL;
+  }
+
+  createStars() {
+    const gfx = this.add.graphics().setDepth(DEPTH.BACKGROUND_STARS);
+    for (let i = 0; i < 300; i++) {
+      const x = Math.random() * WORLD_W;
+      const y = Math.random() * WORLD_H;
+      const s = Math.random() * 1.5 + 0.5;
+      const a = Math.random() * 0.5 + 0.2;
+      gfx.fillStyle(0xddeeff, a);
+      gfx.fillCircle(x, y, s);
+    }
+    this.starGfx = gfx;
+
+    // Twinkling stars
+    for (let i = 0; i < 40; i++) {
+      const star = this.add.image(
+        Math.random() * WORLD_W, Math.random() * WORLD_H, 'pixel'
+      ).setDepth(DEPTH.BACKGROUND_STARS + 1)
+       .setAlpha(Math.random() * 0.5 + 0.2)
+       .setTint(0xddeeff).setScale(Math.random() * 0.7 + 0.4);
+      this.tweens.add({
+        targets: star,
+        alpha: { from: star.alpha, to: star.alpha * 0.2 },
+        duration: 2000 + Math.random() * 4000,
+        yoyo: true, repeat: -1,
+        delay: Math.random() * 3000
+      });
+    }
+  }
+
+  createSilhouettes() {
+    const gfx = this.add.graphics().setDepth(DEPTH.SILHOUETTES);
+    // Zone 1-2 buildings/trees at bottom
+    for (let y = WORLD_H; y > 2600; y -= 300) {
+      const isBlackout = y <= BLACKOUT_BOTTOM && y >= BLACKOUT_TOP;
+      const col = isBlackout ? 0x080810 : 0x0c0c18;
+      const numBuildings = Math.floor(Math.random() * 3) + 2;
+      for (let b = 0; b < numBuildings; b++) {
+        const bx = Math.random() * WORLD_W;
+        const bw = Math.random() * 60 + 30;
+        const bh = Math.random() * 80 + 40;
+        gfx.fillStyle(col, 0.4);
+        gfx.fillRect(bx - bw/2, y - bh, bw, bh);
+      }
+    }
+  }
+
+  createMoon() {
+    const moonGfx = this.add.graphics().setDepth(DEPTH.MOON_GLOW);
+    // Outer glow
+    for (let i = 80; i > 0; i -= 2) {
+      const a = (i/80) * 0.08;
+      moonGfx.fillStyle(0xddeeff, a);
+      moonGfx.fillCircle(400, MOON_Y, i);
+    }
+    // Core
+    moonGfx.fillStyle(0xeef4ff, 0.7);
+    moonGfx.fillCircle(400, MOON_Y, 25);
+    moonGfx.fillStyle(0xffffff, 0.9);
+    moonGfx.fillCircle(400, MOON_Y, 15);
+    this.moonGfx = moonGfx;
+  }
+
+  createMoonbeams() {
+    this.moonbeams = [];
+    const defs = [
+      // Zone 1
+      {x:150, yTop:11100}, {x:650, yTop:10700}, {x:300, yTop:10300}, {x:550, yTop:9900}, {x:400, yTop:9500},
+      // Zone 2
+      {x:350, yTop:9100}, {x:600, yTop:8600}, {x:200, yTop:6500},
+      // Zone 3
+      {x:100, yTop:5300}, {x:720, yTop:3600},
+      // Blackout moonbeam
+      {x:400, yTop:4000}
+    ];
+    const gfx = this.add.graphics().setDepth(DEPTH.MOONBEAMS);
+    for (const d of defs) {
+      const beam = { x: d.x, yTop: d.yTop, yBottom: d.yTop + 400, width: 60 };
+      // Draw moonbeam shaft
+      gfx.fillStyle(0x99aacc, 0.08);
+      gfx.fillRect(d.x - 30, d.yTop, 60, 400);
+      gfx.fillStyle(0x99aacc, 0.12);
+      gfx.fillRect(d.x - 15, d.yTop, 30, 400);
+      this.moonbeams.push(beam);
+    }
+    this.moonbeamGfx = gfx;
+
+    // Moonbeam mote particles
+    this.moonMotes = [];
+    for (const mb of this.moonbeams) {
+      for (let i = 0; i < 5; i++) {
+        const mote = this.add.image(
+          mb.x - 20 + Math.random() * 40,
+          mb.yTop + Math.random() * (mb.yBottom - mb.yTop),
+          'pixel'
+        ).setDepth(DEPTH.MOONBEAMS + 1).setAlpha(0.12).setTint(0xccddee).setScale(0.4);
+        this.moonMotes.push({ sprite: mote, beam: mb, baseAlpha: 0.08 + Math.random() * 0.08 });
+      }
+    }
+  }
+
+  createLights() {
+    this.lights_ = []; // avoid conflict with Phaser's 'lights'
+    const defs = [
+      // Zone 1 streetlamps
+      {type:'streetlamp', x:200, y:11000},
+      {type:'streetlamp', x:600, y:10800},
+      {type:'streetlamp', x:350, y:10400},
+      {type:'streetlamp', x:550, y:10000},
+      {type:'streetlamp', x:150, y:9600},
+      // Zone 1 porch
+      {type:'porch', x:450, y:10600},
+      {type:'porch', x:700, y:10200},
+      {type:'porch', x:300, y:9400},
+      // Zone 2 porch
+      {type:'porch', x:200, y:9000},  // 8
+      {type:'porch', x:500, y:8800},
+      {type:'porch', x:650, y:8400},
+      {type:'porch', x:300, y:7400},
+      {type:'porch', x:450, y:7000},
+      {type:'porch', x:350, y:6400},
+      // Zone 2 neon
+      {type:'neon', x:350, y:8200},   // 14
+      {type:'neon', x:150, y:7800},
+      {type:'neon', x:600, y:7200},
+      {type:'neon', x:200, y:6800},   // 17
+      // Zone 2 bonfire
+      {type:'bonfire', x:500, y:7600},
+      {type:'bonfire', x:650, y:6600},
+      // Zone 3 neon
+      {type:'neon', x:200, y:6000},   // 20
+      {type:'neon', x:350, y:5500},
+      {type:'neon', x:650, y:5200},   // 22
+      {type:'neon', x:450, y:4600},
+      {type:'neon', x:300, y:3200},
+      // Zone 3 spotlight
+      {type:'spotlight', x:500, y:5800}, // 25
+      {type:'spotlight', x:150, y:4900},
+      {type:'spotlight', x:600, y:3400}, // 27
+      // Zone 3 streetlamp clusters
+      {type:'streetlamp', x:100, y:5600},
+      {type:'streetlamp', x:700, y:5400},
+      {type:'streetlamp', x:250, y:5100},
+      {type:'streetlamp', x:550, y:4800},
+      {type:'streetlamp', x:400, y:4500},
+      {type:'streetlamp', x:150, y:3100},
+      {type:'streetlamp', x:650, y:2900},
+      {type:'streetlamp', x:350, y:2700}
+    ];
+
+    this.lightGfx = this.add.graphics().setDepth(DEPTH.LIGHT_GLOWS);
+    this.lightCoreGfx = this.add.graphics().setDepth(DEPTH.LIGHT_CORES);
+
+    for (const d of defs) {
+      // Skip lights in blackout zone
+      if (d.y <= BLACKOUT_BOTTOM && d.y >= BLACKOUT_TOP) continue;
+      const lt = LIGHT_TYPES[d.type];
+      const light = {
+        x: d.x, y: d.y,
+        type: d.type,
+        pullRadius: lt.pullRadius,
+        pullStrength: lt.pullStrength,
+        coreRadius: lt.coreRadius,
+        baseRecharge: lt.baseRecharge,
+        depRate: lt.depRate,
+        color: lt.color,
+        glowSize: lt.glowSize
+      };
+      this.lights_.push(light);
+    }
+    this.drawLights();
+  }
+
+  drawLights() {
+    this.lightGfx.clear();
+    this.lightCoreGfx.clear();
+    for (const l of this.lights_) {
+      const depScale = 1 + this.dependency * 0.3;
+      const brightScale = 1 + this.dependency * 0.4;
+      const flickerPhase = (l.x * 7 + l.y * 13) % 100;
+      const flicker = 1 + Math.sin(this.gameTime * (1.5 + (flickerPhase % 3) * 0.5) + flickerPhase) * 0.08;
+      const gs = l.glowSize * depScale * flicker;
+      // Outer glow
+      for (let i = gs; i > 0; i -= 3) {
+        const a = (i/gs) * 0.06 * brightScale;
+        this.lightGfx.fillStyle(l.color, Math.min(a, 0.15));
+        this.lightGfx.fillCircle(l.x, l.y, i);
+      }
+      // Core
+      this.lightCoreGfx.fillStyle(l.color, 0.6 * brightScale);
+      this.lightCoreGfx.fillCircle(l.x, l.y, l.coreRadius * 0.4);
+    }
+  }
+
+  createRainColumns() {
+    this.rainColumns = [
+      { x: 200, yTop: 7900, yBottom: 8500, width: 80 },
+      { x: 600, yTop: 6800, yBottom: 7400, width: 80 },
+      { x: 400, yTop: 4000, yBottom: 4800, width: 80 }
+    ];
+
+    this.rainGfx = this.add.graphics().setDepth(DEPTH.RAIN_BG);
+    for (const rc of this.rainColumns) {
+      this.rainGfx.fillStyle(0x4466aa, 0.06);
+      this.rainGfx.fillRect(rc.x - rc.width/2, rc.yTop, rc.width, rc.yBottom - rc.yTop);
+    }
+
+    // Create rain particles
+    this.rainDrops = [];
+    for (const rc of this.rainColumns) {
+      for (let i = 0; i < 30; i++) {
+        const rd = this.add.image(
+          rc.x - rc.width/2 + Math.random() * rc.width,
+          rc.yTop + Math.random() * (rc.yBottom - rc.yTop),
+          'pixel'
+        ).setDepth(DEPTH.RAIN_DROPS).setAlpha(0.3).setTint(0x6688aa).setScale(0.5, 2);
+        this.rainDrops.push({ sprite: rd, col: rc });
+      }
+    }
+  }
+
+  createMoth() {
+    this.moth = this.physics.add.image(400, START_Y, 'moth').setDepth(DEPTH.MOTH);
+    this.moth.setCircle(6, 2, 2);
+    this.moth.setCollideWorldBounds(true);
+    this.moth.body.setMaxVelocity(MAX_VX, MAX_VY);
+
+    // Moth glow
+    this.mothGlow = this.add.image(400, START_Y, 'glow').setDepth(DEPTH.MOTH_GLOW)
+      .setScale(2).setAlpha(0.2).setTint(0xd4c5a9);
+
+    // Trail particles - simple array
+    this.trailParticles = [];
+  }
+
+  createNPCMoths() {
+    // Free moths
+    const freeDefs = [
+      {x:160, y:11050}, {x:640, y:10650}, {x:310, y:10250},
+      {x:540, y:9850}, {x:410, y:9450},
+      {x:360, y:9050}, {x:590, y:8550}, {x:210, y:6450}
+    ];
+    for (const def of freeDefs) {
+      const sprite = this.add.image(def.x, def.y, 'npcMoth')
+        .setDepth(DEPTH.NPC_MOTHS).setAlpha(0.6).setTint(0xaabbcc);
+      this.npcMoths.push({
+        sprite, state: NPC_FREE,
+        baseX: def.x, baseY: def.y,
+        phase: Math.random() * Math.PI * 2,
+        followDistance: 0, parentLight: null,
+        orbitAngle: 0, scatterTimer: 0,
+        scatterVelX: 0, scatterVelY: 0
+      });
+    }
+
+    // Trapped moths - find lights by position
+    const trapLightPositions = [
+      {x:350, y:8200}, {x:200, y:6800},
+      {x:200, y:6000}, {x:500, y:5800},
+      {x:650, y:5200}, {x:600, y:3400}
+    ];
+    for (const tlp of trapLightPositions) {
+      const light = this.lights_.find(l => l.x === tlp.x && l.y === tlp.y);
+      if (!light) continue;
+      const sprite = this.add.image(light.x, light.y, 'npcMoth')
+        .setDepth(DEPTH.NPC_MOTHS).setAlpha(0.5).setTint(0xcc9955);
+      this.npcMoths.push({
+        sprite, state: NPC_TRAPPED,
+        baseX: light.x, baseY: light.y,
+        phase: 0, followDistance: 0,
+        parentLight: light,
+        orbitAngle: Math.random() * Math.PI * 2,
+        scatterTimer: 0, scatterVelX: 0, scatterVelY: 0
+      });
+    }
+  }
+
+  createUI() {
+    // Stamina arc graphics (will follow moth via update)
+    this.staminaGfx = this.add.graphics().setDepth(DEPTH.STAMINA_ARC);
+
+    // Dependency vignette (fixed to camera via scrollFactor)
+    this.vignetteGfx = this.add.graphics().setDepth(DEPTH.DEP_VIGNETTE).setScrollFactor(0);
+
+    // Altitude bar (fixed to camera)
+    this.altBarGfx = this.add.graphics().setDepth(DEPTH.ALTITUDE_BAR).setScrollFactor(0);
+  }
+
+  update(time, delta) {
+    if (this.gameOver) return;
+    const dt = delta / 1000;
+    this.gameTime += dt;
+
+    // Update rain drop animations
+    for (const rd of this.rainDrops) {
+      rd.sprite.y += 120 * dt;
+      if (rd.sprite.y > rd.col.yBottom) {
+        rd.sprite.y = rd.col.yTop;
+        rd.sprite.x = rd.col.x - rd.col.width/2 + Math.random() * rd.col.width;
+      }
+    }
+
+    if (this.isMesmerized) {
+      this.updateMesmerize(dt);
+    } else {
+      this.updateMovement(time, dt);
+    }
+
+    this.updateLightInteractions(dt);
+    this.updateMoonbeamInteractions(dt);
+    this.updateRainInteractions(dt);
+    this.updateStamina(dt);
+    this.updateNPCMoths(time, dt);
+    this.updateFlightPathRecording(dt);
+    this.updateVisuals(dt);
+    this.updateUI();
+    this.checkWinLose();
+
+    // Update moth glow
+    // Glow pulses like a heartbeat — quickens with dependency
+    const pulseRate = 1 + this.dependency * 3;
+    const pulse = Math.sin(this.gameTime * pulseRate * Math.PI * 2);
+    const glowScale = (2 + this.dependency * 3) * (1 + pulse * 0.08 * (1 + this.dependency));
+    const glowAlpha = (0.15 + this.dependency * 0.3) * (1 + pulse * 0.12);
+    const glowTint = lerpColor(0xd4c5a9, 0xffaa44, this.dependency);
+    this.mothGlow.setPosition(this.moth.x, this.moth.y);
+    this.mothGlow.setScale(glowScale).setAlpha(glowAlpha).setTint(glowTint);
+
+    // Update moth wing color based on dependency (skip during mesmerize for visual feedback)
+    if (!this.isMesmerized) {
+      const wingTint = lerpColor(0xc8d8e8, 0xddaa66, this.dependency);
+      this.moth.setTint(wingTint);
+    }
+
+    // Continuous wing flutter — frequency and amplitude increase with dependency
+    const wingFreq = lerp(2, 5, this.dependency);
+    const wingFlutter = Math.sin(this.gameTime * wingFreq * Math.PI * 2);
+    this.moth.scaleX = 1 + wingFlutter * lerp(0.06, 0.12, this.dependency);
+
+    // Animate moonbeam motes
+    for (const mp of this.moonMotes) {
+      mp.sprite.y -= 10 * dt;
+      mp.sprite.x += Math.sin(this.gameTime * 1.5 + mp.sprite.y * 0.02) * 0.4;
+      if (mp.sprite.y < mp.beam.yTop) {
+        mp.sprite.y = mp.beam.yBottom;
+        mp.sprite.x = mp.beam.x - 20 + Math.random() * 40;
+      }
+      mp.sprite.setAlpha(mp.baseAlpha * (1 - this.dependency * 0.6));
+    }
+
+    // Trail
+    if (this.gameTime % 0.05 < dt) {
+      const tp = this.add.image(this.moth.x, this.moth.y, 'pixel')
+        .setDepth(DEPTH.MOTH_TRAIL).setAlpha(0.3).setTint(glowTint).setScale(1);
+      this.tweens.add({ targets: tp, alpha: 0, scaleX: 0, scaleY: 0, duration: 500,
+        onComplete: () => tp.destroy() });
+    }
+
+    // Fade instruction text
+    if (this.instructionText && this.moth.y < START_Y - 200) {
+      this.instructionText.setAlpha(Math.max(0, 1 - (START_Y - 200 - this.moth.y) / 300));
+    }
+
+    // Camera breathing at high dependency — world feels unstable
+    if (this.dependency > 0.3) {
+      const breathRate = 0.4 + this.dependency;
+      const breathAmt = (this.dependency - 0.3) * 0.02;
+      this.cameras.main.setZoom(1 + Math.sin(this.gameTime * breathRate * Math.PI * 2) * breathAmt);
+    } else if (this.cameras.main.zoom !== 1) {
+      this.cameras.main.setZoom(1);
+    }
+  }
+
+  updateMovement(time, dt) {
+    // Dynamic physics based on dependency
+    const curFlapImpulse = lerp(-120, -70, this.dependency);
+    const curFlapInterval = lerp(0.15, 0.09, this.dependency);
+    const curFlapCost = lerp(1.5, 1.0, this.dependency);
+    const curHDrag = lerp(0.88, 0.78, this.dependency);
+
+    // Apply gravity
+    let grav = GRAVITY;
+    if (this.inRain) grav *= RAIN_GRAVITY_MULT;
+    this.moth.body.velocity.y += grav * dt;
+
+    // Horizontal movement
+    let targetVX = 0;
+    if (this.cursors.left.isDown) targetVX = -H_SPEED;
+    if (this.cursors.right.isDown) targetVX = H_SPEED;
+    if (this.stamina <= 0) targetVX *= LOW_STAMINA_SPEED_MULT;
+    if (this.inRain) targetVX *= RAIN_SPEED_MULT;
+
+    if (targetVX === 0) {
+      this.moth.body.velocity.x *= curHDrag;
+    } else {
+      const cvx = this.moth.body.velocity.x;
+      this.moth.body.velocity.x = cvx + (targetVX - cvx) * 0.12;
+    }
+
+    // Flapping
+    this.flapCooldown -= dt;
+    // Visual feedback when trying to flap with no stamina
+    if (this.spaceKey.isDown && this.flapCooldown <= 0 && this.stamina <= 0 && !this.isMesmerized) {
+      this.flapCooldown = 0.3;
+      this.moth.setTint(0xff4444);
+      this.time.delayedCall(120, () => {
+        if (!this.isMesmerized) {
+          const wingTint = lerpColor(0xc8d8e8, 0xddaa66, this.dependency);
+          this.moth.setTint(wingTint);
+        }
+      });
+    }
+    if (this.spaceKey.isDown && this.flapCooldown <= 0 && this.stamina > 0 && !this.isMesmerized) {
+      this.moth.body.velocity.y += curFlapImpulse;
+      this.stamina -= curFlapCost;
+      this.flapCooldown = curFlapInterval;
+      // Flap animation
+      const squeezeAmt = lerp(0.7, 0.85, this.dependency);
+      const squeezeDur = lerp(60, 35, this.dependency);
+      this.tweens.add({ targets: this.moth, scaleY: squeezeAmt, duration: squeezeDur, yoyo: true });
+    }
+
+    // Clamp velocity
+    this.moth.body.velocity.x = Phaser.Math.Clamp(this.moth.body.velocity.x, -MAX_VX, MAX_VX);
+    this.moth.body.velocity.y = Phaser.Math.Clamp(this.moth.body.velocity.y, -MAX_VY, MAX_VY);
+
+    // Tilt moth in direction of movement
+    this.moth.rotation = this.moth.body.velocity.x * 0.003;
+  }
+
+  updateMesmerize(dt) {
+    if (!this.mesmerizeLight) return;
+    const light = this.mesmerizeLight;
+
+    // Orbit around light
+    this.mesmerizeAngle += 2 * Math.PI * dt * 0.5;
+    const orbitR = light.coreRadius * 1.5;
+    this.moth.x = light.x + Math.cos(this.mesmerizeAngle) * orbitR;
+    this.moth.y = light.y + Math.sin(this.mesmerizeAngle) * orbitR;
+    this.moth.body.velocity.x = 0;
+    this.moth.body.velocity.y = 0;
+
+    // Increase dependency at 2x rate
+    this.dependency = Math.min(1, this.dependency + light.depRate * 2 * dt);
+
+    // Recharge stamina from light
+    this.stamina = Math.min(STAMINA_MAX, this.stamina + light.baseRecharge * (0.5 + this.dependency * 0.5) * dt);
+    this.timeInArtificialLight += dt;
+
+    this.mesmerizeTimer -= dt;
+    if (this.mesmerizeTimer <= 0) {
+      this.endMesmerize();
+    }
+  }
+
+  startMesmerize(light) {
+    this.isMesmerized = true;
+    this.mesmerizeTimer = 2.0 + this.dependency * 2.0;
+    this.mesmerizeLight = light;
+    this.mesmerizeAngle = Math.atan2(this.moth.y - light.y, this.moth.x - light.x);
+    this.timesMesmerized++;
+
+    if (this.dependency < 0.3) {
+      this.moth.setTint(0xff6644);
+    } else {
+      this.moth.setTint(0xffcc44);
+    }
+    this.cameras.main.shake(150, 0.003);
+
+    // Trap nearby followers
+    for (const npc of this.npcMoths) {
+      if (npc.state === NPC_FOLLOWER) {
+        const d = dist(npc.sprite.x, npc.sprite.y, light.x, light.y);
+        if (d < NPC_TRAP_RADIUS) {
+          const targetX = light.x + Math.cos(npc.orbitAngle) * light.coreRadius;
+          const targetY = light.y + Math.sin(npc.orbitAngle) * light.coreRadius;
+          this.tweens.add({
+            targets: npc.sprite, x: targetX, y: targetY,
+            duration: 500, ease: 'Sine.easeIn',
+            onComplete: () => {
+              npc.state = NPC_TRAPPED;
+              npc.parentLight = light;
+              npc.orbitAngle = Math.atan2(npc.sprite.y - light.y, npc.sprite.x - light.x);
+            }
+          });
+          npc.sprite.setTint(0xcc9955);
+          this.mothsFollowing--;
+          this.mothsTrapped++;
+        }
+      }
+    }
+  }
+
+  endMesmerize() {
+    this.isMesmerized = false;
+    this.mesmerizeLight = null;
+    // Push moth away
+    this.moth.body.velocity.y = -80;
+    this.moth.body.velocity.x = (Math.random() - 0.5) * 100;
+  }
+
+  updateLightInteractions(dt) {
+    this.insideAnyLight = false;
+    if (this.isMesmerized) return;
+
+    for (const light of this.lights_) {
+      const d = dist(this.moth.x, this.moth.y, light.x, light.y);
+      const depScale = 1 + this.dependency * 0.3;
+      const effectivePull = light.pullRadius * depScale;
+
+      if (d < effectivePull) {
+        this.insideAnyLight = true;
+
+        // Pull force toward light
+        const pullFactor = 1 - (d / effectivePull);
+        const angle = Math.atan2(light.y - this.moth.y, light.x - this.moth.x);
+        const force = light.pullStrength * pullFactor;
+        this.moth.body.velocity.x += Math.cos(angle) * force * dt;
+        this.moth.body.velocity.y += Math.sin(angle) * force * dt;
+
+        // Recharge stamina
+        this.stamina = Math.min(STAMINA_MAX, this.stamina + light.baseRecharge * (0.5 + this.dependency * 0.5) * dt);
+
+        // Increase dependency
+        this.dependency = Math.min(1, this.dependency + light.depRate * dt);
+
+        this.timeInArtificialLight += dt;
+
+        // Mesmerize if inside core
+        if (d < light.coreRadius && !this.isMesmerized) {
+          this.startMesmerize(light);
+          return;
+        }
+      }
+    }
+  }
+
+  updateMoonbeamInteractions(dt) {
+    this.insideAnyMoonbeam = false;
+    for (const mb of this.moonbeams) {
+      if (this.moth.x > mb.x - mb.width/2 && this.moth.x < mb.x + mb.width/2 &&
+          this.moth.y > mb.yTop && this.moth.y < mb.yBottom) {
+        this.insideAnyMoonbeam = true;
+        const regen = 20 * (1 - this.dependency);
+        this.stamina = Math.min(STAMINA_MAX, this.stamina + regen * dt);
+        this.timeInMoonlight += dt;
+      }
+    }
+  }
+
+  updateRainInteractions(dt) {
+    this.inRain = false;
+    for (const rc of this.rainColumns) {
+      if (this.moth.x > rc.x - rc.width/2 && this.moth.x < rc.x + rc.width/2 &&
+          this.moth.y > rc.yTop && this.moth.y < rc.yBottom) {
+        this.inRain = true;
+        this.dependency = Math.max(0, this.dependency - 0.012 * dt);
+        this.timeInRain += dt;
+      }
+    }
+  }
+
+  updateStamina(dt) {
+    // Base drain
+    const drain = (2 + this.dependency * 6) * dt;
+    this.stamina -= drain;
+
+    // Passive regen
+    this.stamina += STAMINA_PASSIVE_REGEN * dt;
+
+    // Zone 4 moon regen
+    if (this.moth.y < 2600) {
+      this.stamina += 15 * (1 - this.dependency) * dt;
+    }
+
+    this.stamina = Phaser.Math.Clamp(this.stamina, 0, STAMINA_MAX);
+
+    // Emergency recovery: if stamina has been near 0 for 5+ seconds, slowly restore
+    if (this.stamina <= 0) {
+      this.emptyStaminaTimer += dt;
+      if (this.emptyStaminaTimer > 5) {
+        this.stamina += 3 * dt;
+      }
+    } else if (this.stamina > 5) {
+      this.emptyStaminaTimer = 0;
+    }
+  }
+
+  updateNPCMoths(time, dt) {
+    for (const npc of this.npcMoths) {
+      if (npc.state === NPC_FREE) {
+        // Drift upward with sine wave
+        npc.sprite.y -= NPC_DRIFT_SPEED * dt;
+        npc.sprite.x = npc.baseX + Math.sin(time/1000 * Math.PI/2 + npc.phase) * NPC_SINE_AMP;
+
+        // Check conversion to follower
+        if (this.dependency > NPC_FOLLOW_THRESHOLD && this.mothsFollowing < NPC_MAX_FOLLOWERS) {
+          const d = dist(this.moth.x, this.moth.y, npc.sprite.x, npc.sprite.y);
+          if (d < NPC_ATTRACT_RADIUS) {
+            npc.state = NPC_FOLLOWER;
+            npc.followDistance = Phaser.Math.Between(40, 60);
+            this.mothsFollowing++;
+            // Tint transition
+            this.tweens.addCounter({
+              from: 0, to: 1, duration: 3000,
+              onUpdate: (tween) => {
+                const t = tween.getValue();
+                npc.sprite.setTint(lerpColor(0xaabbcc, 0xcc9955, t));
+              }
+            });
+          }
+        }
+      } else if (npc.state === NPC_FOLLOWER) {
+        // Check blackout scatter
+        const nearestLD = this.distToNearestLight(npc.sprite.x, npc.sprite.y);
+        if (nearestLD > NPC_BLACKOUT_CHECK_RADIUS) {
+          this.scatterFollower(npc);
+          continue;
+        }
+
+        // Check rain avoidance
+        if (this.inRain) {
+          let inColumn = false;
+          for (const rc of this.rainColumns) {
+            if (this.moth.x > rc.x - rc.width/2 && this.moth.x < rc.x + rc.width/2) {
+              inColumn = true;
+              // Hover at column edge
+              if (npc.sprite.x < rc.x) {
+                npc.sprite.x = rc.x - rc.width/2 - 15;
+              } else {
+                npc.sprite.x = rc.x + rc.width/2 + 15;
+              }
+              npc.sprite.y += (this.moth.y - npc.sprite.y) * 0.02;
+            }
+          }
+          if (this.dependency < NPC_FOLLOW_THRESHOLD) {
+            npc.state = NPC_FREE;
+            npc.baseX = npc.sprite.x;
+            this.mothsFollowing--;
+            npc.sprite.setTint(0xaabbcc);
+          }
+          continue;
+        }
+
+        // Normal follow
+        const targetX = this.moth.x;
+        const targetY = this.moth.y + npc.followDistance;
+        npc.sprite.x += (targetX - npc.sprite.x) * NPC_FOLLOW_LERP;
+        npc.sprite.y += (targetY - npc.sprite.y) * NPC_FOLLOW_LERP;
+
+      } else if (npc.state === NPC_TRAPPED) {
+        if (!npc.parentLight) continue;
+        npc.orbitAngle += NPC_ORBIT_SPEED * dt;
+        npc.sprite.x = npc.parentLight.x + Math.cos(npc.orbitAngle) * npc.parentLight.coreRadius;
+        npc.sprite.y = npc.parentLight.y + Math.sin(npc.orbitAngle) * npc.parentLight.coreRadius;
+
+      } else if (npc.state === NPC_SCATTERING) {
+        npc.sprite.x += npc.scatterVelX * dt;
+        npc.sprite.y += npc.scatterVelY * dt;
+        npc.scatterTimer -= dt;
+        if (npc.scatterTimer <= 0) {
+          npc.state = NPC_FREE;
+          npc.baseX = npc.sprite.x;
+          this.mothsFollowing--;
+        }
+      }
+    }
+  }
+
+  scatterFollower(npc) {
+    const angle = Math.random() * Math.PI * 2;
+    npc.state = NPC_SCATTERING;
+    npc.scatterVelX = Math.cos(angle) * NPC_SCATTER_SPEED;
+    npc.scatterVelY = Math.sin(angle) * NPC_SCATTER_SPEED;
+    npc.scatterTimer = NPC_SCATTER_DURATION;
+    npc.sprite.setTint(0xaabbcc);
+  }
+
+  distToNearestLight(x, y) {
+    let minD = Infinity;
+    for (const l of this.lights_) {
+      const d = dist(x, y, l.x, l.y);
+      if (d < minD) minD = d;
+    }
+    return minD;
+  }
+
+  updateFlightPathRecording(dt) {
+    this.pathRecordTimer -= dt;
+    if (this.pathRecordTimer <= 0) {
+      this.pathRecordTimer = PATH_RECORD_INTERVAL;
+      let state = STATE_NEUTRAL;
+      if (this.isMesmerized) state = STATE_MESMERIZED;
+      else if (this.inRain) state = STATE_IN_RAIN;
+      else if (this.insideAnyMoonbeam) state = STATE_IN_MOONBEAM;
+      else if (this.insideAnyLight) state = STATE_NEAR_LIGHT;
+      this.flightPath.push({ x: this.moth.x, y: this.moth.y, state: state });
+    }
+  }
+
+  updateVisuals(dt) {
+    // Redraw lights periodically to reflect dependency scaling
+    if (Math.floor(this.gameTime * 2) !== Math.floor((this.gameTime - dt) * 2)) {
+      this.drawLights();
+    }
+
+    // Update moonbeam visuals based on dependency (dimming)
+    if (Math.floor(this.gameTime * 2) !== Math.floor((this.gameTime - dt) * 2)) {
+      this.moonbeamGfx.clear();
+      const mbAlpha = 0.12 * (1 - this.dependency * 0.6);
+      const mbAlpha2 = 0.08 * (1 - this.dependency * 0.6);
+      for (const mb of this.moonbeams) {
+        this.moonbeamGfx.fillStyle(0x99aacc, mbAlpha2);
+        this.moonbeamGfx.fillRect(mb.x - 30, mb.yTop, 60, mb.yBottom - mb.yTop);
+        this.moonbeamGfx.fillStyle(0x99aacc, mbAlpha);
+        this.moonbeamGfx.fillRect(mb.x - 15, mb.yTop, 30, mb.yBottom - mb.yTop);
+      }
+    }
+  }
+
+  updateUI() {
+    // Stamina arc around moth
+    this.staminaGfx.clear();
+    const stPct = this.stamina / STAMINA_MAX;
+    const arcAngle = stPct * Math.PI * 1.5;
+    const arcColor = stPct > 0.3 ? 0x88aacc : 0xcc4444;
+    this.staminaGfx.lineStyle(2, arcColor, 0.6);
+    this.staminaGfx.beginPath();
+    this.staminaGfx.arc(this.moth.x, this.moth.y, 14, -Math.PI * 0.75, -Math.PI * 0.75 + arcAngle);
+    this.staminaGfx.strokePath();
+
+    // Dependency vignette
+    this.vignetteGfx.clear();
+    if (this.dependency > 0.05) {
+      const vPulse = 1 + Math.sin(this.gameTime * (1 + this.dependency * 3) * Math.PI * 2) * this.dependency * 0.1;
+      const va = this.dependency * 0.4 * vPulse;
+      const vigColor = lerpColor(0x332211, 0x553311, this.dependency);
+      // Draw border rectangles
+      const bw = 40 * this.dependency;
+      this.vignetteGfx.fillStyle(vigColor, va);
+      this.vignetteGfx.fillRect(0, 0, bw, 600); // left
+      this.vignetteGfx.fillRect(800 - bw, 0, bw, 600); // right
+      this.vignetteGfx.fillRect(0, 0, 800, bw * 0.7); // top
+      this.vignetteGfx.fillRect(0, 600 - bw * 0.7, 800, bw * 0.7); // bottom
+    }
+
+    // Altitude bar
+    this.altBarGfx.clear();
+    const progress = 1 - (this.moth.y - MOON_Y) / (START_Y - MOON_Y);
+    const barH = 500;
+    const barY = 50;
+    const barX = 785;
+    // Background
+    this.altBarGfx.fillStyle(0x222233, 0.3);
+    this.altBarGfx.fillRect(barX, barY, 6, barH);
+    // Progress
+    const fillH = barH * Math.max(0, Math.min(1, progress));
+    const barColor = lerpColor(0x556688, 0xaaccff, progress);
+    this.altBarGfx.fillStyle(barColor, 0.5);
+    this.altBarGfx.fillRect(barX, barY + barH - fillH, 6, fillH);
+    // Moon marker
+    this.altBarGfx.fillStyle(0xeef4ff, 0.7);
+    this.altBarGfx.fillCircle(barX + 3, barY, 4);
+    // Moth position
+    this.altBarGfx.fillStyle(0xd4c5a9, 0.8);
+    this.altBarGfx.fillCircle(barX + 3, barY + barH - fillH, 3);
+  }
+
+  checkWinLose() {
+    // Win
+    if (this.moth.y < 350) {
+      this.triggerEnding();
+      return;
+    }
+    // Track if moth entered zone 4
+    if (this.moth.y < 2600) {
+      this.reachedZone4 = true;
+    }
+    // Fail: was in zone 4, stamina 0, drifted back below y=3000
+    if (this.reachedZone4 && this.stamina <= 0 && this.moth.y > 3000) {
+      this.triggerFail();
+      return;
+    }
+    // Also fail if game time exceeds 6 minutes and stamina is 0
+    if (this.gameTime > 360 && this.stamina <= 0) {
+      this.triggerFail();
+    }
+  }
+
+  triggerEnding() {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    let endType;
+    if (this.dependency < 0.3) endType = 'clean';
+    else if (this.dependency < 0.6) endType = 'mixed';
+    else endType = 'dependent';
+    this.cameras.main.fadeOut(1500, 0, 0, 0);
+    this.time.delayedCall(1500, () => {
+      this.scene.start('EndScene', this.buildStats(endType));
+    });
+  }
+
+  triggerFail() {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    this.cameras.main.fadeOut(2000, 0, 0, 0);
+    this.time.delayedCall(2000, () => {
+      this.scene.start('EndScene', this.buildStats('failed'));
+    });
+  }
+
+  buildStats(endType) {
+    return {
+      endType,
+      dependency: this.dependency,
+      timeInArtificialLight: this.timeInArtificialLight,
+      timeInMoonlight: this.timeInMoonlight,
+      timeInRain: this.timeInRain,
+      gameTime: this.gameTime,
+      timesMesmerized: this.timesMesmerized,
+      mothsFollowing: this.mothsFollowing,
+      mothsTrapped: this.mothsTrapped,
+      flightPath: this.flightPath
+    };
+  }
+}
+
+// =============================================
+// END SCENE
+// =============================================
+class EndScene extends Phaser.Scene {
+  constructor() { super('EndScene'); }
+
+  init(data) {
+    this.stats = data;
+    this.flightPath = data.flightPath || [];
+  }
+
+  create() {
+    const d = this.stats;
+    const cx = 400;
+
+    switch (d.endType) {
+      case 'clean':
+        this.cameras.main.setBackgroundColor('#c8ced6');
+        this.add.text(cx, 80, 'You found the moon.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '28px', color: '#2a2a3a'
+        }).setOrigin(0.5).setDepth(100);
+        break;
+      case 'mixed':
+        this.cameras.main.setBackgroundColor('#b0b0a8');
+        this.add.text(cx, 70, 'You reached the moon.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '28px', color: '#4a4a3a'
+        }).setOrigin(0.5).setDepth(100);
+        const sub1 = this.add.text(cx, 100, 'It was enough.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#777766'
+        }).setOrigin(0.5).setAlpha(0).setDepth(100);
+        this.tweens.add({ targets: sub1, alpha: 1, delay: 1500, duration: 800 });
+        break;
+      case 'dependent':
+        this.cameras.main.setBackgroundColor('#c8a878');
+        this.add.text(cx, 80, 'The moon was not what you remembered.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '24px', color: '#3a2a1a'
+        }).setOrigin(0.5).setDepth(100);
+        break;
+      case 'failed':
+        this.cameras.main.setBackgroundColor('#1a1008');
+        this.add.text(cx, 70, 'You looked for the moon.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '26px', color: '#886644'
+        }).setOrigin(0.5).setDepth(100);
+        const sub2 = this.add.text(cx, 100, 'It looked different than you remembered.', {
+          fontFamily: 'Arial, sans-serif', fontSize: '16px', color: '#665533'
+        }).setOrigin(0.5).setAlpha(0).setDepth(100);
+        this.tweens.add({ targets: sub2, alpha: 1, delay: 2000, duration: 1000 });
+        break;
+    }
+
+    // Flight path visualization
+    this.pathGfx = this.add.graphics().setDepth(DEPTH.FLIGHT_PATH).setAlpha(0);
+    this.tweens.add({ targets: this.pathGfx, alpha: 0.7, delay: 2000, duration: 500 });
+
+    this.pathIndex = 0;
+    if (this.flightPath.length > 1) {
+      this.time.delayedCall(2500, () => {
+        this.pathDrawEvent = this.time.addEvent({
+          delay: 1000 / PATH_DRAW_RATE,
+          callback: () => {
+            const i = this.pathIndex;
+            if (i >= this.flightPath.length - 1) return;
+            const p1 = this.flightPath[i];
+            const p2 = this.flightPath[i + 1];
+            const sx1 = 300 + (p1.x / 800) * 200;
+            const sy1 = 450 - ((11400 - p1.y) / 11200) * 370;
+            const sx2 = 300 + (p2.x / 800) * 200;
+            const sy2 = 450 - ((11400 - p2.y) / 11200) * 370;
+            const color = STATE_COLORS[p1.state];
+            this.pathGfx.lineStyle(1.5, color, 0.7);
+            this.pathGfx.beginPath();
+            this.pathGfx.moveTo(sx1, sy1);
+            this.pathGfx.lineTo(sx2, sy2);
+            this.pathGfx.strokePath();
+            // Mesmerize marker
+            if (p2.state === STATE_MESMERIZED && p1.state !== STATE_MESMERIZED) {
+              this.pathGfx.fillStyle(0xffcc22, 0.8);
+              this.pathGfx.fillCircle(sx2, sy2, 4);
+            }
+            this.pathIndex++;
+          },
+          callbackScope: this,
+          repeat: this.flightPath.length - 2
+        });
+      });
+    }
+
+    // Stats
+    const pathDuration = this.flightPath.length > 1
+      ? ((this.flightPath.length / PATH_DRAW_RATE) * 1000) : 0;
+    const statsDelay = 2500 + pathDuration + 800;
+
+    const statColor = (d.endType === 'failed') ? '#886655' : '#888877';
+    const statsData = [
+      'Dependency: ' + Math.round(d.dependency * 100) + '%',
+      'Moths still following: ' + d.mothsFollowing,
+      'Moths lost to lights: ' + d.mothsTrapped,
+      'Time near artificial light: ' + formatTime(d.timeInArtificialLight),
+      'Time in moonlight: ' + formatTime(d.timeInMoonlight),
+      'Time in rain: ' + formatTime(d.timeInRain)
+    ];
+
+    for (let i = 0; i < statsData.length; i++) {
+      const t = this.add.text(cx, 475 + i * 20, statsData[i], {
+        fontFamily: 'Arial, sans-serif', fontSize: '13px', color: statColor
+      }).setOrigin(0.5).setAlpha(0);
+      this.tweens.add({ targets: t, alpha: 1, delay: statsDelay + i * 300, duration: 500 });
+    }
+
+    // Restart prompt
+    const restartDelay = statsDelay + statsData.length * 300 + 500;
+    const restart = this.add.text(cx, 590, 'SPACE to try again', {
+      fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#777766'
+    }).setOrigin(0.5).setAlpha(0);
+    this.tweens.add({ targets: restart, alpha: 1, delay: restartDelay, duration: 500 });
+    this.tweens.add({ targets: restart, alpha: 0.4, delay: restartDelay + 500,
+      duration: 1500, yoyo: true, repeat: -1 });
+
+    this.time.delayedCall(restartDelay, () => {
+      this.input.keyboard.once('keydown-SPACE', () => {
+        this.scene.start('TitleScene');
+      });
+    });
+  }
+}
+
+// =============================================
+// PHASER CONFIG
+// =============================================
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  parent: 'game-container',
+  backgroundColor: '#0a0a1a',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false }
+  },
+  scene: [BootScene, TitleScene, GameScene, EndScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  }
+};
+
+new Phaser.Game(config);
+</script>
+</body>
+</html>

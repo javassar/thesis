@@ -1,0 +1,1408 @@
+================================================================================
+                         MOTH & FLAME (REVISED)
+                     Complete Game Design Document
+================================================================================
+
+
+================================================================================
+CRITIQUE OF THE ORIGINAL DESIGN
+================================================================================
+
+The original Moth & Flame design is polished and atmospheric, but it is not
+genuinely creative. It is the "safe, pretty choice." Here's why:
+
+1. THE MOTH IS TOO OBEDIENT. The pitch promises "you can't control it," but
+   the moth simply goes to the nearest flame, every time. That's not autonomy;
+   that's a homing missile with nice visuals. The player has near-total control,
+   which undercuts the entire emotional premise.
+
+2. THE HAZARDS ARE STOCK. Spiders = static hitbox. Bats = moving enemy. Rain =
+   debuff zone. Wind = displacement force. These are the four most generic
+   obstacle types in game design, dressed in a forest skin. Nothing about them
+   is specific to THIS game's theme of care and indirect influence.
+
+3. THE LEVEL IS A TREADMILL. One linear scroll, left to right, with increasing
+   obstacle density. That's not a journey — it's a difficulty ramp. There's no
+   moment where the player's understanding of the game changes.
+
+4. THE ENDING IS A DESTINATION. "Reach the lantern" is the most conventional
+   possible ending for a game about guiding something through space. The quote
+   at the end ("You cannot hold the light...") is telling the player what to
+   feel instead of making them feel it through play.
+
+5. THE MECHANIC NEVER EVOLVES. You place flames at minute one. You place
+   flames at minute five. The world changes, but your relationship to the moth
+   does not. For a game about a deeply evolving human experience (care,
+   mentorship, letting go), the mechanic is strangely static.
+
+The core insight — caring for something you can't control — is excellent. But
+the original design doesn't earn it. The revised design below does.
+
+
+================================================================================
+STAGE 1: GAME DESIGN
+================================================================================
+
+
+1. TITLE & HOOK
+--------------------------------------------------------------------------------
+
+Title: Moth & Flame
+
+Revised pitch: Guide a moth through darkness with candlelight — but as it
+grows, it stops needing your flames, and you must learn to let it go.
+
+
+2. CORE INSIGHT
+--------------------------------------------------------------------------------
+
+Central question: Can you love something enough to let it outgrow you?
+
+The game begins as a nurturing puzzle: a helpless moth, a dark forest, your
+protective light. But it quietly transforms into something else entirely. As
+the moth gains confidence and its own inner glow, your flames — once essential
+— become interference. The player's tools don't get weaker; the moth gets
+stronger. And the final challenge isn't a gauntlet of obstacles. It's putting
+down the mouse and watching the moth fly on its own.
+
+Why it matters: Every person has experienced this arc — as a parent, a teacher,
+a friend, or even as someone who once needed help and then didn't. Games almost
+never explore the feeling of becoming unnecessary to something you love. That
+bittersweetness is the heart of this design, and it's expressed entirely through
+mechanics, not narration.
+
+
+3. MECHANIC-THEME INTEGRATION
+--------------------------------------------------------------------------------
+
+Primary mechanic: Click to place candle flames that attract the moth. Right-
+click to extinguish. Maximum 3 flames active at once.
+
+The evolution: The moth develops an "inner glow" that grows over the course of
+the game across five phases. As this glow increases:
+  - The moth becomes less attracted to your flames (response radius shrinks)
+  - The moth begins making its own movement choices (exploring, pausing at
+    things that interest it)
+  - In the final phase, the moth ignores your flames entirely
+
+How this embodies the theme: The mechanic undergoes an inversion. In Act 1,
+placing flames IS care — without your light, the moth is lost. By Act 3,
+placing flames IS harm — your lights confuse a moth that was finding its own
+way. The player must recognize this shift and willingly surrender the only tool
+they have. The game doesn't take your power away; it asks you to stop using it.
+That choice is where the meaning lives.
+
+Secondary mechanic — Light as Revelation: Flames don't just attract the moth;
+they reveal the true nature of what's hidden in darkness. A dark shape might be
+a predator or a flower. You don't know until you illuminate it. Some things
+that look threatening in shadow are harmless in light (a gnarled branch that
+looks like a claw). Some things that look safe are dangerous when lit (a
+beautiful glowing flower that is actually a trap). This creates a layer of
+discovery: every flame is a question about what's real.
+
+
+4. PLAYER JOURNEY
+--------------------------------------------------------------------------------
+
+The game is divided into three acts, each with a distinct emotional tone and
+mechanical identity. The acts flow seamlessly — no loading screens, no
+explicit labels.
+
+--- ACT 1: DEPENDENCY (0:00 - 1:45) ---
+
+Tone: Tender, protective.
+
+The moth appears in near-total darkness — tiny, fragile, barely visible. It
+drifts aimlessly, slowly, with no sense of direction. Text fades in softly:
+"Click to light the way."
+
+The player places their first flame. The moth turns toward it immediately,
+drawn with obvious need. It reaches the flame and circles it closely, like a
+child clinging to a hand. When the flame dies, the moth drifts helplessly
+again. The message is clear: without you, it's lost.
+
+The forest in Act 1 is sparse. A few dark shapes loom in the periphery. The
+player learns to chain flames: place a new one ahead before the last dies,
+creating a breadcrumb path. They learn that right-click extinguishes a flame
+(useful for correcting mistakes).
+
+The first revelation: The player lights a flame near a dark, looming shape.
+It's revealed to be a cluster of night-blooming flowers — harmless, beautiful.
+The moth pauses to admire them. A second dark shape, further on, is illuminated
+and revealed to be a spider in its web. The moth veers away instinctively.
+The player learns: light reveals truth, and truth can be safe or dangerous.
+
+The moth's inner glow: completely dark. Phase 0.
+
+--- ACT 2: GROWTH (1:45 - 3:30) ---
+
+Tone: Pride mixed with creeping anxiety.
+
+Something has changed. The moth now has a barely perceptible warm glow of its
+own — just a few pixels of faint light around it. It still follows flames,
+but with a slight delay. Sometimes it pauses to investigate something on its
+own before obeying the flame's pull.
+
+The forest grows denser, and hazards appear:
+
+  - LURKERS: Dark shapes that could be predator or harmless. The player must
+    decide whether to "spend" a flame to reveal what they are. Some are spider
+    nests (moth must avoid). Some are sleeping fireflies that, when illuminated,
+    wake up and add their own light to the scene — creating free, safe beacons
+    that the moth can follow without risk. The player is rewarded for
+    curiosity and punished for paranoia (wasting flames on harmless shapes
+    means fewer flames for guidance).
+
+  - ECHO MOTHS: The moth encounters other moths — ghostly, faded — trapped in
+    spider webs. These are "echoes" of failed journeys. They serve as silent
+    warnings about web locations. But the moth is drawn to them out of
+    curiosity/kinship and will drift toward them unless redirected. The player
+    must place a flame to pull the moth away from investigating its fallen kin.
+
+  - OVERGLOW ZONES: Areas where bioluminescent fungi create ambient light.
+    The moth's attraction to your flames weakens in these zones because the
+    ambient light competes with yours. You must place flames more carefully —
+    closer to the moth, in darker pockets — or let the moth navigate the lit
+    zones semi-independently. This is the first hint: in the presence of
+    enough light, the moth doesn't need you as much.
+
+The moth's inner glow strengthens. Phase 1 -> Phase 2. It now illuminates a
+small radius around itself — enough to see immediate obstacles. Its movement
+becomes more confident: straighter lines, less frantic circling at flames.
+
+The pivotal moment of Act 2: The moth encounters a fork in the path. One
+direction is dark and unknown. The other is faintly lit by distant fungi.
+If the player places a flame down the dark path, the moth follows. If the
+player places no flame, the moth — for the first time — chooses on its own. It
+goes toward the faint light. Both paths are safe. But the player has just
+witnessed the moth making a decision without them.
+
+--- ACT 3: RELEASE (3:30 - 5:00) ---
+
+Tone: Bittersweet. The ache of letting go.
+
+The moth now glows visibly — a warm, soft light that illuminates its
+surroundings. It moves with purpose. When the player places a flame, the moth
+acknowledges it — pauses, tilts toward it — but often continues on its own
+path instead. The moth's attraction radius to player flames has halved. It is
+becoming its own light.
+
+The mechanical inversion begins:
+
+  - CONFUSION PENALTY: If the player places flames too frequently (more than
+    one every ~4 seconds), the moth becomes disoriented — its movement becomes
+    erratic, it stops, it circles. Too many lights from the player now create
+    noise, not guidance. The player must learn restraint.
+
+  - TRUST REWARDS: When the player refrains from placing flames and lets the
+    moth navigate on its own, the moth's glow brightens temporarily — a visual
+    reward for trust. The moth also moves more efficiently when self-directed.
+
+  - DANGEROUS BEAUTY: A luminous, gorgeous flower appears ahead — pulsing
+    with color, irresistible. The moth is drawn to it. It is a trap (a
+    predatory plant). The player's instinct is to place a flame to redirect
+    the moth. But the moth, now semi-independent, may ignore the flame. The
+    solution: place a flame BEHIND the trap to reveal its true nature. When
+    illuminated, the trap's beauty fades and its thorns become visible. The
+    moth, seeing the truth, avoids it on its own. The player's role has
+    shifted from "telling the moth where to go" to "showing it what's real."
+
+The forest opens. The trees thin. The sky lightens from black to deep blue.
+Stars become visible. The moth's glow is now strong enough to illuminate its
+entire path.
+
+THE ENDING (4:30 - 5:00):
+The moth reaches the edge of the forest. Beyond it: an open meadow under a
+sky full of stars. The moth pauses at the tree line. If the player places a
+flame — anywhere — the moth does not respond. Its glow pulses gently once, as
+if in gratitude. Then it flies forward into the meadow, its light steady and
+sure, growing smaller but no dimmer as it recedes into the distance.
+
+No quote. No text. No "click to restart" yet. Just the player watching
+something they nurtured fly away. The screen holds for 5 seconds of stillness.
+
+Then, softly: "Again?" appears in the corner.
+
+The final emotion: Not triumph. Not sadness. The specific, irreplaceable
+feeling of watching something you protected become something that no longer
+needs your protection. The quiet pride that comes with becoming unnecessary.
+
+
+5. GAME ELEMENTS
+--------------------------------------------------------------------------------
+
+THE MOTH
+  Small sprite, 16x16. Off-white/cream body. Wings animate with a gentle
+  flutter (sine wave). In Act 1, no glow. Over the game, an inner light
+  develops: a warm amber radial glow emanating from the body, growing from
+  0px radius (Act 1) to 60px radius (Act 3). The glow is the primary
+  visual indicator of the moth's growth. Trail particles become warmer
+  and brighter as the moth grows.
+
+  Behavioral states:
+    - SEEKING: Moving toward the nearest flame (Act 1 primary behavior)
+    - WANDERING: Drifting with gentle purpose in a generally forward direction
+      (Act 3 primary behavior)
+    - INVESTIGATING: Pausing near points of interest (echo moths, flowers,
+      dark shapes) — moth hovers in place for 1-2 seconds
+    - CONFUSED: Erratic circling, triggered by too many flames in Act 3
+    - AVOIDING: Veering away from revealed dangers
+
+CANDLE FLAMES (player-placed)
+  Golden circle with radial glow. Flicker animation. Burns down over time,
+  visually shrinking. Maximum 3 active. Placing a 4th kills the oldest.
+  In Act 3, placing more than one every 4 seconds triggers moth confusion.
+
+  New property — REVELATION: Flames illuminate a radius around them, changing
+  the visual state of any DARK SHAPES within range from "unknown" (dark
+  silhouette) to "revealed" (true form visible).
+
+DARK SHAPES (the revelation system)
+  The primary obstacle/discovery mechanic. Throughout the forest, dark shapes
+  are visible as identical dark silhouettes — ambiguous blobs. When a flame
+  illuminates them (within 80px), they transform and reveal their true nature:
+
+    - SPIDER NEST: Reddish-brown with visible web threads. Hazardous — moth
+      is caught if it enters. ~8 total.
+    - NIGHT FLOWERS: Blue and purple, softly glowing once revealed. Harmless
+      and beautiful. The moth pauses to admire them briefly. ~10 total.
+    - SLEEPING FIREFLIES: When lit, they wake up and create a small persistent
+      golden glow (acts like a free, permanent, stationary flame that attracts
+      the moth but NOT predators). ~6 total. Strategic resource.
+    - PREDATORY PLANT (Act 3 only): Appears beautiful and luminous even
+      before being lit — the only shape that's visible in darkness. Attracts
+      the moth. When illuminated by a player flame, its true thorny, dangerous
+      form is revealed, and the moth avoids it. ~2 total.
+
+  Before revelation, all dark shapes (except predatory plants) look identical.
+  The player must choose where to spend their flames.
+
+ECHO MOTHS
+  Faint, ghostly moth sprites trapped in spider webs. They glow dimly with
+  a cold blue-white light. They don't move. They serve as: (a) warnings that
+  a web is nearby, (b) emotional texture — evidence of moths that didn't make
+  it, and (c) a lure, because the living moth is drawn to investigate them.
+  ~5 total, placed near spider nests.
+
+OVERGLOW ZONES
+  Patches of bioluminescent fungi on the forest floor and tree trunks. They
+  emit a soft teal-green ambient light (radius ~100px). In these zones, the
+  moth's attraction to player flames is reduced by 50%. These train the
+  player to rely less on flames. 3-4 zones, appearing in Act 2.
+
+THE FOREST
+  Background: Deep indigo (#0a0a1a) fading to dark blue (#0a1025) in Act 3,
+  to navy-with-stars (#0a1535) at the end.
+
+  Trees: Dark silhouettes — trunks as rectangles, canopies as rough circles.
+  Density varies: sparse in Act 1, dense in Act 2, thinning in Act 3.
+  Foreground grass blades and small mushrooms add depth. Ground is a slightly
+  lighter dark tone (#121218).
+
+THE MEADOW (ending)
+  Beyond the forest edge: the ground color lightens slightly. Small dots of
+  white and pale yellow represent distant flowers or fireflies. The sky above
+  is visible, dark blue with tiny star sprites (white dots, some twinkling).
+  The meadow extends rightward and visually fades, suggesting openness.
+
+UI ELEMENTS
+  - Flame counter: Three small circles at top-left. Lit (#ffe082) or dim
+    (#333333) to show available flame slots.
+  - Moth glow indicator: A tiny moth icon next to the flame counter. Its
+    glow grows across the game — a subtle mirror of the moth's development.
+  - Progress: Thin line at the top of screen, no label. Fills left to right.
+  - Control hint: "Left click: place flame  |  Right click: extinguish" at
+    bottom center, fades out after 12 seconds.
+  - NO score. NO timer visible to the player.
+
+SCREENS
+  - Title: Dark background, "Moth & Flame" in warm gold (#ffe082), a small
+    moth with flickering wings, "Click to begin" pulsing below.
+  - Death overlay: Screen dims, "The moth was lost..." fades in, "Click to
+    continue" below. Respawn at last checkpoint.
+  - Ending: No overlay. The game world IS the ending screen. After the moth
+    disappears into the meadow, "Again?" appears in the lower-right corner
+    after 5 seconds of stillness.
+
+
+6. RULES & SYSTEMS
+--------------------------------------------------------------------------------
+
+PLAYER ACTIONS
+  - Left click: Place a candle flame at cursor position (max 3 active).
+    Placing a 4th extinguishes the oldest.
+  - Right click: Extinguish nearest flame within 30px of cursor.
+  - No other inputs. This remains a one/two-button game.
+
+MOTH GLOW SYSTEM (the core progression)
+  The moth has a "glow level" that increases based on distance traveled:
+    Phase 0 (x: 0-1000):     No glow. Full attraction to flames (200px radius).
+    Phase 1 (x: 1000-2000):  Faint glow (15px). Attraction radius 180px.
+    Phase 2 (x: 2000-3200):  Soft glow (30px). Attraction radius 140px.
+                              Moth occasionally investigates points of interest.
+    Phase 3 (x: 3200-4400):  Visible glow (45px). Attraction radius 90px.
+                              Moth frequently self-navigates. Confusion penalty
+                              active.
+    Phase 4 (x: 4400-5600):  Bright glow (60px). Attraction radius 40px.
+                              Moth mostly ignores flames.
+    Phase 5 (x: 5600+):      Full glow. Attraction radius 0px.
+                              Moth navigates entirely on its own.
+
+  The glow level increases smoothly (not in steps) as the moth moves right.
+  Displayed values above represent the midpoint of each phase.
+
+MOTH BEHAVIOR (detailed)
+  The moth always wants to move. Its behavior priority stack:
+    1. AVOIDING: If a revealed danger is within 60px, steer away (always).
+    2. CONFUSED: If confusion counter > 0, move erratically (random angle
+       changes every 200ms). Confusion decays at 1 unit/sec.
+    3. INVESTIGATING: If a point of interest (echo moth, night flower) is
+       within 40px AND a random check passes (30% chance per second), pause
+       and hover for 1.5 seconds, then resume.
+    4. SEEKING: If a flame exists within attraction radius, steer toward the
+       nearest flame. Speed: 70 px/sec.
+    5. WANDERING: Default. Move rightward with organic drift (Perlin-style
+       smooth noise on the angle). Speed scales with glow: 15 px/sec at
+       Phase 0 (aimless) up to 50 px/sec at Phase 4 (purposeful).
+
+  The moth turns smoothly — angle is lerped, not snapped.
+
+FLAME BEHAVIOR
+  - Duration: 6 seconds.
+  - Attraction range: Varies by moth glow phase (see above).
+  - Revelation range: 80px — any dark shape within this radius is revealed.
+  - Revealed shapes STAY revealed permanently (the truth doesn't un-show).
+  - Flames visually shrink as they burn down.
+
+CONFUSION PENALTY (Act 3+)
+  A hidden counter tracks "flame frequency." Each flame placed adds 1.0 to
+  the counter. The counter decays by 0.25 per second. If the counter exceeds
+  2.0 (meaning roughly 3+ flames in rapid succession), the moth enters
+  CONFUSED state. Confusion lasts until the counter drops below 1.0.
+  Only active when moth is at Phase 3 or above.
+
+TRUST REWARD
+  When the moth travels 150+ pixels without the player placing any flame,
+  the moth's glow brightens temporarily (a brief warm pulse, +20% radius for
+  2 seconds). This is a visual reward with no mechanical effect — it simply
+  tells the player "you're doing the right thing by letting go."
+
+DARK SHAPES
+  - All appear as identical dark silhouettes (ellipses, ~30x30px, color
+    #0d0d15) until illuminated.
+  - Once a flame is placed within 80px, the shape transitions (fade/morph
+    over 300ms) to its true form:
+      * Spider nest: Expands slightly, reddish tint, web lines appear.
+        Hitbox becomes active (30x30px). Moth is caught if center enters.
+      * Night flowers: Color blooms (blue/purple), no hitbox. Moth may
+        pause to investigate.
+      * Sleeping fireflies: Wake animation (small dots scatter, then
+        regroup into a steady glow). Become a permanent mini-flame (40px
+        attraction radius) that does NOT attract predators or contribute
+        to confusion counter.
+      * Predatory plant: Already visible as a beautiful pulsing light in
+        darkness (the only pre-visible shape). When a player flame reveals
+        it within 80px, it transforms into a thorny, ugly form. Before
+        revelation, it attracts the moth (acts like a 100px attractor).
+        After revelation, the moth avoids it. Hitbox: moth is caught if
+        it reaches the unrevealed plant.
+
+ECHO MOTHS
+  - Stationary, ghostly sprites near spider nests.
+  - The living moth is drawn to investigate them (treated as a point of
+    interest with 60px pull range, weaker than player flames but active
+    when no flames are present).
+  - No hitbox — they are only a lure toward nearby danger.
+
+FAILURE AND RECOVERY
+  - When the moth contacts a spider nest hitbox or unrevealed predatory
+    plant, the screen dims and the moth "dissolves" (fade + particle burst).
+  - Respawn at the last checkpoint after a click.
+  - Checkpoints are at x = 0, 1200, 2400, 3600, 4800. Not visible.
+  - All revealed shapes remain revealed after death (progress is preserved).
+  - No lives limit. The game wants to be completed.
+
+THE ENDING TRIGGER
+  - When the moth reaches x = 5700, isEnding = true.
+  - The moth auto-navigates toward (6000, 300) — the meadow center.
+  - Player clicks have no effect.
+  - The moth's glow brightens as it flies into the open.
+  - At x = 5900, the moth begins to shrink visually (receding into distance).
+  - At x = 6000 (or after ~8 seconds), the moth fades to a tiny bright dot,
+    then winks out. Screen holds for 5 seconds. "Again?" appears.
+
+
+================================================================================
+STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+================================================================================
+
+
+7. TECHNICAL SPECIFICATION
+--------------------------------------------------------------------------------
+
+DISPLAY
+  - Canvas: 800 x 600 pixels
+  - Background: #0a0a1a (shifts via tint toward #0a1535 in the final 1000px)
+  - Scale mode: Phaser.Scale.FIT, centered
+  - No external assets. All graphics generated programmatically.
+
+WORLD
+  - Width: 6400 pixels. Height: 600 pixels (no vertical scroll).
+  - Camera follows moth x with +100px lookahead, lerp 0.05.
+  - Camera bounded to world limits.
+
+THE MOTH (sprite + systems)
+  - Texture: 16x16 circle, color #f5e6c8, alpha 0.9.
+  - Wings: Two small 6x4 ellipses drawn offset from center, oscillating
+    vertically via sine wave (amplitude 3px, period 400ms).
+  - Trail: Particle emitter — 4x4 circles, #f5e6c8, alpha 0.2->0, lifespan
+    500ms, frequency 80ms. In later phases, particle color shifts warmer to
+    #ffe082 and alpha increases to 0.35.
+  - Inner glow: A separate sprite using the "glow" texture (120x120 radial
+    gradient circle, color #ffe082, alpha 0.0 initially). Scale and alpha
+    increase with glow level:
+      Phase 0: scale 0.0, alpha 0.0
+      Phase 1: scale 0.25, alpha 0.04
+      Phase 2: scale 0.5, alpha 0.07
+      Phase 3: scale 0.75, alpha 0.10
+      Phase 4: scale 1.0, alpha 0.13
+      Phase 5: scale 1.1, alpha 0.16
+    Glow sprite tracks moth position every frame.
+  - Start position: (80, 300).
+  - Hitbox: Circle, radius 6px.
+
+  Movement values:
+    - Base wander speed (Phase 0): 15 px/sec
+    - Base wander speed (Phase 4): 50 px/sec (lerp between phases)
+    - Seeking speed (toward flame): 70 px/sec
+    - Turn rate (angle lerp factor): 0.03 per frame
+    - Investigation hover: 1.5 seconds, moth drifts in tiny circle (radius
+      5px, speed 10 px/sec)
+
+  Attraction radius by phase:
+    Phase 0: 200px
+    Phase 1: 180px
+    Phase 2: 140px
+    Phase 3: 90px
+    Phase 4: 40px
+    Phase 5: 0px
+  (Interpolate smoothly based on moth.x position.)
+
+CANDLE FLAMES
+  - Core texture: 12x12 circle, #ffe082.
+  - Glow texture: 120x120 circle, #ffe082, alpha 0.07.
+  - Flicker: Core scale oscillates between 0.9 and 1.1, sine wave, 200ms.
+  - Max active: 3. 4th placement destroys oldest.
+  - Duration: 6 seconds (6000ms).
+  - Visual: Both core and glow linearly scale down to 0 over lifetime.
+  - Revelation radius: 80px from flame center.
+  - Cannot be placed overlapping a tree trunk (check trunk hitboxes).
+  - Right-click extinguish: Remove nearest flame within 30px of cursor.
+
+DARK SHAPES
+  - Unrevealed texture: 30x30 ellipse, #0d0d15 (very slightly lighter than
+    background — just barely visible).
+  - Each dark shape has a "type" property: "spider", "flower", "firefly",
+    or "plant".
+  - Revealed state is toggled by boolean. Once revealed, stays revealed.
+  - Reveal transition: 300ms tween. Unrevealed texture fades out, revealed
+    texture fades in.
+  - Revealed textures:
+      Spider nest: 30x30, #5a1a1a, with thin white lines (#ffffff alpha 0.3)
+        radiating outward. Hitbox: 30x30 rectangle, only active when revealed
+        OR when moth enters unrevealed spider (it's still dangerous even if
+        you don't see it — this is critical. Dark shapes of type "spider" are
+        ALWAYS dangerous. Revelation just makes them visible.)
+        CORRECTION: Spider nests are always dangerous whether revealed or not.
+        The moth avoids them only if they are revealed (within 60px). If
+        unrevealed and the moth wanders into one, it's caught.
+      Night flowers: 30x30, gradient from #4444aa to #8844cc, with small
+        petal shapes. No hitbox. Point of interest for moth.
+      Sleeping fireflies: Reveal animation — tiny 3px dots scatter outward,
+        then collect into a steady glow. Post-reveal: permanent glow, 40px
+        attraction radius for moth (no confusion contribution). Texture: 20x20
+        warm yellow glow (#ffe066), pulsing alpha 0.2-0.4.
+      Predatory plant: PRE-reveal: 30x30 pulsing gradient, #ff66aa to
+        #ffaa44, beautiful, alpha oscillating 0.3-0.6. Visible in darkness
+        (unlike all other dark shapes). Acts as 100px attractor for moth.
+        Hitbox: 20x20, active ONLY while unrevealed. POST-reveal: Color
+        shifts to #553322, thorny jagged shape. Attractor disabled. Moth
+        avoids (60px avoidance radius). Hitbox disabled.
+
+ECHO MOTHS
+  - Texture: 12x12, #aabbcc, alpha 0.15. Subtle wing flutter animation.
+  - Thin white web lines across them (#ffffff, alpha 0.1).
+  - No hitbox. Point of interest for moth (60px pull, weaker than flames).
+  - 5 total, placed near spider nests as warnings.
+
+OVERGLOW ZONES (bioluminescent fungi)
+  - Rectangular zones (width 150-300px, full height 600px).
+  - Visual: Small circle particles (#44aa88, alpha 0.06) drifting upward
+    slowly within zone bounds. Mushroom shapes (tiny rectangles with circle
+    caps, #44aa88 alpha 0.08) on the ground line.
+  - Effect: Moth's flame attraction radius reduced by 50% while moth is
+    inside the zone.
+  - 4 zones in Act 2 area (x: 1800-3200).
+
+TREES
+  - Trunk: Rectangle, width 20-30px, height 80-160px, color #0d0d12.
+  - Canopy: Circle, radius 30-50px, color #0f0f18.
+  - Trunk has rectangular physics body for blocking flame placement.
+  - ~35 trees total. Sparse Act 1, dense Act 2, thinning Act 3.
+
+BACKGROUND TRANSITION
+  - Background color interpolates based on camera x position:
+    x 0-4800:    #0a0a1a (deep dark)
+    x 4800-5600: lerp to #0a1025 (midnight blue)
+    x 5600-6400: lerp to #0a1535 (navy with depth)
+  - Stars: At x > 5000, small white circles (2x2, alpha 0.2-0.6) appear
+    in the upper third of the screen. ~30 stars. Some twinkle (alpha tween).
+
+MEADOW (x > 5700)
+  - Ground color shifts from #121218 to #1a1a20.
+  - Small dots (#ffffff, alpha 0.1, scattered) suggest distant lights/flowers.
+  - No trees. No hazards. Open space.
+
+UI — HUD
+  - Flame counter: 3 circles, 8px radius, at (20, 20), (44, 20), (68, 20).
+    Active: #ffe082 alpha 0.8. Empty: #333333 alpha 0.4.
+  - Moth glow icon: 10px circle at (92, 20), color #ffe082. Its alpha mirrors
+    the moth's glow phase (starts 0.05, grows to 0.6).
+  - Progress bar: 200px wide, 3px tall, centered at (400, 15). Background
+    #222222. Fill #ffe082. Fill = moth.x / 5700.
+  - Control hint: "Left click: light  |  Right click: extinguish" at
+    (400, 580), Arial 14px, #666666. Fades to alpha 0 over 3 seconds after
+    a 12-second delay.
+
+UI — TITLE SCREEN
+  - Background: #0a0a1a.
+  - "Moth & Flame": (400, 220), Arial 42px, #ffe082, stroke #000 thickness 3.
+  - Animated moth sprite: (400, 330), gentle y tween ±10px, duration 2000ms.
+  - "Click to begin": (400, 440), Arial 20px, #aaaaaa, alpha pulse 0.4-1.0.
+
+UI — DEATH OVERLAY (within game scene)
+  - Black rectangle, full camera viewport, alpha 0 -> 0.7 over 500ms.
+  - "The moth was lost..." at center, Arial 28px, #aaaaaa, fade in at 500ms.
+  - "Click to continue" below, Arial 16px, #666666, fade in at 1000ms.
+  - On click: remove overlay, respawn moth at checkpoint, clear active flames,
+    reset confusion counter. Revealed shapes stay revealed.
+
+UI — ENDING SEQUENCE (within game scene, no new scene)
+  - No overlay. The world is the ending.
+  - Moth auto-flies right and forward.
+  - Moth glow expands: radius tween from current to 80px over 4 seconds.
+  - Moth scale shrinks: 1.0 -> 0.2 over 6 seconds (receding effect).
+  - Moth alpha fades: 1.0 -> 0.0 over last 2 seconds.
+  - After moth fully fades: 5 seconds of stillness.
+  - "Again?" appears at (750, 570), Arial 16px, #555555, fade in over 1s.
+  - On click: camera fadeout -> restart TitleScene.
+
+CONFUSION SYSTEM
+  - confusionCounter: float, starts at 0.
+  - Each flame placed adds 1.0 to confusionCounter.
+  - confusionCounter decays by 0.25 per second.
+  - If confusionCounter > 2.0 AND moth is Phase 3+: moth enters CONFUSED.
+  - CONFUSED: moth angle changes randomly every 200ms by ±0.5 to ±1.5 rad.
+    Speed drops to 25 px/sec. Moth glow flickers (alpha oscillates faster).
+  - CONFUSED ends when confusionCounter drops below 1.0.
+
+TRUST PULSE
+  - Track "distance since last flame placed" (in pixels of moth travel).
+  - When this exceeds 150px: trigger a trust pulse.
+  - Visual: moth's glow radius increases by 20% for 2 seconds (tween up
+    then back down). A single ring of particles expands outward from moth
+    (4-6 golden particles, lifespan 800ms).
+  - Reset distance counter after pulse.
+  - Only active when moth is Phase 2+.
+
+
+8. GAME FLOW
+--------------------------------------------------------------------------------
+
+STATE 1: BOOT SCENE
+  - preload(): Generate all textures:
+      moth_body (16x16 cream circle)
+      moth_wing (6x4 cream ellipse)
+      flame_core (12x12 golden circle)
+      glow (120x120 radial gradient, golden, low alpha)
+      particle (4x4 white circle)
+      dark_shape (30x30 dark ellipse)
+      spider_revealed (30x30 reddish with web lines)
+      flower_revealed (30x30 blue-purple gradient)
+      firefly_glow (20x20 yellow glow circle)
+      plant_lure (30x30 pink-orange gradient)
+      plant_revealed (30x30 brown jagged)
+      echo_moth (12x12 pale blue circle)
+      tree_trunk (24x120 dark rectangle — use as template, scale per tree)
+      tree_canopy (80x80 dark circle)
+      fungi_particle (4x4 teal circle)
+      star (2x2 white circle)
+  - create(): Transition to TitleScene.
+
+STATE 2: TITLE SCENE
+  - create(): Render title, subtitle, animated moth, pulsing prompt.
+  - Input: pointerdown -> camera fadeout 800ms -> start GameScene.
+
+STATE 3: GAME SCENE
+  - init(): Reset all variables (checkpointX, isDead, isEnding, flames,
+    confusionCounter, distSinceFlame, gameTime).
+  - create():
+      Build world from LEVEL_DATA.
+      Instantiate all trees, dark shapes, echo moths, overglow zones.
+      Place moth at (checkpointX + 80, 300) or (80, 300) on first play.
+      Create HUD elements.
+      Set camera to follow moth.
+      Register input handlers (pointerdown left/right).
+      Prevent context menu on right-click.
+  - update(time, delta):
+      If isDead or isEnding: return.
+      Update gameTime.
+      Compute current moth glow phase from moth.x.
+      Update flame lifetimes, remove expired, update visuals.
+      Compute moth behavior (priority: avoiding > confused > investigating >
+        seeking > wandering).
+      Update moth position.
+      Clamp moth y to [30, 570]. Clamp moth x >= checkpointX.
+      Update moth glow sprite position and scale/alpha.
+      Check flame revelation (for each flame, reveal dark shapes in 80px).
+      Check predatory plant lure (move moth toward unrevealed plants if in
+        range and no stronger attractor).
+      Check echo moth lure.
+      Check collision: moth vs spider nests, moth vs unrevealed predatory
+        plants.
+      Check checkpoint advancement.
+      Check ending trigger (moth.x >= 5700).
+      Update HUD.
+      Update confusion counter decay.
+      Update trust pulse distance tracking.
+      Update overglow zone effect.
+      Update background color interpolation.
+      Spawn stars if camera x > 5000.
+
+STATE 4: DEATH (overlay within GameScene)
+  - Set isDead = true.
+  - Moth dissolve: particle burst from moth position, moth alpha -> 0.
+  - Dark overlay fades in. Text appears staggered.
+  - On click: clear overlay, respawn moth, isDead = false.
+
+STATE 5: ENDING (within GameScene)
+  - Set isEnding = true.
+  - Moth auto-moves toward (6200, 300) at 50 px/sec.
+  - Moth glow tween expands.
+  - Moth scale tween shrinks.
+  - Moth alpha tween fades.
+  - After moth gone: 5 second delay.
+  - "Again?" appears. On click: TitleScene.
+
+
+9. PSEUDOCODE
+--------------------------------------------------------------------------------
+
+=== LEVEL DATA ===
+
+LEVEL_DATA = {
+  trees: [
+    // Section 1 (Act 1, x: 200-1200): 6 trees, wide spacing
+    { x: 300, y: 480, trunkW: 24, trunkH: 120, canopyR: 40 },
+    { x: 550, y: 500, trunkW: 20, trunkH: 100, canopyR: 35 },
+    { x: 800, y: 460, trunkW: 28, trunkH: 140, canopyR: 45 },
+    { x: 1000, y: 510, trunkW: 22, trunkH: 110, canopyR: 38 },
+    { x: 1150, y: 440, trunkW: 26, trunkH: 130, canopyR: 42 },
+    { x: 350, y: 180, trunkW: 22, trunkH: 100, canopyR: 36 },
+
+    // Section 2 (Act 2 early, x: 1200-2400): 10 trees, corridors
+    { x: 1300, y: 500, trunkW: 26, trunkH: 130, canopyR: 44 },
+    { x: 1300, y: 200, trunkW: 24, trunkH: 120, canopyR: 40 },
+    { x: 1550, y: 350, trunkW: 28, trunkH: 150, canopyR: 48 },
+    { x: 1700, y: 500, trunkW: 22, trunkH: 110, canopyR: 38 },
+    { x: 1700, y: 150, trunkW: 24, trunkH: 130, canopyR: 42 },
+    { x: 1900, y: 300, trunkW: 30, trunkH: 160, canopyR: 50 },
+    { x: 2050, y: 480, trunkW: 24, trunkH: 120, canopyR: 40 },
+    { x: 2050, y: 180, trunkW: 26, trunkH: 140, canopyR: 44 },
+    { x: 2200, y: 350, trunkW: 22, trunkH: 110, canopyR: 38 },
+    { x: 2350, y: 250, trunkW: 28, trunkH: 130, canopyR: 46 },
+
+    // Section 3 (Act 2 late, x: 2400-3600): 10 trees, dense
+    { x: 2500, y: 500, trunkW: 28, trunkH: 140, canopyR: 46 },
+    { x: 2500, y: 160, trunkW: 26, trunkH: 130, canopyR: 42 },
+    { x: 2650, y: 320, trunkW: 30, trunkH: 160, canopyR: 50 },
+    { x: 2800, y: 480, trunkW: 24, trunkH: 120, canopyR: 40 },
+    { x: 2800, y: 200, trunkW: 28, trunkH: 140, canopyR: 46 },
+    { x: 2950, y: 380, trunkW: 26, trunkH: 130, canopyR: 44 },
+    { x: 3100, y: 500, trunkW: 22, trunkH: 110, canopyR: 38 },
+    { x: 3100, y: 140, trunkW: 24, trunkH: 120, canopyR: 40 },
+    { x: 3300, y: 280, trunkW: 30, trunkH: 160, canopyR: 50 },
+    { x: 3500, y: 420, trunkW: 26, trunkH: 140, canopyR: 44 },
+
+    // Section 4 (Act 3 early, x: 3600-4800): 6 trees, thinning
+    { x: 3750, y: 460, trunkW: 24, trunkH: 130, canopyR: 42 },
+    { x: 3900, y: 200, trunkW: 22, trunkH: 110, canopyR: 38 },
+    { x: 4150, y: 380, trunkW: 26, trunkH: 140, canopyR: 44 },
+    { x: 4400, y: 500, trunkW: 20, trunkH: 100, canopyR: 36 },
+    { x: 4600, y: 250, trunkW: 24, trunkH: 120, canopyR: 40 },
+    { x: 4800, y: 400, trunkW: 22, trunkH: 110, canopyR: 38 },
+
+    // Section 5 (Act 3 late, x: 4800-5700): 3 trees at edges
+    { x: 5000, y: 520, trunkW: 20, trunkH: 100, canopyR: 35 },
+    { x: 5200, y: 140, trunkW: 22, trunkH: 110, canopyR: 38 },
+    { x: 5500, y: 500, trunkW: 20, trunkH: 100, canopyR: 35 },
+  ],
+
+  darkShapes: [
+    // Act 1: Gentle introduction (2 flowers, 1 spider, 1 firefly)
+    { x: 400, y: 320, type: "flower" },
+    { x: 650, y: 400, type: "spider" },
+    { x: 900, y: 250, type: "flower" },
+    { x: 1100, y: 350, type: "firefly" },
+
+    // Act 2: Increasing complexity
+    { x: 1400, y: 280, type: "spider" },
+    { x: 1500, y: 420, type: "flower" },
+    { x: 1650, y: 250, type: "firefly" },
+    { x: 1850, y: 400, type: "spider" },
+    { x: 2000, y: 300, type: "flower" },
+    { x: 2100, y: 450, type: "firefly" },
+    { x: 2300, y: 200, type: "spider" },
+    { x: 2550, y: 350, type: "flower" },
+    { x: 2700, y: 280, type: "spider" },
+    { x: 2850, y: 450, type: "firefly" },
+    { x: 3000, y: 200, type: "flower" },
+    { x: 3200, y: 380, type: "spider" },
+    { x: 3400, y: 250, type: "flower" },
+    { x: 3550, y: 350, type: "firefly" },
+
+    // Act 3: Fewer, but includes predatory plants
+    { x: 3800, y: 300, type: "spider" },
+    { x: 4000, y: 350, type: "flower" },
+    { x: 4200, y: 280, type: "plant" },
+    { x: 4500, y: 400, type: "flower" },
+    { x: 4700, y: 250, type: "spider" },
+    { x: 5000, y: 320, type: "plant" },
+    { x: 5300, y: 380, type: "firefly" },
+  ],
+
+  echoMoths: [
+    // Placed near spider nests as warnings
+    { x: 620, y: 380 },
+    { x: 1380, y: 260 },
+    { x: 2280, y: 180 },
+    { x: 2680, y: 260 },
+    { x: 3780, y: 280 },
+  ],
+
+  overglowZones: [
+    { x: 1800, w: 200 },
+    { x: 2350, w: 250 },
+    { x: 2900, w: 180 },
+    { x: 3350, w: 220 },
+  ],
+
+  checkpoints: [0, 1200, 2400, 3600, 4800],
+}
+
+
+=== BOOT SCENE ===
+
+class BootScene:
+  function preload():
+    for each texture needed:
+      g = make.graphics(0, 0, not added to scene)
+      draw appropriate shape with appropriate colors
+      g.generateTexture(name, width, height)
+      g.destroy()
+
+  function create():
+    scene.start("TitleScene")
+
+
+=== TITLE SCENE ===
+
+class TitleScene:
+  function create():
+    cx = 400, cy = 300
+
+    add text "Moth & Flame" at (cx, 220), gold, large, centered
+    add moth sprite at (cx, 330)
+    tween moth y: ±10, duration 2000, yoyo, loop forever
+    add text "Click to begin" at (cx, 440), pulsing alpha
+
+    on pointerdown:
+      camera.fadeOut(800)
+      on fadeout complete: scene.start("GameScene")
+
+
+=== GAME SCENE ===
+
+--- VARIABLES ---
+moth                    // sprite
+mothGlow                // glow sprite tracking moth
+mothAngle               // float, radians
+mothGlowPhase           // float, computed from moth.x
+mothAttractionRadius    // float, computed from phase
+flames[]                // array of { sprite, glowSprite, x, y, lifetime, maxLifetime }
+darkShapes[]            // array of { sprite, revealedSprite, x, y, type, isRevealed }
+echoMoths[]             // array of { sprite, x, y }
+overglowZones[]         // array of { x, w }
+trees[]                 // array of { trunkSprite, canopySprite, hitbox }
+checkpointX             // int
+confusionCounter        // float
+distSinceFlame          // float (pixels moth has traveled since last flame)
+isDead                  // bool
+isEnding                // bool
+gameTime                // float, ms
+
+
+--- INIT ---
+
+function init():
+    checkpointX = 0
+    isDead = false
+    isEnding = false
+    flames = []
+    confusionCounter = 0
+    distSinceFlame = 0
+    gameTime = 0
+
+
+--- CREATE ---
+
+function create():
+    set world bounds (0, 0, 6400, 600)
+    set camera bounds to match
+    set background color #0a0a1a
+
+    // Build trees from LEVEL_DATA
+    for each tree in LEVEL_DATA.trees:
+        trunkSprite = add rectangle(tree.x, tree.y, tree.trunkW, tree.trunkH, #0d0d12)
+        canopySprite = add circle(tree.x, tree.y - tree.trunkH/2 - tree.canopyR*0.5,
+                                  tree.canopyR, #0f0f18)
+        store trunk hitbox as { x, y, w, h } for flame placement checks
+
+    // Build dark shapes
+    for each ds in LEVEL_DATA.darkShapes:
+        if ds.type == "plant":
+            // Predatory plants are VISIBLE in darkness
+            ds.sprite = add sprite(ds.x, ds.y, "plant_lure")
+            tween ds.sprite alpha: 0.3 <-> 0.6, duration 1200, yoyo, loop
+        else:
+            ds.sprite = add sprite(ds.x, ds.y, "dark_shape")
+        ds.revealedSprite = null  // Created on reveal
+        ds.isRevealed = false
+        store in darkShapes[]
+
+    // Build echo moths
+    for each em in LEVEL_DATA.echoMoths:
+        em.sprite = add sprite(em.x, em.y, "echo_moth")
+        em.sprite.alpha = 0.15
+        add subtle flutter tween
+        draw thin web lines across sprite
+        store in echoMoths[]
+
+    // Build overglow zones
+    for each oz in LEVEL_DATA.overglowZones:
+        create particle emitter within zone: teal circles, drifting up
+        draw small mushroom shapes on ground
+        store zone bounds in overglowZones[]
+
+    // Create moth
+    moth = add sprite(80, 300, "moth_body")
+    create wing oscillation tween on child graphics
+    mothGlow = add sprite(80, 300, "glow")
+    mothGlow.alpha = 0
+    mothGlow.scale = 0
+    create moth trail particle emitter
+    mothAngle = 0
+
+    // Create stars (initially hidden, revealed by background transition)
+    create 30 star sprites in upper third, x range 5000-6400, alpha 0
+    // They become visible when camera reaches x > 5000
+
+    // Camera
+    camera.startFollow(moth, true, 0.05, 0.05)
+    camera.setFollowOffset(-100, 0)
+
+    // HUD
+    create flame counter circles (3 at top-left)
+    create moth glow icon (small circle, alpha 0.05)
+    create progress bar at top-center
+    create control hints text at bottom-center
+    set timer to fade hints after 12 seconds
+
+    // Input
+    on pointerdown:
+        if pointer.leftButtonDown() AND NOT isDead AND NOT isEnding:
+            placeFlame(pointer.worldX, pointer.worldY)
+        if pointer.rightButtonDown() AND NOT isDead AND NOT isEnding:
+            extinguishNearestFlame(pointer.worldX, pointer.worldY)
+
+    prevent context menu on canvas element
+
+
+--- UPDATE ---
+
+function update(time, delta):
+    if isDead or isEnding: return
+
+    deltaSec = delta / 1000
+    gameTime += delta
+
+    // === MOTH GLOW PHASE ===
+    // Smooth interpolation based on moth.x
+    rawPhase = clamp(moth.x / 1200, 0, 5)  // 0 at start, 5 at x=6000
+    mothGlowPhase = rawPhase
+    mothAttractionRadius = lerp(200, 0, rawPhase / 5)
+
+    // Update glow visual
+    targetGlowScale = rawPhase / 5 * 1.1
+    targetGlowAlpha = rawPhase / 5 * 0.16
+    mothGlow.setScale(targetGlowScale)
+    mothGlow.setAlpha(targetGlowAlpha)
+
+    // === UPDATE FLAMES ===
+    for i = flames.length - 1 downto 0:
+        flame = flames[i]
+
+        // Check if in rain zone (not used in revised — removed rain for
+        // overglow zones instead. All flames burn at standard rate.)
+        flame.lifetime -= delta
+
+        // Visual update
+        lifeRatio = flame.lifetime / flame.maxLifetime
+        flame.sprite.setScale(lifeRatio)
+        flame.glowSprite.setScale(lifeRatio)
+        flame.glowSprite.setAlpha(0.07 * lifeRatio)
+
+        if flame.lifetime <= 0:
+            flame.sprite.destroy()
+            flame.glowSprite.destroy()
+            flames.splice(i, 1)
+
+    // === REVELATION CHECK ===
+    for each flame in flames:
+        for each ds in darkShapes:
+            if NOT ds.isRevealed:
+                if distance(flame, ds) < 80:
+                    revealShape(ds)
+
+    // === DETERMINE MOTH BEHAVIOR ===
+    mothBehavior = "wandering"
+    behaviorTarget = null
+
+    // Priority 1: Avoidance (revealed dangers within 60px)
+    for each ds in darkShapes:
+        if ds.isRevealed AND (ds.type == "spider" OR
+           (ds.type == "plant" AND ds.isRevealed)):
+            if distance(moth, ds) < 60:
+                mothBehavior = "avoiding"
+                behaviorTarget = ds
+                break
+
+    // Priority 2: Confusion
+    if mothBehavior == "wandering" AND confusionCounter > 2.0
+       AND mothGlowPhase >= 2.5:
+        mothBehavior = "confused"
+
+    // Priority 3: Investigation (echo moths, flowers)
+    if mothBehavior == "wandering":
+        for each em in echoMoths:
+            if distance(moth, em) < 60 AND random() < 0.005:
+                mothBehavior = "investigating"
+                behaviorTarget = em
+                break
+        if mothBehavior == "wandering":
+            for each ds in darkShapes:
+                if ds.isRevealed AND ds.type == "flower":
+                    if distance(moth, ds) < 40 AND random() < 0.005:
+                        mothBehavior = "investigating"
+                        behaviorTarget = ds
+                        break
+
+    // Priority 4: Seeking (attracted to flame)
+    if mothBehavior == "wandering":
+        // Check if in overglow zone (reduces attraction radius)
+        inOverglow = false
+        for each oz in overglowZones:
+            if moth.x >= oz.x AND moth.x <= oz.x + oz.w:
+                inOverglow = true
+                break
+        effectiveRadius = mothAttractionRadius * (inOverglow ? 0.5 : 1.0)
+
+        nearestFlame = findNearestFlame(moth.x, moth.y, effectiveRadius)
+        if nearestFlame:
+            mothBehavior = "seeking"
+            behaviorTarget = nearestFlame
+
+    // Priority 4b: Predatory plant lure (unrevealed)
+    if mothBehavior == "wandering":
+        for each ds in darkShapes:
+            if ds.type == "plant" AND NOT ds.isRevealed:
+                if distance(moth, ds) < 100:
+                    mothBehavior = "seeking"
+                    behaviorTarget = ds
+                    break
+
+    // Priority 4c: Echo moth lure (when no flames active)
+    if mothBehavior == "wandering" AND flames.length == 0:
+        for each em in echoMoths:
+            if distance(moth, em) < 60:
+                mothBehavior = "seeking"
+                behaviorTarget = em
+                break
+
+    // Priority 4d: Firefly attractor
+    if mothBehavior == "wandering":
+        for each ds in darkShapes:
+            if ds.isRevealed AND ds.type == "firefly":
+                if distance(moth, ds) < 40:
+                    mothBehavior = "seeking"
+                    behaviorTarget = ds
+                    break
+
+    // === APPLY MOTH MOVEMENT ===
+    prevX = moth.x
+    prevY = moth.y
+
+    switch mothBehavior:
+        case "avoiding":
+            awayAngle = angleBetween(behaviorTarget, moth)
+            mothAngle = lerpAngle(mothAngle, awayAngle, 0.06)
+            mothSpeed = 60
+
+        case "confused":
+            // Random angle jitter every 200ms
+            if (gameTime % 200) < delta:
+                mothAngle += (random() - 0.5) * 2.5
+            mothSpeed = 25
+
+        case "investigating":
+            // Hover in tiny circle near target
+            orbitAngle = gameTime * 0.003
+            targetX = behaviorTarget.x + cos(orbitAngle) * 5
+            targetY = behaviorTarget.y + sin(orbitAngle) * 5
+            moth.x = lerp(moth.x, targetX, 0.05)
+            moth.y = lerp(moth.y, targetY, 0.05)
+            mothSpeed = 0  // Position set directly
+            // Exit after 1.5 seconds (track with timer or counter)
+
+        case "seeking":
+            targetAngle = angleBetween(moth, behaviorTarget)
+            mothAngle = lerpAngle(mothAngle, targetAngle, 0.03)
+            dist = distance(moth, behaviorTarget)
+            if dist < 15:
+                // Orbit gently
+                mothAngle += 0.02
+                mothSpeed = 20
+            else:
+                mothSpeed = 70
+
+        case "wandering":
+            // Organic forward drift with Perlin-like noise
+            wanderSpeed = lerp(15, 50, mothGlowPhase / 5)
+            noiseVal = sin(gameTime * 0.0007) * 0.4 +
+                       sin(gameTime * 0.0013) * 0.2
+            targetAngle = noiseVal  // Roughly rightward
+            mothAngle = lerpAngle(mothAngle, targetAngle, 0.015)
+            mothSpeed = wanderSpeed
+
+    if mothSpeed > 0:
+        moth.x += cos(mothAngle) * mothSpeed * deltaSec
+        moth.y += sin(mothAngle) * mothSpeed * deltaSec
+
+    // Clamp
+    moth.y = clamp(moth.y, 30, 570)
+    moth.x = max(moth.x, checkpointX)
+
+    // Track distance for trust pulse
+    distTraveled = distance(prevX, prevY, moth.x, moth.y)
+    distSinceFlame += distTraveled
+
+    // Update moth glow position
+    mothGlow.x = moth.x
+    mothGlow.y = moth.y
+
+    // === CONFUSION DECAY ===
+    confusionCounter = max(0, confusionCounter - 0.25 * deltaSec)
+
+    // === TRUST PULSE ===
+    if distSinceFlame > 150 AND mothGlowPhase >= 1.5:
+        triggerTrustPulse()
+        distSinceFlame = 0
+
+    // === COLLISION CHECKS ===
+    for each ds in darkShapes:
+        if ds.type == "spider":
+            if distance(moth, ds) < 15:  // Spider is ALWAYS dangerous
+                triggerDeath()
+                return
+        if ds.type == "plant" AND NOT ds.isRevealed:
+            if distance(moth, ds) < 12:
+                triggerDeath()
+                return
+
+    // === CHECKPOINT ===
+    for each cp in LEVEL_DATA.checkpoints:
+        if moth.x >= cp AND cp > checkpointX:
+            checkpointX = cp
+
+    // === ENDING CHECK ===
+    if moth.x >= 5700:
+        triggerEnding()
+        return
+
+    // === UPDATE HUD ===
+    updateFlameCounter()
+    progressBar.scaleX = moth.x / 5700
+    mothGlowIcon.alpha = 0.05 + (mothGlowPhase / 5) * 0.55
+
+    // === BACKGROUND COLOR ===
+    camX = camera.scrollX
+    if camX > 4800:
+        t = clamp((camX - 4800) / 800, 0, 1)
+        bgColor = lerpColor(#0a0a1a, #0a1025, t)
+        if camX > 5600:
+            t2 = clamp((camX - 5600) / 800, 0, 1)
+            bgColor = lerpColor(#0a1025, #0a1535, t2)
+        camera.setBackgroundColor(bgColor)
+
+    // === STARS ===
+    if camX > 4800:
+        for each star:
+            star.alpha = clamp((camX - 4800) / 400 * star.baseAlpha, 0, star.baseAlpha)
+
+
+--- KEY FUNCTIONS ---
+
+function placeFlame(worldX, worldY):
+    // Check tree trunk collision
+    for each tree in trees:
+        if pointInRect(worldX, worldY, tree.hitbox):
+            return
+
+    // Confusion tracking
+    confusionCounter += 1.0
+    distSinceFlame = 0
+
+    // If 3 flames active, remove oldest
+    if flames.length >= 3:
+        oldest = flames[0]
+        oldest.sprite.destroy()
+        oldest.glowSprite.destroy()
+        flames.splice(0, 1)
+
+    // Create flame
+    newFlame = {
+        sprite: add sprite(worldX, worldY, "flame_core"),
+        glowSprite: add sprite(worldX, worldY, "glow"),
+        x: worldX,
+        y: worldY,
+        maxLifetime: 6000,
+        lifetime: 6000
+    }
+    newFlame.glowSprite.alpha = 0.07
+    add flicker tween to newFlame.sprite (scale 0.9-1.1, 200ms, yoyo, loop)
+    flames.push(newFlame)
+    updateFlameCounter()
+
+
+function extinguishNearestFlame(worldX, worldY):
+    closest = null
+    closestDist = 30
+    closestIndex = -1
+    for i, flame in flames:
+        d = distance(worldX, worldY, flame.x, flame.y)
+        if d < closestDist:
+            closestDist = d
+            closest = flame
+            closestIndex = i
+    if closest:
+        closest.sprite.destroy()
+        closest.glowSprite.destroy()
+        flames.splice(closestIndex, 1)
+        updateFlameCounter()
+
+
+function findNearestFlame(x, y, maxRange):
+    closest = null
+    closestDist = maxRange
+    for each flame in flames:
+        d = distance(x, y, flame.x, flame.y)
+        if d < closestDist:
+            closestDist = d
+            closest = flame
+    return closest
+
+
+function revealShape(ds):
+    ds.isRevealed = true
+    // Fade out unrevealed sprite
+    tween ds.sprite.alpha to 0 over 300ms, then destroy
+
+    switch ds.type:
+        case "spider":
+            ds.revealedSprite = add sprite(ds.x, ds.y, "spider_revealed")
+            ds.revealedSprite.alpha = 0
+            tween ds.revealedSprite.alpha to 1 over 300ms
+
+        case "flower":
+            ds.revealedSprite = add sprite(ds.x, ds.y, "flower_revealed")
+            ds.revealedSprite.alpha = 0
+            tween ds.revealedSprite.alpha to 1 over 300ms
+
+        case "firefly":
+            // Scatter animation: spawn 4-6 tiny particles that spread
+            // then converge into a glow
+            for i = 0 to 5:
+                p = add sprite(ds.x, ds.y, "particle")
+                p.tint = 0xffe066
+                randomAngle = random() * 2PI
+                tween p to (ds.x + cos(randomAngle)*20,
+                            ds.y + sin(randomAngle)*20) over 200ms
+                then tween p back to (ds.x, ds.y) over 300ms
+                then destroy p
+            after 500ms:
+                ds.revealedSprite = add sprite(ds.x, ds.y, "firefly_glow")
+                tween ds.revealedSprite.alpha: 0.2<->0.4, 800ms, yoyo, loop
+
+        case "plant":
+            // Already visible — transform from beautiful to ugly
+            tween ds.sprite tint from normal to #553322 over 300ms
+            // Stop the pulsing alpha tween
+            // Replace with revealed thorny sprite
+            ds.revealedSprite = add sprite(ds.x, ds.y, "plant_revealed")
+            ds.revealedSprite.alpha = 0
+            tween ds.revealedSprite.alpha to 1 over 300ms
+            // The lure attractor is now disabled (checked via isRevealed flag)
+
+
+function triggerTrustPulse():
+    // Brief glow expansion
+    tween mothGlow.scale to currentScale * 1.2 over 400ms, then back, ease Sine
+    // Particle ring
+    for i = 0 to 5:
+        angle = i * (2PI / 6)
+        p = add sprite(moth.x, moth.y, "particle")
+        p.tint = 0xffe082
+        p.alpha = 0.5
+        tween p to (moth.x + cos(angle)*30, moth.y + sin(angle)*30) over 800ms
+        tween p.alpha to 0 over 800ms
+        after 800ms: destroy p
+
+
+function triggerDeath():
+    isDead = true
+
+    // Moth dissolve: burst of particles
+    for i = 0 to 12:
+        p = add sprite(moth.x, moth.y, "particle")
+        p.tint = 0xf5e6c8
+        randomAngle = random() * 2PI
+        speed = 20 + random() * 40
+        tween p to (moth.x + cos(randomAngle)*speed,
+                    moth.y + sin(randomAngle)*speed) over 600ms
+        tween p.alpha from 0.6 to 0 over 600ms
+        after 600ms: destroy p
+
+    moth.alpha = 0
+    mothGlow.alpha = 0
+
+    // Dark overlay
+    overlay = add rectangle(camera.scrollX + 400, 300, 800, 600, 0x000000)
+    overlay.alpha = 0
+    overlay.setScrollFactor(0)
+    tween overlay.alpha to 0.7 over 500ms
+
+    after 500ms:
+        lostText = add text(camera.scrollX + 400, 260, "The moth was lost...",
+                            Arial 28px, #aaaaaa, centered)
+        lostText.setScrollFactor(0)
+        lostText.alpha = 0
+        tween lostText.alpha to 1 over 400ms
+
+    after 1000ms:
+        continueText = add text(camera.scrollX + 400, 320, "Click to continue",
+                                Arial 16px, #666666, centered)
+        continueText.setScrollFactor(0)
+        continueText.alpha = 0
+        tween continueText.alpha to 1 over 400ms
+
+    after 1200ms:
+        once pointerdown:
+            destroy overlay, lostText, continueText
+            moth.x = checkpointX + 80
+            moth.y = 300
+            moth.alpha = 1
+            mothGlow.alpha = targetGlowAlpha  // Based on current phase
+            // Clear flames
+            for each flame in flames:
+                flame.sprite.destroy()
+                flame.glowSprite.destroy()
+            flames = []
+            confusionCounter = 0
+            distSinceFlame = 0
+            isDead = false
+
+
+function triggerEnding():
+    isEnding = true
+
+    // Moth auto-flies toward meadow
+    tween moth to (6200, 300) over 8000ms, ease Sine.easeInOut
+
+    // Glow expands
+    tween mothGlow.scale to 1.5 over 4000ms
+
+    // Moth shrinks (receding into distance)
+    tween moth.scale from 1.0 to 0.15 over 7000ms
+
+    // Moth fades in final stretch
+    after 5000ms:
+        tween moth.alpha to 0 over 3000ms
+        tween mothGlow.alpha to 0 over 3000ms
+
+    // After moth fully gone: stillness
+    after 8500ms:
+        // 5 seconds of nothing. Just the sky and stars.
+        after 5000ms:
+            againText = add text(750, 570, "Again?", Arial 16px, #555555)
+            againText.setScrollFactor(0)
+            againText.alpha = 0
+            tween againText.alpha to 1 over 1000ms
+            once pointerdown:
+                camera.fadeOut(1000)
+                on fadeout complete: scene.start("TitleScene")
+
+
+function updateFlameCounter():
+    for i = 0 to 2:
+        if i < flames.length:
+            flameIcons[i].fillColor = 0xffe082
+            flameIcons[i].alpha = 0.8
+        else:
+            flameIcons[i].fillColor = 0x333333
+            flameIcons[i].alpha = 0.4
+
+
+function lerpAngle(current, target, t):
+    diff = target - current
+    while diff > PI: diff -= 2*PI
+    while diff < -PI: diff += 2*PI
+    return current + diff * t
+
+
+function lerpColor(colorA, colorB, t):
+    // Interpolate R, G, B channels independently
+    rA = (colorA >> 16) & 0xFF
+    gA = (colorA >> 8) & 0xFF
+    bA = colorA & 0xFF
+    rB = (colorB >> 16) & 0xFF
+    gB = (colorB >> 8) & 0xFF
+    bB = colorB & 0xFF
+    r = round(rA + (rB - rA) * t)
+    g = round(gA + (gB - gA) * t)
+    b = round(bA + (bB - bA) * t)
+    return (r << 16) | (g << 8) | b
+
+
+================================================================================
+END OF REVISED DOCUMENT
+================================================================================

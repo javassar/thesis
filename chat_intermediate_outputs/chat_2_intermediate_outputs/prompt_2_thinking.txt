@@ -1,0 +1,3 @@
+**Evaluating game ideas**
+
+I need to pick one idea and develop it in two stages while ensuring it fits within a 5-minute duration, has a distinct ending, and can be implemented in 2D with Phaser. Among the ideas, Umbra Courier seems complex, while Echo Runner, which features replay ghosts, appears doable in 2D. The Beat Bistro rhythm game is feasible too. Although ideas like Switchyard Shuffle and Paper Siege present complexity, a color mixing shooter could also work effectively within our constraints.

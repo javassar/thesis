@@ -1,0 +1,112 @@
+Explored 1 file
+Read index.html
+Edited file
+index.html
++19
+-11
+
+          const lifetime = mapRange(length, 10, 200, 350, 650);
+          const dirLen = Math.sqrt(dx * dx + dy * dy) || 1;
+          const dir = { x: dx / dirLen, y: dy / dirLen };
+          const dirLen = Math.sqrt(dx * dx + dy * dy);
+          let dir = { x: 0, y: -1 };
+          if (dirLen >= 6) {
+            dir = { x: dx / dirLen, y: dy / dirLen };
+          } else {
+            const toGliderX = this.glider.x - worldPoint.x;
+            const toGliderY = this.glider.y - worldPoint.y;
+            const gliderLen = Math.sqrt(toGliderX * toGliderX + toGliderY * toGliderY);
+            if (gliderLen > 0) {
+              dir = { x: toGliderX / gliderLen, y: toGliderY / gliderLen };
+            }
+          }
+          this.createGust({ x: worldPoint.x, y: worldPoint.y }, strength, radius, lifetime, dir);
+        const torqueScale = 0.0008;
+        const windDir = gust.dir || { x: 0, y: -1 };
+        this.windBodies.forEach((body) => {
+          if (dist === 0 || dist > gust.radius) return;
+          const dirX = dx / dist;
+          const dirY = dy / dist;
+          const radialX = dx / dist;
+          const radialY = dy / dist;
+          const distRatio = 1 - clamp(dist / gust.radius, 0, 1);
+          Phaser.Physics.Matter.Matter.Body.applyForce(body, body.position, {
+            x: dirX * forceMag,
+            y: dirY * forceMag
+            x: windDir.x * forceMag,
+            y: windDir.y * forceMag
+          });
+          if (body.isPinwheel || body.isGear) {
+            const tangentX = -dirY;
+            const tangentY = dirX;
+            const gustDir = gust.dir || { x: 0, y: -1 };
+            const align = gustDir.x * tangentX + gustDir.y * tangentY;
+            const torque = torqueScale * gust.strength * distRatio * lifeRatio * align;
+            const cross = radialX * windDir.y - radialY * windDir.x;
+            const torque = torqueScale * gust.strength * distRatio * lifeRatio * cross;
+            body.angularVelocity += torque;
+Edited file
+index.html
++3
+-3
+
+        this.howText = this.add.text(WIDTH / 2, HEIGHT / 2,
+          'Draw gusts with the mouse to push the glider and mechanisms.\n' +
+          'Drag to aim gusts that push the glider and mechanisms.\n' +
+          'Longer drags create stronger winds and cost more wind meter.\n' +
+        this.tutorialText = this.add.text(WIDTH / 2, 80,
+          'Draw gusts with the mouse. Nudge the glider to fly. Reach the lighthouse.', {
+          'Drag to aim gusts. Longer drags are stronger. Reach the lighthouse.', {
+            fontFamily: 'Courier New, monospace',
+        this.helpText = this.add.text(WIDTH / 2, HEIGHT / 2,
+          'Draw gusts to push the glider and mechanisms.\n' +
+          'Drag to aim gusts and push the glider or mechanisms.\n' +
+          'Longer drags cost more wind meter.\n' +
+Edited file
+index.html
++10
+-0
+
+        this.trailPoints = [];
+        this.helpPaused = false;
+
+        this.helpText.setVisible(this.helpOverlayVisible);
+        if (this.helpOverlayVisible && !this.paused) {
+          this.helpPaused = true;
+          this.paused = true;
+          this.matter.world.pause();
+        } else if (!this.helpOverlayVisible && this.helpPaused) {
+          this.helpPaused = false;
+          this.paused = false;
+          this.matter.world.resume();
+        }
+      }
+Worked for 3m 42s
+Playtest (first‑time, casual)
+I see the title screen. I read the “How to Play” panel, then click Start. Okay, I see the glider on the pier and the quick tip overlay. I drag to the right to “aim” a gust. A wind circle pops, but the glider scoots away from the gust center instead of along the drag direction. Wait, I just read “drag to aim” — why isn’t it aiming? I try again with a longer drag. Same thing: it pushes outward from the gust, not along my line. That feels inconsistent and I’m not sure how to control it. CONFUSION: drag direction vs. actual force direction.
+
+I keep going anyway, manage to nudge the glider toward the pinwheel, and it spins enough to open the door. That part feels good once it clicks. I drift toward the lake, see the wind meter draining, and it starts shaking red — okay, I wait a second and it refills.
+
+I press H to reread the instructions. The help overlay shows up, but the glider keeps drifting and I dip into the water while I’m reading. I have to close the overlay quickly and respawn. FRUSTRATION: I expect a help panel to pause the action.
+
+Eventually I get past the lanterns and bridge. The gear area is busy but doable. I reach the lighthouse with some bumps, but those two moments were the only “why did that happen?” points.
+
+Playability issues + fixes
+
+Drag direction doesn’t match wind direction
+Player experience: I drag to the right, but the gust pushes away from its center, not along my drag. I feel like the controls are lying to me.
+Root cause: applyGustForces uses radial direction from gust center and ignores the drag vector; the drag direction only affects visuals. index.html (applyGustForces, pointerup handler).
+Fix: Use the drag direction as the gust’s force direction, and derive torque from wind direction vs. radial. I also add a tap fallback that nudges toward the glider when the drag is tiny. index.html
+Help overlay doesn’t pause gameplay
+Player experience: I open the help overlay and drift into water while reading.
+Root cause: toggleHelpOverlay only toggles visibility; it doesn’t pause physics or the update loop. index.html (toggleHelpOverlay).
+Fix: Pause/resume Matter when the help overlay is shown/hidden, without forcing the pause overlay. index.html
+Edits are already applied in index.html. If you want, I can do a quick pass to balance gust strength after the directional change.
+
+
+1 file changed
+Undo
+
+Review
+index.html
+

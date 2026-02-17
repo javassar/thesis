@@ -1,0 +1,143 @@
+1. Title & Hook
+Title: Overlap Hook: "The shortest distance between two points is a well-placed window."
+
+2. Core Insight
+Central Question: How can we bridge the gap between disconnected spaces?
+
+Human Connection: It’s a metaphor for "context switching." We often feel like our lives are lived in fragmented boxes (work, home, digital, physical). This game allows the player to find the hidden connections between those boxes.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: Spatial Window Dragging. The player controls a character who exists inside a small "Active Window." To move across the desktop, the player must drag other "App Windows" (a Calculator, a Notepad, a Photo Viewer) so that their edges or interiors overlap, creating a bridge for the character to walk through.
+
+Theme Integration: The theme is "connectivity." By physically overlapping two distinct digital environments to let a character pass between them, the mechanic literally embodies the idea of finding common ground between disparate worlds.
+
+4. Player Journey
+Start: The character (a small white spark) is stuck in a tiny "terminal" window in the center of a black screen. A "Goal" (a gold folder) is visible in the top right, but there is no floor leading to it.
+
+Minute 1: The player realizes they can click the title bar of the terminal and drag it. They find a "Notepad" window nearby and drag it so it touches the terminal. The spark walks from the terminal into the Notepad.
+
+Minutes 2-4: Complexity increases. Some windows "glitch" and move on their own. Others (like the "Photo Viewer") have gravity that shifts when the window is rotated. The player must "stack" three windows to create a staircase to a high-up portal.
+
+The Turning Point: The desktop begins to "minify." All windows start shrinking slowly. The player must move quickly, overlapping windows before they become too small to stand on.
+
+The End: The character reaches the "Cloud Backup" portal. As they enter, all windows on the desktop fly toward the center, overlapping into a single point of light that fills the screen.
+
+Emotion: A "Zen-like" satisfaction of organization followed by a rush of adrenaline during the shrinking climax.
+
+5. Game Elements
+The Spark: The player-controlled character (Aseprite-style glowing pixel).
+
+The Windows: 4 distinct types:
+
+Terminal: Static, flat floor.
+
+Notepad: Thin and tall, acts as a ladder.
+
+Photo Viewer: Contains a "heavy" block inside that can be used to press buttons.
+
+Calculator: A small square that bounces when it hits other windows.
+
+The Desktop: A deep navy blue background with "ghost" outlines of where windows should go.
+
+The Goal: A glowing gold folder icon.
+
+6. Rules & Systems
+Movement: A/D to walk, Space to jump. This only works within the bounds of a window.
+
+The Overlap Rule: If Window A and Window B overlap by even 1 pixel, the character can cross the boundary as if the borders don't exist.
+
+The Void: If the character walks outside the bounds of a window into the "Desktop," they respawn in the last window they occupied.
+
+Success: Touching the Gold Folder in the final "Application" level.
+
+STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+7. Technical Specification
+Display
+
+Canvas Size: 1024x768 pixels.
+
+Background Color: #0F172A (Deep Navy).
+
+Elements
+
+Spark: 8x8px square, #FFFFFF, Physics-enabled (Gravity: 300).
+
+Windows: Phaser Containers. Each contains a Phaser.GameObjects.Graphics rectangle (the "content area") and a "Title Bar" (the drag handle).
+
+Bounds: Each window has its own local physics world or "Zone."
+
+Input
+
+Keyboard: A/D for velocity, Space for jump.
+
+Mouse: Drag on Title Bars to update Window Container coordinates.
+
+State
+
+activeWindow: The window object currently containing the Spark.
+
+isOverlapping: Boolean check performed every frame between the activeWindow and all other windows.
+
+levelIndex: 1 through 5.
+
+Timing
+
+Shrink Rate: (Final Level only) window.scale -= 0.001 per frame.
+
+Transition: 1-second fade between levels.
+
+Interactions
+
+Boundary Check: If Spark.x or Spark.y is outside activeWindow.bounds, check if Overlap(current_pos, anyOtherWindow).
+
+If Yes: Update activeWindow to the new window; adjust Spark's local coordinates.
+
+If No: Reset Spark to activeWindow.center.
+
+8. Game Flow
+Init: Create the "Desktop" and spawn the first two Windows.
+
+Loop: Check for Spark movement and Window dragging. Continuously run overlap detection.
+
+Progression: When Spark hits the "Folder" icon, clear current windows and spawn the next configuration.
+
+Climax: Level 5 triggers the shrink function on all active windows.
+
+End: On touching the final portal, trigger a particle explosion and show "CONNECTION ESTABLISHED."
+
+9. Pseudocode
+JavaScript
+// Window Class
+class AppWindow extends Phaser.GameObjects.Container {
+    constructor(scene, x, y, width, height) {
+        super(scene, x, y);
+        this.content = scene.add.rectangle(0, 0, width, height, 0x1E293B).setOrigin(0);
+        this.titleBar = scene.add.rectangle(0, -20, width, 20, 0x334155).setOrigin(0);
+        this.add([this.content, this.titleBar]);
+        this.titleBar.setInteractive({ draggable: true });
+    }
+}
+
+// Global Overlap Logic
+function update() {
+    let sparkGlobalX = this.activeWindow.x + this.spark.x;
+    let sparkGlobalY = this.activeWindow.y + this.spark.y;
+
+    let foundNewWindow = false;
+    this.allWindows.forEach(win => {
+        if (win !== this.activeWindow) {
+            if (Phaser.Geom.Rectangle.Contains(win.getBounds(), sparkGlobalX, sparkGlobalY)) {
+                // Transition Spark to New Window
+                this.spark.x = sparkGlobalX - win.x;
+                this.spark.y = sparkGlobalY - win.y;
+                this.activeWindow = win;
+                foundNewWindow = true;
+            }
+        }
+    });
+
+    // Void Check
+    if (!foundNewWindow && !Phaser.Geom.Rectangle.Contains(this.activeWindow.getBounds(), sparkGlobalX, sparkGlobalY)) {
+        this.spark.setPosition(this.activeWindow.width / 2, this.activeWindow.height / 2);
+    }
+}

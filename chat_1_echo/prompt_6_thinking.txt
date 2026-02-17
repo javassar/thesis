@@ -1,0 +1,86 @@
+
+Edited file
+index.html
++1
+-0
+
+        this.gameState = 'PLAY';
+        this.guardWakeTime = this.time.now + 3500;
+
+Edited file
+index.html
++6
+-0
+
+
+        for (let r = 8; r <= 14; r++) {
+          if (r === 11) continue;
+          this.tiles[r][32].solid = true;
+          this.tiles[r][32].material = 'wall';
+        }
+
+        this.mapGfx = this.add.graphics().setDepth(0);
+Edited file
+index.html
++3
+-5
+
+      spawnGuards() {
+        const g1 = this.add.image(130, 270, 'guardGreen').setDepth(8);
+        const g1 = this.add.image(432, 282, 'guardGreen').setDepth(8);
+        const g2 = this.add.image(360, 270, 'guardBlue').setDepth(8);
+          waypoints: [
+            { x: 100, y: 240 },
+            { x: 160, y: 240 },
+            { x: 160, y: 300 },
+            { x: 100, y: 300 }
+            { x: 420, y: 282 },
+            { x: 444, y: 282 }
+          ],
+Edited file
+index.html
++1
+-0
+
+        const now = this.time.now;
+        if (now < this.guardWakeTime) return;
+        this.guards.forEach(g => {
+Ran python - <<'PY' import re path='chat_1_echo/index.html' with open(path,'r') as f: data=f.read() # quick sanity: ensure non-ascii print('non-ascii', any(ord(ch)>127 for ch in data)) PY for 1s
+
+
+Edited file
+index.html
++2
+-2
+
+
+    const PILLAR_RANGE = 48;
+    const PILLAR_RANGE = 64;
+    const PILLAR_ACTIVE_MS = 2000;
+    const DOOR_SYNC_MS = 1500;
+    const DOOR_SYNC_MS = 2200;
+    const DOOR_GRACE_MS = 4000;
+Worked for 4m 30s
+Made a few playability tweaks based on the mental playtest: I moved the first guard deeper into the level and added a short hearing grace period, enforced the resonance door as a real gate with a wall column, and loosened the pillar sync window.
+
+Playtest
+"I see the title screen. I press a key. The screen is almost black except a cyan dot and the control hint. I try WASD and I move; tiny cyan blips appear under me. I press Space and a green ring spreads out, revealing a pillar and a small door. I walk toward the pillar. A green triangle shows up and immediately angles toward me and speeds up. I do not really understand why it heard me yet. FLAG: confused about instant guard reaction. It reaches me quickly and I get Caught. I restart. This time I crouch and move slower, and the blips feel smaller. I ping near the pillar and the small door opens, so I slip through. In the stone area I switch to low and the big ring helps me see more; I spot a blue guard and go around him. In the fabric gallery I try high and the ring feels small, so I switch to mid. I reach the metal hall and see two pillars and another door. I ping one and run to the other, but the door does not open in time. FLAG: confused about timing. I notice I can walk around the door entirely through open space. FLAG: unexpected gate bypass. I grab the relic and head back to the exit and win."
+
+Issues and fixes
+
+Early guard catch feels unfair
+Player perspective: I get caught within seconds and do not understand why my normal movement is so loud.
+Root cause: The green guard starts very close to the spawn, and notifyGuards reacts to footsteps immediately. index.html
+Fix: Moved the green guard deeper into the level and added a short hearing grace period at the start. index.html
+Resonance door is confusing and optionally bypassed
+Player perspective: The two‑pillar door does not open reliably, and I can walk around it anyway.
+Root cause: The metal hall is fully open, so the door is not a real chokepoint, and the pillar sync window is tight for a first‑time player. index.html
+Fix: Added a wall column that forces a single‑tile passage through the door, and increased the pillar activation range + sync window to make the puzzle readable. index.html
+If you want, I can do a second pass with the same playtester persona now that the tweaks are in.
+
+
+1 file changed
+Undo
+
+Review
+index.html

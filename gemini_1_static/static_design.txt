@@ -1,0 +1,150 @@
+STAGE 1: GAME DESIGN
+1. Title & Hook
+Title: The Static Between Us Hook: You play as the "Signal" between two people—if you get too close, the connection distorts; if you move too far apart, it breaks.
+
+2. Core Insight
+Central Question: Can intimacy be measured by the space we keep between ourselves?
+
+Human Truth: This game explores the "Goldilocks Zone" of relationships—the delicate balance between losing one's identity by being too close and losing the connection by being too distant.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: Dual-Point Tethering. The player controls two silhouettes (A and B) simultaneously. They are connected by a visible, oscillating sine wave (the Signal).
+
+Integration: The player’s goal isn't just to reach the end of the level, but to maintain a specific distance range. Moving too far apart makes the screen go "Static" (grey/noisy); moving too close makes the screen "Clip" (harsh red/glitchy). The mechanic is the struggle of communication.
+
+4. Player Journey
+Start: Two figures stand on opposite sides of a small gap. A soft, melodic hum plays. As the player moves, the hum stays clear only if the distance is maintained.
+
+First Minute: The player learns to control both characters (WASD for one, Arrows for the other, or mirrored movement). They realize that obstacles are positioned to force one character to "wait" while the other navigates a ledge, testing the stretch of the tether.
+
+Evolution: The "sweet spot" for distance begins to shift. Sometimes the characters must get close to pass through a narrow doorway, forcing the player to endure the "glitchy" visual and audio distortion as a temporary sacrifice.
+
+The Turning Point: A section where the two characters are physically separated by a wall. The player can't see both at once and must rely on the "Signal" (the wave in the middle) to guess where the other character is.
+
+Ending: The two silhouettes finally reach a "Phone Booth" or "Terminal." As they overlap, the screen doesn't glitch—it blooms into full color for the first time. The game ends with the sound of a voice finally coming through clearly: "I'm here."
+
+5. Game Elements
+The Silhouettes: Two simple, hand-drawn 2D figures (P1 and P2).
+
+The Signal: A dynamic line connecting the two. It vibrates faster as they reach the "danger zones" of distance.
+
+The Environment: Minimalist, "Blue-print" style 2D platforms. The world looks like a schematic of a city or a house.
+
+Distortion Layers: A full-screen "Noise" shader (for distance) and a "Chromatic Aberration/Red Tint" shader (for closeness).
+
+UI: No traditional HUD. The health of the connection is communicated entirely through the visual clarity of the game world.
+
+6. Rules & Systems
+The Sweet Spot: The ideal distance is 200–300 pixels.
+
+The Snap: If the distance exceeds 500 pixels for more than 3 seconds, the "Signal" breaks, and the level restarts.
+
+The Feedback Loop: * Optimal: Clear screen, melodic music.
+
+Too Far: Screen desaturates, white noise increases, the "Signal" line thins out.
+
+Too Close: Screen vibrates, red-glitch effect, audio becomes "distorted/bit-crushed."
+
+Success: Navigating through 5 short "scenes" to the final terminal.
+
+STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+7. Technical Specification
+Display
+
+Canvas: 800 x 600 px.
+
+Background: Dark Navy (#0a0a1a).
+
+Visual Style: High-contrast line art.
+
+Elements
+
+Characters: 20x40 px rectangles. P1: White, P2: Light Blue.
+
+The Tether: A Phaser.Geom.Line updated every frame.
+
+The Wave: A custom graphic that draws a Sine Wave along the Tether.
+
+Amplitude = (Current Distance - 250) / 10.
+
+Input
+
+P1: WASD.
+
+P2: Arrow Keys.
+
+Note: This encourages local co-op (two people on one keyboard) or a "brain-split" solo challenge.
+
+State Variables
+
+currentDist: Float
+
+signalHealth: 100
+
+targetDist: 250
+
+state: 'IDLE', 'STABLE', 'DISTORTED_FAR', 'DISTORTED_NEAR'
+
+Timing/Physics
+
+Gravity: 800 (Arcade Physics).
+
+Movement Speed: 200 px/sec.
+
+Tolerance: 2-second "grace period" when in a distortion zone before signalHealth drops.
+
+Interactions
+
+Distance Calculation: Phaser.Math.Distance.Between(P1.x, P1.y, P2.x, P2.y).
+
+Dynamic Audio: The volume of the "Music" track is mapped to 1 - distortionLevel. The volume of "Static" is mapped to distortionLevel.
+
+8. Game Flow
+Load: Simple title: "The Static Between Us. (Use WASD & Arrows)."
+
+Play: 5 platforming levels of increasing complexity (Level 1: Flat ground; Level 5: Vertical shafts requiring alternating jumps).
+
+Check: Every frame, if distance > 500 or distance < 50, trigger camera.shake and reduce alpha of the world.
+
+End: On reaching the goal, P1 and P2 are forced into a "Merge" animation where their sprites tween to the center and the background turns white.
+
+9. Pseudocode
+JavaScript
+// UPDATE LOOP (60 FPS)
+function update() {
+    let distance = getDistance(P1, P2);
+    
+    // UPDATE TETHER GRAPHICS
+    drawSineWave(P1, P2, distance);
+
+    // DISTANCE LOGIC
+    if (distance > 500) {
+        applyStaticEffect('far');
+        health -= 0.5;
+    } else if (distance < 60) {
+        applyStaticEffect('near');
+        health -= 0.5;
+    } else {
+        clearEffects();
+        if (health < 100) health += 0.2; // Slowly recover
+    }
+
+    // LOSE CONDITION
+    if (health <= 0) restartLevel();
+
+    // WIN CONDITION
+    if (P1.overlaps(Goal) && P2.overlaps(Goal)) nextLevel();
+}
+
+function drawSineWave(p1, p2, dist) {
+    graphics.clear();
+    graphics.lineStyle(2, 0x00ffff, calculateAlpha(dist));
+    
+    // Create points along the line and apply Math.sin() 
+    // to the perpendicular offset to create the "vibration" effect.
+    for (let i = 0; i <= 1; i += 0.05) {
+        let x = lerp(p1.x, p2.x, i);
+        let y = lerp(p1.y, p2.y, i) + Math.sin(time + i * 10) * (dist/20);
+        graphics.lineTo(x, y);
+    }
+}

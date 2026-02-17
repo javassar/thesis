@@ -1,0 +1,101 @@
+Let me do a systematic code review of the game, checking each of the listed categories for bugs.
+
+Let me systematically review the code for bugs. I already have the full file read, so let me trace through each category.
+
+1. Page load / Canvas
+
+Config at line 1179: 800x600, background #0a0a1a, Phaser.Scale.FIT with CENTER_BOTH. Correct.
+
+2. Initial state
+
+Moth at (80, 300), wings at (74, 298) and (86, 298), glow at (80, 300) with alpha 0 and scale 0. Camera follows moth with offset -100. All looks correct.
+
+3. Input handling
+
+Left click places flame, right click extinguishes nearest. Context menu prevented. Both guarded by if (this.isDead || this.isEnding) return. Correct.
+
+4. Game logic - let me trace carefully...
+
+Read index.html (lines 547-646)
+Let me trace through for bugs systematically:
+
+Investigation priority bug (lines 566-605): The investigation check at line 567 only triggers when !this.isInvestigating. But at line 596, if this.isInvestigating is true, it overrides any previous behavior to 'investigating'. This means investigation takes priority over avoidance! If the moth is investigating and a revealed spider is within 60px, the avoidance check at line 550 sets mothBehavior = 'avoiding', but then at line 596, this.isInvestigating is true, so it overrides back to mothBehavior = 'investigating'.
+
+The flow confirms it: avoidance gets set when a spider is nearby, but the investigation flag check doesn't care about the current behavior state—it just overwrites it. So the moth will happily investigate right next to a revealed spider instead of fleeing.
+
+The fix is to add a guard that prevents investigation from triggering when avoidance is active, or to check that the investigation flag only persists if we're still in wandering mode.
+
+Refining the logic further: when a spider is revealed nearby and triggers avoidance, I need to explicitly cancel any ongoing investigation so the moth prioritizes fleeing over exploring.
+
+Writing the behavior override logic... I'm checking the actual level data to see if this bug would really occur. Looking at the echo moth and spider positions, there are several cases where they're dangerously close—like the echo moth at (620,380) with a spider at (650,400) only 36 pixels away, or the pair at (2680,260) and (2700,280) just 28 pixels apart. When the moth investigates an echo moth and orbits at 5 pixels radius, the spider avoidance check gets completely bypassed, so this is definitely a real bug that would manifest in the actual level.
+
+The collision detection itself checks all spiders regardless of whether they're revealed, but avoidance only works for revealed ones—that's intentional since unrevealed spiders are supposed to be hidden threats. However, the investigation override means even revealed spiders can kill the moth while it's investigating, and the same issue applies to plants too, though that's less of a concern since investigation targets are flowers and echo moths, not plants.
+
+For unrevealed plants specifically, they don't trigger avoidance at all since avoidance only responds to revealed dangers. The plant lure behavior handles unrevealed plants when the moth is wandering, but during investigation the moth ignores that entirely. The core issue here is really just the avoidance override during investigation—that's what's allowing the moth to get killed by dangers it would normally avoid.
+
+When the moth respawns after death, it properly clears the investigation state. Flames persist for their full 6-second lifetime before being removed. The confusion counter increments by 1.0 per flame placed and decays at 0.25 per second, so placing multiple flames in quick succession can trigger confusion at phase 2.5 and above, which seems intentional.
+
+For the ending sequence, the camera continues following the moth correctly, and since the ending triggers around x=5700, the background and star updates continue working as expected since they check for camX > 4800. The flame counter HUD updates properly by iterating through the three icons and adjusting their fill based on the current flame count. The progress bar scales linearly from 0 to 200 pixels as the moth moves from x=0 to x=5700.
+
+Now I'm noticing a potential issue with the wing animations on the title screen—there are two tweens targeting the same y property on both wings, one doing a fast flutter with relative movement and another doing a slower bob with absolute positioning, which could cause them to conflict and fight each other.
+
+Looking at the star twinkle effect, the tween is set to animate alpha from 0 to 0, which doesn't actually do anything, and the update loop is directly controlling the star alpha based on a fade value anyway. The stars only become visible once the camera moves past a certain threshold, so before that point they're invisible regardless. alpha 0. The tween cycles alpha from 0 to 0 (no change). After they become visible, the update overrides the tween every frame. So the tween is effectively dead code - it doesn't cause a bug because the update() always wins.
+
+But wait - does the tween override the update? Tweens run in the update cycle, potentially after the scene's update(). If the tween sets alpha back to 0 after the update set it to something visible... this could cause flickering!
+
+Actually, in Phaser 3, tweens are updated in the pre-update step, and scene update() runs after. So the order is:
+
+Tween sets alpha to some value between 0 and 0 (always 0)
+Scene update() sets alpha to starFade * baseAlpha
+Since scene update runs after, it wins. No flickering. The tween is just dead code - wasted processing but not a bug, and I was told not to improve working code anyway.
+
+Now let me check for memory leaks. Flames are properly destroyed when they expire or are extinguished, including the sprite, glow sprite, and flicker tween. Death particles are set up with completion handlers that destroy them, and I should verify the trust pulse particles are handled the same way.
+
+Actually, I'm noticing an issue with the deathOverlay. It's created with fillAlpha set to 0, but the tween targets the game object's alpha property instead of fillAlpha. So the rectangle stays invisible - the tween multiplies 0 * 0.7 = 0. The dark overlay after death doesn't actually appear because the rectangle's fill alpha is set to 0, making it invisible even though the game object's alpha gets tweened to 0.7. The fix is straightforward: either create the rectangle with fillAlpha=1 and tween the game object's alpha from 0 to 0.7, or adjust the initial alpha values so the visual effect actually shows up. Setting up the death overlay with the correct alpha values so it fades in properly. Now I'm checking the investigation behavior logic to see if there's an override issue when the timer runs out.
+
+Looking at the code, when a moth is investigating, it unconditionally sets the behavior to 'investigating' and overrides any avoidance that might be needed. I'm noticing there are several dangerous echo moth and spider pairs scattered across the map—like the ones at (620,380) and (650,400) that are only 36 pixels apart—where if the moth investigates the echo moth, it would end up too close to the spider but the avoidance behavior would get blocked by the investigation override.
+
+During investigation, the moth orbits at 5 pixels from its target, so for those dangerous pairs, it would be roughly 28-43 pixels away from the adjacent spider—still safely above the 15-pixel death radius, but close enough that avoidance should really be kicking in for safety. The moth probably won't die in these scenarios, but the behavior logic is definitely flawed.
+
+Looking at the code structure, avoidance is marked as Priority 1 and should be checked first, yet the investigation continuation block overrides it entirely. This is clearly unintentional—the priority system is being bypassed, which is a real logic bug even if it's unlikely to cause immediate death.
+
+So I've identified two bugs so far: the death overlay with zero fill alpha, and investigation behavior incorrectly overriding avoidance. Let me scan through the rest of the code for other issues. The confusion trigger requires both a counter above 2.0 and glow phase at 2.5+, which gates the behavior to later game phases—probably intentional based on the design. The overglow zones look correct, reducing attraction radius by half during seeking behavior with proper visual feedback.
+
+Now checking the checkpoint system: it tracks progress at intervals of 1200 pixels, updating whenever the moth passes a new checkpoint threshold. The ending condition triggers at x=5700 and prevents repeated execution. Scene restart properly clears state through Phaser's lifecycle. The right-click extinguish mechanic uses a 30-pixel detection range.
+
+Verifying text positioning: the title and prompt text are centered at their coordinates with proper origin points, while the instruction text stays fixed to the camera view regardless of scrolling.
+
+I've identified two actual bugs to fix: the death overlay has zero opacity making it invisible, and the investigation state is incorrectly taking priority over the avoidance behavior.
+
+I found two bugs. Let me trace through each.
+
+Bug 1: Death overlay is invisible.
+
+At index.html:988:
+
+
+this.deathOverlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0)
+The 6th argument to add.rectangle is fillAlpha. It's set to 0. The tween then animates the game object's .alpha to 0.7, but rendered alpha = fillAlpha * alpha = 0 * 0.7 = 0. The death overlay never actually darkens the screen. The "The moth was lost..." text floats over the unobscured game.
+
+Bug 2: Investigation overrides avoidance.
+
+At index.html:596:
+
+
+if (this.isInvestigating) {
+  mothBehavior = 'investigating';  // unconditionally overrides!
+Priority 1 (avoidance) sets mothBehavior = 'avoiding' when a revealed spider is within 60px. But this block runs afterward and unconditionally resets it to 'investigating'. Three echo moth/spider pairs in the level data are dangerously close (28-36px apart), meaning if the moth investigates those echo moths, it won't flee the adjacent revealed spider.
+
+Fixing both:
+
+Edit index.html
+Added 5 lines
+Edit index.html
+Modified
+Two bugs fixed:
+
+Death overlay (line 988): Changed fillAlpha from 0 to 1 and set initial game object alpha to 0. Now the overlay actually darkens the screen from transparent to 70% black over 500ms when the moth dies.
+
+Investigation vs avoidance priority (line 596): Added a check so that if avoidance was already triggered (revealed spider within 60px), the investigation is cancelled instead of overriding avoidance. This affects three echo moth / spider pairs in the level that are 28-36px apart: (620,380)/(650,400), (2680,260)/(2700,280), and (3780,280)/(3800,300).
+
+No other bugs found. Canvas dimensions, input handling, collision logic, flame mechanics, checkpoint/respawn, ending sequence, text positioning, and scene transitions all check out correctly.

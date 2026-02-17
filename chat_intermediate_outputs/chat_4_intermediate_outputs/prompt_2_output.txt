@@ -1,0 +1,330 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Title: Museum Heist: Lines Only  
+Hook: Plan a daring heist by drawing a single continuous line that becomes your thief’s path—then watch it play out in tense real-time against guards and lasers.
+
+## 2. Core Insight
+- Central question/truth: Elegant planning beats frantic improvisation when constraints are clear and absolute.
+- Why it matters: Players feel the thrill of pulling off something clever with limited tools; success feels earned because the outcome flows entirely from their one committed sketch.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: The player draws one unbroken path, places up to two gadgets along it, and then presses go; the thief runs that path exactly.
+- How it embodies the theme: A single, irreversible line mirrors the high-stakes finality of a heist plan—no mid-mission course-correction, only the consequences of preparation.
+
+## 4. Player Journey
+- Start: A clean floor plan fades in with a minimalist, classy vibe. A blinking “Start here” circle shows the entry point; vault glows faint at the far side. The player immediately understands: draw a route.
+- First minute: The player experiments with drawing and learns line constraints (can’t clip walls), tests a short run, and sees how guards move. They notice they can place gadgets on the line at precise points.
+- Evolution: Each attempt uncovers timing nuances—patrol cycles, laser windows, and how their line geometry affects timing. The player iterates: shave corners, reposition gadget triggers, optimize length to sync with patrol gaps.
+- Climax: On the final attempt, everything aligns—the thief slips past a vision cone as the smoke pops, hits the switch when a laser pauses, nicks the vault, and dashes to the exit on a razor-thin window.
+- Ending: The thief either escapes (clean success screen with time and a “Line Length” elegance score) or is caught (freeze-frame capture, short debrief). The intended emotion is “I did that” satisfaction on success, or “One more try—now I get it” clarity on failure.
+
+## 5. Game Elements
+- Player character: A small circular thief token (12 px diameter) that follows the drawn line at a steady speed; has a subtle trailing line.
+- Player cursor: Crosshair pointer with a ghost line preview while drawing.
+- Path line: A continuous polyline in the player’s color (cyan by default). It includes up to two gadget nodes marked with icons.
+- Walls: Solid museum walls as simple, thick rectangles (dark gray).
+- Guards: Two NPCs (triangular markers) that patrol along set paths. Each has a visible vision cone (light sector) that rotates with facing.
+- Lasers: Two horizontal beams (thin red lines) that can be temporarily disabled by EMP gadget or by hitting a switch.
+- Switches: Small floor tiles near the laser emitters; crossing them toggles that laser off for a few seconds.
+- Vault: A shining square. Touch to collect, causes a “loot acquired” indicator and requires escape to the exit.
+- Exit: A marked area near the start; reach it with loot to win.
+- Gadgets:
+  - Smoke: A small gray puff icon placed on the line. On trigger, hides the thief from cones for a short duration.
+  - EMP: A small blue spark icon placed on the line. On trigger, disables lasers for a short duration.
+- UI elements:
+  - Title screen with Play button.
+  - In-game HUD: attempts left, timer countdown, ink remaining, gadget inventory (2 slots total), “Run” button, “Undo segment” prompt.
+  - Fail overlay (“Spotted!”) and Success overlay with basic stats.
+- Screens:
+  - Title screen (Start, How to Play).
+  - Planning screen (main play).
+  - Execution (playback) mode.
+  - Ending screen (Success/Fail, Restart).
+
+## 6. Rules & Systems
+- Player actions:
+  - Draw: Click and hold to draw one continuous line from the Start circle. Release ends the path. Path can’t cross walls or exceed ink length.
+  - Place gadget: While drawing, press 1 (Smoke) or 2 (EMP) to stamp that gadget node at the current cursor position on the path. Max 2 gadgets total (any mix).
+  - Undo: Right-click to remove the last drawn segment back to the previous node (without refunding gadget placements on removed segments; removing a gadget requires undoing past it).
+  - Run: Press Space or click Run to commit the plan. No edits during execution.
+  - Reset attempt: After failure or success prompt on-screen.
+- System responses:
+  - Drawing blocks on wall intersections; segment won’t be placed if it would cross a wall.
+  - During execution, the thief moves along the line at a constant speed, updating facing.
+  - If the thief enters a guard’s vision cone (not hidden by smoke), instant fail.
+  - If the thief intersects an active laser, instant fail.
+  - When the thief reaches a gadget node, it triggers its effect immediately (Smoke stealth or EMP laser disable).
+  - Touching a switch tile toggles its paired laser off for a fixed duration (they auto-reactivate).
+  - Touching the vault grants the loot; the exit is then required to win.
+- Success, progress, failure:
+  - Success: Touch vault, then reach exit while not caught within the 5-minute overall limit.
+  - Failure: Caught by guard cone, touched active laser, or time runs out. Up to 3 attempts total per playthrough.
+- Experience over time:
+  - Attempt 1: Discovery—draw a simple, perhaps flawed route; observe timing.
+  - Attempt 2: Refine—place gadgets at smarter points, shorten path.
+  - Attempt 3: Master—precise timing yields a clean escape or a dramatic near-miss.
+  - The fixed five-minute cap and three-attempt limit ensure a concise arc and distinct ending.
+
+---
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Canvas: 960 x 540, background color #0E1013 (near-black).
+- World: Single screen (no camera scrolling).
+- Visual style: Flat shapes, high contrast. Accent colors: cyan (#2DE2E6), red (#FF3864), gold (#FFD166), gray walls (#2C2F33), vision cones pale yellow (#F7EA8A, 35% alpha).
+
+Elements (positions in pixels; origin at top-left):
+- Start zone: Circle center (80, 270), radius 18, outline cyan.
+- Exit zone: Same as Start (use a labeled ring).
+- Vault: Square 40x40 at top-left (840, 250).
+- Walls (rectangles):
+  - Outer bounds (invisible, for collision): edges of canvas.
+  - Room separators (solid):
+    - Wall A: x=200, y=100, w=20, h=340
+    - Wall B: x=360, y=100, w=20, h=340
+    - Wall C: x=600, y=100, w=20, h=340
+    - Horizontal cutouts to create corridors (gaps):
+      - In Wall A, a gap from y=240 to y=300 (so two rects: A1 y=100 h=140, A2 y=300 h=140)
+      - In Wall B, a gap from y=180 to y=240 (B1 y=100 h=80, B2 y=240 h=200)
+      - In Wall C, a gap from y=300 to y=360 (C1 y=100 h=200, C2 y=360 h=80)
+- Lasers:
+  - Laser 1: Beam from x=360 to x=600 at y=200 (horizontal 2 px line). Switch tile L1: 24x24 at (336, 180).
+  - Laser 2: Beam from x=360 to x=600 at y=340 (horizontal 2 px line). Switch tile L2: 24x24 at (336, 360).
+- Guards:
+  - Guard A: Patrol path vertical at x=480 from y=140 to y=400, speed 70 px/s, vision cone:
+    - Range 160 px, angle 90°, facing along movement direction. Cone color pale yellow alpha 0.35.
+  - Guard B: Patrol path horizontal at y=270 from x=650 to x=820, speed 60 px/s, vision cone:
+    - Range 140 px, angle 80°, faces along movement direction.
+- Thief token:
+  - Circle radius 6 px (12 diameter), color white with cyan outline.
+  - Trail: faint afterimage or thin line drawn behind (optional).
+- Path line:
+  - Stroke width 4 px, color cyan (#2DE2E6).
+  - Max length: 1800 px total polyline length.
+- Gadgets:
+  - Inventory: 2 total placements (any combination).
+  - Smoke node: Icon 12 px circle filled #999999.
+  - EMP node: Icon 10 px diamond filled #2DE2E6.
+  - Activation radius: triggers automatically when thief is within 6 px of node coordinate along the path.
+  - Effects:
+    - Smoke: Hide from cones for 2.5 seconds; thief becomes semitransparent, and detection checks are skipped.
+    - EMP: Disable both lasers for 3 seconds (both beams off).
+- Switch tiles:
+  - L1 and L2 each disable their assigned laser for 4 seconds upon crossing (touch detection radius 8 px around tile center).
+- UI text:
+  - Font: 'Verdana', 18 px, color #FFFFFF for labels; subheads 24 px.
+  - HUD positions:
+    - Timer (top-left): “Time: 5:00” at (16, 12).
+    - Attempts (top-left below timer): “Attempts: 3” at (16, 38).
+    - Ink (top-right): “Ink: 1800 px” at (760, 12).
+    - Gadgets (top-right below ink): “Gadgets: 2” at (760, 38).
+    - Mode hint (bottom-left): context-sensitive (“Drag to draw…”, “Press Space to run”, etc.) at (16, 506).
+  - Buttons (textual with hitboxes):
+    - Run button: Rect 140x36 at (410, 488), label “RUN (Space)”.
+    - Undo: Not a button; use Right-Click. Optional small hint at bottom-left.
+- Sounds (optional placeholders):
+  - Draw scratch, soft beep on gadget place, laser hum on, thud on caught, soft chime on vault, big sting on success.
+- Timers:
+  - Overall game timer: 300 seconds countdown.
+  - Attempt cap: 3.
+
+Input:
+- Mouse left: press/hold to draw; release ends drawing.
+- Mouse right: undo last segment to previous vertex.
+- Key 1: Place Smoke node at current drawing point (if inventory > 0).
+- Key 2: Place EMP node (if inventory > 0).
+- Space: Start run (if a valid line exists).
+- R: Reset current drawn line during planning (does not consume attempt).
+- Esc: Pause (optional simple overlay).
+
+State (core variables):
+- mode: 'title' | 'plan' | 'run' | 'end'
+- timeRemaining: float (starts 300.0 seconds)
+- attemptsLeft: int (3)
+- inkMax: 1800, inkUsed: float (0)
+- pathPoints: array of {x,y}, in drawing order
+- pathLength: float (cumulative)
+- gadgetNodes: array of {type: 'smoke' | 'emp', index: int path vertex index, triggered: bool}
+- thief:
+  - progress: float (0 to pathLength)
+  - pos: {x,y}
+  - speed: 120 px/s (movement along polyline)
+  - hiddenUntil: timestamp (seconds)
+  - hasLoot: bool
+- guards:
+  - For each guard: {pos, path: [p1,p2], dir: 1 or -1, speed, facingAngleRad, coneAngleRad, coneRange}
+- lasers:
+  - L1: {active: bool, reactivateAt: time or null}
+  - L2: {active: bool, reactivateAt: time or null}
+- switches: L1SwitchTouchedAt, L2SwitchTouchedAt (for cooldown)
+- vaultCollected: bool
+- exitReached: bool
+- caughtReason: 'cone' | 'laser' | 'time' | null
+- messages/log: array of short strings for overlays (optional)
+
+Timing:
+- Update tick: 60 FPS target.
+- Guard direction flip when reaching a path endpoint (ping-pong).
+- Vision detection check every frame.
+- Smoke duration: 2.5 s
+- EMP duration: 3.0 s
+- Switch disable duration: 4.0 s
+- Laser reactivation: when currentTime >= reactivateAt.
+
+Interactions:
+- Drawing vs. walls: A segment from last point to cursor is permitted only if it doesn’t intersect any wall rect; else clamp or disallow (no new vertex added).
+- Thief vs. vision cone: If timeNow > hiddenUntil, check point-in-sector for thief center against each guard cone. If inside, fail.
+- Thief vs. lasers: If corresponding laser.active and the thief’s y is within 2 px of beam y and x is between beam endpoints, fail.
+- Thief vs. switches: If thief passes within 8 px of L1/L2 switch centers, set that laser’s active=false and reactivateAt=timeNow+4.0.
+- Thief vs. gadget nodes: On proximity to node’s path distance, trigger once; for Smoke, set hiddenUntil=timeNow+2.5; for EMP, set both lasers active=false with reactivateAt=max(current reactivateAt, timeNow+3.0) for each.
+- Vault: If thief center overlaps vault rect, set vaultCollected=true and hasLoot=true, change vault glow to dim, display “Loot acquired!”
+- Exit: If thief overlaps exit circle and hasLoot==true, success.
+
+Progression:
+- The game starts on the title screen. On Play, set attemptsLeft=3, timeRemaining=300, mode='plan'.
+- Each run consumes 1 attempt only if the thief is caught or completes the run; planning and redrawing don’t consume attempts.
+- Ending:
+  - Success: exit reached with loot within time. mode='end' with success summary.
+  - Failure: attemptsLeft reaches 0 or timeRemaining <= 0. mode='end' with fail summary.
+
+## 8. Game Flow
+- Load:
+  - Show title screen with “Museum Heist: Lines Only”, Play, and short How to Play overlay.
+- Start main experience:
+  - On Play: initialize state, fade in map, show Start and Vault highlights, mode='plan'.
+- During plan mode:
+  - Display HUD and hints.
+  - Player draws path from Start; walls block segments; ink counter decreases with path length.
+  - Player can place up to 2 gadgets (1 or 2) while drawing.
+  - Player presses Space or clicks RUN to begin.
+- During run mode:
+  - attemptsLeft does not decrease on start; it decreases only on resolution (success or caught).
+  - Thief traverses path at 120 px/s.
+  - Guards patrol; cones detect; lasers toggle per switches/EMP.
+  - Vault collection and exit detection trigger success if conditions met.
+  - If caught (cone/laser), freeze, show “Spotted!” with reason, attemptsLeft--, offer “Plan Again” button, return to plan mode retaining timeRemaining and resetting path (or keep path for convenience—design choice: reset path to encourage iteration; we will keep the last path on screen but editable only by full redraw).
+- Repeat:
+  - Player iterates plan→run until success or attemptsLeft==0 or time runs out.
+- End:
+  - Success: Show summary (time left, ink used, gadgets used). Button: Restart (returns to title).
+  - Fail: Show cause (out of attempts or time). Button: Retry Heist (fresh run).
+
+## 9. Pseudocode
+
+Initialization (setup):
+- On game create:
+  - Set canvas 960x540, background #0E1013.
+  - Load fonts/sfx (optional).
+  - Build static geometry: walls as rects list; switches (L1, L2) with positions; lasers with endpoints and initial active=true; vault rect; start/exit circle.
+  - Create guards with:
+    - Guard A: path=[(480,140),(480,400)], speed=70, coneAngle=PI*0.5, range=160
+    - Guard B: path=[(650,270),(820,270)], speed=60, coneAngle=PI*0.444.., range=140
+    - dir=1, t=0 (progress along segment).
+  - Initialize game state variables:
+    - mode='title', timeRemaining=300, attemptsLeft=3, inkMax=1800, inkUsed=0
+    - pathPoints=[], gadgetNodes=[], vaultCollected=false, exitReached=false
+    - lasers: L1.active=true, L1.reactivateAt=null; L2 likewise
+  - Create UI text elements and buttons (hidden as needed).
+  - Set input handlers.
+
+Main loop/update (per frame):
+- If mode=='title':
+  - Wait for Play click → reset all state, switch to 'plan'.
+- If mode=='plan':
+  - Update timer countdown (dt): timeRemaining -= dt; if <=0 → end fail.
+  - Handle drawing:
+    - If left mouse down:
+      - If starting new line: ensure cursor within Start circle (distance <= 18) and pathPoints empty.
+      - Sample cursor position p.
+      - If pathPoints empty, push p.
+      - Else:
+        - Let last=last point in pathPoints.
+        - If segment (last→p) length >= sampleStep (e.g., 6 px), compute next point n moving from last toward p by sampleStep while cursor held; check if segment (last→n) intersects any wall rect; if not:
+          - Append n to pathPoints; increase inkUsed by distance(last,n).
+          - If inkUsed > inkMax: stop accepting further points (lock drawing).
+        - If segment would intersect wall: disallow (do not add).
+    - If mouse released: stop drawing; ensure path starts within Start zone or invalidate path.
+    - Right-click:
+      - If pathPoints length > 1: remove points until previous “vertex” boundary (e.g., remove last N to reduce ~30 px); decrement inkUsed accordingly; also remove any gadget whose index >= new path length.
+    - Key 1 pressed:
+      - If gadgetsUsed < 2 and currently drawing and pathPoints length > 1: add gadgetNodes.push({type:'smoke', index: pathPoints.length-1, triggered:false}); gadgetsUsed++.
+    - Key 2 pressed: same but type 'emp'.
+    - Show preview line from last point to cursor (ghost) if valid.
+  - Validate Run readiness:
+    - Valid if pathPoints length > 2, starts in Start circle, path does not self-intersect walls, and inkUsed <= inkMax.
+  - On Space or Run click and path valid:
+    - mode='run'
+    - Initialize thief: progress=0, pos=pathPoints[0], speed=120, hiddenUntil=0, hasLoot=false
+- If mode=='run':
+  - Update timer: timeRemaining -= dt; if <=0 → caughtReason='time'; handleFail()
+  - Move guards:
+    - For each guard:
+      - advance t by dir*speed*dt along segment
+      - If at end: dir*=-1
+      - Update pos accordingly
+      - Update facingAngleRad:
+        - facing is normalized vector from previous pos to current; angle = atan2(vy,vx)
+  - Update lasers:
+    - For L1 and L2: if reactivateAt != null and now >= reactivateAt: set active=true and reactivateAt=null
+  - Move thief along path:
+    - targetDistance = min(progress + speed*dt, pathLength)
+    - While targetDistance > segmentEndDistance: advance to next segment index
+    - Interpolate position between current segment points
+    - Set thief.pos
+    - For each gadgetNode where !triggered and node.index <= currentPathIndex:
+      - If distance(thief.pos, pathPoints[node.index]) <= 6:
+        - Trigger:
+          - If smoke: thief.hiddenUntil = now + 2.5
+          - If emp: L1.active=false; L2.active=false; L1.reactivateAt = max(L1.reactivateAt or 0, now+3.0); same for L2
+        - node.triggered=true
+  - Check switches:
+    - If distance(thief.pos, L1.center) <= 8: L1.active=false; L1.reactivateAt=now+4.0
+    - If distance(thief.pos, L2.center) <= 8: L2.active=false; L2.reactivateAt=now+4.0
+  - Check vault and exit:
+    - If thief overlaps vault rect and !vaultCollected: vaultCollected=true; thief.hasLoot=true
+    - If thief within Exit circle (<=18 px) and thief.hasLoot: success → mode='end' (success), attemptsLeft unchanged; show summary
+  - Check detection:
+    - If now > thief.hiddenUntil:
+      - For each guard:
+        - Compute vector from guard.pos to thief.pos; dist = length
+        - If dist <= coneRange:
+          - angleToThief = atan2(dy,dx)
+          - angleDelta = smallestAngleDiff(angleToThief, guard.facingAngleRad)
+          - If |angleDelta| <= coneAngleRad/2:
+            - Raycast check for wall occlusion (optional simplification: ignore occlusion since top-down walls are solid and path avoids crossing walls).
+            - If not occluded: caughtReason='cone'; handleFail()
+    - Laser checks:
+      - If L1.active and abs(thief.pos.y - 200) <= 2 and thief.pos.x between 360 and 600: caughtReason='laser'; handleFail()
+      - If L2.active and abs(thief.pos.y - 340) <= 2 and thief.pos.x between 360 and 600: caughtReason='laser'; handleFail()
+  - End of path:
+    - If thief reaches end of path without fulfilling both vaultCollected and exitReached: treat as fail (ran out of route) → caughtReason='route' (optional); handleFail()
+- If mode=='end':
+  - Wait for button click: Restart → go to title and reset all.
+
+Key functions:
+- intersectsSegmentWithRect(p1, p2, rect): returns true if line segment crosses rect bounds (AABB).
+- pointInCircle(p, circleCenter, r): for Start/Exit.
+- smallestAngleDiff(a, b): normalize delta to [-PI, PI].
+- handleFail():
+  - If caughtReason=='time': attemptsLeft stays same; go to end fail
+  - Else: attemptsLeft -= 1
+  - Show “Spotted! by [cone/laser]” overlay
+  - If attemptsLeft > 0 and timeRemaining > 0:
+    - mode='plan'
+    - Clear pathPoints and gadgetNodes (or keep ghost line but require redraw—implementation choice per spec: clear to focus on iteration)
+  - Else:
+    - mode='end' with failure summary
+- drawPath():
+  - Render polyline pathPoints with stroke width 4, color cyan
+  - Render gadget nodes as icons at their indices
+- renderHUD():
+  - Update text fields; draw Run button if path valid; show hints based on mode
+
+Notes for Phaser implementation:
+- Use a single Scene with states managed via 'mode'.
+- Use Geometry/Graphics objects to draw walls, cones, lasers, and path.
+- Collision checks are geometry math, not Arcade physics.
+- Timer via scene.time.addEvent or per-frame dt accumulation.

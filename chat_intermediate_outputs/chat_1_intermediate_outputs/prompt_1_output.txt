@@ -1,0 +1,49 @@
+1) THE FOLDED PATH
+- Description: Navigate a paper adventurer across a hand-drawn map you can fold, crease, and unfold. Line up torn edges to create bridges, hide hazards in the creases, and bend routes into existence. Each level is a single sheet with different foldable landmarks.
+- Core mechanic: Physically “fold” the 2D level, snapping edges together to alter platforming paths in real time.
+- Unique hook: The level is both puzzle and platform—fold topology transforms space, producing elegant “aha” moments from simple paper rules.
+
+2) LAUNDRY RUSH
+- Description: You run a chaotic 2D laundromat where clothes tumble in physicsy piles. Drag, fling, and sort garments by color and symbol as machines finish cycles at unpredictable times. Customers’ quirky requests escalate into silly, fast-paced challenges.
+- Core mechanic: Physics-based sorting and quick triage—grab-and-throw interactions paired with priority management.
+- Unique hook: Everyday setting with slapstick physics and time-pressure puzzles makes mundane tasks feel like arcade action.
+
+3) ECHO CHAMBERS
+- Description: A top-down stealth game set in pitch-black ruins. You “see” by emitting controlled sound pulses that outline geometry for a moment—enemies also hear them. Thread the maze by timing quiet steps and clever decoys.
+- Core mechanic: Sonar pings reveal the map temporarily; sound is both vision and danger.
+- Unique hook: A visibility system that’s literally sound-based, turning scouting into a dance of controlled noise and silence.
+
+4) BEAT BISTRO
+- Description: Cook meals by layering musical ingredients—chop on the offbeat, simmer on sustained notes, and plate on the downbeat. Every recipe becomes a catchy loop you build as you play. Serve dishes that sound as good as they taste.
+- Core mechanic: Rhythm-timed mini-actions assemble loops that represent recipes; success depends on groove accuracy and layering.
+- Unique hook: Audio and gameplay fuse—your performance composes the soundtrack and the meal simultaneously.
+
+5) CIRCUIT SHEPHERD
+- Description: Guide swarms of tiny repair drones through electronic boards to fix a broken spaceship. Draw temporary electromagnetic fields to push, pull, or orbit them around hazards. Juggle power flow, charge polarity, and swarming behavior to reach sockets.
+- Core mechanic: Real-time line-drawing fields that influence many agents with simple physics rules.
+- Unique hook: A herding puzzle where you don’t move units directly; you sculpt invisible forces like a magnetic shepherd.
+
+6) MOONLIGHT POST
+- Description: As a nocturnal courier, glide over quiet towns delivering letters carried by a lantern kite. Catch star gusts, dip between chimneys, and time lantern flickers to ride thermal currents. Nightly routes are short, meditative, and subtly challenging.
+- Core mechanic: Momentum-based gliding with gentle wind manipulation and precision landings.
+- Unique hook: A tranquil “flight feel” game—short delivery runs that encourage flow rather than score-chasing.
+
+7) SHADOW INK
+- Description: You paint with light in a monochrome world where shadows become platforms. Place lanterns, rotate beams, and spend limited “ink” to cast the right silhouette to cross chasms. Turn fragile scribbles into sturdy bridges with precise angles.
+- Core mechanic: Light placement and angle control create solid shadow geometry you can traverse.
+- Unique hook: Puzzles are solved by composing silhouettes—art, optics, and platforming in one minimalist canvas.
+
+8) TIME TWINS
+- Description: Control two characters separated by decades in the same 2D space—one in the past, one in the present. Record a short “ghost” run in the past to move objects, plant seeds, or break walls; press play and solve the present with the consequences. Sync the pair to outwit temporal locks.
+- Core mechanic: Asynchronous dual-timeline recordings that interact through persistent environment states.
+- Unique hook: Cooperative puzzles with yourself—cause-and-effect across time as a compact, replayable loop.
+
+9) PINBALL HEIST
+- Description: Pull off a bank job inside a pinball-like 2D building. Flick your thief like a ball, ricochet off bumpers, hit switches, and avoid patrolling guards who change the table layout mid-run. Chain skill shots to crack safes and escape.
+- Core mechanic: Precision flicking and ricochet physics combined with stealth-triggered table states.
+- Unique hook: Blends pinball kinetics with stealth objectives, turning each level into a fast, puzzle-y “table.”
+
+10) POLARITY EXPRESS
+- Description: You’re dispatch in a neon rail yard where trains use magnetic tracks. Toggle track polarities to pull, push, and dock cars without collisions. Timetables, cargo weights, and branching rails build intricate, satisfying routing puzzles.
+- Core mechanic: Polarity toggling that dynamically changes train directions and coupling behaviors.
+- Unique hook: A fresh train puzzle that feels like magnetic sokoban with moving parts, short levels, and delightful chain reactions.

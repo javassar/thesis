@@ -1,0 +1,357 @@
+Explored 1 file, 1 search
+Searched for TODO|FIXME|bug in index.html
+Read index.html
+Edited file
+index.html
++19
+-0
+
+        this.createOverlays();
+        this.createVFX();
+        this.createInput();
+        this.tutorialVisible = true;
+        this.trailPoints = [];
+
+        g.clear();
+        g.fillStyle(COLORS.gust, 1);
+        g.fillCircle(4, 4, 4);
+        g.generateTexture('trail', 8, 8);
+
+        g.clear();
+        g.fillStyle(0xe7f3ff, 1);
+
+      createVFX() {
+        this.trailGraphics = this.add.graphics();
+        this.trailGraphics.setDepth(4);
+        this.trailGraphics.setBlendMode(Phaser.BlendModes.ADD);
+
+        this.thermalGfx = this.add.graphics();
+        this.thermalGfx.setDepth(1.4);
+
+        this.lighthouseGfx = this.add.graphics();
+        this.lighthouseGfx.setDepth(1.2);
+      }
+
+      createLeafParticles() {
+Edited file
+index.html
++4
+-0
+
+        this.landingSensor = this.matter.add.rectangle(2750, 200, 140, 60, { isStatic: true, isSensor: true, label: 'landing' });
+
+        this.lighthousePos = { x: 2700, y: 120 };
+        this.add.rectangle(2685, 60, 60, 140, COLORS.nearCliff).setDepth(2);
+        this.add.rectangle(this.lighthousePos.x, this.lighthousePos.y, 14, 14, COLORS.lanternLit).setDepth(3);
+      }
+Edited file
+index.html
++4
+-0
+
+        body.setDepth(2);
+        const gfx = this.add.graphics();
+        gfx.setDepth(1.6);
+        gfx.setBlendMode(Phaser.BlendModes.ADD);
+        return {
+          dir: new Phaser.Math.Vector2(dirX, dirY).normalize(),
+          gfx,
+          countedResonance: false
+Edited file
+index.html
++31
+-3
+
+        this.aimGraphics.clear();
+        this.aimGraphics.lineStyle(2, COLORS.gust, 0.6);
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 1) return;
+        const nx = dx / len;
+        const ny = dy / len;
+        const px = -ny;
+        const py = nx;
+        const segments = 8;
+        const waveAmp = 6 * (len / 200);
+
+        this.aimGraphics.lineStyle(2, COLORS.gust, 0.75);
+        this.aimGraphics.beginPath();
+        this.aimGraphics.moveTo(start.x, start.y);
+        this.aimGraphics.lineTo(end.x, end.y);
+        for (let i = 0; i <= segments; i += 1) {
+          const t = i / segments;
+          const wave = Math.sin(t * Math.PI * 2) * waveAmp;
+          const x = start.x + nx * len * t + px * wave;
+          const y = start.y + ny * len * t + py * wave;
+          if (i === 0) {
+            this.aimGraphics.moveTo(x, y);
+          } else {
+            this.aimGraphics.lineTo(x, y);
+          }
+        }
+        this.aimGraphics.strokePath();
+
+        const arrow = 8 + len * 0.02;
+        const leftX = end.x - nx * arrow + px * arrow * 0.6;
+        const leftY = end.y - ny * arrow + py * arrow * 0.6;
+        const rightX = end.x - nx * arrow - px * arrow * 0.6;
+        const rightY = end.y - ny * arrow - py * arrow * 0.6;
+        this.aimGraphics.fillStyle(COLORS.gust, 0.75);
+        this.aimGraphics.fillTriangle(end.x, end.y, leftX, leftY, rightX, rightY);
+      }
+Edited file
+index.html
++3
+-1
+
+          const lifetime = mapRange(length, 10, 200, 350, 650);
+          this.createGust({ x: worldPoint.x, y: worldPoint.y }, strength, radius, lifetime);
+          const dirLen = Math.sqrt(dx * dx + dy * dy) || 1;
+          const dir = { x: dx / dirLen, y: dy / dirLen };
+          this.createGust({ x: worldPoint.x, y: worldPoint.y }, strength, radius, lifetime, dir);
+          this.tutorialTimer = 0;
+Edited file
+index.html
++13
+-10
+
+
+      createGust(center, strength, radius, lifetime) {
+      createGust(center, strength, radius, lifetime, dir) {
+        const gfx = this.add.graphics();
+          age: 0,
+          gfx
+          gfx,
+          dir
+        };
+        gust.gfx.fillCircle(gust.center.x, gust.center.y, gust.radius * lifeRatio);
+        gust.gfx.lineStyle(1, COLORS.gust, 0.5 * lifeRatio);
+        for (let i = 0; i < 5; i += 1) {
+          const angle = (Math.PI * 2 * i) / 5;
+          const x1 = gust.center.x + Math.cos(angle) * gust.radius * 0.4;
+          const y1 = gust.center.y + Math.sin(angle) * gust.radius * 0.4;
+          const x2 = gust.center.x + Math.cos(angle) * gust.radius * 0.8;
+          const y2 = gust.center.y + Math.sin(angle) * gust.radius * 0.8;
+          gust.gfx.strokeLineShape(new Phaser.Geom.Line(x1, y1, x2, y2));
+        const dir = gust.dir || { x: 0, y: -1 };
+        const perp = { x: -dir.y, y: dir.x };
+        gust.gfx.lineStyle(2, COLORS.gust, 0.55 * lifeRatio);
+        for (let i = -1; i <= 1; i += 1) {
+          const offset = i * gust.radius * 0.12;
+          const sx = gust.center.x - dir.x * gust.radius * 0.6 + perp.x * offset;
+          const sy = gust.center.y - dir.y * gust.radius * 0.6 + perp.y * offset;
+          const ex = gust.center.x + dir.x * gust.radius * 0.9 + perp.x * offset * 0.5;
+          const ey = gust.center.y + dir.y * gust.radius * 0.9 + perp.y * offset * 0.5;
+          gust.gfx.strokeLineShape(new Phaser.Geom.Line(sx, sy, ex, ey));
+        }
+Edited file
+index.html
++88
+-0
+
+
+      updateTrail() {
+        if (!this.trailGraphics) return;
+        this.trailPoints.push({ x: this.glider.x, y: this.glider.y });
+        if (this.trailPoints.length > 18) {
+          this.trailPoints.shift();
+        }
+        this.trailGraphics.clear();
+        for (let i = 1; i < this.trailPoints.length; i += 1) {
+          const p0 = this.trailPoints[i - 1];
+          const p1 = this.trailPoints[i];
+          const alpha = (i / this.trailPoints.length) * 0.35;
+          this.trailGraphics.lineStyle(2, COLORS.gust, alpha);
+          this.trailGraphics.beginPath();
+          this.trailGraphics.moveTo(p0.x, p0.y);
+          this.trailGraphics.lineTo(p1.x, p1.y);
+          this.trailGraphics.strokePath();
+        }
+      }
+
+      updateFanVisuals(time) {
+        this.fans.forEach((fan) => {
+          fan.gfx.clear();
+          if (!fan.on) return;
+          const origin = fan.body.body.position;
+          const dir = fan.dir;
+          const len = 220;
+          const spread = Phaser.Math.DegToRad(30);
+          const baseAngle = Math.atan2(dir.y, dir.x);
+          const leftAngle = baseAngle - spread;
+          const rightAngle = baseAngle + spread;
+          const lx = origin.x + Math.cos(leftAngle) * len;
+          const ly = origin.y + Math.sin(leftAngle) * len;
+          const rx = origin.x + Math.cos(rightAngle) * len;
+          const ry = origin.y + Math.sin(rightAngle) * len;
+          const pulse = 0.12 + 0.06 * Math.sin(time * 0.006);
+          fan.gfx.fillStyle(COLORS.gust, pulse);
+          fan.gfx.fillTriangle(origin.x, origin.y, lx, ly, rx, ry);
+          fan.gfx.lineStyle(1, COLORS.gust, 0.2);
+          for (let i = 0; i < 3; i += 1) {
+            const t = (i + 1) / 4;
+            const mx = origin.x + dir.x * len * t;
+            const my = origin.y + dir.y * len * t;
+            fan.gfx.strokeCircle(mx, my, 10 + i * 8);
+          }
+        });
+      }
+
+      updateThermalVisuals(time) {
+        if (!this.thermalGfx) return;
+        this.thermalGfx.clear();
+        this.thermals.forEach((thermal) => {
+          if (!thermal.active) return;
+          const pulse = 0.08 + 0.04 * Math.sin(time * 0.004 + thermal.x * 0.01);
+          this.thermalGfx.fillStyle(COLORS.gust, pulse);
+          this.thermalGfx.fillCircle(thermal.x, thermal.y, thermal.radius * 0.55);
+          this.thermalGfx.lineStyle(1, COLORS.gust, 0.18);
+          for (let i = 0; i < 3; i += 1) {
+            const offset = (i - 1) * 20;
+            this.thermalGfx.strokeLineShape(new Phaser.Geom.Line(
+              thermal.x + offset,
+              thermal.y + thermal.radius * 0.3,
+              thermal.x + offset * 0.5,
+              thermal.y - thermal.radius * 0.6
+            ));
+          }
+        });
+      }
+
+      updateLighthouseBeam(time) {
+        if (!this.lighthouseGfx || !this.lighthousePos) return;
+        this.lighthouseGfx.clear();
+        const active = this.doorParts.every((part) => part.open) || this.finished;
+        if (!active) return;
+        const base = this.lighthousePos;
+        const sweep = Math.sin(time * 0.0015) * 0.6;
+        const angle = -0.6 + sweep;
+        const spread = 0.28;
+        const len = 460;
+        const leftX = base.x + Math.cos(angle - spread) * len;
+        const leftY = base.y + Math.sin(angle - spread) * len;
+        const rightX = base.x + Math.cos(angle + spread) * len;
+        const rightY = base.y + Math.sin(angle + spread) * len;
+        this.lighthouseGfx.fillStyle(COLORS.lanternLit, 0.12);
+        this.lighthouseGfx.fillTriangle(base.x, base.y, leftX, leftY, rightX, rightY);
+        this.lighthouseGfx.fillStyle(COLORS.lanternLit, 0.35);
+        this.lighthouseGfx.fillCircle(base.x, base.y, 8);
+      }
+
+      updateGliderLift() {
+Edited file
+index.html
++4
+-1
+
+        const barH = 12;
+        const lowWind = this.windMeter < 30;
+        const pulse = lowWind ? 0.6 + 0.4 * Math.sin(this.time.now * 0.02) : 1;
+        const fillColor = lowWind ? 0xf28c8c : COLORS.windFill;
+        this.windGraphics.fillStyle(COLORS.windBg, 0.9);
+        this.windGraphics.fillRect(barX, barY, barW, barH);
+        this.windGraphics.fillStyle(COLORS.windFill, 0.9);
+        this.windGraphics.fillStyle(fillColor, 0.85 * pulse);
+        this.windGraphics.fillRect(barX, barY, barW * (this.windMeter / 100), barH);
+Edited file
+index.html
++4
+-0
+
+        this.updateGliderLift();
+        this.updateFanVisuals(time);
+        this.updateThermalVisuals(time);
+
+        this.updateLeaves(progress);
+        this.updateTrail();
+        this.updateLighthouseBeam(time);
+
+Edited file
+index.html
++5
+-2
+
+          if (body.isPinwheel || body.isGear) {
+            const torqueDir = dx >= 0 ? 1 : -1;
+            const torque = torqueScale * gust.strength * distRatio * lifeRatio * torqueDir;
+            const tangentX = -dirY;
+            const tangentY = dirX;
+            const gustDir = gust.dir || { x: 0, y: -1 };
+            const align = gustDir.x * tangentX + gustDir.y * tangentY;
+            const torque = torqueScale * gust.strength * distRatio * lifeRatio * align;
+            body.angularVelocity += torque;
+Edited file
+index.html
++3
+-3
+
+        body.body.isPinwheel = true;
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x, y } });
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x: 0, y: 0 }, pointB: { x, y } });
+        return {
+        body.setFrictionAir(0.02);
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x: hingeX, y } });
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x: -70, y: 0 }, pointB: { x: hingeX, y } });
+        return {
+        body.body.isGear = true;
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x, y } });
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x: 0, y: 0 }, pointB: { x, y } });
+        return {
+Edited file
+index.html
++1
+-0
+
+        this.glider.setAngularVelocity(0);
+        this.trailPoints = [];
+      }
+Edited file
+index.html
++10
+-2
+
+        this.leafEmitter.setSpeedX({ min: 30 + 40 * progress, max: 70 + 90 * progress });
+        this.leafEmitter.setPosition(cam.scrollX - 40, cam.scrollY + 60);
+        this.leafEmitter.y = { min: cam.scrollY + 40, max: cam.scrollY + 220 };
+        if (this.leafEmitter.setX) {
+          this.leafEmitter.setX(cam.scrollX - 40);
+        } else {
+          this.leafEmitter.x = cam.scrollX - 40;
+        }
+        if (this.leafEmitter.setY) {
+          this.leafEmitter.setY({ min: cam.scrollY + 40, max: cam.scrollY + 220 });
+        } else {
+          this.leafEmitter.y = { min: cam.scrollY + 40, max: cam.scrollY + 220 };
+        }
+      }
+Explored 1 file
+Worked for 7m 43s
+Findings
+
+Medium: The bridge hinge uses a hard-coded local offset (-70), so any bridge size/scale change will misalign the pivot and make the hinge feel wrong. index.html (line 731)
+Low: Pinwheel/gear torque is applied by directly mutating angularVelocity, which can become frame-rate sensitive and feel inconsistent on slower machines. index.html (line 884)
+Low: Leaf emitter repositioning relies on optional setX/setY methods; if they’re absent in the Phaser build, the fallback property assignment might not update the internal emit zone consistently. index.html (line 1097)
+Assumptions
+
+The bridge stays 140px wide (since the hinge offset is derived from that width).
+Phaser 3.60 exposes setX/setY on particle emitters; otherwise the fallback is sufficient.
+Changes made (to improve creativity)
+
+Added calligraphic wind aim lines + directional gust streaks so wind feels “sculpted” instead of generic circles. index.html (line 787)
+Added a glider wind trail, fan cones, thermal wisps, and a sweeping lighthouse beam tied to gear progression for richer world feedback. index.html (line 1015)
+Made torque respond to drag direction for more expressive contraption control. index.html (line 867)
+Corrected hinge anchoring so the bridge, pinwheels, and gears pivot around proper points. index.html (line 684)
+Notes
+
+I did not run any automated tests or a local playtest.
+If you want, I can:
+
+Tighten the hinge math to be size-agnostic.
+Replace the direct torque mutation with Matter’s torque APIs for smoother rotation.
+
+1 file changed
+Undo
+
+Review
+index.html

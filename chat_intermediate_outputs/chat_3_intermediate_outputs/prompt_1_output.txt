@@ -1,0 +1,49 @@
+1) The Last Post Office
+- Description: A winding factory of belts, flippers, and stampers turns frantic as you route color-coded letters to the right bins before pickup. Each level is a single-screen contraption that escalates with splitters, timed gates, and prank parcels that invert rules. Failures cascade fast, but perfect runs feel like conducting a tiny orchestra.
+- Core mechanic: Real-time belt routing by toggling junctions and timing activations to shepherd parcels along optimal paths.
+- Unique hook: “Rulebreaker” mail periodically rewrites system logic (e.g., red letters use blue rules for 10 seconds), forcing quick improvisation within a deterministic machine.
+
+2) Shadow Shepherd
+- Description: You can’t move your character—only the lights. Drag lanterns, spotlights, and mirrors to cast shifting shadows that shepherd a skittish silhouette to safety. Puzzles evolve with color filters, moving hazards, and shadow “bridges” that only exist in darkness.
+- Core mechanic: Indirect control via dynamic light placement; the shadow entity follows safest, darkest paths.
+- Unique hook: Physics-based shadows as navigable terrain, creating a tactile, toy-like feel as you sculpt darkness.
+
+3) Orbit Oddity
+- Description: Fling tiny probe-satellites into gravity wells to play melodies as they slingshot past musical planets. Chaining orbits on-beat unlocks harmonies, but stray too wide and you clip hazards or decay into the sun. It’s part puzzle, part rhythm, all cosmic pinball.
+- Core mechanic: Timing-based slingshot launches with gravity-assisted arcs; orbits trigger notes on contact.
+- Unique hook: A reactive soundtrack where your orbital solutions literally compose the level’s music.
+
+4) Witch’s Mise en Place
+- Description: In a cozy cottage, you prep potions by chopping, fermenting, and enchanting ingredients on a cramped 4x4 counter. Recipes mutate mid-level (a toadstool becomes lunar puree if it sits near moonlight tiles), so you must pipeline steps smartly. It’s a brisk blend of spatial puzzling and kitchen chaos.
+- Core mechanic: Turn-based tile-crafting with adjacency effects and timers; chain reactions to meet order deadlines.
+- Unique hook: Ingredients have “aura” states that contaminate neighbors, letting you engineer elegant multi-step transformations.
+
+5) Night Guard, Day Thief
+- Description: You direct a heist indirectly by controlling the museum’s security systems—camera angles, janitor paths, and audio tours—to open safe routes for a thief on autopilot. Every input helps or hinders as patrols adapt and exhibits have quirky triggers. Success feels like solving a Rube Goldberg stealth puzzle.
+- Core mechanic: Indirect manipulation of systems; predict the thief’s behavior and shape the environment to guide them.
+- Unique hook: Dual-role inversion—playing as security to orchestrate the perfect theft without ever moving the thief yourself.
+
+6) Garden of Forking Vines
+- Description: A single seed sprouts, then forks each turn; you place limited trellises and blockers to shape its growth into target silhouettes. Manage nutrients, avoid pests, and time blooms to cover special markers. It’s zen until a vine gets away from you.
+- Core mechanic: Turn-based growth simulation with deterministic branching and spatial constraints.
+- Unique hook: Puzzle “origami” grown from one living line—failures create beautiful, shareable botanical doodles.
+
+7) Echo Courier
+- Description: Deliver packages through pitch-black levels where vision comes from sound. Tap to ping; walls and hazards materialize as expanding outlines, fading like ripples on a pond. Different objects “ring” uniquely, letting you learn spaces by ear.
+- Core mechanic: Limited echolocation bursts and sound-propagation clues to route-find and time movement.
+- Unique hook: A synesthetic map that only exists when you make noise—stealth and navigation fuse into one mechanic.
+
+8) Packet Panic: Metro Loop
+- Description: Program a tram that loops a compact city in 30-second cycles, picking up commuters with incompatible demands. Each failed loop, you tweak the script—switch labels, stop timings, door rules—until every passenger is satisfied simultaneously. It’s a tight, iterative time-loop management puzzle.
+- Core mechanic: Pre-planned command sequence that replays; micro-adjust between loops to converge on a perfect run.
+- Unique hook: Roguelite-style iteration applied to transit logic, with persistent “hacks” you unlock for later routes.
+
+9) Paper Planes & Electric Fans
+- Description: Juggle multiple paper planes through a 2D apartment by toggling household fans, vents, and window drafts. Planes have different weights and fold-styles, drifting uniquely as they bounce, snag, or soar. Threading them through moving targets feels like conducting a breezy ballet.
+- Core mechanic: Physics-based airflow manipulation; time your fan toggles to maintain graceful flight paths.
+- Unique hook: Origami variants that change lift/drag let you “compose” a squadron for each puzzle.
+
+10) Patchwork Paradox
+- Description: Reality has a rip—fix it by stitching irregular fabric pieces onto a wobbly tear that shifts under gravity. You can cut patches once per level, but every seam warps nearby space, bending the board and changing fit. It’s Tetris meets quilting with a mischievous physics twist.
+- Core mechanic: Drag-rotate-scale fabric pieces onto a deformable playfield; strategic cuts and anchor pins counter warp.
+- Unique hook: The board fights back—your repairs change the puzzle’s geometry in delightful, solvable ways.

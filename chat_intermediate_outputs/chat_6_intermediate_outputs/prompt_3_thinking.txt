@@ -1,0 +1,3 @@
+**Exploring game mechanics**
+
+I'm considering how to integrate mechanic themes with musical harmony, like mapping colors to notes and using shells as chords for harmonies. I want to add "ephemeral edits" that allow drawing channels during a calm moment, while tides can erase unreinforced grooves. Introducing "sand runes" for color transformations and "tide spirits" as obstacles to appease is intriguing. Overall, I’m aiming for a feasible system in Phaser, focusing on how tiles and modifiers interact, while ensuring we adhere to our structure and timing. The revised title might be "Tidepainter: Songs of the Shore."

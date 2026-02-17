@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orbit Oddity</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #060913;
+      color: #cfe7ff;
+      font-family: "Courier New", monospace;
+      overflow: hidden;
+    }
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script>
+    const WIDTH = 960;
+    const HEIGHT = 540;
+
+    const NOTE_COLORS = {
+      C: 0x69a7ff,
+      Cs: 0x9ec5ff,
+      D: 0x69c3ff,
+      E: 0x7cffc1,
+      Fs: 0x74ffd8,
+      G: 0xffd36e,
+      A: 0xffb36e,
+      B: 0xff9ea6
+    };
+
+    const NOTE_FREQ = {
+      C: 261.63,
+      Cs: 277.18,
+      D: 293.66,
+      E: 329.63,
+      Fs: 369.99,
+      G: 392.0,
+      A: 440.0,
+      B: 493.88
+    };
+
+    const AURORA_COLORS = [0x2dd4bf, 0x60a5fa, 0x93c5fd, 0x7dd3fc];
+
+    const LAUNCHER_CONFIG = {
+      minDrag: 80,
+      maxDrag: 220,
+      minSpeed: 120,
+      maxSpeed: 280
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function mapRange(value, inMin, inMax, outMin, outMax) {
+      const t = (value - inMin) / (inMax - inMin);
+      return outMin + (outMax - outMin) * clamp(t, 0, 1);
+    }
+
+    class TonePlayer {
+      constructor() {
+        this.context = null;
+        this.muted = false;
+      }
+
+      ensureContext() {
+        if (!this.context) {
+          this.context = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.context.state === 'suspended') {
+          this.context.resume();
+        }
+      }
+
+      playTone(freq, duration, volume, type = 'sine') {
+        if (this.muted) return;
+        this.ensureContext();
+        const ctx = this.context;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        const now = ctx.currentTime;
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+
+      playNote(noteId, volume = 0.7, duration = 0.6) {
+        const freq = NOTE_FREQ[noteId];
+        if (!freq) return;
+        this.playTone(freq, duration, volume, 'sine');
+      }
+
+      playMetronome() {
+        this.playTone(1200, 0.08, 0.2, 'square');
+      }
+    }
+
+    class OrbitOddityScene extends Phaser.Scene {
+      constructor() {
+        super('OrbitOddity');
+        this.state = 'title';
+      }
+
+      create() {
+        this.audio = new TonePlayer();
+        this.pointerWasDown = false;
+        this.lastDt = 1 / 60;
+        this.movementIndex = 0;
+        this.stats = {
+          totalLaunches: 0,
+          onBeatLaunches: 0,
+          longestOrbit: 0
+        };
+
+        this.createBackground();
+
+        this.worldGfx = this.add.graphics();
+        this.uiGfx = this.add.graphics();
+
+        this.titleText = this.add.text(WIDTH / 2, HEIGHT / 2 - 80, 'Orbit Oddity', {
+          fontSize: '36px',
+          color: '#cfe7ff',
+          fontFamily: 'Courier New, monospace'
+        }).setOrigin(0.5);
+
+        this.subtitleText = this.add.text(WIDTH / 2, HEIGHT / 2 - 20,
+          'Drag to aim. Release on the beat. Fill the motif.', {
+            fontSize: '16px',
+            color: '#b9d6ff',
+            fontFamily: 'Courier New, monospace'
+          }).setOrigin(0.5);
+
+        this.startText = this.add.text(WIDTH / 2, HEIGHT / 2 + 30, 'Click or press Enter to start', {
+          fontSize: '16px',
+          color: '#cfe7ff',
+          fontFamily: 'Courier New, monospace'
+        }).setOrigin(0.5);
+
+        this.instructionText = this.add.text(WIDTH / 2, HEIGHT - 20,
+          'Drag from the launcher. Release on the beat. R: retry, N: next, M: mute', {
+            fontSize: '14px',
+            color: '#9ab7dd',
+            fontFamily: 'Courier New, monospace'
+          }).setOrigin(0.5).setVisible(false);
+
+        this.hudText = this.add.text(720, 16, '', {
+          fontSize: '14px',
+          color: '#cfe7ff',
+          fontFamily: 'Courier New, monospace'
+        }).setVisible(false);
+
+        this.objectiveText = this.add.text(420, 58, '', {
+          fontSize: '12px',
+          color: '#b9d6ff',
+          fontFamily: 'Courier New, monospace'
+        }).setOrigin(0.5, 0).setVisible(false);
+
+        this.muteText = this.add.text(720, 34, '', {
+          fontSize: '12px',
+          color: '#9ab7dd',
+          fontFamily: 'Courier New, monospace'
+        }).setVisible(false);
+
+        this.overlayText = this.add.text(WIDTH / 2, HEIGHT / 2, '', {
+          fontSize: '20px',
+          color: '#cfe7ff',
+          fontFamily: 'Courier New, monospace',
+          align: 'center'
+        }).setOrigin(0.5).setVisible(false);
+
+        this.keys = this.input.keyboard.addKeys({
+          r: Phaser.Input.Keyboard.KeyCodes.R,
+          n: Phaser.Input.Keyboard.KeyCodes.N,
+          enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+          m: Phaser.Input.Keyboard.KeyCodes.M
+        });
+
+        this.input.on('pointerdown', () => this.audio.ensureContext());
+        this.input.keyboard.on('keydown', () => this.audio.ensureContext());
+      }
+
+      createBackground() {
+        const tex = this.textures.createCanvas('bg', WIDTH, HEIGHT);
+        const ctx = tex.getContext();
+        const gradient = ctx.createRadialGradient(WIDTH / 2, HEIGHT / 2, 80, WIDTH / 2, HEIGHT / 2, WIDTH);
+        gradient.addColorStop(0, '#101a33');
+        gradient.addColorStop(1, '#060913');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        for (let i = 0; i < 220; i++) {
+          const x = Math.random() * WIDTH;
+          const y = Math.random() * HEIGHT;
+          const r = Math.random() * 1.6 + 0.2;
+          const alpha = Math.random() * 0.6 + 0.2;
+          ctx.fillStyle = `rgba(200, 220, 255, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        tex.refresh();
+        this.add.image(0, 0, 'bg').setOrigin(0);
+
+        this.twinkles = [];
+        for (let i = 0; i < 40; i++) {
+          this.twinkles.push({
+            x: Math.random() * WIDTH,
+            y: Math.random() * HEIGHT,
+            r: Math.random() * 1.4 + 0.6,
+            speed: Math.random() * 1.5 + 0.5,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+
+      startMovement(index) {
+        this.state = 'playing';
+        this.movementIndex = index;
+        this.probes = [];
+        this.pulses = [];
+        this.frozen = false;
+
+        const config = this.configureMovement(index);
+        this.bodies = config.bodies;
+        this.rings = config.rings;
+        this.motif = config.motif;
+        this.phraseBeats = config.phraseBeats;
+        this.requiredNotes = config.requiredNotes || [];
+        this.asteroid = config.asteroid || null;
+
+        this.launcher = {
+          pos: new Phaser.Math.Vector2(config.launcherPos.x, config.launcherPos.y),
+          aiming: false,
+          aimVec: new Phaser.Math.Vector2(0, 0),
+          launchesUsed: 0
+        };
+
+        this.beatClock = {
+          bpm: 80,
+          beatInterval: 0.75,
+          nextBeatTime: this.time.now / 1000 + 0.75,
+          beatIndex: 0,
+          lastBeatTime: this.time.now / 1000
+        };
+
+        this.phraseProgress = 0;
+        this.beatSatisfiedFlags = new Array(this.phraseBeats).fill(false);
+        this.phraseNotesHit = new Set();
+
+        this.ringHitThisBeat = {};
+        this.rings.forEach((ring) => {
+          this.ringHitThisBeat[ring.note] = false;
+          ring.activeThisFrame = false;
+          ring.lastPlayTime = 0;
+        });
+
+        this.titleText.setVisible(false);
+        this.subtitleText.setVisible(false);
+        this.startText.setVisible(false);
+        this.instructionText.setVisible(true);
+        this.hudText.setVisible(true);
+        this.objectiveText.setVisible(true);
+        this.muteText.setVisible(true);
+        this.overlayText.setVisible(false);
+
+        if (index === 0) {
+          this.objectiveText.setText('Chord: hit C E G within 4 beats');
+        } else {
+          this.objectiveText.setText('Motif: hit colored notes on their beats');
+        }
+      }
+
+      configureMovement(index) {
+        if (index === 0) {
+          return {
+            launcherPos: { x: 120, y: 270 },
+            bodies: [
+              { type: 'planet', pos: new Phaser.Math.Vector2(480, 270), radius: 40, mass: 400 }
+            ],
+            rings: [
+              { body: 0, radius: 80, thickness: 10, note: 'C' },
+              { body: 0, radius: 120, thickness: 10, note: 'E' },
+              { body: 0, radius: 160, thickness: 10, note: 'G' }
+            ],
+            motif: [null, null, null, null],
+            phraseBeats: 4,
+            requiredNotes: ['C', 'E', 'G']
+          };
+        }
+        if (index === 1) {
+          return {
+            launcherPos: { x: 120, y: 420 },
+            bodies: [
+              { type: 'sun', pos: new Phaser.Math.Vector2(480, 270), radius: 34, killRadius: 26, mass: 1400 },
+              { type: 'planet', pos: new Phaser.Math.Vector2(360, 220), radius: 38, mass: 350 },
+              { type: 'planet', pos: new Phaser.Math.Vector2(650, 320), radius: 34, mass: 300 }
+            ],
+            rings: [
+              { body: 1, radius: 90, thickness: 10, note: 'C' },
+              { body: 1, radius: 130, thickness: 10, note: 'G' },
+              { body: 2, radius: 70, thickness: 10, note: 'E' },
+              { body: 2, radius: 110, thickness: 10, note: 'B' }
+            ],
+            motif: ['C', null, 'G', null, 'E', null, 'B', null],
+            phraseBeats: 8
+          };
+        }
+        return {
+          launcherPos: { x: 840, y: 120 },
+          bodies: [
+            { type: 'sun', pos: new Phaser.Math.Vector2(480, 270), radius: 34, killRadius: 26, mass: 1400 },
+            { type: 'planet', pos: new Phaser.Math.Vector2(310, 180), radius: 36, mass: 300 },
+            { type: 'planet', pos: new Phaser.Math.Vector2(700, 170), radius: 30, mass: 250 },
+            { type: 'planet', pos: new Phaser.Math.Vector2(520, 360), radius: 28, mass: 220 }
+          ],
+          rings: [
+            { body: 1, radius: 85, thickness: 10, note: 'D' },
+            { body: 1, radius: 125, thickness: 10, note: 'A' },
+            { body: 2, radius: 65, thickness: 10, note: 'Fs' },
+            { body: 2, radius: 105, thickness: 10, note: 'Cs' },
+            { body: 3, radius: 55, thickness: 10, note: 'E' }
+          ],
+          motif: ['D', 'Fs', 'A', 'Cs', 'E', null, 'D', null],
+          phraseBeats: 8,
+          asteroid: {
+            pos: new Phaser.Math.Vector2(480, 480),
+            vel: new Phaser.Math.Vector2(-30, -10),
+            radius: 12
+          }
+        };
+      }
+
+      update(time, delta) {
+        const t = time / 1000;
+        const dt = clamp(delta / 1000, 1 / 60, 1 / 30);
+        this.lastDt = dt;
+
+        const pointer = this.input.activePointer;
+        const justDown = pointer.isDown && !this.pointerWasDown;
+        const justUp = !pointer.isDown && this.pointerWasDown;
+        this.pointerWasDown = pointer.isDown;
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.m)) {
+          this.audio.muted = !this.audio.muted;
+        }
+
+        if (this.state === 'title') {
+          if (justDown || Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+            this.startMovement(0);
+          }
+          this.renderScene(t);
+          return;
+        }
+
+        if (this.state === 'wonMovement') {
+          if (Phaser.Input.Keyboard.JustDown(this.keys.n) || Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+            if (this.movementIndex < 2) {
+              this.startMovement(this.movementIndex + 1);
+            } else {
+              this.enterComplete();
+            }
+          }
+          if (Phaser.Input.Keyboard.JustDown(this.keys.r)) {
+            this.startMovement(this.movementIndex);
+          }
+          this.renderScene(t);
+          return;
+        }
+
+        if (this.state === 'complete') {
+          if (Phaser.Input.Keyboard.JustDown(this.keys.r)) {
+            this.stats = { totalLaunches: 0, onBeatLaunches: 0, longestOrbit: 0 };
+            this.startMovement(0);
+          }
+          this.renderScene(t);
+          return;
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.r)) {
+          this.startMovement(this.movementIndex);
+          return;
+        }
+
+        this.handleInput(t, pointer, justDown, justUp);
+        this.physicsUpdate(dt, t);
+        this.checkRingIntersections(t);
+        this.handleBeat(t);
+        this.renderScene(t);
+      }
+
+      handleInput(time, pointer, justDown, justUp) {
+        if (justDown) {
+          const dist = Phaser.Math.Distance.Between(pointer.x, pointer.y, this.launcher.pos.x, this.launcher.pos.y);
+          if (dist <= 24) {
+            this.launcher.aiming = true;
+          }
+        }
+
+        if (this.launcher.aiming) {
+          const aimVec = new Phaser.Math.Vector2(pointer.x - this.launcher.pos.x, pointer.y - this.launcher.pos.y);
+          const len = aimVec.length();
+          if (len > 0.0001) {
+            const clamped = clamp(len, LAUNCHER_CONFIG.minDrag, LAUNCHER_CONFIG.maxDrag);
+            aimVec.normalize().scale(clamped);
+          }
+          this.launcher.aimVec = aimVec;
+        }
+
+        if (justUp && this.launcher.aiming) {
+          const aimVec = this.launcher.aimVec.clone();
+          if (aimVec.length() > 1) {
+            const speed = mapRange(aimVec.length(), LAUNCHER_CONFIG.minDrag, LAUNCHER_CONFIG.maxDrag,
+              LAUNCHER_CONFIG.minSpeed, LAUNCHER_CONFIG.maxSpeed);
+            const launchTime = time;
+            const nearest = this.nearestBeatTime(this.beatClock, launchTime);
+            const isOnBeat = Math.abs(launchTime - nearest) <= 0.12;
+            const jitter = isOnBeat ? 0.02 : 0.08;
+            const dir = aimVec.normalize().rotate(Phaser.Math.FloatBetween(-jitter, jitter));
+            const v0 = dir.scale(speed * (isOnBeat ? 1.05 : 1));
+            this.createProbe(this.launcher.pos, v0, launchTime);
+            if (isOnBeat) {
+              this.stats.onBeatLaunches += 1;
+              this.pulses.push({
+                x: this.launcher.pos.x,
+                y: this.launcher.pos.y,
+                radius: 16,
+                color: 0x8ad1ff,
+                life: 0,
+                maxLife: 0.4,
+                thickness: 2,
+                expand: 18
+              });
+            }
+            this.stats.totalLaunches += 1;
+            this.launcher.launchesUsed += 1;
+          }
+          this.launcher.aiming = false;
+        }
+      }
+
+      createProbe(pos, vel, spawnTime) {
+        this.probes.push({
+          pos: new Phaser.Math.Vector2(pos.x, pos.y),
+          vel: new Phaser.Math.Vector2(vel.x, vel.y),
+          alive: true,
+          radius: 4,
+          trail: [],
+          spawnTime
+        });
+      }
+
+      physicsUpdate(dt, time) {
+        if (this.frozen) return;
+        const G = 200;
+        const minDist2 = 400;
+        const dragRate = 0.05;
+
+        this.probes.forEach((probe) => {
+          if (!probe.alive) return;
+
+          let ax = 0;
+          let ay = 0;
+
+          for (let i = 0; i < this.bodies.length; i++) {
+            const body = this.bodies[i];
+            const dx = body.pos.x - probe.pos.x;
+            const dy = body.pos.y - probe.pos.y;
+            const dist2 = Math.max(dx * dx + dy * dy, minDist2);
+            const dist = Math.sqrt(dist2);
+            const accel = (G * body.mass) / dist2;
+            ax += (dx / dist) * accel;
+            ay += (dy / dist) * accel;
+
+            if (body.type === 'sun' && dist <= body.killRadius) {
+              probe.alive = false;
+              return;
+            }
+          }
+
+          probe.vel.x += ax * dt;
+          probe.vel.y += ay * dt;
+          probe.vel.x *= (1 - dragRate * dt);
+          probe.vel.y *= (1 - dragRate * dt);
+          probe.pos.x += probe.vel.x * dt;
+          probe.pos.y += probe.vel.y * dt;
+
+          for (let i = 0; i < this.bodies.length; i++) {
+            const body = this.bodies[i];
+            if (body.type !== 'planet') continue;
+            const dx = probe.pos.x - body.pos.x;
+            const dy = probe.pos.y - body.pos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist <= body.radius + probe.radius) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              const dot = probe.vel.x * nx + probe.vel.y * ny;
+              probe.vel.x = (probe.vel.x - 2 * dot * nx) * 0.6;
+              probe.vel.y = (probe.vel.y - 2 * dot * ny) * 0.6;
+              probe.pos.x = body.pos.x + nx * (body.radius + probe.radius + 0.5);
+              probe.pos.y = body.pos.y + ny * (body.radius + probe.radius + 0.5);
+            }
+          }
+
+          if (this.asteroid) {
+            const dx = probe.pos.x - this.asteroid.pos.x;
+            const dy = probe.pos.y - this.asteroid.pos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist <= this.asteroid.radius + probe.radius) {
+              const nx = dx / dist;
+              const ny = dy / dist;
+              const dot = probe.vel.x * nx + probe.vel.y * ny;
+              const jitter = Phaser.Math.FloatBetween(-15, 15);
+              probe.vel.x = probe.vel.x - 2 * dot * nx + jitter;
+              probe.vel.y = probe.vel.y - 2 * dot * ny - jitter;
+            }
+          }
+
+          probe.trail.push({ x: probe.pos.x, y: probe.pos.y });
+          if (probe.trail.length > 24) {
+            probe.trail.shift();
+          }
+
+          this.stats.longestOrbit = Math.max(this.stats.longestOrbit, time - probe.spawnTime);
+        });
+
+        if (this.asteroid) {
+          this.asteroid.pos.x += this.asteroid.vel.x * dt;
+          this.asteroid.pos.y += this.asteroid.vel.y * dt;
+          if (this.asteroid.pos.x <= this.asteroid.radius || this.asteroid.pos.x >= WIDTH - this.asteroid.radius) {
+            this.asteroid.vel.x *= -1;
+          }
+          if (this.asteroid.pos.y <= this.asteroid.radius || this.asteroid.pos.y >= HEIGHT - this.asteroid.radius) {
+            this.asteroid.vel.y *= -1;
+          }
+        }
+      }
+
+      checkRingIntersections(time) {
+        this.rings.forEach((ring) => {
+          ring.activeThisFrame = false;
+        });
+
+        this.probes.forEach((probe) => {
+          if (!probe.alive) return;
+          for (let i = 0; i < this.rings.length; i++) {
+            const ring = this.rings[i];
+            const body = this.bodies[ring.body];
+            const dx = probe.pos.x - body.pos.x;
+            const dy = probe.pos.y - body.pos.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (Math.abs(dist - ring.radius) <= ring.thickness / 2) {
+              ring.activeThisFrame = true;
+              this.ringHitThisBeat[ring.note] = true;
+              if (time - ring.lastPlayTime > 0.2) {
+                this.audio.playNote(ring.note, 0.7, 0.6);
+                ring.lastPlayTime = time;
+                this.pulses.push({
+                  x: body.pos.x,
+                  y: body.pos.y,
+                  radius: ring.radius,
+                  color: NOTE_COLORS[ring.note] || 0xffffff,
+                  life: 0,
+                  maxLife: 0.6,
+                  thickness: ring.thickness,
+                  expand: 28
+                });
+              }
+            }
+          }
+        });
+      }
+
+      handleBeat(time) {
+        const clock = this.beatClock;
+        let safety = 0;
+        while (time >= clock.nextBeatTime && safety < 4) {
+          clock.lastBeatTime = clock.nextBeatTime;
+          this.audio.playMetronome();
+          const beatIndex = clock.beatIndex;
+
+          if (this.movementIndex === 0) {
+            let beatSatisfied = false;
+            Object.keys(this.ringHitThisBeat).forEach((note) => {
+              if (this.ringHitThisBeat[note]) {
+                beatSatisfied = true;
+                this.phraseNotesHit.add(note);
+              }
+            });
+
+            if (beatSatisfied) {
+              const completesPhrase = (this.phraseProgress + 1) >= this.phraseBeats;
+              const hasAll = this.requiredNotes.every((note) => this.phraseNotesHit.has(note));
+              if (!completesPhrase || hasAll) {
+                this.phraseProgress += 1;
+                this.beatSatisfiedFlags[beatIndex] = true;
+              } else {
+                this.phraseProgress = 0;
+                this.beatSatisfiedFlags.fill(false);
+                this.phraseNotesHit.clear();
+              }
+            } else {
+              this.phraseProgress = 0;
+              this.beatSatisfiedFlags.fill(false);
+              this.phraseNotesHit.clear();
+            }
+          } else {
+            const required = this.motif[beatIndex];
+            const beatSatisfied = required === null || this.ringHitThisBeat[required];
+            if (beatSatisfied) {
+              this.phraseProgress += 1;
+              this.beatSatisfiedFlags[beatIndex] = true;
+              if (required) {
+                this.audio.playNote(required, 0.6, 0.5);
+              }
+            } else {
+              this.phraseProgress = 0;
+              this.beatSatisfiedFlags.fill(false);
+            }
+          }
+
+          if (this.phraseProgress >= this.phraseBeats) {
+            this.onMovementClear();
+          }
+
+          Object.keys(this.ringHitThisBeat).forEach((note) => {
+            this.ringHitThisBeat[note] = false;
+          });
+
+          clock.beatIndex = (clock.beatIndex + 1) % this.phraseBeats;
+          clock.nextBeatTime += clock.beatInterval;
+          safety += 1;
+        }
+      }
+
+      onMovementClear() {
+        this.state = 'wonMovement';
+        this.frozen = true;
+        this.overlayText.setText('Movement Clear!\nPress N to continue').setVisible(true);
+        this.playChordForMovement(this.movementIndex);
+      }
+
+      enterComplete() {
+        this.state = 'complete';
+        this.frozen = true;
+        const accuracy = this.stats.totalLaunches
+          ? Math.round((this.stats.onBeatLaunches / this.stats.totalLaunches) * 100)
+          : 0;
+        const lines = [
+          'You composed the sky',
+          `Accuracy: ${accuracy}% on-beat`,
+          `Total Launches: ${this.stats.totalLaunches}`,
+          `Longest Orbit: ${this.stats.longestOrbit.toFixed(1)}s`,
+          'Press R to replay'
+        ];
+        this.overlayText.setText(lines.join('\n')).setVisible(true);
+      }
+
+      playChordForMovement(index) {
+        if (index === 0) {
+          ['C', 'E', 'G'].forEach((note) => this.audio.playNote(note, 0.4, 1.8));
+          return;
+        }
+        if (index === 1) {
+          ['C', 'E', 'G', 'B'].forEach((note) => this.audio.playNote(note, 0.35, 1.8));
+          return;
+        }
+        ['D', 'Fs', 'A', 'Cs', 'E'].forEach((note) => this.audio.playNote(note, 0.35, 2.2));
+      }
+
+      nearestBeatTime(clock, t) {
+        const lastBeat = clock.nextBeatTime - clock.beatInterval;
+        const n = Math.round((t - lastBeat) / clock.beatInterval);
+        return lastBeat + n * clock.beatInterval;
+      }
+
+      renderScene(time) {
+        this.worldGfx.clear();
+        this.drawTwinkles(time);
+        this.drawAurora(time);
+
+        if (this.bodies && (this.state !== 'title')) {
+          this.drawBodiesAndRings();
+          this.drawPulses();
+          this.drawProbes();
+          this.drawLauncher(time);
+          if (this.asteroid) {
+            this.worldGfx.fillStyle(0x8893a7, 0.9);
+            this.worldGfx.fillCircle(this.asteroid.pos.x, this.asteroid.pos.y, this.asteroid.radius);
+          }
+        }
+
+        this.uiGfx.clear();
+        if (this.state !== 'title') {
+          this.drawHUD(time);
+        }
+
+        if (this.hudText.visible) {
+          this.hudText.setText(`Launches: ${this.stats.totalLaunches}`);
+          this.muteText.setText(this.audio.muted ? 'Mute: On' : 'Mute: Off');
+        }
+      }
+
+      drawTwinkles(time) {
+        this.twinkles.forEach((star) => {
+          const alpha = 0.2 + 0.5 * (0.5 + 0.5 * Math.sin(time * star.speed + star.phase));
+          this.worldGfx.fillStyle(0xb9d6ff, alpha);
+          this.worldGfx.fillCircle(star.x, star.y, star.r);
+        });
+      }
+
+      drawAurora(time) {
+        const intensity = this.getAuroraIntensity();
+        if (intensity <= 0.01) return;
+        for (let i = 0; i < 4; i++) {
+          const baseY = 40 + i * 42;
+          const amp = 10 + i * 4 + intensity * 12;
+          const color = AURORA_COLORS[i % AURORA_COLORS.length];
+          const alpha = 0.08 + intensity * 0.12;
+          this.worldGfx.fillStyle(color, alpha);
+          this.worldGfx.beginPath();
+          this.worldGfx.moveTo(0, baseY);
+          for (let x = 0; x <= WIDTH; x += 40) {
+            const wave = Math.sin(time * 0.6 + x * 0.02 + i) * amp;
+            this.worldGfx.lineTo(x, baseY + wave);
+          }
+          this.worldGfx.lineTo(WIDTH, baseY + amp + 70);
+          this.worldGfx.lineTo(0, baseY + amp + 70);
+          this.worldGfx.closePath();
+          this.worldGfx.fillPath();
+        }
+      }
+
+      drawPulses() {
+        if (!this.pulses || this.pulses.length === 0) return;
+        for (let i = this.pulses.length - 1; i >= 0; i--) {
+          const pulse = this.pulses[i];
+          pulse.life += this.lastDt;
+          const t = pulse.life / pulse.maxLife;
+          if (t >= 1) {
+            this.pulses.splice(i, 1);
+            continue;
+          }
+          const alpha = (1 - t) * 0.6;
+          const radius = pulse.radius + pulse.expand * t;
+          this.worldGfx.lineStyle(pulse.thickness, pulse.color, alpha);
+          this.worldGfx.strokeCircle(pulse.x, pulse.y, radius);
+        }
+      }
+
+      getAuroraIntensity() {
+        if (this.state === 'wonMovement' || this.state === 'complete') return 0.9;
+        if (this.state === 'playing') {
+          const progress = this.phraseBeats ? (this.phraseProgress / this.phraseBeats) : 0;
+          return 0.25 + progress * 0.6;
+        }
+        return 0.2;
+      }
+
+      drawBodiesAndRings() {
+        this.bodies.forEach((body) => {
+          if (body.type === 'sun') {
+            this.worldGfx.fillStyle(0xffdd99, 0.6);
+            this.worldGfx.fillCircle(body.pos.x, body.pos.y, body.radius + 8);
+            this.worldGfx.fillStyle(0xffb347, 1);
+            this.worldGfx.fillCircle(body.pos.x, body.pos.y, body.radius);
+            return;
+          }
+          this.worldGfx.fillStyle(0x3c4f7a, 0.9);
+          this.worldGfx.fillCircle(body.pos.x, body.pos.y, body.radius + 2);
+          this.worldGfx.fillStyle(0x2a3a5a, 1);
+          this.worldGfx.fillCircle(body.pos.x, body.pos.y, body.radius);
+        });
+
+        this.rings.forEach((ring) => {
+          const color = NOTE_COLORS[ring.note] || 0xffffff;
+          const alpha = ring.activeThisFrame ? 0.9 : 0.35;
+          this.worldGfx.lineStyle(ring.thickness, color, alpha);
+          const body = this.bodies[ring.body];
+          this.worldGfx.strokeCircle(body.pos.x, body.pos.y, ring.radius);
+        });
+      }
+
+      drawProbes() {
+        this.probes.forEach((probe) => {
+          if (!probe.alive) return;
+          for (let i = 1; i < probe.trail.length; i++) {
+            const p0 = probe.trail[i - 1];
+            const p1 = probe.trail[i];
+            const alpha = i / probe.trail.length;
+            this.worldGfx.lineStyle(2, 0x9ad9ff, alpha * 0.7);
+            this.worldGfx.beginPath();
+            this.worldGfx.moveTo(p0.x, p0.y);
+            this.worldGfx.lineTo(p1.x, p1.y);
+            this.worldGfx.strokePath();
+          }
+
+          this.worldGfx.fillStyle(0xffffff, 1);
+          this.worldGfx.fillCircle(probe.pos.x, probe.pos.y, probe.radius);
+        });
+      }
+
+      drawLauncher(time) {
+        const beatPhase = Phaser.Math.Clamp((time - this.beatClock.lastBeatTime) / this.beatClock.beatInterval, 0, 1);
+        const pulse = 14 + 4 * Math.exp(-beatPhase * 5);
+        this.worldGfx.lineStyle(2, 0x8ad1ff, 0.8);
+        this.worldGfx.strokeCircle(this.launcher.pos.x, this.launcher.pos.y, pulse);
+        this.worldGfx.fillStyle(0x8ad1ff, 1);
+        this.worldGfx.fillCircle(this.launcher.pos.x, this.launcher.pos.y, 10);
+
+        if (this.launcher.aiming) {
+          const endX = this.launcher.pos.x + this.launcher.aimVec.x;
+          const endY = this.launcher.pos.y + this.launcher.aimVec.y;
+          this.worldGfx.lineStyle(2, 0x8ad1ff, 0.9);
+          this.worldGfx.beginPath();
+          this.worldGfx.moveTo(this.launcher.pos.x, this.launcher.pos.y);
+          this.worldGfx.lineTo(endX, endY);
+          this.worldGfx.strokePath();
+          this.worldGfx.fillStyle(0x8ad1ff, 0.9);
+          this.worldGfx.fillCircle(endX, endY, 4);
+        }
+      }
+
+      drawHUD(time) {
+        const beatX = 70;
+        const beatY = 70;
+        const beatPhase = Phaser.Math.Clamp((time - this.beatClock.lastBeatTime) / this.beatClock.beatInterval, 0, 1);
+        const inner = 26 + 4 * Math.exp(-beatPhase * 5);
+        this.uiGfx.lineStyle(2, 0x8ad1ff, 0.8);
+        this.uiGfx.strokeCircle(beatX, beatY, 30);
+        this.uiGfx.fillStyle(0x8ad1ff, 0.35);
+        this.uiGfx.fillCircle(beatX, beatY, inner);
+
+        const barX = 400;
+        const barY = 24;
+        const barWidth = 320;
+        const barHeight = 8;
+        const segmentWidth = barWidth / this.phraseBeats;
+        for (let i = 0; i < this.phraseBeats; i++) {
+          const filled = this.beatSatisfiedFlags[i];
+          this.uiGfx.fillStyle(filled ? 0x9ec5ff : 0x2a3350, filled ? 0.9 : 0.6);
+          this.uiGfx.fillRect(barX + i * segmentWidth, barY, segmentWidth - 2, barHeight);
+        }
+
+        const motifY = 40;
+        for (let i = 0; i < this.motif.length; i++) {
+          const note = this.motif[i];
+          const satisfied = this.beatSatisfiedFlags[i];
+          const color = note ? NOTE_COLORS[note] : 0x4b556d;
+          const alpha = satisfied ? 0.95 : (note ? 0.35 : 0.25);
+          this.uiGfx.fillStyle(color, alpha);
+          this.uiGfx.fillCircle(barX + i * segmentWidth + segmentWidth / 2 - 1, motifY, 4);
+        }
+
+        if (this.movementIndex === 0 && this.requiredNotes) {
+          const chordY = 58;
+          const chordSpacing = 18;
+          const startX = barX + barWidth - chordSpacing * (this.requiredNotes.length - 1);
+          for (let i = 0; i < this.requiredNotes.length; i++) {
+            const note = this.requiredNotes[i];
+            const color = NOTE_COLORS[note] || 0xffffff;
+            const active = this.phraseNotesHit.has(note);
+            this.uiGfx.fillStyle(color, active ? 0.9 : 0.25);
+            this.uiGfx.fillCircle(startX + i * chordSpacing, chordY, 4);
+          }
+        }
+      }
+    }
+
+    const config = {
+      type: Phaser.AUTO,
+      width: WIDTH,
+      height: HEIGHT,
+      parent: 'game-container',
+      backgroundColor: '#060913',
+      scene: OrbitOddityScene
+    };
+
+    new Phaser.Game(config);
+  </script>
+</body>
+</html>

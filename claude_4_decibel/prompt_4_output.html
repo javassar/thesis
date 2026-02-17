@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Decibel Thief</title>
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+<script>
+
+// ============================================================
+// BOOT SCENE — Generate all textures
+// ============================================================
+class BootScene extends Phaser.Scene {
+  constructor() { super('BootScene'); }
+
+  preload() {
+    const g = this.make.graphics({ add: false });
+
+    // Player body
+    g.clear();
+    g.fillStyle(0x1a1a2e);
+    g.fillCircle(8, 8, 8);
+    g.generateTexture('player_body', 16, 16);
+
+    // Light cookie textures (radial gradient for darkness erase)
+    // Draw concentric circles from largest to smallest, each with small alpha.
+    // Center accumulates all layers (bright), edges get few layers (dim).
+    const lightSizes = [64, 96, 128, 180, 256, 320, 400, 512];
+    for (const size of lightSizes) {
+      g.clear();
+      const steps = 24;
+      const halfSize = size / 2;
+      for (let i = 0; i <= steps; i++) {
+        const radius = halfSize * (1 - i / steps);
+        g.fillStyle(0xffffff, 0.06);
+        g.fillCircle(halfSize, halfSize, Math.max(1, radius));
+      }
+      g.generateTexture('light_' + size, size, size);
+    }
+
+    // Instrument bodies
+    const instColors = [
+      { name: 'melody', color: 0x00e5ff },
+      { name: 'bass', color: 0xff00aa },
+      { name: 'harmony', color: 0xffd700 },
+      { name: 'percussion', color: 0x88ff00 }
+    ];
+    for (const ic of instColors) {
+      g.clear();
+      g.fillStyle(ic.color);
+      g.fillCircle(18, 18, 18);
+      g.generateTexture('inst_' + ic.name, 36, 36);
+    }
+
+    // Seeking note
+    g.clear();
+    g.fillStyle(0x00e5ff);
+    g.fillCircle(6, 6, 6);
+    g.generateTexture('seeking_note', 12, 12);
+
+    // Fog patch
+    g.clear();
+    g.fillStyle(0xffd700, 0.15);
+    g.fillCircle(40, 40, 40);
+    g.generateTexture('fog_patch', 80, 80);
+
+    // Mine
+    g.clear();
+    g.fillStyle(0x88ff00);
+    g.fillCircle(10, 10, 10);
+    g.generateTexture('mine', 20, 20);
+
+    // Particle
+    g.clear();
+    g.fillStyle(0xffffff);
+    g.fillCircle(3, 3, 3);
+    g.generateTexture('particle', 6, 6);
+
+    g.destroy();
+  }
+
+  create() {
+    this.game.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    this.scene.start('TitleScene');
+  }
+}
+
+// ============================================================
+// TITLE SCENE
+// ============================================================
+class TitleScene extends Phaser.Scene {
+  constructor() { super('TitleScene'); }
+
+  create() {
+    const cx = 400, cy = 300;
+
+    // Background orbs
+    const orbData = [
+      { x: 200, y: 150, color: 0x00e5ff },
+      { x: 600, y: 450, color: 0xff00aa },
+      { x: 600, y: 150, color: 0xffd700 },
+      { x: 200, y: 450, color: 0x88ff00 }
+    ];
+    for (const od of orbData) {
+      const orb = this.add.circle(od.x, od.y, 14, od.color, 0.4);
+      this.tweens.add({
+        targets: orb, alpha: 0.15, duration: 1500,
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+      });
+    }
+
+    // Title
+    this.add.text(cx, 100, 'DECIBEL THIEF', {
+      fontFamily: 'Arial Black, sans-serif', fontSize: '44px',
+      color: '#ffffff', stroke: '#000', strokeThickness: 4
+    }).setOrigin(0.5);
+
+    // Subtitle
+    this.add.text(cx, 155, 'Consume the music. Embrace the silence.', {
+      fontFamily: 'Arial', fontSize: '16px', color: '#888899'
+    }).setOrigin(0.5);
+
+    // Controls
+    const controlLines = [
+      'WASD or Arrow Keys — Move',
+      'SPACE — Feed (when near a sound)',
+      '',
+      'Approach the glowing creatures.',
+      'Time your feed to their beat.',
+      'Silence them all before time runs out.'
+    ];
+    this.add.text(cx, 310, controlLines.join('\n'), {
+      fontFamily: 'Arial', fontSize: '15px', color: '#aaaaaa',
+      align: 'center', lineSpacing: 6
+    }).setOrigin(0.5);
+
+    // Start prompt
+    const startText = this.add.text(cx, 510, 'Press SPACE to begin', {
+      fontFamily: 'Arial', fontSize: '22px', color: '#ffffff'
+    }).setOrigin(0.5);
+    this.tweens.add({
+      targets: startText, alpha: 0.3, duration: 900,
+      yoyo: true, repeat: -1
+    });
+
+    this.input.keyboard.once('keydown-SPACE', () => {
+      this.game.audioCtx.resume();
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () =>
+        this.scene.start('GameScene'));
+    });
+  }
+}
+
+// ============================================================
+// GAME SCENE
+// ============================================================
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+
+  init() {
+    this.C = {
+      PLAYER_SPEED: 200,
+      PLAYER_RADIUS: 8,
+      DECEL: 0.85,
+      STUN_MS: 400,
+      OVERWHELM_MS: 2000,
+      OVERWHELM_HITS: 3,
+      OVERWHELM_WINDOW: 8000,
+      FEED_RANGE: 50,
+      FEED_RING_RADIUS: 35,
+      FEED_SUCCESS_COOLDOWN: 300,
+      FEED_FAIL_COOLDOWN: 500,
+      BPM: 100,
+      BEAT_MS: 600,
+      GAME_TIME_MS: 300000,
+      FEED_WINDOWS: [180, 160, 140, 120],
+      FEED_QUOTAS: [8, 7, 6, 5],
+      HAZARD_FREQ_MULT_PER_SILENCE: 0.2,
+      VOLUME_BOOST_PER_SILENCE: 0.25,
+      LIGHT_BOOST_PER_SILENCE: 0.15,
+      INSTRUMENTS: {
+        melody:     { color: 0x00e5ff, cx: 200, cy: 150, lightR: 180,
+                      patrolType: 'figure8', patrolW: 80, patrolH: 60,
+                      patrolSpeed: 0.4, gain: 0.10 },
+        bass:       { color: 0xff00aa, cx: 600, cy: 450, lightR: 160,
+                      patrolType: 'circle', patrolR: 60,
+                      patrolSpeed: 0.3, gain: 0.15 },
+        harmony:    { color: 0xffd700, cx: 600, cy: 150, lightR: 200,
+                      patrolType: 'random', patrolR: 70,
+                      patrolSpeed: 20, gain: 0.08 },
+        percussion: { color: 0x88ff00, cx: 200, cy: 450, lightR: 140,
+                      patrolType: 'zigzag', patrolR: 70,
+                      patrolSpeed: 40, gain: 0.12 }
+      }
+    };
+
+    this.score = 0;
+    this.instrumentsSilenced = 0;
+    this.silenceOrder = [];
+    this.currentPhase = 1;
+    this.elapsedTime = 0;
+    this.gameActive = false;
+    this.beatAccumulator = 0;
+    this.beatCount = 0;
+
+    this.playerVelX = 0;
+    this.playerVelY = 0;
+    this.playerX = 400;
+    this.playerY = 300;
+    this.stunTimer = 0;
+    this.overwhelmed = false;
+    this.overwhelmTimer = 0;
+    this.hitTimestamps = [];
+    this.isFeeding = false;
+    this.feedTarget = null;
+    this.feedCooldown = 0;
+    this.feedPulseWaves = [];
+
+    this.instruments = {};
+    this.seekingNotes = [];
+    this.shockwaves = [];
+    this.fogPatches = [];
+    this.beatMines = [];
+    this.mineDetonations = [];
+    this.playerInFog = false;
+  }
+
+  closestLightTexture(diameter) {
+    const sizes = [64, 96, 128, 180, 256, 320, 400, 512];
+    for (const s of sizes) {
+      if (s >= diameter) return 'light_' + s;
+    }
+    return 'light_512';
+  }
+
+  create() {
+    const C = this.C;
+
+    // Grid dots
+    for (let x = 0; x <= 800; x += 40) {
+      for (let y = 0; y <= 600; y += 40) {
+        this.add.circle(x, y, 1.5, 0xffffff, 0.03).setDepth(1);
+      }
+    }
+
+    // Initialize instruments
+    for (const [name, cfg] of Object.entries(C.INSTRUMENTS)) {
+      const inst = {
+        name: name,
+        alive: true,
+        x: cfg.cx, y: cfg.cy,
+        config: cfg,
+        feedCount: 0,
+        quota: C.FEED_QUOTAS[0],
+        patrolAngle: 0,
+        hazardBeatCounter: 0,
+        driftTarget: null,
+        zigDir: null,
+        zigTimer: 0,
+        sprite: this.add.image(cfg.cx, cfg.cy, 'inst_' + name).setDepth(30),
+        lightSprite: this.add.image(cfg.cx, cfg.cy,
+          this.closestLightTexture(cfg.lightR * 2))
+          .setDepth(5).setAlpha(0.12).setTint(cfg.color),
+        gainNode: null
+      };
+      this.instruments[name] = inst;
+    }
+
+    // Player
+    this.playerGlow = this.add.image(400, 300,
+      this.closestLightTexture(60))
+      .setDepth(39).setAlpha(0.25).setTint(0x6622aa);
+    this.playerBody = this.add.circle(400, 300, C.PLAYER_RADIUS, 0x1a1a2e)
+      .setDepth(40).setStrokeStyle(1, 0x6622aa, 0.6);
+
+    // Darkness overlay (RenderTexture)
+    this.darkness = this.add.renderTexture(0, 0, 800, 600).setDepth(80);
+
+    // Feed ring graphics
+    this.feedRingGraphics = this.add.graphics().setDepth(45);
+    this.feedRingVisible = false;
+
+    // HUD (depth 100)
+    this.scoreText = this.add.text(24, 18, 'STOLEN: 0', {
+      fontFamily: 'Arial', fontSize: '16px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3
+    }).setDepth(100);
+
+    // Instrument indicator dots
+    this.indicatorDots = {};
+    let dotX = 24;
+    for (const name of ['melody', 'bass', 'harmony', 'percussion']) {
+      const color = C.INSTRUMENTS[name].color;
+      const dot = this.add.circle(dotX, 50, 6, color).setDepth(100);
+      this.indicatorDots[name] = dot;
+      dotX += 24;
+    }
+
+    this.timerText = this.add.text(776, 18, '0:00', {
+      fontFamily: 'Arial', fontSize: '16px', color: '#ffffff',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(1, 0).setDepth(100);
+
+    this.feedProgressText = this.add.text(776, 46, '', {
+      fontFamily: 'Arial', fontSize: '13px', color: '#888899'
+    }).setOrigin(1, 0).setDepth(100).setAlpha(0);
+
+    this.controlsHint = this.add.text(400, 580,
+      'WASD: move | SPACE: feed near a sound | Silence all four', {
+        fontFamily: 'Arial', fontSize: '13px', color: '#555566'
+      }).setOrigin(0.5).setDepth(100);
+    this.tweens.add({
+      targets: this.controlsHint, alpha: 0,
+      delay: 8000, duration: 1000
+    });
+
+    // Input
+    this.keys = this.input.keyboard.addKeys({
+      w: 'W', a: 'A', s: 'S', d: 'D',
+      up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT',
+      space: 'SPACE'
+    });
+
+    // Audio
+    this.initAudio();
+
+    // Start
+    this.cameras.main.fadeIn(600);
+    this.gameActive = true;
+  }
+
+  // ------ AUDIO ------
+
+  initAudio() {
+    const ctx = this.game.audioCtx;
+    this.masterGain = ctx.createGain();
+    this.masterGain.gain.value = 0.7;
+    this.masterGain.connect(ctx.destination);
+
+    const beatDur = 60 / this.C.BPM; // 0.6s
+
+    for (const [name, inst] of Object.entries(this.instruments)) {
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = inst.config.gain;
+      gainNode.connect(this.masterGain);
+      inst.gainNode = gainNode;
+    }
+
+    this.audioStartTime = ctx.currentTime + 0.1;
+    this.scheduleMelody(ctx, beatDur);
+    this.scheduleBass(ctx, beatDur);
+    this.scheduleHarmony(ctx, beatDur);
+    this.schedulePercussion(ctx, beatDur);
+  }
+
+  scheduleMelody(ctx, beatDur) {
+    const notes = [440, 494, 523, 587, 523, 494, 440, 392];
+    const startTime = this.audioStartTime;
+    const gainNode = this.instruments.melody.gainNode;
+    for (let rep = 0; rep < 50; rep++) {
+      for (let i = 0; i < 8; i++) {
+        const t = startTime + (rep * 8 + i) * beatDur;
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.value = notes[i];
+        const env = ctx.createGain();
+        env.gain.setValueAtTime(1.0, t);
+        env.gain.exponentialRampToValueAtTime(0.01, t + beatDur * 0.9);
+        osc.connect(env).connect(gainNode);
+        osc.start(t);
+        osc.stop(t + beatDur);
+      }
+    }
+  }
+
+  scheduleBass(ctx, beatDur) {
+    const notes = [110, 130.8, 146.8, 130.8];
+    const startTime = this.audioStartTime;
+    const gainNode = this.instruments.bass.gainNode;
+    for (let rep = 0; rep < 60; rep++) {
+      for (let i = 0; i < 4; i++) {
+        const t = startTime + (rep * 8 + i * 2) * beatDur;
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = notes[i];
+        const env = ctx.createGain();
+        env.gain.setValueAtTime(1.0, t);
+        env.gain.exponentialRampToValueAtTime(0.01, t + beatDur * 1.9);
+        osc.connect(env).connect(gainNode);
+        osc.start(t);
+        osc.stop(t + beatDur * 2);
+      }
+    }
+  }
+
+  scheduleHarmony(ctx, beatDur) {
+    const roots = [330, 349, 392, 349];
+    const startTime = this.audioStartTime;
+    const gainNode = this.instruments.harmony.gainNode;
+    for (let rep = 0; rep < 19; rep++) {
+      for (let i = 0; i < 4; i++) {
+        const t = startTime + (rep * 16 + i * 4) * beatDur;
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = roots[i];
+        const env = ctx.createGain();
+        env.gain.setValueAtTime(1.0, t);
+        env.gain.setValueAtTime(0.8, t + beatDur * 3.8);
+        env.gain.linearRampToValueAtTime(0.01, t + beatDur * 4);
+        osc.connect(env).connect(gainNode);
+        osc.start(t);
+        osc.stop(t + beatDur * 4);
+      }
+    }
+  }
+
+  schedulePercussion(ctx, beatDur) {
+    const gainNode = this.instruments.percussion.gainNode;
+    const startTime = this.audioStartTime;
+    const bufferSize = Math.floor(ctx.sampleRate * 0.1);
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    for (let beat = 0; beat < 500; beat++) {
+      const t = startTime + beat * beatDur;
+
+      // Hi-hat every beat
+      const hihat = ctx.createBufferSource();
+      hihat.buffer = noiseBuffer;
+      const hhFilter = ctx.createBiquadFilter();
+      hhFilter.type = 'highpass';
+      hhFilter.frequency.value = 5000;
+      const hhEnv = ctx.createGain();
+      hhEnv.gain.setValueAtTime(0.5, t);
+      hhEnv.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+      hihat.connect(hhFilter).connect(hhEnv).connect(gainNode);
+      hihat.start(t);
+      hihat.stop(t + 0.05);
+
+      // Kick on even beats
+      if (beat % 2 === 0) {
+        const kick = ctx.createBufferSource();
+        kick.buffer = noiseBuffer;
+        const kFilter = ctx.createBiquadFilter();
+        kFilter.type = 'lowpass';
+        kFilter.frequency.value = 150;
+        const kEnv = ctx.createGain();
+        kEnv.gain.setValueAtTime(1.0, t);
+        kEnv.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        kick.connect(kFilter).connect(kEnv).connect(gainNode);
+        kick.start(t);
+        kick.stop(t + 0.1);
+      }
+    }
+  }
+
+  // ------ MAIN UPDATE ------
+
+  update(time, delta) {
+    if (!this.gameActive) return;
+
+    const C = this.C;
+    const dt = delta / 1000;
+
+    // Timers
+    this.elapsedTime += delta;
+    if (this.elapsedTime >= C.GAME_TIME_MS) {
+      this.triggerTimeoutEnding();
+      return;
+    }
+
+    if (this.stunTimer > 0) this.stunTimer -= delta;
+    if (this.feedCooldown > 0) this.feedCooldown -= delta;
+    if (this.overwhelmed) {
+      this.overwhelmTimer -= delta;
+      if (this.overwhelmTimer <= 0) {
+        this.overwhelmed = false;
+        this.playerBody.setFillStyle(0x1a1a2e);
+      }
+    }
+
+    // ---- PLAYER MOVEMENT ----
+    let inputX = 0, inputY = 0;
+    const canMove = this.stunTimer <= 0 && !this.overwhelmed;
+    if (canMove || (this.overwhelmed && this.stunTimer <= 0)) {
+      if (this.keys.a.isDown || this.keys.left.isDown) inputX -= 1;
+      if (this.keys.d.isDown || this.keys.right.isDown) inputX += 1;
+      if (this.keys.w.isDown || this.keys.up.isDown) inputY -= 1;
+      if (this.keys.s.isDown || this.keys.down.isDown) inputY += 1;
+    }
+
+    if (inputX !== 0 || inputY !== 0) {
+      const mag = Math.sqrt(inputX * inputX + inputY * inputY);
+      const speed = this.overwhelmed ? 100 : (this.playerInFog ? 100 : C.PLAYER_SPEED);
+      this.playerVelX = (inputX / mag) * speed;
+      this.playerVelY = (inputY / mag) * speed;
+    } else {
+      this.playerVelX *= C.DECEL;
+      this.playerVelY *= C.DECEL;
+      if (Math.abs(this.playerVelX) < 1) this.playerVelX = 0;
+      if (Math.abs(this.playerVelY) < 1) this.playerVelY = 0;
+    }
+
+    this.playerX += this.playerVelX * dt;
+    this.playerY += this.playerVelY * dt;
+
+    // Wraparound
+    if (this.playerX < -8) this.playerX = 808;
+    if (this.playerX > 808) this.playerX = -8;
+    if (this.playerY < -8) this.playerY = 608;
+    if (this.playerY > 608) this.playerY = -8;
+
+    this.playerBody.setPosition(this.playerX, this.playerY);
+    this.playerGlow.setPosition(this.playerX, this.playerY);
+
+    // ---- BEAT TRACKING ----
+    this.beatAccumulator += delta;
+    if (this.beatAccumulator >= C.BEAT_MS) {
+      this.beatAccumulator -= C.BEAT_MS;
+      this.onBeat();
+    }
+
+    // ---- UPDATE INSTRUMENTS (patrol) ----
+    for (const [name, inst] of Object.entries(this.instruments)) {
+      if (!inst.alive) continue;
+      this.updatePatrol(inst, dt);
+      inst.sprite.setPosition(inst.x, inst.y);
+      inst.lightSprite.setPosition(inst.x, inst.y);
+
+      // Proximity volume
+      const dist = Phaser.Math.Distance.Between(
+        this.playerX, this.playerY, inst.x, inst.y);
+      const proxFactor = 1.0 - Phaser.Math.Clamp(dist / 400, 0, 0.85);
+      const boostMult = 1.0 + (this.instrumentsSilenced * C.VOLUME_BOOST_PER_SILENCE);
+      const targetGain = inst.config.gain * proxFactor * boostMult;
+      try {
+        inst.gainNode.gain.linearRampToValueAtTime(
+          targetGain, this.game.audioCtx.currentTime + 0.05);
+      } catch (e) { /* audio context may not be ready */ }
+    }
+
+    // ---- UPDATE HAZARDS ----
+    this.playerInFog = false;
+    this.updateSeekingNotes(dt);
+    this.updateShockwaves(dt);
+    this.updateFogPatches(dt);
+    this.updateBeatMines(dt);
+    this.updateMineDetonations(dt);
+
+    // ---- FEED SYSTEM ----
+    this.updateFeedSystem(dt);
+
+    // ---- FEED INPUT (SPACE) ----
+    if (Phaser.Input.Keyboard.JustDown(this.keys.space)) {
+      this.attemptFeed();
+    }
+
+    // ---- DARKNESS LAYER ----
+    this.updateDarkness();
+
+    // ---- HUD ----
+    this.scoreText.setText('STOLEN: ' + this.score);
+    const mins = Math.floor(this.elapsedTime / 60000);
+    const secs = Math.floor((this.elapsedTime % 60000) / 1000);
+    this.timerText.setText(mins + ':' + (secs < 10 ? '0' : '') + secs);
+  }
+
+  // ------ BEAT ------
+
+  onBeat() {
+    this.beatCount++;
+
+    // Pulse player
+    this.tweens.add({
+      targets: [this.playerBody, this.playerGlow],
+      scaleX: 1.08, scaleY: 1.08, duration: 80, yoyo: true
+    });
+
+    // Spawn hazards
+    const freqMult = 1.0 + this.instrumentsSilenced * this.C.HAZARD_FREQ_MULT_PER_SILENCE;
+    for (const [name, inst] of Object.entries(this.instruments)) {
+      if (!inst.alive) continue;
+      inst.hazardBeatCounter++;
+
+      switch (name) {
+        case 'melody': {
+          const interval = Math.max(1, Math.floor(2 / freqMult));
+          if (inst.hazardBeatCounter % interval === 0) {
+            this.spawnSeekingNote(inst);
+          }
+          break;
+        }
+        case 'bass': {
+          const interval = Math.max(1, Math.floor(2 / freqMult));
+          if (inst.hazardBeatCounter % interval === 0) {
+            this.spawnShockwave(inst);
+          }
+          break;
+        }
+        case 'harmony': {
+          const interval = Math.max(1, Math.floor(3 / freqMult));
+          if (inst.hazardBeatCounter % interval === 0) {
+            this.spawnFogPatch(inst);
+          }
+          break;
+        }
+        case 'percussion': {
+          this.spawnBeatMine(inst);
+          break;
+        }
+      }
+    }
+
+    // Feed pulse wave
+    if (this.isFeeding && this.feedTarget) {
+      this.spawnFeedPulseWave();
+    }
+  }
+
+  // ------ PATROL MOVEMENT ------
+
+  updatePatrol(inst, dt) {
+    const cfg = inst.config;
+    switch (cfg.patrolType) {
+      case 'figure8':
+        inst.patrolAngle += cfg.patrolSpeed * dt;
+        inst.x = cfg.cx + Math.sin(inst.patrolAngle) * cfg.patrolW;
+        inst.y = cfg.cy + Math.sin(inst.patrolAngle * 2) * cfg.patrolH;
+        break;
+      case 'circle':
+        inst.patrolAngle += cfg.patrolSpeed * dt;
+        inst.x = cfg.cx + Math.cos(inst.patrolAngle) * cfg.patrolR;
+        inst.y = cfg.cy + Math.sin(inst.patrolAngle) * cfg.patrolR;
+        break;
+      case 'random':
+        if (!inst.driftTarget ||
+            Phaser.Math.Distance.Between(inst.x, inst.y,
+              inst.driftTarget.x, inst.driftTarget.y) < 5) {
+          const angle = Math.random() * Math.PI * 2;
+          const r = Math.random() * cfg.patrolR;
+          inst.driftTarget = {
+            x: cfg.cx + Math.cos(angle) * r,
+            y: cfg.cy + Math.sin(angle) * r
+          };
+        }
+        {
+          const dx = inst.driftTarget.x - inst.x;
+          const dy = inst.driftTarget.y - inst.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d > 0) {
+            inst.x += (dx / d) * cfg.patrolSpeed * dt;
+            inst.y += (dy / d) * cfg.patrolSpeed * dt;
+          }
+        }
+        break;
+      case 'zigzag':
+        if (!inst.zigDir || inst.zigTimer <= 0) {
+          const zx = (Math.random() - 0.5) * 2;
+          const zy = (Math.random() - 0.5) * 2;
+          const mag = Math.sqrt(zx * zx + zy * zy) || 1;
+          inst.zigDir = { x: zx / mag, y: zy / mag };
+          inst.zigTimer = 1000 + Math.random() * 1000;
+        }
+        inst.zigTimer -= dt * 1000;
+        {
+          const newX = inst.x + inst.zigDir.x * cfg.patrolSpeed * dt;
+          const newY = inst.y + inst.zigDir.y * cfg.patrolSpeed * dt;
+          if (Phaser.Math.Distance.Between(newX, newY, cfg.cx, cfg.cy) < cfg.patrolR) {
+            inst.x = newX;
+            inst.y = newY;
+          } else {
+            inst.zigTimer = 0;
+          }
+        }
+        break;
+    }
+  }
+
+  // ------ HAZARD SPAWNERS ------
+
+  spawnSeekingNote(inst) {
+    if (this.seekingNotes.length >= 5) return;
+    const note = {
+      x: inst.x, y: inst.y,
+      vx: 0, vy: 0,
+      lifetime: 3000,
+      sprite: this.add.image(inst.x, inst.y, 'seeking_note').setDepth(25),
+      dead: false
+    };
+    this.seekingNotes.push(note);
+  }
+
+  spawnShockwave(inst) {
+    const wave = {
+      cx: inst.x, cy: inst.y,
+      radius: 20, alpha: 0.8,
+      graphics: this.add.graphics().setDepth(22),
+      dead: false,
+      hitPlayer: false
+    };
+    this.shockwaves.push(wave);
+  }
+
+  spawnFogPatch(inst) {
+    if (this.fogPatches.length >= 4) return;
+    const angle = Math.random() * Math.PI * 2;
+    const r = Math.random() * 80;
+    const fx = inst.x + Math.cos(angle) * r;
+    const fy = inst.y + Math.sin(angle) * r;
+    const fog = {
+      x: fx, y: fy,
+      lifetime: 4000,
+      sprite: this.add.image(fx, fy, 'fog_patch').setDepth(20).setAlpha(0.15),
+      dead: false
+    };
+    // Gentle scale pulse
+    this.tweens.add({
+      targets: fog.sprite,
+      scaleX: 1.05, scaleY: 1.05, duration: 1000,
+      yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+    this.fogPatches.push(fog);
+  }
+
+  spawnBeatMine(inst) {
+    if (this.beatMines.length >= 12) {
+      const oldest = this.beatMines.shift();
+      this.detonateMine(oldest);
+    }
+    const mine = {
+      x: inst.x, y: inst.y,
+      age: 0, armed: false,
+      sprite: this.add.image(inst.x, inst.y, 'mine').setDepth(21),
+      detonated: false
+    };
+    this.beatMines.push(mine);
+  }
+
+  // ------ HAZARD UPDATES ------
+
+  updateSeekingNotes(dt) {
+    for (const note of this.seekingNotes) {
+      if (note.dead) continue;
+      note.lifetime -= dt * 1000;
+
+      if (note.lifetime <= 300 && note.lifetime > 0) {
+        note.sprite.setAlpha(note.lifetime / 300);
+      }
+
+      if (note.lifetime <= 0) {
+        note.sprite.destroy();
+        note.dead = true;
+        continue;
+      }
+
+      // Homing toward player
+      const dx = this.playerX - note.x;
+      const dy = this.playerY - note.y;
+      const targetAngle = Math.atan2(dy, dx);
+      let currentAngle = Math.atan2(note.vy, note.vx);
+      if (note.vx === 0 && note.vy === 0) currentAngle = targetAngle;
+
+      let angleDiff = targetAngle - currentAngle;
+      // Normalize to [-PI, PI]
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+      const turnRate = 1.5 * dt;
+      const newAngle = currentAngle + Phaser.Math.Clamp(angleDiff, -turnRate, turnRate);
+      const speed = 80;
+      note.vx = Math.cos(newAngle) * speed;
+      note.vy = Math.sin(newAngle) * speed;
+      note.x += note.vx * dt;
+      note.y += note.vy * dt;
+      note.sprite.setPosition(note.x, note.y);
+
+      // Collision with player
+      if (Phaser.Math.Distance.Between(note.x, note.y, this.playerX, this.playerY) < 14) {
+        this.hitPlayer(note.x, note.y, 60);
+        note.sprite.destroy();
+        note.dead = true;
+      }
+    }
+    this.seekingNotes = this.seekingNotes.filter(n => !n.dead);
+  }
+
+  updateShockwaves(dt) {
+    for (const wave of this.shockwaves) {
+      if (wave.dead) continue;
+      wave.radius += 150 * dt;
+      wave.alpha -= 0.4 * dt;
+
+      wave.graphics.clear();
+      if (wave.alpha > 0.05) {
+        wave.graphics.lineStyle(12, 0xff00aa, wave.alpha);
+        wave.graphics.strokeCircle(wave.cx, wave.cy, wave.radius);
+      } else {
+        wave.graphics.destroy();
+        wave.dead = true;
+        continue;
+      }
+
+      // Collision: player within ring band
+      if (!wave.hitPlayer) {
+        const playerDist = Phaser.Math.Distance.Between(
+          this.playerX, this.playerY, wave.cx, wave.cy);
+        if (Math.abs(playerDist - wave.radius) < 14) {
+          this.hitPlayer(wave.cx, wave.cy, 80);
+          wave.hitPlayer = true;
+        }
+      }
+    }
+    this.shockwaves = this.shockwaves.filter(w => !w.dead);
+  }
+
+  updateFogPatches(dt) {
+    for (const fog of this.fogPatches) {
+      if (fog.dead) continue;
+      fog.lifetime -= dt * 1000;
+      if (fog.lifetime <= 0) {
+        this.tweens.add({
+          targets: fog.sprite, alpha: 0, duration: 500,
+          onComplete: () => fog.sprite.destroy()
+        });
+        fog.dead = true;
+        continue;
+      }
+      // Check player overlap
+      if (Phaser.Math.Distance.Between(this.playerX, this.playerY, fog.x, fog.y) < 48) {
+        this.playerInFog = true;
+      }
+    }
+    this.fogPatches = this.fogPatches.filter(f => !f.dead);
+  }
+
+  updateBeatMines(dt) {
+    for (const mine of this.beatMines) {
+      if (mine.detonated) continue;
+      mine.age += dt * 1000;
+
+      if (mine.age > 500 && !mine.armed) {
+        mine.armed = true;
+        mine.sprite.setAlpha(0.9);
+      }
+
+      if (!mine.armed) {
+        mine.sprite.setAlpha(mine.age % 400 < 200 ? 0.4 : 0.8);
+      }
+
+      if (mine.age > 4000) {
+        this.detonateMine(mine);
+        continue;
+      }
+
+      if (mine.armed) {
+        if (Phaser.Math.Distance.Between(
+          this.playerX, this.playerY, mine.x, mine.y) < 18) {
+          this.detonateMine(mine);
+        }
+      }
+    }
+    this.beatMines = this.beatMines.filter(m => !m.detonated);
+  }
+
+  detonateMine(mine) {
+    if (mine.detonated) return;
+    mine.detonated = true;
+    mine.sprite.destroy();
+    const det = {
+      cx: mine.x, cy: mine.y,
+      radius: 0, maxRadius: 50,
+      graphics: this.add.graphics().setDepth(23),
+      dead: false,
+      hitPlayer: false
+    };
+    this.mineDetonations.push(det);
+  }
+
+  updateMineDetonations(dt) {
+    for (const det of this.mineDetonations) {
+      if (det.dead) continue;
+      det.radius += 200 * dt;
+      const alpha = 1.0 - (det.radius / det.maxRadius);
+      det.graphics.clear();
+      if (det.radius < det.maxRadius) {
+        det.graphics.lineStyle(6, 0x88ff00, Math.max(0, alpha));
+        det.graphics.strokeCircle(det.cx, det.cy, det.radius);
+        // Player collision
+        if (!det.hitPlayer) {
+          const playerDist = Phaser.Math.Distance.Between(
+            this.playerX, this.playerY, det.cx, det.cy);
+          if (Math.abs(playerDist - det.radius) < 14) {
+            this.hitPlayer(det.cx, det.cy, 50);
+            det.hitPlayer = true;
+          }
+        }
+      } else {
+        det.graphics.destroy();
+        det.dead = true;
+      }
+    }
+    this.mineDetonations = this.mineDetonations.filter(d => !d.dead);
+  }
+
+  // ------ PLAYER HIT ------
+
+  hitPlayer(sourceX, sourceY, knockbackDist) {
+    if (this.stunTimer > 0) return; // invulnerable during stun
+
+    // Knockback
+    const dx = this.playerX - sourceX;
+    const dy = this.playerY - sourceY;
+    const d = Math.sqrt(dx * dx + dy * dy) || 1;
+    this.playerVelX = (dx / d) * knockbackDist / 0.4;
+    this.playerVelY = (dy / d) * knockbackDist / 0.4;
+
+    // Stun
+    this.stunTimer = this.C.STUN_MS;
+    this.playerBody.setFillStyle(0xff2222);
+    this.time.delayedCall(this.C.STUN_MS, () => {
+      if (!this.overwhelmed) {
+        this.playerBody.setFillStyle(0x1a1a2e);
+      }
+    });
+
+    // Cancel feed
+    if (this.isFeeding) this.cancelFeed();
+
+    // Hit sound
+    this.playHitSFX();
+
+    // Overwhelm check
+    const now = this.elapsedTime;
+    this.hitTimestamps.push(now);
+    this.hitTimestamps = this.hitTimestamps.filter(t =>
+      now - t < this.C.OVERWHELM_WINDOW);
+    if (this.hitTimestamps.length >= this.C.OVERWHELM_HITS) {
+      this.overwhelmed = true;
+      this.overwhelmTimer = this.C.OVERWHELM_MS;
+      this.playerBody.setFillStyle(0xff2222);
+      this.hitTimestamps = [];
+    }
+  }
+
+  // ------ FEED SYSTEM ------
+
+  updateFeedSystem(dt) {
+    // Find closest alive instrument within range
+    let closestInst = null;
+    let closestDist = Infinity;
+    for (const [name, inst] of Object.entries(this.instruments)) {
+      if (!inst.alive) continue;
+      const d = Phaser.Math.Distance.Between(
+        this.playerX, this.playerY, inst.x, inst.y);
+      if (d < this.C.FEED_RANGE && d < closestDist) {
+        closestInst = inst;
+        closestDist = d;
+      }
+    }
+
+    if (closestInst && !this.overwhelmed) {
+      if (!this.isFeeding || this.feedTarget !== closestInst) {
+        this.startFeed(closestInst);
+      }
+      this.drawFeedRing(closestInst);
+      this.feedProgressText.setAlpha(1);
+      this.feedProgressText.setText(
+        'FEEDS: ' + closestInst.feedCount + ' / ' + closestInst.quota);
+    } else {
+      if (this.isFeeding) this.cancelFeed();
+      this.feedRingGraphics.clear();
+      this.feedProgressText.setAlpha(0);
+    }
+
+    // Update feed pulse waves
+    for (const wave of this.feedPulseWaves) {
+      if (wave.dead) continue;
+      wave.radius += wave.speed * dt;
+      wave.alpha -= 1.5 * dt;
+      if (wave.alpha <= 0) {
+        wave.graphics.destroy();
+        wave.dead = true;
+      } else {
+        wave.graphics.clear();
+        wave.graphics.lineStyle(2, wave.color, wave.alpha);
+        wave.graphics.strokeCircle(this.playerX, this.playerY, wave.radius);
+      }
+    }
+    this.feedPulseWaves = this.feedPulseWaves.filter(w => !w.dead);
+  }
+
+  startFeed(inst) {
+    this.isFeeding = true;
+    this.feedTarget = inst;
+  }
+
+  cancelFeed() {
+    this.isFeeding = false;
+    this.feedTarget = null;
+    this.feedRingGraphics.clear();
+    for (const w of this.feedPulseWaves) {
+      if (!w.dead) w.graphics.destroy();
+    }
+    this.feedPulseWaves = [];
+  }
+
+  drawFeedRing(inst) {
+    this.feedRingGraphics.clear();
+
+    if (this.feedCooldown > 0 && this.feedCooldown > this.C.FEED_SUCCESS_COOLDOWN - 50) {
+      // Brief grey after mistime
+    }
+
+    // Check if sweet spot is active
+    let sweetSpot = false;
+    for (const wave of this.feedPulseWaves) {
+      if (wave.dead) continue;
+      if (Math.abs(wave.radius - this.C.FEED_RING_RADIUS) < 6) {
+        sweetSpot = true;
+        break;
+      }
+    }
+
+    const lineWidth = sweetSpot ? 3 : 2;
+    let alpha = sweetSpot ? 1.0 : 0.5;
+    if (this.feedCooldown > 0) alpha = 0.2;
+    const wobble = this.playerInFog ? Math.sin(this.elapsedTime * 0.01) * 3 : 0;
+    this.feedRingGraphics.lineStyle(lineWidth, 0xffffff, alpha);
+    this.feedRingGraphics.strokeCircle(
+      this.playerX, this.playerY,
+      this.C.FEED_RING_RADIUS + wobble);
+  }
+
+  spawnFeedPulseWave() {
+    if (!this.feedTarget) return;
+    const wave = {
+      radius: 0,
+      speed: this.C.FEED_RING_RADIUS / (this.C.BEAT_MS / 1000),
+      alpha: 0.5,
+      color: this.feedTarget.config.color,
+      graphics: this.add.graphics().setDepth(44),
+      dead: false
+    };
+    this.feedPulseWaves.push(wave);
+  }
+
+  attemptFeed() {
+    if (!this.isFeeding || !this.feedTarget) return;
+    if (this.feedCooldown > 0) return;
+    if (this.overwhelmed) return;
+
+    const phase = this.currentPhase;
+    const windowMs = this.C.FEED_WINDOWS[Math.min(phase - 1, 3)];
+
+    // Check sweet spot
+    let hit = false;
+    for (const wave of this.feedPulseWaves) {
+      if (wave.dead) continue;
+      const radiusDiff = Math.abs(wave.radius - this.C.FEED_RING_RADIUS);
+      const timeDiff = (radiusDiff / wave.speed) * 1000;
+      if (timeDiff <= windowMs) {
+        hit = true;
+        wave.graphics.destroy();
+        wave.dead = true;
+        break;
+      }
+    }
+
+    if (hit) {
+      this.onFeedSuccess();
+    } else {
+      this.onFeedMistime();
+    }
+  }
+
+  onFeedSuccess() {
+    const inst = this.feedTarget;
+    inst.feedCount++;
+    this.score += 15;
+
+    // Visual feedback
+    this.emitParticles(this.playerX, this.playerY, inst.config.color, 8);
+    this.feedRingGraphics.clear();
+    this.feedRingGraphics.lineStyle(4, inst.config.color, 1.0);
+    this.feedRingGraphics.strokeCircle(this.playerX, this.playerY,
+      this.C.FEED_RING_RADIUS);
+
+    // Shrink instrument
+    const progress = inst.feedCount / inst.quota;
+    const newScale = 1.0 - progress * 0.8;
+    this.tweens.add({
+      targets: inst.sprite,
+      scaleX: newScale, scaleY: newScale, duration: 200
+    });
+
+    // SFX
+    this.playFeedSFX();
+
+    // Cooldown
+    this.feedCooldown = this.C.FEED_SUCCESS_COOLDOWN;
+
+    // Check if silenced
+    if (inst.feedCount >= inst.quota) {
+      this.silenceInstrument(inst);
+    }
+  }
+
+  onFeedMistime() {
+    this.feedCooldown = this.C.FEED_FAIL_COOLDOWN;
+    this.feedRingGraphics.clear();
+    this.feedRingGraphics.lineStyle(2, 0x444444, 0.3);
+    this.feedRingGraphics.strokeCircle(this.playerX, this.playerY,
+      this.C.FEED_RING_RADIUS);
+    this.playMistimeSFX();
+  }
+
+  // ------ SILENCE INSTRUMENT ------
+
+  silenceInstrument(inst) {
+    inst.alive = false;
+    this.silenceOrder.push(inst.name);
+    this.instrumentsSilenced++;
+
+    // Score bonus: 300, 200, 100, 50 for 1st through 4th silenced
+    const bonuses = [300, 200, 100, 50];
+    this.score += bonuses[this.instrumentsSilenced - 1];
+
+    // Cancel feed
+    this.cancelFeed();
+
+    // Fade audio
+    try {
+      inst.gainNode.gain.linearRampToValueAtTime(
+        0, this.game.audioCtx.currentTime + 1.5);
+    } catch (e) {}
+
+    // Fade visuals
+    this.tweens.add({
+      targets: [inst.sprite, inst.lightSprite],
+      alpha: 0, scaleX: 0.1, scaleY: 0.1, duration: 1500,
+      onComplete: () => {
+        inst.sprite.setVisible(false);
+        inst.lightSprite.setVisible(false);
+      }
+    });
+
+    // Update indicator dot
+    this.indicatorDots[inst.name].setAlpha(0.2);
+    this.indicatorDots[inst.name].setFillStyle(0x333333);
+
+    // Clear this instrument's hazards
+    this.clearHazardsFor(inst.name);
+
+    // Grow player glow
+    const newGlowR = 30 + this.instrumentsSilenced * 17;
+    const glowTexName = this.closestLightTexture(newGlowR * 2);
+    this.playerGlow.setTexture(glowTexName);
+    // Interpolate glow color toward white
+    const t = this.instrumentsSilenced / 4;
+    const glowColor = Phaser.Display.Color.Interpolate.ColorWithColor(
+      Phaser.Display.Color.ValueToColor(0x6622aa),
+      Phaser.Display.Color.ValueToColor(0xffffff),
+      1, t
+    );
+    const glowTint = Phaser.Display.Color.GetColor(
+      glowColor.r, glowColor.g, glowColor.b);
+    this.playerGlow.setTint(glowTint);
+
+    // Update phase
+    this.currentPhase = this.instrumentsSilenced + 1;
+
+    // Set quotas for remaining instruments
+    const nextQuotaIdx = Math.min(this.instrumentsSilenced,
+      this.C.FEED_QUOTAS.length - 1);
+    const nextQuota = this.C.FEED_QUOTAS[nextQuotaIdx];
+    for (const [name, otherInst] of Object.entries(this.instruments)) {
+      if (otherInst.alive) {
+        otherInst.feedCount = 0;
+        otherInst.quota = nextQuota;
+        // Boost light radius
+        const boost = 1 + this.instrumentsSilenced * this.C.LIGHT_BOOST_PER_SILENCE;
+        const newLightR = otherInst.config.lightR * boost;
+        const newTexName = this.closestLightTexture(newLightR * 2);
+        otherInst.lightSprite.setTexture(newTexName);
+      }
+    }
+
+    // Silence SFX
+    this.playSilenceSFX();
+
+    // Screen flash
+    this.cameras.main.flash(400, 255, 255, 255, false, null, null, 0.15);
+
+    // Check win
+    if (this.instrumentsSilenced >= 4) {
+      this.triggerGoodEnding();
+    }
+  }
+
+  clearHazardsFor(instName) {
+    switch (instName) {
+      case 'melody':
+        for (const n of this.seekingNotes) {
+          if (!n.dead) {
+            this.tweens.add({
+              targets: n.sprite, alpha: 0, duration: 500,
+              onComplete: () => { n.sprite.destroy(); }
+            });
+            n.dead = true;
+          }
+        }
+        this.seekingNotes = [];
+        break;
+      case 'bass':
+        for (const w of this.shockwaves) {
+          if (!w.dead) w.graphics.destroy();
+        }
+        this.shockwaves = [];
+        break;
+      case 'harmony':
+        for (const f of this.fogPatches) {
+          if (!f.dead) {
+            this.tweens.add({
+              targets: f.sprite, alpha: 0, duration: 500,
+              onComplete: () => { f.sprite.destroy(); }
+            });
+            f.dead = true;
+          }
+        }
+        this.fogPatches = [];
+        break;
+      case 'percussion':
+        for (const m of this.beatMines) {
+          if (!m.detonated) m.sprite.destroy();
+        }
+        this.beatMines = [];
+        for (const d of this.mineDetonations) {
+          if (!d.dead) d.graphics.destroy();
+        }
+        this.mineDetonations = [];
+        break;
+    }
+  }
+
+  // ------ DARKNESS ------
+
+  updateDarkness() {
+    this.darkness.fill(0x000000, 0.95);
+
+    // Erase holes for each light source
+    for (const [name, inst] of Object.entries(this.instruments)) {
+      if (!inst.alive) continue;
+      const boost = 1 + this.instrumentsSilenced * this.C.LIGHT_BOOST_PER_SILENCE;
+      const r = inst.config.lightR * boost;
+      const texName = this.closestLightTexture(r * 2);
+      const tex = this.textures.get(texName);
+      const texSize = tex.getSourceImage().width;
+      this.darkness.erase(texName,
+        inst.x - texSize / 2, inst.y - texSize / 2);
+    }
+
+    // Player glow
+    const glowR = 30 + this.instrumentsSilenced * 17;
+    const texName = this.closestLightTexture(glowR * 2);
+    const tex = this.textures.get(texName);
+    const texSize = tex.getSourceImage().width;
+    this.darkness.erase(texName,
+      this.playerX - texSize / 2, this.playerY - texSize / 2);
+  }
+
+  // ------ ENDINGS ------
+
+  triggerGoodEnding() {
+    this.gameActive = false;
+    this.cancelFeed();
+
+    // Fade HUD
+    this.tweens.add({
+      targets: [this.scoreText, this.timerText, this.feedProgressText],
+      alpha: 0, duration: 800
+    });
+
+    // 2 seconds of dark silence
+    this.time.delayedCall(2000, () => {
+      // Player glow expands
+      this.tweens.add({
+        targets: this.playerGlow,
+        scaleX: 12, scaleY: 12, alpha: 0.6,
+        duration: 1500, ease: 'Sine.easeIn',
+        onComplete: () => {
+          this.spawnEndingRipples();
+          this.tweens.add({
+            targets: this.playerGlow,
+            scaleX: 1, scaleY: 1, alpha: 0.3,
+            duration: 1000, ease: 'Sine.easeOut',
+            onComplete: () => this.showEndingText(true)
+          });
+        }
+      });
+      this.playEndingMelody();
+    });
+  }
+
+  spawnEndingRipples() {
+    const colors = [0x00e5ff, 0xff00aa, 0xffd700, 0x88ff00];
+    for (let i = 0; i < 4; i++) {
+      this.time.delayedCall(i * 300, () => {
+        const g = this.add.graphics().setDepth(85);
+        let radius = 0;
+        const color = colors[i];
+        const px = this.playerX;
+        const py = this.playerY;
+        const timer = this.time.addEvent({
+          delay: 16, loop: true,
+          callback: () => {
+            radius += 4;
+            const alpha = 1.0 - radius / 500;
+            g.clear();
+            if (alpha > 0) {
+              g.lineStyle(3, color, alpha);
+              g.strokeCircle(px, py, radius);
+            } else {
+              g.destroy();
+              timer.remove();
+            }
+          }
+        });
+      });
+    }
+  }
+
+  playEndingMelody() {
+    const ctx = this.game.audioCtx;
+    const pitches = [523, 587, 659, 784, 880];
+    for (let i = 0; i < 15; i++) {
+      const t = ctx.currentTime + i * 0.2;
+      const freq = pitches[Math.floor(Math.random() * pitches.length)];
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.06, t);
+      env.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(env).connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.4);
+    }
+  }
+
+  triggerTimeoutEnding() {
+    this.gameActive = false;
+    this.cancelFeed();
+
+    // Fade remaining audio
+    for (const [name, inst] of Object.entries(this.instruments)) {
+      if (inst.alive) {
+        try {
+          inst.gainNode.gain.linearRampToValueAtTime(
+            0, this.game.audioCtx.currentTime + 3.0);
+        } catch (e) {}
+        this.tweens.add({
+          targets: [inst.sprite, inst.lightSprite],
+          alpha: 0, duration: 3000
+        });
+      }
+    }
+
+    this.clearAllHazards();
+
+    this.tweens.add({
+      targets: [this.scoreText, this.timerText],
+      alpha: 0, duration: 1000
+    });
+
+    this.time.delayedCall(3500, () => this.showEndingText(false));
+  }
+
+  showEndingText(isGoodEnding) {
+    this.darkness.setAlpha(0);
+
+    const cx = 400;
+    let finalScore;
+    let mainText;
+
+    if (isGoodEnding) {
+      const completionBonus = Math.max(0,
+        (300 - Math.floor(this.elapsedTime / 1000))) * 2;
+      finalScore = this.score + completionBonus;
+      mainText = 'You ate the world. Now you are the music.';
+    } else {
+      finalScore = this.score;
+      mainText = "Some sounds can't be caught.\nThey leave on their own.";
+    }
+
+    const t1 = this.add.text(cx, 240, mainText, {
+      fontFamily: 'Arial', fontSize: '26px', color: '#ffffff',
+      align: 'center', stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setAlpha(0).setDepth(100);
+    this.tweens.add({ targets: t1, alpha: 1, duration: 1200 });
+
+    const t2 = this.add.text(cx, 320, 'STOLEN: ' + finalScore, {
+      fontFamily: 'Arial', fontSize: '22px', color: '#ffd700',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setAlpha(0).setDepth(100);
+    this.tweens.add({ targets: t2, alpha: 1, duration: 1000, delay: 600 });
+
+    const elapsed = this.formatTime(this.elapsedTime);
+    const silenced = this.instrumentsSilenced;
+    const t3 = this.add.text(cx, 365,
+      'Silenced: ' + silenced + '/4  |  Time: ' + elapsed, {
+        fontFamily: 'Arial', fontSize: '14px', color: '#888899'
+      }).setOrigin(0.5).setAlpha(0).setDepth(100);
+    this.tweens.add({ targets: t3, alpha: 1, duration: 1000, delay: 1000 });
+
+    const restartText = this.add.text(cx, 480, 'Press SPACE to play again', {
+      fontFamily: 'Arial', fontSize: '18px', color: '#ffffff'
+    }).setOrigin(0.5).setAlpha(0).setDepth(100);
+    this.tweens.add({
+      targets: restartText, alpha: 1, delay: 1800, duration: 800
+    });
+    this.tweens.add({
+      targets: restartText, alpha: 0.3,
+      delay: 3000, duration: 900, yoyo: true, repeat: -1
+    });
+
+    this.input.keyboard.once('keydown-SPACE', () => {
+      try {
+        this.masterGain.gain.linearRampToValueAtTime(
+          0, this.game.audioCtx.currentTime + 0.1);
+      } catch (e) {}
+      // Create fresh audio context for restart
+      this.time.delayedCall(150, () => {
+        this.game.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        this.scene.start('GameScene');
+      });
+    });
+  }
+
+  // ------ SFX ------
+
+  playFeedSFX() {
+    try {
+      const ctx = this.game.audioCtx;
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.12, ctx.currentTime);
+      env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.connect(env).connect(this.masterGain);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch (e) {}
+  }
+
+  playMistimeSFX() {
+    try {
+      const ctx = this.game.audioCtx;
+      const bufSize = Math.floor(ctx.sampleRate * 0.06);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.frequency.value = 300;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.06, ctx.currentTime);
+      env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+      src.connect(filt).connect(env).connect(this.masterGain);
+      src.start();
+      src.stop(ctx.currentTime + 0.06);
+    } catch (e) {}
+  }
+
+  playHitSFX() {
+    try {
+      const ctx = this.game.audioCtx;
+      const bufSize = Math.floor(ctx.sampleRate * 0.1);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.1, ctx.currentTime);
+      env.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      src.connect(env).connect(this.masterGain);
+      src.start();
+      src.stop(ctx.currentTime + 0.1);
+    } catch (e) {}
+  }
+
+  playSilenceSFX() {
+    try {
+      const ctx = this.game.audioCtx;
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 1.5);
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.15, ctx.currentTime);
+      env.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
+      osc.connect(env).connect(this.masterGain);
+      osc.start();
+      osc.stop(ctx.currentTime + 1.5);
+    } catch (e) {}
+  }
+
+  // ------ UTILITIES ------
+
+  emitParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const p = this.add.circle(x, y, 2.5, color).setDepth(50);
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 20 + Math.random() * 40;
+      this.tweens.add({
+        targets: p,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist,
+        alpha: 0, duration: 350 + Math.random() * 200,
+        onComplete: () => p.destroy()
+      });
+    }
+  }
+
+  formatTime(ms) {
+    const m = Math.floor(ms / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  clearAllHazards() {
+    for (const n of this.seekingNotes) { if (!n.dead) n.sprite.destroy(); }
+    this.seekingNotes = [];
+    for (const w of this.shockwaves) { if (!w.dead) w.graphics.destroy(); }
+    this.shockwaves = [];
+    for (const f of this.fogPatches) { if (!f.dead) f.sprite.destroy(); }
+    this.fogPatches = [];
+    for (const m of this.beatMines) { if (!m.detonated) m.sprite.destroy(); }
+    this.beatMines = [];
+    for (const d of this.mineDetonations) { if (!d.dead) d.graphics.destroy(); }
+    this.mineDetonations = [];
+  }
+}
+
+// ============================================================
+// PHASER CONFIG
+// ============================================================
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  backgroundColor: '#000000',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  scene: [BootScene, TitleScene, GameScene]
+};
+
+const game = new Phaser.Game(config);
+
+</script>
+</body>
+</html>

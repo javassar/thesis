@@ -1,0 +1,3 @@
+**Selecting a game concept**
+
+I need to pick one concept with the most potential for a 5-minute Phaser 2D game. I have several ideas: Folded Path, Laundry Rush, Echo Chambers, Beat Bistro, Circuit Shepherd, Moonlight Post, Shadow Ink, Time Twins, Pinball Heist, and Polarity Express. For a short game with a clear ending, "Echo Chambers" stands out. It could use sound as vision with pings revealing walls, making for a unique stealth puzzle. I'll outline the elements and rules for that!

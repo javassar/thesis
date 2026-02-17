@@ -1,0 +1,41 @@
+Edited file
+index.html
++6
+-3
+
+        const attractBoost = (this.lure.calling ? 0.7 : 0) + (this.lure.scattering ? -0.5 : 0);
+        const hawkDelay = 0.6;
+        const hawkInterval = 0.25;
+        const hawkChance = this.lure.scattering ? 0.02 : 0.05;
+
+              bird.hawkTick += dt;
+              if (bird.hawkTick >= 0.2) {
+                bird.hawkTick = 0;
+                if (Math.random() < 0.12) {
+              if (bird.hawkTick >= hawkDelay) {
+                bird.hawkTick -= hawkInterval;
+                if (Math.random() < hawkChance) {
+                  bird.remove = true;
+Explored 1 search
+Worked for 2m 6s
+Playtest Narrative
+I see the title screen with drifting dots and a big “MURMURATION” title. The controls line is long but I skim it and press Space. The sky opens up, a cluster of triangle birds appears, and I notice a glowing lure following my mouse. I move the mouse—birds arc toward it with a delay. I hold left-click and the glow swells; the flock tightens and feels more responsive. I tap right-click and they spread slightly.
+
+A ring gate sits ahead with a progress arc. I pull the flock toward it and try to get them through together. The progress fills and the camera pans right to the next section. Wind arrows drift across the sky; the flock starts sliding sideways. I adjust the lure and it mostly holds.
+
+Then the hawk shadow sweeps across. I see the tip about scattering and I try to right-click, but I still linger under the shadow for a moment. Suddenly the flock count drops hard and I lose with “Night falls.”
+FLAG: I lose abruptly without understanding how deadly the shadow is; it feels too punishing for a first-time player.
+
+Issues & Fixes
+
+Issue: The hawk shadow can wipe the flock very quickly, causing a sudden loss without clear warning.
+Root cause: Each bird has a 12% removal chance every 0.2s immediately upon overlap, which makes the effective per‑second loss rate extremely high. (index.html (line 706))
+Fix: Added a 0.6s exposure delay and reduced the per‑tick chance to 5% (2% while scattering). This makes the hazard readable and gives the player time to react. (index.html (line 578), index.html (line 706))
+If you want me to run another mental pass after this change (or tune difficulty further), say the word.
+
+
+1 file changed
+Undo
+
+Review
+index.html

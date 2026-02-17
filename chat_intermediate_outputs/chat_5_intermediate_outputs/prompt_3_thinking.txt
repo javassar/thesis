@@ -1,0 +1,5 @@
+**Evaluating design creativity**
+
+I need to critique the “Cozy Cryptids” design for its creativity and then create a revised plan that’s more imaginative without losing the detail. I'll make sure to respect constraints: a 5-minute duration, 2D window, and feasibility in Phaser. 
+
+First, I’ll outline what the original plan lacks, and then propose a new design. I’m considering ideas like “Loopsmith” with 10-second factory loops or “Pocket Typhoon” with a unique wind-control mechanic that involves drawing gusts. A set of puzzles or levels could give a satisfying conclusion in five minutes.

@@ -1,0 +1,43 @@
+
+Edited file
+index.html
++13
+-1
+
+        const tile = this.tileAt(x, y);
+        return tile ? !tile.solid : false;
+        if (!tile || tile.solid) return false;
+        for (let i = 0; i < this.doors.length; i++) {
+          const door = this.doors[i];
+          if (door.isOpen) continue;
+          const sprite = door.sprite;
+          const halfW = sprite.displayWidth / 2;
+          const halfH = sprite.displayHeight / 2;
+          if (x >= sprite.x - halfW && x <= sprite.x + halfW &&
+              y >= sprite.y - halfH && y <= sprite.y + halfH) {
+            return false;
+          }
+        }
+        return true;
+      }
+Explored 1 file
+Worked for 2m 43s
+Fixed guard movement so they no longer walk through closed doors, which could break gate behavior and confuse win/lose pacing.
+
+Findings
+
+Medium: Guards could path through closed doors because movement only checked tile solidity; this let them cross the resonance/tutorial doors even when closed. Fixed by blocking guard movement when their next step is inside a closed door’s bounds. index.html (line 1070)
+No other issues found with page load, initial placements, input handling, end conditions, or HUD text visibility.
+
+Changes made:
+
+Added closed‑door bounds checks in isPassable used by guard movement. index.html (line 1070)
+Next steps:
+
+Do a quick browser playtest to confirm guards now respect doors.
+
+1 file changed
+Undo
+
+Review
+index.html

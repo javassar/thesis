@@ -1,0 +1,458 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Cozy Cryptids: Snap gentle legends before dusk falls in a five-minute, one-screen photo safari where patience and timing earn magical shots.
+
+## 2. Core Insight
+- Central question/truth: Quiet attention reveals more than rushing ever will.
+- Why it matters: Players feel the reward of slowing down, observing subtle cues, and timing actions—mirroring real-world mindfulness and the thrill of “earning” a perfect moment.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Move a camera reticle, hold to focus, release to take a photo; loud shots can spook nearby cryptids.
+- Embodiment of theme: The act of holding to focus calms the “noise” of the world (smaller noise radius, sharper images), literally turning patience into better outcomes and kinder interactions with shy creatures.
+
+## 4. Player Journey
+- Start: A twilight forest fades in with soft ambient sounds. A simple instruction overlay appears: “Find cryptids. Hold to focus. Release to snap. You have 5:00 and 20 shots.” The player sees a few likely hiding spots (rustling reeds, glowing mushrooms) and a gentle timer ticking down.
+- First minute: The player learns that holding to focus shrinks a ring; releasing too early makes a louder, blurrier shot that can scare creatures away. They discover that cryptids emerge on patterns and have brief special poses that are worth extra points.
+- Evolution: By minute 2–4, the player anticipates spawn rhythms and positions the reticle ahead of time. They start planning quieter, focused snaps to avoid spooking others and to catch “pose” moments. Resource tension grows as film count declines and the sun lowers (warmer tint, fireflies).
+- Climax: In the final minute, multiple cryptids appear in quicker succession. The player must decide between safe shots or waiting an extra beat for a rare pose, balancing dwindling time and film.
+- Ending: Dusk settles at 0:00. The album opens, showing the best photo per species and a total score with a rank title. The intended emotion: contentment and quiet pride, with a hint of wonder—“I want to go back and do even better.”
+
+## 5. Game Elements
+- Player cursor/reticle:
+  - A soft-edged square frame (camera viewfinder).
+  - Inner focus ring that tightens while holding.
+  - Subtle sway when unfocused; steady when fully focused.
+- Cryptids (3 species):
+  - Peekaboo Mothman: Perches high; peeks from treetops with glowing eyes; brief pose window when eyes flare.
+  - Nesslet (lake sipper): Wades by reeds; lingers longer; pose when lifting head with dripping beak.
+  - Stump Gobbler: Pops from hollow stumps quickly; pose with a hat-tip motion.
+- Hiding spots (environmental clues):
+  - Treetop canopies, reed beds by water, hollow stumps, mossy rocks.
+  - Occasional ambient cues (rustle, ripple, eye-glint) hint at imminent emergence.
+- Environment and visual style:
+  - 2D parallax forest at twilight: layered silhouettes, subtle particle fireflies, soft gradients.
+  - Calm, cozy palette with warm highlights.
+- Interactive elements:
+  - Focus mechanic (hold to tighten ring).
+  - Photo noise shockwave (visual ripple on snap) that can spook nearby cryptids.
+- UI elements:
+  - Timer (top center).
+  - Film counter (shots remaining, top-right).
+  - Score (top-left).
+  - Subtle toast-style popups for “Pose Bonus,” “Framing Bonus,” etc.
+  - Pause/Help overlay (esc or H).
+- Screens:
+  - Title screen with “Start” and “How to Play.”
+  - In-game HUD during play.
+  - Results/Album screen: thumbnails of best shot per species, totals, and rank; “Retry” and “Quit.”
+
+## 6. Rules & Systems
+- Player actions:
+  - Move reticle with mouse.
+  - Hold left mouse to focus (focus % increases).
+  - Release left mouse to take a photo.
+  - Optional: Press H for help overlay; Esc to pause.
+- System responses:
+  - While holding: focus ring tightens up to 100%; camera sway dampens; impending noise radius shrinks.
+  - On release: a photo is taken, consuming one film. A noise ripple expands from the reticle, potentially spooking nearby cryptids depending on radius and their skittishness. Score is computed from species, focus, framing, and pose.
+- Cryptid behavior:
+  - Each species has spawn points and a cycle (in/out) with slight randomness.
+  - When emerging, a cryptid is visible for a duration; within that window, a short pose moment occurs.
+  - If a noise ripple overlaps a visible cryptid within its “hearing” threshold while it is skittish, it flees and won’t reappear at that spot for a cooldown.
+- Success/progress:
+  - No fail state; progress is score-based and album-based (best photo per species).
+  - The session lasts 5 minutes or until the player runs out of film. Score ranks are awarded at the end.
+- Scoring:
+  - Base per visible cryptid captured: 100 points.
+  - Focus multiplier: 0.5x at 0% focus to 2.0x at 100% focus (linear).
+  - Framing bonus: +100 if cryptid center is within 30 px of reticle center at snap.
+  - Pose bonus: +200 if snapped during the pose window.
+  - Unique species bonus: +150 the first time each species is captured in the session (awarded once per species).
+- Ending:
+  - The game ends at 0:00 or when film = 0. The album screen appears with results and rank based on total score.
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Canvas size: 960 x 540 (landscape).
+- Background color: #0f1a1d (deep twilight).
+- Visual style: Flat-shaded silhouettes with soft glows; parallax layers (3 depth layers + foreground props).
+- Frame rate target: 60 FPS.
+
+Elements:
+- Parallax layers (static images or tiled sprites):
+  - Back layer: distant trees (y=0), tint #0e1518, scroll factor 0.2.
+  - Mid layer: tree line and lake (y=0), tint #122126, scroll factor 0.5.
+  - Fore layer: bushes/stumps/reeds (y=0), tint #1b2c31, scroll factor 1.0.
+  - Fireflies particle emitter (small yellow-green dots, alpha 0.6, slow drift).
+- Hiding spots (positions in screen coordinates):
+  - Treeline_A: x=180, y=110
+  - Treeline_B: x=760, y=95
+  - Reeds_A: x=300, y=360
+  - Reeds_B: x=640, y=355
+  - Stump_A: x=200, y=410
+  - Stump_B: x=780, y=415
+- Cryptid sprites (each with idle and pose animation frames):
+  - Peekaboo Mothman: size ~64x64; anchor at perch; glow overlay during pose.
+  - Nesslet: size ~72x48; ripple decal on water; head-up pose frame.
+  - Stump Gobbler: size ~48x56; pop-up tween; hat-tip pose frame.
+- Reticle:
+  - Outer frame: 96x96 transparent square with white corners (alpha 0.9).
+  - Focus ring: Circle radius starts at 42 px, line width 2 px, color #8ee6d0; shrinks to 28 px at full focus.
+  - Sway: up to 6 px random drift at 0% focus; 0 px at 100% focus.
+- Noise ripple (on snap):
+  - Expanding circle sprite or graphics drawn each shot.
+  - Radius: baseNoiseRadius = 120 px at 0% focus; minNoiseRadius = 60 px at 100% focus. Interpolate linearly.
+  - Lifetime: 350 ms; alpha fades to 0.
+- UI:
+  - Timer text: top center (x=480, y=20), font: 20px monospace, color #e8f7ff.
+  - Film counter: top-right (x=900, y=20), format “Film: NN”, same style.
+  - Score: top-left (x=60, y=20), same style.
+  - Toasts: transient text near reticle; 18px monospace, fade up over 800 ms.
+  - Title/Buttons: simple rectangles with text; center aligned.
+
+Text:
+- Title: “Cozy Cryptids” 36px, center screen.
+- How to Play (overlay): “Move mouse to aim. Hold Left Mouse to focus. Release to snap. Quiet shots earn better photos. 5:00, 20 film. Press H for help.”
+- Results ranks:
+  - 0–999: Amateur Spotter
+  - 1000–1999: Park Ranger
+  - 2000–2999: Field Researcher
+  - 3000+: Mythmaker
+- Results summary:
+  - “Best Photos” subhead 24px.
+  - Per-species labels: “Mothman,” “Nesslet,” “Gobbler.”
+
+Input:
+- Mouse move: updates reticle position (clamped to canvas).
+- Left mouse button:
+  - pointerdown: start focusing (if film > 0 and not on cooldown).
+  - pointerup: take photo (consume 1 film), emit noise ripple, compute score.
+- Keyboard:
+  - H: toggle help overlay.
+  - Esc: toggle pause menu (dim screen, stop timers).
+  - R (on results screen): retry.
+
+State:
+- Global:
+  - timeRemainingMs: starts at 300000 (5 minutes).
+  - score: starts at 0.
+  - film: starts at 20.
+  - gameOver: false.
+  - paused: false.
+  - uniqueCaptured: { mothman: false, nesslet: false, gobbler: false }.
+  - bestPhotos: map species -> { score, thumbTextureKey } or null.
+- Reticle:
+  - reticleX, reticleY.
+  - focusing: boolean.
+  - focusStartTimeMs.
+  - focusPercent: 0..1 (derived each frame from hold duration).
+  - swayMagnitudePx: derived from focusPercent (6 * (1 - focusPercent)).
+- Cryptid definitions (constants):
+  - For each species:
+    - spawnPoints: array of hiding spots.
+    - visibleDurationRangeMs (min, max).
+    - offscreenCooldownRangeMs (min, max).
+    - poseWindowMs: duration.
+    - poseOffsetMsRange: when during visible window pose occurs.
+    - skittishHearingRadiusPx: threshold beyond which it won’t flee (lower = more skittish).
+  - Mothman:
+    - spawnPoints: Treeline_A, Treeline_B
+    - visible: 1500–2400 ms
+    - cooldown: 8000–12000 ms
+    - poseWindow: 1200 ms (eyes glow for last 1200 ms of visibility, overlapping)
+    - poseOffset: visibleEnd - 1200 ms
+    - hearing: 110 px (medium)
+  - Nesslet:
+    - spawnPoints: Reeds_A, Reeds_B
+    - visible: 2800–4000 ms
+    - cooldown: 7000–10000 ms
+    - poseWindow: 800 ms (head-up near middle)
+    - poseOffset: 40–60% of visible window
+    - hearing: 140 px (low skittish)
+  - Gobbler:
+    - spawnPoints: Stump_A, Stump_B
+    - visible: 800–1400 ms
+    - cooldown: 6000–9000 ms
+    - poseWindow: 500 ms (hat-tip at ~200 ms after appear)
+    - poseOffset: 150–250 ms after appear
+    - hearing: 90 px (high skittish)
+- Cryptid runtime state per spawn:
+  - species, spot position, state: 'hidden' | 'emerging' | 'visible' | 'fleeing' | 'cooldown'
+  - visibleStartTimeMs, visibleEndTimeMs
+  - poseStartMs, poseEndMs
+  - sprite reference
+
+Timing:
+- Focus:
+  - Time to reach full focus: 800 ms.
+  - FocusPercent = clamp((now - focusStartTimeMs) / 800, 0, 1).
+- Photo cooldown: none beyond film; snapping is instant on release.
+- Noise ripple:
+  - Radius = 60 + (1 - focusPercent) * 60 (i.e., 60–120 px).
+  - Lifetime: 350 ms (visual only; effect computed instantly on snap).
+- Cryptid spawn scheduling:
+  - Each spawn point runs its own loop: wait cooldown, show for visibleDuration, then hide.
+  - Pose computed per visibility window as specified.
+- UI updates: every frame; timer decremented by delta time.
+
+Interactions:
+- Taking a photo:
+  - Find nearest visible cryptid to reticle center within 80 px (capture radius). If none: photo is empty; no base points but still consumes film.
+  - If found:
+    - Compute focusMultiplier = 0.5 + 1.5 * focusPercent (range 0.5–2.0).
+    - Base = 100.
+    - FramingBonus = +100 if distance <= 30 px.
+    - PoseBonus = +200 if currentTime within [poseStartMs, poseEndMs].
+    - UniqueBonus = +150 if this species not yet captured; then set uniqueCaptured[species]=true.
+    - PhotoScore = floor((Base + FramingBonus + PoseBonus + UniqueBonus) * focusMultiplier).
+    - Add to score; show toasts per bonus near reticle.
+    - If PhotoScore > bestPhotos[species]?.score: store a thumbnail (screenshot of region or static chosen sprite frame).
+- Spooking:
+  - On snap, compute noiseRadius.
+  - For each visible cryptid: if distance(reticle, cryptid) <= min(noiseRadius, cryptid.hearingRadiusPx), then set state to 'fleeing' and hide immediately; schedule cooldown as usual (random in species range).
+- Ending:
+  - Game ends when timeRemainingMs <= 0 or film <= 0. Transition to Results screen with rank mapping.
+
+Progression:
+- No levels; the five-minute session is the whole arc. Slight increase in concurrent spawns in final minute:
+  - Implementation: reduce cooldowns by 20% and bump visible durations by +10% after T <= 60, causing more overlaps.
+
+## 8. Game Flow
+- Load:
+  - Preload assets (layers, spritesheets for cryptids, UI fonts, SFX for shutter, rustle).
+  - Show Title screen with “Start” and “How to Play.”
+- Start:
+  - On “Start,” initialize game state, create environment layers and hiding spots, reticle, UI, and start cryptid spawn loops.
+  - Show quick 3-second tutorial overlay that fades after input or time.
+- Play loop:
+  - Update timer; check end condition.
+  - Update reticle position, focus percent, and sway.
+  - Animate visible cryptids; handle pose state visual cues.
+  - On pointerdown: begin focus if film > 0.
+  - On pointerup: take photo; compute score; emit noise; update bestPhotos; decrement film.
+  - Show toasts for bonuses; play subtle SFX.
+  - In last 60 seconds: adjust spawn parameters (as above).
+- End:
+  - On time up or film out: stop spawns, fade out environment, open Results.
+  - Results screen shows:
+    - Total score and rank.
+    - Best photo thumbnails (or silhouettes if none captured) for each species.
+    - “Retry (R)” and “Quit.”
+- After end:
+  - Retry restarts Play loop with fresh state; Quit returns to Title.
+
+## 9. Pseudocode
+
+Initialization (setup):
+- Scene: TitleScene
+  - preload():
+    - load images: bg_back, bg_mid, bg_fore, reticle, ripple, firefly particle
+    - load spritesheets: mothman, nesslet, gobbler (with idle/pose frames)
+    - load UI assets or use graphics/text
+    - load sounds: shutter, rustle, water, soft_chime
+  - create():
+    - draw title text and buttons
+    - on start button -> start GameScene
+    - on how-to button -> show overlay text
+
+- Scene: GameScene
+  - create():
+    - set background color
+    - add parallax layers
+    - create particle emitter for fireflies
+    - define hidingSpots with positions (as constants above)
+    - init state:
+      timeRemainingMs = 300000
+      score = 0
+      film = 20
+      gameOver = false
+      paused = false
+      uniqueCaptured = { mothman:false, nesslet:false, gobbler:false }
+      bestPhotos = { mothman:null, nesslet:null, gobbler:null }
+    - create reticle:
+      reticleX = 480; reticleY = 270
+      focusing = false
+      focusStartTimeMs = 0
+      focusPercent = 0
+      swayMagnitudePx = 6
+      reticleSprite = graphics or image with custom draw; store for updates
+    - setup input:
+      this.input.on('pointermove', onPointerMove)
+      this.input.on('pointerdown', onPointerDown)
+      this.input.on('pointerup', onPointerUp)
+      keys = this.input.keyboard.addKeys({H:'H', ESC:'ESC'})
+    - UI:
+      scoreText = addText(60,20,"Score: 0")
+      filmText = addText(900,20,"Film: 20").setOrigin(1,0)
+      timerText = addText(480,20,"05:00").setOrigin(0.5,0)
+      helpOverlay = hidden by default, toggled by H
+    - create cryptid managers:
+      createCryptidManager('mothman', MOTHMAN_CONFIG)
+      createCryptidManager('nesslet', NESSLET_CONFIG)
+      createCryptidManager('gobbler', GOBBLER_CONFIG)
+
+Main loop or update cycle:
+- update(time, delta):
+  - if paused or gameOver: return
+  - timeRemainingMs -= delta
+  - if timeRemainingMs <= 0: endGame()
+  - update reticle:
+    - if focusing:
+      focusPercent = clamp((now - focusStartTimeMs)/800, 0, 1)
+    - else:
+      focusPercent = 0
+    - swayMagnitudePx = 6 * (1 - focusPercent)
+    - apply small per-frame sway to reticle visual (do not change reticleX/Y, just draw offset)
+    - redraw reticle graphics with current focus ring radius
+  - update UI texts:
+    - scoreText.setText("Score: " + score)
+    - filmText.setText("Film: " + film)
+    - timerText.setText(formatTime(timeRemainingMs))
+  - adjust difficulty in last minute:
+    - if timeRemainingMs <= 60000 and not this.finalMinuteApplied:
+      for each manager: manager.applyFinalMinuteTuning()
+      this.finalMinuteApplied = true
+  - update cryptid managers:
+    - for each spawn point: run state machine and animate sprites as needed
+  - if gameOver: return
+
+Key functions:
+
+- onPointerMove(pointer):
+  - reticleX = clamp(pointer.x, 0, 960)
+  - reticleY = clamp(pointer.y, 0, 540)
+
+- onPointerDown(pointer):
+  - if film <= 0 or gameOver: return
+  - focusing = true
+  - focusStartTimeMs = now
+
+- onPointerUp(pointer):
+  - if film <= 0 or gameOver: return
+  - takePhoto()
+
+- takePhoto():
+  - film -= 1
+  - compute focusPercent (as current)
+  - noiseRadius = 60 + (1 - focusPercent) * 60
+  - emitNoiseRipple(reticleX, reticleY, noiseRadius)
+  - shutterSFX.play()
+  - target = findNearestVisibleCryptid(reticleX, reticleY, captureRadius=80)
+  - if target == null:
+    - showToast("…empty frame", reticleX, reticleY, color=#cccccc)
+    - focusing = false
+    - return
+  - // scoring
+  - base = 100
+  - dist = distance(reticleCenter, target.center)
+  - framingBonus = (dist <= 30) ? 100 : 0
+  - isPose = target.isInPoseWindow(now)
+  - poseBonus = isPose ? 200 : 0
+  - species = target.species
+  - uniqueBonus = uniqueCaptured[species] ? 0 : 150
+  - focusMult = 0.5 + 1.5 * focusPercent
+  - photoScore = floor((base + framingBonus + poseBonus + uniqueBonus) * focusMult)
+  - score += photoScore
+  - if not uniqueCaptured[species]: uniqueCaptured[species] = true
+  - updateBestPhoto(species, photoScore, target) // store best score and a reference image/texture key
+  - showToastsForBonuses(framingBonus, poseBonus, uniqueBonus, focusMult)
+  - // spook check
+  - for each visible cryptid c:
+    - if distance((reticleX, reticleY), c.center) <= min(noiseRadius, c.hearingRadius):
+      c.flee()
+  - focusing = false
+
+- emitNoiseRipple(x, y, radius):
+  - create graphics circle at x,y radius 0
+  - tween radius to target radius over 200 ms, fade alpha to 0 by 350 ms, then destroy
+
+- findNearestVisibleCryptid(x, y, captureRadius):
+  - best = null; bestDist = captureRadius+1
+  - for each cryptid c that is 'visible':
+    - d = distance((x,y), c.center)
+    - if d < bestDist and d <= captureRadius: best = c; bestDist = d
+  - return best
+
+- createCryptidManager(species, config):
+  - For each spawnPoint in config.spawnPoints:
+    - create SpawnEntry with:
+      state='hidden'
+      sprite hidden at spawn position
+      scheduleNextAppear()
+  - Functions:
+    - scheduleNextAppear(entry):
+      - entry.state='hidden'
+      - set timer = random(config.cooldownMin, cooldownMax) (apply finalMinute factor if active)
+      - after timer -> showCryptid(entry)
+    - showCryptid(entry):
+      - entry.state='visible'
+      - duration = random(config.visibleMin, visibleMax) (apply finalMinute factor)
+      - now = current time
+      - if config.poseOffset is absolute window edge (like “last 1200 ms”):
+        - poseStart = now + max(0, duration - config.poseWindowMs)
+      - else if it’s relative (% or specific ms after appear):
+        - poseStart = now + computed offset within [poseOffsetMin, poseOffsetMax]
+      - poseEnd = poseStart + config.poseWindowMs
+      - store entry.visibleStart = now; entry.visibleEnd = now + duration
+      - show sprite; play idle anim
+      - set timers:
+        - at poseStart: switch to pose frame/anim
+        - at poseEnd: return to idle frame if still visible
+        - at visibleEnd: hideCryptid(entry)
+    - hideCryptid(entry):
+      - entry.state='cooldown'
+      - hide sprite; cancel pending pose timers if any
+      - scheduleNextAppear(entry)
+    - entry.isInPoseWindow(now):
+      - return now between poseStart and poseEnd and entry.state == 'visible'
+    - entry.flee():
+      - if entry.state != 'visible': return
+      - entry.state='fleeing'
+      - play quick hide animation then call hideCryptid(entry)
+
+- applyFinalMinuteTuning():
+  - cooldownMin *= 0.8; cooldownMax *= 0.8
+  - visibleMin *= 1.1; visibleMax *= 1.1
+
+- showToastsForBonuses(framing, pose, unique, focusMult):
+  - if framing>0: toast("+Framing", near reticle, color=#aef)
+  - if pose>0: toast("+Pose!", near reticle, color=#ffd27f)
+  - if unique>0: toast("First of species!", near reticle, color=#b2ffb2)
+  - toast("x" + focusMult.toFixed(2), near reticle, color=#8ee6d0)
+
+- updateBestPhoto(species, photoScore, target):
+  - if bestPhotos[species] == null or photoScore > bestPhotos[species].score:
+    - bestPhotos[species] = { score: photoScore, thumbTextureKey: snapshotSpeciesFrame(species, target) }
+
+- snapshotSpeciesFrame(species, target):
+  - Simplest: choose a pre-made thumbnail key based on whether target is in pose or not (e.g., species_pose or species_idle).
+  - Return that key for the album.
+
+- formatTime(ms):
+  - totalSec = ceil(ms/1000)
+  - mm = floor(totalSec/60); ss = totalSec % 60
+  - return pad(mm)+":"+pad(ss)
+
+- endGame():
+  - if gameOver: return
+  - gameOver = true
+  - stop/clear cryptid timers
+  - start ResultsScene, passing score, bestPhotos
+
+Results Scene:
+- create(data):
+  - read score, bestPhotos
+  - compute rank by ranges
+  - display title “Album”
+  - show per-species thumbnail or silhouette if null
+  - show score and rank
+  - add buttons “Retry (R)” and “Quit”
+  - input: key R restarts GameScene; back to Title on Quit
+
+This plan keeps scope tight, fulfills the five-minute duration with a clear ending, and maps directly to Phaser systems using timers, input events, sprites, and simple state machines.

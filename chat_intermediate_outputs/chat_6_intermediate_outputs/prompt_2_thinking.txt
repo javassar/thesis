@@ -1,0 +1,3 @@
+**Choosing a game concept**
+
+I need to pick the best concept out of ten for a simple 5-minute Phaser game with a distinct ending. I'm looking for something innovative yet feasible. Options like Tidepainter, Orbital Garden, and Echo Thief all have potential, but for this time limit, I think Orbital Garden with its rhythm timing might work well. Tidepainter also seems doable with fluid-routing and discrete waves. Overall, I’m leaning towards Tidepainter since it allows blending colors with a grid and flood fill method.

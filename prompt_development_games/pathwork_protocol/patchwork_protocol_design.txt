@@ -1,0 +1,120 @@
+1. Title & Hook
+Title: Patchwork Protocol Hook: The world is literally falling apart, and your cursor is the needle. Don't just jump over gaps—sew the platforms together to delete the space between them.
+
+2. Core Insight
+The central question: Is progress about moving forward, or is it about bringing the things we need closer to us? Why this matters: Human players often feel overwhelmed by the distance between where they are and where they want to be. This game grants the power to physically collapse that distance, providing a cathartic sense of control over a broken environment.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: The "Pinch-Stitch." The player clicks two points in the 2D world. A "thread" connects them, and the two points are pulled together, folding the level geometry and permanently moving platforms, walls, and goals into new configurations. Integration: The theme is "Repairing a Corrupted Memory." The environment looks like a mix of a digital blueprint and a woven tapestry. By "stitching" the level, the player isn't just solving a puzzle; they are "mending" a broken digital space to reach the "core memory" (the exit).
+
+5. Technical Specification
+Display Specs:
+
+Canvas: 800px x 600px.
+
+Background: #121212 (Near-black).
+
+Grid Overlay: A faint #222222 grid of 40px squares to help player align stitches.
+
+Player Character: A small white square (20px x 20px) called "The Cursor-Bot."
+
+Platforms: Solid blocks of #00FFCC (Neon Teal) with a "stitchable" edge highlighted in #FFFFFF.
+
+Threads: Lines drawn with a 2px stroke, color #FF007F (Neon Pink).
+
+UI: * "Stitches Left" counter: Top-left, 24px 'Courier New', #FFFFFF.
+
+"Reset Level" button: Top-right, 80x30px button, #FF007F.
+
+Inputs:
+
+WASD / Arrow Keys: Move the character.
+
+Mouse Left-Click (Point A): First anchor point for a stitch.
+
+Mouse Left-Click (Point B): Second anchor point. Triggers the "Fold."
+
+Spacebar: Jump.
+
+'R' Key: Reset level (essential for physics-based puzzles).
+
+Game State Information:
+
+maxStitches: 3 per level (Refills at start of level).
+
+activeAnchor: Vector2 (stores first click) or null.
+
+isStitching: Boolean (True between click A and B).
+
+winCondition: player.collidesWith(CoreMemory) == true.
+
+gravity: 800 px/s².
+
+foldSpeed: 300ms (The duration of the tween that pulls objects together).
+
+Assets:
+
+Sound: A sharp "Zip" sound for the fold; a "Pop" sound for the anchor placement; a low-frequency hum for the background.
+
+Sprites: Simple geometric shapes; a "glitch" particle effect for when the world folds.
+
+6. Implementation Pseudo Code
+JavaScript
+// PATCHWORK PROTOCOL - CORE LOGIC
+
+// 1. ANCHOR PLACEMENT
+onMouseClick(pointer) {
+    if (!this.activeAnchor) {
+        // Drop first anchor
+        this.activeAnchor = new Vector2(pointer.x, pointer.y);
+        this.spawnAnchorVisual(pointer.x, pointer.y);
+    } else {
+        // Execute the Fold
+        this.executeFold(this.activeAnchor, new Vector2(pointer.x, pointer.y));
+        this.activeAnchor = null;
+        this.stitchesUsed++;
+    }
+}
+
+// 2. THE FOLD (The Core Spatial Logic)
+executeFold(pointA, pointB) {
+    let midpoint = (pointA + pointB) / 2;
+    let foldVector = pointB - pointA;
+
+    // Get all stitchable objects in the scene
+    let objects = this.physicsGroup.getChildren();
+
+    objects.forEach(obj => {
+        // Calculate which side of the fold "plane" the object is on
+        // and move objects toward the midpoint to "close the gap"
+        let distanceToA = Phaser.Math.Distance.Between(obj.x, obj.y, pointA.x, pointA.y);
+        let distanceToB = Phaser.Math.Distance.Between(obj.x, obj.y, pointB.x, pointB.y);
+
+        this.tweens.add({
+            targets: obj,
+            x: obj.x + (midpoint.x - (distanceToA < distanceToB ? pointA.x : pointB.x)),
+            y: obj.y + (midpoint.y - (distanceToA < distanceToB ? pointA.y : pointB.y)),
+            duration: 300,
+            ease: 'Cubic.easeOut',
+            onUpdate: () => {
+                // Refresh physics bodies during the fold to prevent clipping
+                obj.body.updateFromGameObject();
+            }
+        });
+    });
+
+    this.playZipSound();
+    this.spawnGlitchParticles(midpoint);
+}
+
+// 3. WIN CONDITION & LEVEL FLOW
+update() {
+    if (this.player.overlaps(this.goal)) {
+        this.currentLevel++;
+        if (this.currentLevel > 5) {
+            this.showEnding("RESTORATION COMPLETE: The memory is whole.");
+        } else {
+            this.loadLevel(this.currentLevel);
+        }
+    }
+}

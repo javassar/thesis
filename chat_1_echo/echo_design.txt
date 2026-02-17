@@ -1,0 +1,393 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Echo Chambers: Frequency Heist — A stealth puzzle where you “see” with sound, tuning your pings to low/mid/high frequencies that reflect, resonate, or get absorbed by different materials—and by different guards.
+
+## 2. Core Insight
+- Central question: What if information isn’t just risky—it’s tuned? Choosing how to “see” also chooses who hears, what opens, and which parts of the world answer back.
+- Why it matters: The player experiences mastery through meaningful, musical choices: selecting a frequency is a micro-strategy that sculpts space, manipulates AI, and colors vision. It’s a simple, tactile twist that turns cautious sneaking into playful sonic problem-solving.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Emit frequency-tuned pings (low/mid/high) to reveal space, trigger resonant devices, and mislead frequency-specific guards. Walk and crouch produce tiny, untuned footstep blips.
+- Embodying the theme: Frequencies are adjectives for sound—heavy, neutral, sharp—and the world is built to respond in kind. Stone loves low rumbles, fabric eats treble, metal hums mid; guards have ears for certain bands. Your “vision mode” is a musical choice that changes how the dungeon and its threats behave.
+
+## 4. Player Journey
+- Start: Blackness and a cyan dot. “1/2/3 to tune • Space to ping • Shift to crouch.” The first mid-frequency ping (2) blooms green, revealing a corridor and a single patrol triangle with a green ear icon. The color-coding is instantly legible.
+- First minute: The player learns the trio:
+  - Low (1/blue): big, slow, reflects off stone; blue guards hear it best.
+  - Mid (2/green): balanced; activates metal resonance pillars to stash light; green guards prefer it.
+  - High (3/orange): tight, crisp; passes through grates; orange guards track it most.
+  They see a metal pillar labeled “MID” that, when pinged correctly, glows and continues revealing a safe bubble—aha, a checkpoint of vision.
+- Evolution over five minutes: The route alternates between material pockets:
+  - A stone choke where blue (low) bounce illuminates around corners without waking orange guards far away.
+  - A drape-filled gallery where high (orange) gets eaten—forcing the player to switch to mid to snake visibility carefully.
+  - Resonance doors that open only when two adjacent pillars hum in harmony (both mid within 1.5s).
+  The player drops a tuned decoy (E) near a fork to draw matching-guard types off their patrols, then walks the other path under contrasting frequency “cover.”
+- Climax: An open hall to the relic with each guard keyed to a different frequency. The player choreographs: hit low to bounce a wide map read, place a high decoy to pull the high-guard aside, then tap a mid ping to activate a pillar that sustains a safe ring while they cross.
+- Ending: The relic chimes; exit lamps light. The shortcut back is a fabric-lined corridor that kills high pings; the player leverages a stored mid resonance to maintain intermittent vision and slips through. Exiting with seconds to spare feels like finishing a song—with the satisfaction of having tuned the space itself.
+
+## 5. Game Elements
+- Player: Small cyan circle with faint self-glow; frequency indicator ring colored by current tuning (blue/mid/green/orange).
+- Guards (triangles):
+  - Blue-Guard: hears low best, reduced sensitivity to high.
+  - Green-Guard: hears mid best, average to others.
+  - Orange-Guard: hears high best, reduced sensitivity to low.
+  States: patrol • investigate (last-heard point) • return.
+- Materials (tiles/areas):
+  - Stone (dark slate): reflects/amplifies low; slightly muffles high.
+  - Metal (gunmetal): resonates with mid (can store resonance temporarily via pillars).
+  - Fabric (deep maroon): absorbs high strongly; muffles mid; barely affects low.
+  - Grates (dark grid): allow high reveal to pass beyond while blocking low/mid.
+- Resonance Pillars: Short metallic posts; when hit by mid-frequency ping, they “store” light for ~2s, emitting a local reveal bubble and counting toward door activation.
+- Resonance Doors: Frames that open when two linked pillars both hum within 1.5s of each other.
+- Relic: Gold icon; collecting toggles exit open.
+- Exit Door: Near start; opens post-relic.
+- Pings:
+  - Low (1/blue): large radius, slower expand, long fade, strong reflection from stone edges.
+  - Mid (2/green): medium radius/duration, activates pillars, balanced alert.
+  - High (3/orange): small radius, crisp quick reveal, passes through grates, short alert.
+- Decoys: Tuned chimes set to the current frequency when placed; pulse briefly (3s total).
+- UI:
+  - Timer: 5:00 countdown.
+  - Frequency HUD: “LOW • MID • HIGH” with color highlight on selection.
+  - Decoy icons (x3).
+  - Minimal control hints at start.
+- Screens:
+  - Title: Echo Chambers: Frequency Heist, “Tune your vision.”
+  - End: Win (time shown, “Harmonic Steps” stat = fewest alerts) or Lose (caught/time up), restart option.
+
+## 6. Rules & Systems
+- Player can:
+  - Move (WASD), crouch (Shift) to reduce footstep blips.
+  - Tune frequency (1=low, 2=mid, 3=high).
+  - Ping (Space): emits a colored ring with properties per frequency.
+  - Drop decoy (E): a 3-second pulsing emitter tuned to current frequency; 3 total.
+- World response:
+  - Reveal: Sound pings draw colored circles on a mask; material rules modify effective radius locally:
+    - Stone boosts low reveal (+20% radius within stone-adjacent cells), diminishes high (-20%).
+    - Metal normal for all; mid can “charge” pillars.
+    - Fabric strongly diminishes high (-50%), mid (-20%), barely affects low (-10%).
+    - Grate tiles let high reveal “bleed” to the far side (treated as not blocking visibility), others blocked.
+  - Guards hear by frequency with multipliers:
+    - Blue-Guard: low x1.0, mid x0.8, high x0.5.
+    - Green-Guard: mid x1.0, low x0.8, high x0.8.
+    - Orange-Guard: high x1.0, mid x0.8, low x0.5.
+    Hearing uses effective radius = baseRadius * multiplier; if within, they investigate last-heard point.
+- Pillars/Doors:
+  - Pillar stores 2.0s of local reveal (green bubble) when hit by a mid ping; sets pillar.activeUntil = now + 2000ms.
+  - Linked door opens if both linked pillars are active within 1500ms of each other; door closes after 2.0s if either pillar deactivates (in this short game, doors stay open for 4.0s once opened to be fair).
+- Success:
+  - Pick up relic, then reach exit before timer expires.
+- Failure:
+  - Caught by any guard or time runs out.
+- Evolution:
+  - Single focused level with three distinct pockets (stone twist, fabric gallery, metal hall) teaches the frequency-material loop quickly and pays it off once with a multi-guard space.
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display
+- Canvas: 960 x 540 (16:9).
+- Background: #0A0A0A.
+- Render style: Flat shapes; colored echo mask.
+
+Elements
+- Player:
+  - Circle radius: 8 px, fill #33D1FF.
+  - Self-glow on mask: 24 px radius, alpha 0.15.
+  - Speed: walk 110 px/s; crouch 60 px/s.
+  - Frequency: enum LOW, MID, HIGH.
+- Guards (triangles):
+  - Size: radius 10 px, fill per type:
+    - Blue-Guard: #3DA5FF
+    - Green-Guard: #4CD964
+    - Orange-Guard: #FF9500
+  - Patrol speed 90 px/s; investigate 120 px/s.
+  - Hearing base radius: 200 px, scaled by frequency multiplier.
+  - States: patrol, investigate, return; investigate timeout 2.5 s.
+- Tiles:
+  - Size: 24x24 px grid.
+  - Types:
+    - Floor default: #111111
+    - Walls/collision: #2A2A2A
+    - Stone: metadata material='stone'
+    - Metal: material='metal'
+    - Fabric: material='fabric'
+    - Grate: material='grate' (non-blocking for high reveal; still walls for movement as needed)
+- Resonance Pillars:
+  - Sprite: 12x18 px post, color #6EE7B7 with green pulse when active.
+  - activeUntil (timestamp); linkedDoors: array ids.
+- Resonance Doors:
+  - Size: 24x36 px; closed color #777; open outline #4CD964; collision off when open.
+  - Links to two pillar IDs.
+- Relic:
+  - 16x16 px #F6C25B, pulse scale 0.95–1.05 over 1.2 s.
+- Exit:
+  - Door near start; opens on relic pickup; color #33D1FF outline when open.
+- Pings (visualization on mask):
+  - LOW (blue #3DA5FF): radiusMax 240 px; revealTime 320 ms; fadeTime 900 ms.
+  - MID (green #4CD964): radiusMax 180 px; revealTime 260 ms; fadeTime 750 ms.
+  - HIGH (orange #FF9500): radiusMax 120 px; revealTime 180 ms; fadeTime 550 ms.
+- Decoys:
+  - Dot 8x8 px matching current frequency color.
+  - Pulses every 0.5 s to that frequency’s radiusMax x 0.6; lifetime 3.0 s.
+
+Text
+- Title: “ECHO CHAMBERS: FREQUENCY HEIST” 32 px #FFFFFF centered.
+- Subtitle: “Tune your vision.” 18 px #A0A0A0.
+- HUD:
+  - Timer top-center: 20 px #FFFFFF, “Time 5:00”.
+  - Frequencies top-left: “LOW [1] • MID [2] • HIGH [3]” with active color bright and inactives dim (#245/#2a5/#a53).
+  - Decoys top-right: “Decoys: ●●●” filled (#66FFAA) vs empty (#224433).
+  - Start hint bottom-center: “WASD move • Shift crouch • 1/2/3 tune • Space ping • E decoy” 16 px #A0A0A0.
+- End: “You Escaped!” or “Caught!”/“Time’s Up!” 32 px, subtext shows remaining time and alerts caused.
+
+Input
+- Keyboard:
+  - WASD / Arrows: movement.
+  - Shift (hold): crouch toggle.
+  - 1: set frequency LOW.
+  - 2: set frequency MID.
+  - 3: set frequency HIGH.
+  - Space: emit ping (cooldown 0.7 s).
+  - E: drop tuned decoy (cooldown 0.5 s, if decoysRemaining > 0).
+  - R: restart on end.
+  - Any key: start from title.
+
+State
+- gameState: 'TITLE'|'PLAY'|'WIN'|'LOSE'.
+- timerMs: starts 300000.
+- player: {x,y,vx,vy,isCrouching,frequency,lastPingTime,lastFootstepTime,decoysRemaining}.
+- guards: [{x,y,type:'blue'|'green'|'orange',state,waypoints[],patrolIndex,targetPoint,lastHeardTime}].
+- sounds: [{x,y,freq:'low'|'mid'|'high'|'foot',radiusMax,revealDur,fadeDur,tStart,color}].
+- decoys: [{x,y,freq,tStart,tEnd,nextPulseTime}].
+- pillars: [{x,y,activeUntil,linkedDoors[]}].
+- doors: [{x,y,width,height,isOpen,linkedPillarIds[]}].
+- relicCollected (bool), exitOpen (bool).
+- alertsCount: increment when any guard switches to investigate due to player-generated sound.
+- map: tile data including materials; collision layer.
+- revealMask: RenderTexture/BitmapMask updated each frame.
+
+Timing
+- Player ping cooldown: 700 ms.
+- Decoy cooldown: 500 ms; lifetime: 3000 ms; pulse interval: 500 ms.
+- Footstep emission:
+  - Walk: every 400 ms; Crouch: every 650 ms.
+  - Footstep pings are 'foot' freq: radius 50 (walk), 18 (crouch); reveal 140 ms; fade 320 ms; color #88FFFF faint.
+- Pillar active duration: 2000 ms per mid-frequency hit.
+- Door open grace: 4000 ms once both pillars activated.
+
+Interactions
+- Sound creation:
+  - createSound(x,y,freq,…): push to sounds; notify guards using frequency multipliers:
+    - multipliers: blue {low:1.0, mid:0.8, high:0.5}; green {low:0.8, mid:1.0, high:0.8}; orange {low:0.5, mid:0.8, high:1.0}; foot treated as mid with 0.6 multiplier across.
+    - effectiveHearing = GUARD_HEARING_BASE * multiplier; if distance <= effectiveHearing, set investigate to sound.x,y; lastHeardTime=now; alertsCount++ if source != decoy and != footstep crouch.
+- Reveal mask drawing:
+  - Clear to black; draw self-glow.
+  - For each sound s:
+    - age = now - s.tStart; compute radius r and alpha a by phase (expand then fade) as previous, color = by freq.
+    - Material modulation:
+      - Sample tiles in a ring: for performance, compute a scalar modifier m based on sound.freq and a “dominant material” at the sound origin tile; base m:
+        - LOW: stone +0.2, fabric -0.1, metal +0.0, default +0.0.
+        - MID: metal +0.1, fabric -0.2, stone +0.0.
+        - HIGH: fabric -0.5, stone -0.2, metal +0.0, grate bypass (see below).
+      - Effective radius rEff = r * (1 + m), clamped ≥ 0.4*r.
+      - Grate behavior: if freq=HIGH and line from sound to pixel passes through a grate tile boundary, allow reveal; otherwise, obstructed by walls. For simplicity, we approximate: if either source or target tile is 'grate', ignore wall obstruction for HIGH reveals within 1 tile beyond the grate.
+    - Draw filled colored circle on mask with rEff and alpha a (additive blending).
+- Pillars/Doors:
+  - When a MID sound circle’s center is within 48 px of a pillar, pillar.activeUntil = now + 2000 ms.
+  - Each frame, for each door:
+    - isOpen if both linked pillars have activeUntil > now AND |pillar1.activeUntil - pillar2.activeUntil| <= 1500 ms; once opened, keep open for at least 4000 ms from first open timestamp.
+    - Toggle door collision/visual accordingly.
+- Guard behavior:
+  - As before: patrol waypoints; investigate last-heard for up to 2.5 s; return to nearest waypoint.
+  - Collision radius with player: 10 px -> Lose.
+- Relic/Exit:
+  - Overlap with relic -> collect, exitOpen=true.
+  - Overlap with exit when open -> Win if timer > 0.
+
+Progression
+- Single handcrafted level sized to canvas:
+  - Start/Exit area with tutorial pillar (mid) and a single green guard.
+  - Stone choke (low-friendly) with a blue guard.
+  - Fabric gallery (high-unfriendly) with an orange guard and a grate window revealing a safer lane for high pings only.
+  - Metal hall with two mid pillars gating a resonance door before the relic.
+  - Shortcut corridor back to exit.
+
+## 8. Game Flow
+- Load:
+  - Boot -> Preload minimal assets (generated shapes ok).
+  - TitleScene shows title and prompt.
+- Start:
+  - Any key -> GameScene initializes all state; timer 5:00; frequency MID default; decoys=3; alertsCount=0.
+  - Show controls hint for first 10 s or until one ping + one tune occur.
+- Play loop:
+  - Handle input: move, crouch, switch frequency, ping (cooldown), drop decoy.
+  - Emit footsteps at intervals; crouch reduces frequency and radius.
+  - Update sounds (lifespans), decoys (pulses), pillars (activeUntil), doors (linked logic).
+  - Update guards (FSM + hearing notifications happen on sound creation).
+  - Check collisions: player vs walls; player vs relic/exit; guard vs player.
+  - Update timer; lose if <= 0.
+  - Render world; rebuild reveal mask with colored pings and material modifiers; HUD.
+- End:
+  - Win on reaching exit after relic; Lose on catch or timeout.
+  - Freeze input; show EndScene with time remaining and alertsCount.
+- After end:
+  - R to restart; any other key to title optional.
+
+## 9. Pseudocode
+
+Constants
+- CANVAS_W=960, CANVAS_H=540
+- SPEED_WALK=110, SPEED_CROUCH=60
+- PING_COOLDOWN=700
+- FOOT_WALK_INTERVAL=400, FOOT_CROUCH_INTERVAL=650
+- HEARING_BASE=200, INVESTIGATE_TIMEOUT=2500
+- FREQS: LOW, MID, HIGH
+- PING_PROPS = {
+  LOW:{radius:240,reveal:320,fade:900,color:BLUE},
+  MID:{radius:180,reveal:260,fade:750,color:GREEN},
+  HIGH:{radius:120,reveal:180,fade:550,color:ORANGE}
+}
+- MATERIAL_MOD = {
+  LOW:{stone:+0.2, metal:+0.0, fabric:-0.1, default:0},
+  MID:{stone:+0.0, metal:+0.1, fabric:-0.2, default:0},
+  HIGH:{stone:-0.2, metal:+0.0, fabric:-0.5, default:0}
+}
+- HEARING_MULT = {
+  blue:{low:1.0, mid:0.8, high:0.5},
+  green:{low:0.8, mid:1.0, high:0.8},
+  orange:{low:0.5, mid:0.8, high:1.0},
+  foot:{low:0.6, mid:0.6, high:0.6} // used uniformly
+}
+- PILLAR_RANGE=48, PILLAR_ACTIVE_MS=2000, DOOR_SYNC_MS=1500, DOOR_GRACE_MS=4000
+- START_TIME=300000
+
+Data structures
+- player {x,y,isCrouching=false,frequency=MID,lastPingTime=-INF,lastFootstepTime=0,decoys=3}
+- sounds [] of {x,y,freq,revealDur,fadeDur,radiusMax,tStart,color,source:'player'|'decoy'|'foot'}
+- decoys [] {x,y,freq,tStart,tEnd,nextPulse}
+- guards [] {x,y,type,state,waypoints[],patrolIndex,target,lastHeardTime}
+- pillars [] {x,y,activeUntil=0,doorIds[]}
+- doors [] {x,y,w,h,isOpen=false,openUntil=0,pillarIds[2]}
+- timerMs=START_TIME
+- alertsCount=0
+- gameState='TITLE'
+- revealMaskRT, blackOverlay with BitmapMask
+
+Functions
+- startGame():
+  - init map, place tiles/materials, collision
+  - spawn player, guards (with patrols), relic, exit, pillars, doors (linked)
+  - clear arrays; set timerMs, alertsCount, player defaults
+- createSound(x,y,freq,source):
+  - props = PING_PROPS[freq] or foot defaults
+  - push to sounds with tStart=now
+  - notifyGuards(x,y,freq,source)
+- notifyGuards(x,y,freq,source):
+  - for each guard g:
+    - mult = HEARING_MULT[g.type][freq] or HEARING_MULT['foot'][freq] if foot
+    - eff = HEARING_BASE * mult
+    - if distance(g,x,y) <= eff:
+      - g.state='investigate'; g.target={x,y}; g.lastHeardTime=now
+      - if source=='player' and freq!='foot' and not from decoy: alertsCount++
+- spawnDecoy():
+  - if player.decoys>0 and decoyCooldown ok:
+    - decoys.push({x:player.x,y:player.y,freq:player.frequency,tStart=now,tEnd=now+3000,nextPulse=now})
+    - player.decoys--
+
+Update loop (time, delta)
+- if gameState!='PLAY': return
+- handleInput():
+  - dir from WASD; speed = crouch? SPEED_CROUCH : SPEED_WALK
+  - moveWithCollisions(player, dir*speed*dt)
+  - set player.isCrouching by Shift
+  - set player.frequency by 1/2/3
+  - if Space and now - lastPingTime >= PING_COOLDOWN:
+    - createSound(player.x,player.y,player.frequency,'player')
+    - lastPingTime=now
+  - if E: spawnDecoy
+- footsteps():
+  - if moving:
+    - interval = crouch? FOOT_CROUCH_INTERVAL : FOOT_WALK_INTERVAL
+    - if now - lastFootstepTime >= interval:
+      - createSound(player.x,player.y,'foot','foot')
+      - lastFootstepTime=now
+- updateDecoys():
+  - for decoy d in decoys:
+    - if now >= d.tEnd: remove
+    - else if now >= d.nextPulse:
+      - // pulse at 60% radius for clarity
+      - push sounds with props from PING_PROPS[d.freq] but radiusMax*=0.6, revealDur=PING_PROPS[d.freq].reveal, fadeDur=PING_PROPS[d.freq].fade, source='decoy'
+      - notifyGuards(d.x,d.y,d.freq,'decoy')
+      - d.nextPulse += 500
+- updateSounds():
+  - remove any with age >= reveal+fade
+  - pillar activation:
+    - for each sound s with freq==MID:
+      - for each pillar p:
+        - if distance(s.x,s.y,p.x,p.y) <= PILLAR_RANGE:
+          - p.activeUntil = max(p.activeUntil, now + PILLAR_ACTIVE_MS)
+- updateDoors():
+  - for each door d:
+    - p1 = pillars[d.pillarIds[0]], p2 = pillars[d.pillarIds[1]]
+    - bothActive = (p1.activeUntil>now && p2.activeUntil>now)
+    - synced = abs(p1.activeUntil - p2.activeUntil) <= DOOR_SYNC_MS
+    - if (bothActive && synced):
+      - d.isOpen=true; d.openUntil = max(d.openUntil, now + DOOR_GRACE_MS); disable collision
+    - if now > d.openUntil:
+      - d.isOpen=false; enable collision
+- updateGuards(delta):
+  - for each g:
+    - if state=='patrol': moveToward next waypoint at 90 px/s; loop index on arrival
+    - if state=='investigate':
+      - moveToward target at 120 px/s
+      - if distance to target < 10 or now - lastHeardTime > INVESTIGATE_TIMEOUT: state='return'
+    - if state=='return':
+      - moveToward nearest waypoint at 90; on arrival -> patrol
+    - if distance(g,player) < 10: endGame('LOSE')
+- relic/exit:
+  - if player overlaps relic: hide relic; relicCollected=true; exitOpen=true
+  - if exitOpen and player overlaps exit: endGame('WIN')
+- timer:
+  - timerMs -= delta; if timerMs <= 0: endGame('LOSE'); update HUD mm:ss
+- renderRevealMask():
+  - clear revealMaskRT
+  - drawLocalGlow(player.x,player.y,24,0.15)
+  - for each sound s:
+    - age = now - s.tStart
+    - if age > s.revealDur + s.fadeDur: continue
+    - if age <= s.revealDur:
+      - p = age / s.revealDur; r = s.radiusMax * p; a = 0.9 * (1 - (1-p)^2)
+    - else:
+      - r = s.radiusMax; f = (age - s.revealDur)/s.fadeDur; a = 0.9 * (1 - f)
+    - m = materialModifierAt(s.x,s.y, s.freq)
+    - rEff = clamp(r * (1+m), r*0.4, r*1.4)
+    - drawColoredFilledCircle(s.x,s.y,rEff, a, s.color)
+- materialModifierAt(x,y,freq):
+  - tile = material of tile at (x,y) or 'default'
+  - return MATERIAL_MOD[freq][tile] or 0
+- endGame(result):
+  - gameState=result=='WIN'?'WIN':'LOSE'
+  - show EndScene with remaining time and alertsCount
+
+Collision and movement
+- Use Arcade physics with immovable wall layer.
+- attemptMove resolves axis-aligned to avoid tunneling.
+
+Level layout (approx coordinates within 960x540)
+- Start/Exit near (80, 270)
+- Tutorial pillar at (200, 270) linked to tiny door at (240, 270) that opens when MID ping hits it
+- Stone choke around (360, 200–340) with blue guard loop
+- Fabric gallery center (480–600, 160–380) with orange guard and a grate window tile line
+- Metal hall near relic (760, 200–340) with two mid pillars at (700,260) and (820, 300) linked to door at (780, 280)
+- Relic at (880, 280)
+- Shortcut corridor along bottom edge back left
+
+Notes for Phaser
+- Use a BitmapMask over a black overlay; draw reveal circles on a render texture each frame; colors can be drawn additively to create mixed hues (visual flair).
+- Simplify grate behavior: mark a strip of 'grate' tiles; when freq=HIGH, treat adjacent wall checks as passable for reveal within 1 tile past the grate—no heavy raycasting needed.
+- All values chosen to keep CPU light and logic clear.

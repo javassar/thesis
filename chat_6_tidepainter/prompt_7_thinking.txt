@@ -1,0 +1,14 @@
+Explored 1 file
+Worked for 3m 34s
+Findings
+
+High: Paint never spawns and the gate can’t be tuned because source entry / inlet tiles were blocked from editing, leaving them as sand (impassable). Fixed by allowing those tiles in tileIsEditable() so players can carve into the sources and inlet. index.html (line 546).
+Assumptions / Questions
+
+Assumed the inlet tile must be carveable to receive color (otherwise the gate can’t ever open).
+Changes made
+
+Allowed edits on source entry and inlet tiles by removing the extra lock in tileIsEditable() in index.html (line 546).
+Tests
+
+script>')[0];new Function(script);console.log('ok');"

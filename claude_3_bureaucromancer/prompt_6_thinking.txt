@@ -1,0 +1,318 @@
+Let me carefully trace through the game as a first-time player, reading the code to simulate what would actually happen on screen.
+
+Let me trace through the game as a first-time player by carefully reading the code.
+
+Read index.html
+Now let me mentally playtest this game from start to finish as a casual first-time player.
+
+Title Screen
+I open the game. I see "BUREAUCROMANCER" in big gold letters. "Department of Magical Monster Processing." Okay, interesting. There's a premise paragraph — monsters threaten the realm, I stamp verdicts. Rules will change. Got it.
+
+Controls: [A] APPROVE, [D] DENY, [R] REDIRECT. Simple enough. "When rules conflict, the NEWEST regulation wins." Okay.
+
+"Press SPACE or Click to Begin Your Shift" — pulsing. I press SPACE.
+
+Screen fades out, then fades into the game scene.
+
+Game Scene - Wave 1
+The interface loads with my reputation bar at full, a 5-minute shift timer, and empty case and monster windows. On the left I see the bulletin board with just the default regulation — if nothing else applies, deny the case. The bottom has my three action buttons ready to go. A "WAVE 1" banner appears with flavor text about the morning shift, and I'm waiting for the first case to arrive.
+
+Now I'm checking the timing sequence for when everything displays. The flavor text fades in early, but there's a potential issue with how the delays stack up — the regulation card and banner transitions need to sync properly so the UI doesn't feel sluggish or confusing.
+
+Once the banner fades at 4800ms, the first case loads and I see Gerald the Slime appear with his squish animation and dialogue bubble. The case file slides up from below with his details. The slime bursts apart and disappears, then the case file slides away for the next one. The first case works well as a tutorial—the player learns the basic loop with just one rule to apply, then practices that same rhythm through the remaining three slime cases in wave 1. I'm noticing that when wave 3 hits and REG 1 gets repealed, the player will need to catch that visual change since it's the only regulation they've been relying on.
+
+Now wave 2 introduces ghosts alongside a new banner and flavor text explaining that management sent contradictory regulations. Three new rules appear: one that denies creatures below a certain size threshold, another that redirects all ghosts to a different department, and a tip clarifying that newer rules override older ones. So the player now has to juggle the original slime approval rule against these new size and ghost-type regulations, creating actual decision points where the rules might conflict.
+
+Let me work through a couple test cases to see how the priority system plays out. When a ghost is small enough to trigger both the size denial and the ghost redirect, the newer ghost rule wins and sends it to spectral affairs. But when a slime is small, the size denial from the newer regulation overrides the original slime approval—which is a genuine gotcha moment for players who assume all slimes get approved. The "newest wins" tip should guide them, but this is their first real conflict to navigate.
+
+If they guess wrong, the explanation clearly states "DENY — Regulation 2 overrides Reg 1," which should help them learn. Though I'm realizing players might not even notice the size threshold is in play—they'll see a slime and instinctively think approval without checking the numbers. With five cases in wave 2 and these overlapping rules, they'll probably stumble on a few and learn from the feedback. The 15 reputation hit per mistake stings, but starting at 100 gives some buffer. Incorrect answers get 1.8 seconds to display the explanation, which should be enough time to read it, though the text is pretty small.
+
+Patience ticks down from 15 to 13 seconds—still workable.
+
+Now wave 3 removes Regulation 1 entirely with a visual strikethrough, and introduces two new rules: one that auto-approves any creature with a weapon, and another that carves out an exception for ghosts carrying food. Imps are entering the scene too. The ruleset is expanding—I need to track the default deny, the weapon override, and how the food exception interacts with the ghost redirect rule. REG 1: Slime → APPROVE (REPEALED)
+
+REG 2: Size < X → DENY
+REG 3: Ghost → REDIRECT
+REG 4: Weapon → APPROVE
+REG 5: EXCEPTION: Reg 3 doesn't apply if carrying food
+So now:
+
+A Slime with no special conditions: no reg applies → DENY (default). This is a gotcha! The player might still think slimes = APPROVE.
+A Ghost carrying food: REG 5 disables REG 3, so the ghost isn't redirected. If no other reg applies → DENY.
+A Ghost with a weapon: REG 3 (REDIRECT) and REG 4 (APPROVE) both apply. REG 4 has higher ID → APPROVE.
+A small creature with a weapon: REG 2 (DENY) and REG 4 (APPROVE) both apply. REG 4 wins → APPROVE.
+The repeal of REG 1 is a major trap for players—the strikethrough and faded text on the regulation board might be too subtle to catch, especially with the flavor text in wave 1 mentioning "mostly slimes today" to lull them into approving them by default.
+
+The 11-second time limit is tight for reading the case file, checking all the creature attributes, and cross-referencing multiple regulations with exceptions. The exception text itself is small and easy to overlook, which could trip up casual players trying to work through the logic quickly.
+
+The real friction point is that players have to mentally map regulation numbers to their verdicts—when an exception references "Regulation 3," they need to scan back up the board to remember what that rule actually does. This is probably the core puzzle challenge, so it might be intentional friction.
+
+Wave 4 introduces three new regulations and Wraiths, compressing the decision window down to 9 seconds—now the player is really under pressure.
+
+Let me walk through how a specific case would play out. With Case #16 (an even-numbered case with a Wraith, size 8, neutral alignment, carrying a rubber duck), I need to check each regulation: REG 2 probably doesn't trigger since 8 isn't below the size threshold, REG 3 doesn't apply since it's not a ghost, REG 4 doesn't apply since a rubber duck isn't a weapon—and I'm starting to see how the exceptions and meta-rules create branching logic that's hard to track under time pressure.
+
+The real complication is that REG 7's exception might disable REG 6, which would be the only rule that applies to this case, forcing a DENY verdict instead. The puzzle hinges on understanding which regulation each exception targets, and that's deliberately obscured.
+
+I'm also noticing that starting in wave 3, there's a 30% chance the system forces conflicting attributes on a case, which would make it nearly impossible to satisfy multiple regulations simultaneously.
+
+Now looking at wave 5, the dragon emergency introduces three new regulations that seem to create a paradox: REG 9 auto-approves all dragons, REG 10 redirects large creatures, and REG 11 explicitly states that emergency regulations don't override standard ones, which would nullify REG 9 and REG 10 entirely. , the dragon. It's big (35-50ft). Two emergency regs say APPROVE and REDIRECT. But the META rule says emergency regs don't override standard ones. What does this mean?
+
+The meta rule (REG 11) causes hasEmergencyAdvisory = true, which sets all emergency regs' effectivePriority to 0. So REG 9 (Dragon→APPROVE) and REG 10 (size>30→REDIRECT) both get priority 0.
+
+Now what standard regs apply to the dragon? The dragon is:
+
+Species: Dragon (REG 1 is repealed, so no species match except REG 9 which is demoted)
+Size: 35-50ft (REG 2: size < 3/4/5? No. REG 10 is demoted)
+Alignment: Neutral or Evil (REG 6: Neutral + size > 6 → if Neutral, this applies! REG 8: Good → doesn't apply)
+Item: random
+If alignment is Neutral, REG 6 applies with priority 6 since it's not emergency, while the demoted emergency regs (REG 9 and REG 10) both sit at priority 0. REG 4 kicks in too if the dragon carries a weapon, but REG 6 wins overall with its higher priority, so the answer is APPROVE.
+
+If alignment is Evil, I need to check which standard regs actually match the dragon's profile. I'm sorting by effective priority, and since both REG 9 and REG 10 have priority 0, the stable sort preserves their original order—so REG 9 comes first and wins with APPROVE. I should verify no other standard regulations apply to this Evil Dragon scenario: REG 2 doesn't match the size range, REG 3 is for Ghosts, REG 8 requires Good alignment, and REG 7 only disables other regs rather than creating new outcomes. So it's just these two emergency regulations competing at equal priority.
+
+Now I'm checking the weapon-carrying case: if the dragon has a weapon, REG 4 kicks in with priority 4, which overrides the demoted emergency regs entirely. And for the broader puzzle, I'm realizing the answer might always be APPROVE across different alignments—Neutral dragons get approval from either REG 4 or REG 6, and Evil dragons without weapons still get it from the emergency regs by default.
+
+The real challenge for the player is recognizing that REG 11 makes the emergency regulations advisory only, so they need to identify which standard regulation actually applies rather than defaulting to the emergency fallback. The trap is probably that size-based REDIRECT rules look tempting but don't actually override the approval chain once you understand the hierarchy. The instructions frame emergency regs as "advisory only," which could reasonably mean they still apply but can't override standard regulations—that's actually a fair puzzle for players willing to think through it. Now I'm looking at the board layout and realizing there's a serious space problem: by wave 5, up to 12 regulation cards could stack vertically, but the board is only 470 pixels tall and the cards would overflow well past the bottom boundary around the 9th card. maybe 1-2 lines = 30-44px per card. By wave 4-5 with a dozen cards total, they'll definitely overflow the board and risk overlapping the buttons, which is a real problem for gameplay. Let me check the timer issue — the update function returns early during wave transitions so the timer doesn't tick then, but I need to verify it doesn't tick during the banner fade and case loading phase.
+
+Looking at the sequence: waveTransitioning is set to false before loadNextCase() runs, so the game timer starts ticking again as soon as the wave transition ends, even while the case file is still animating in. The patience meter doesn't tick during this window since waitingForNextCase stays true until after the case display finishes, but the game timer does tick — though that's fine since the 5-minute total should be plenty.
+
+Now checking whether casesProcessed gets incremented when a case times out...
+
+it doesn't. Only handleCorrect increments it, while both handleIncorrect and handleTimeout only increment casesMisfiled. So "Cases Processed" on the end screen only counts correct verdicts, and "Misfilings" covers everything else. This seems intentional — "processed" means successfully processed — though it could confuse players who expect it to mean total cases seen.
+
+Now I'm checking the regulation card layout. Let me trace through how many cards appear by wave: starting with 1 default card, then adding 1, then 2 more, then 2 more (with one repealed), then 3, then 3 again. That's 12 cards total by wave 5. With each card taking up at least 44 pixels plus 8-pixel gaps, I need to calculate whether they actually fit on the board.
+
+At 52 pixels per card, 12 cards would need 624 pixels of vertical space starting from y=70, which would end at y=694—but the canvas is only 600 pixels tall. The regulations are definitely overflowing off the bottom of the screen by wave 4 or 5. The card height varies based on text length, but even with the minimum 44-pixel height, the math shows this is a real layout problem that makes later regulations invisible. So cards 10-12 are where things break down, and since wave 5 has those emergency regulation cards that are crucial for solving the dragon puzzle, they'll be cut off or invisible — that's a serious problem for gameplay. I'm also noticing the wave 1 flavor text might be getting hidden behind the wave banner depending on how it wraps.
+
+The score display itself isn't an issue since it only shows up at the end, but the real blocker is the regulation board overflowing. I need to either scale down the font dynamically as more regulations appear, or implement scrolling to keep everything readable.
+
+The cleanest solution would be to remove repealed regulations from the display entirely since they're already struck through and don't affect gameplay decisions anymore. But that's complex to animate smoothly. A simpler approach is just tightening up the card heights and gaps — reducing the spacing from 8px to 4px and shrinking the cards themselves should give me enough breathing room on the 225px by 470px board. and just enable scrolling on the regulation board instead. Actually, the real solution is to collapse repealed regulations when wave 3 starts—showing a brief strikethrough animation before shrinking the card to zero height and removing it from the array. That would free up space, and if I also reduce the gap between cards, I can fit the remaining 11 cards within the bounds. Let me work through whether that's actually enough space. me think about this differently. What if I just make the board scrollable? That's complex with Phaser.
+
+Most practical fix: when adding new regulation cards, if the next card would go past y=500, start reducing the gap and card min height. This is a progressive shrink approach.
+
+Actually the MOST practical fix for a game like this: remove repealed regulations from the board after a brief animation. The player has already seen the strikethrough; they don't need it taking up space permanently.
+
+Let me implement: when regs are repealed (in startWave), after showing the strikethrough for ~1 second, animate the card and text to alpha 0, then destroy them and remove from regulationCards, then re-layout all remaining cards.
+
+Wait but re-layout is complex because I'd need to animate all cards to new positions. Let me just do this: when repealing, show strikethrough, then after 1 second destroy the card elements and remove from the array. When rendering new cards, use the actual current position calculation which already sums existing card heights.
+
+Actually, I'm overcomplicating this. Let me just tighten the spacing numbers: minimum card height of 30 pixels, 3-pixel gaps, and starting Y at 65. That gives me 33 pixels per card, so 12 cards fit in 461 pixels total, well within the board bounds.
+
+But 30-pixel cards with 10-point font is too cramped—the text alone needs 20-30 pixels plus padding. I could shrink the font to 9 points and the card to 28 pixels, which gives 31 pixels per card and fits 437 pixels total. This is getting too fiddly though.
+
+I'm going to go with the cleaner approach: collapse repealed regulations. When a regulation is repealed, show the strikethrough, fade out after 1.5 seconds, remove it from the array, and don't bother re-laying out—just leave the gap and let new cards use the actual current position calculation.
+
+The y-position calculation uses the regulationCards array, so removing a repealed card means new cards will position correctly based on what's left. Existing visible cards stay put, creating a gap where the repealed one was. That's fine—a gap beats cards going off-screen.
+
+Actually, the simplest fix is just reducing the card height and gap sizes to make everything fit. I'll keep the 10-point font but trim the padding down to 6 pixels.
+
+Let me think through the math: 32 pixels per card times 12 cards equals 384, plus 70 for the header gives 454 total—that fits comfortably within the viewport.
+
+Though 28 pixels is pretty cramped for a card. I think a hybrid approach works better: reduce the gap to 4 pixels, keep the minimum card height at 36, and when a card gets repealed, collapse it out of the array after showing the strikethrough animation. That way by wave 5, the repealed cards are actually gone instead of just visually hidden.
+
+Let me verify the math with these adjustments: 36 pixels per card plus 4 pixel gap equals 40 pixels per card. Twelve cards at 40 pixels each is 480, plus 70 for the header is 550—that just barely fits before the buttons at 548 pixels. So I can make this work without needing to destroy cards dynamically.
+
+Wait, I'm running into an overlap issue. The stamp tray sits at y=520, and with 12 cards at 40 pixels each starting from y=70, the last card's bottom edge lands at 550, which overlaps with the tray. I only have 450 pixels of available space, which fits 11.25 cards at 40 pixels each. I need to reduce the card height further to 34 pixels to make everything fit.
+
+With a 3-pixel gap between cards, that's 37 pixels per card total. Twelve cards would take up 444 pixels plus the initial 70-pixel offset, landing at 514—just under the 520-pixel limit. The longest text content, like the emergency regulation about overriding standard regulations, might stretch to 41 pixels when accounting for text wrapping and padding, but that's still acceptable since it just means that particular card uses 44 pixels instead of the standard 37.
+
+The real issue is that one oversized card pushes the total to 521 pixels, exceeding the limit by just one pixel. The cleanest solution is to remove repealed regulations from the board entirely after the wave transition completes. During the transition, the strikethrough animation plays to show what's being repealed, but once the new wave loads, those cards disappear completely. I'll modify the wave start method to apply the strikethrough effect, then fade out and destroy the repealed card after a second, letting the remaining cards reposition smoothly.
+
+Implementing the collapse logic now...
+
+Writing collapse animation... Finishing the repositioning logic...
+
+Actually, I'm overcomplicating this. Instead of all these animations and repositioning calls, I should just reduce the minimum card height to 30 pixels with a 3-pixel gap between them, which gives me 33 pixels per card and should fit everything on screen without the complex collapse mechanics.
+
+For the text, I could go with 9 pixels to save space, but that might hurt readability. Better to keep it at 10 pixels and trim the padding instead. With that approach, most cards will be around 30 pixels tall, and even the longer ones with three lines of text will only be around 42 pixels, so I'm looking at roughly 10 cards at 33 pixels plus a couple of longer ones—well within the available space.
+
+But if everything maxes out at 42 pixels, I'd hit 540 pixels total, which overshoots the limit. The collapse approach is really the way to go here. I'll set it up so that after the repeals show with strikethrough, the animation waits about 1.5 seconds, then fades out and removes those cards from the array. Once they're gone, I'll smoothly reposition the remaining cards by recalculating their y-coordinates based on their actual heights and tweening them into place. I should also tighten up the gap between cards to squeeze things in better.
+
+Implementing this means adjusting the card rendering to use a smaller gap and minimum height, adding methods to handle the collapse and repositioning, and triggering the collapse from the wave start function. The text layout should still work fine given the dimensions I'm working with. Now I need to be careful about how the card array gets updated during this process—if I'm removing collapsed cards and then recalculating positions, I need to make sure the rendering logic accounts for that properly. The collapse needs to finish before new regulations render, so I'm thinking about the timing in startWave — if I schedule the collapse around 1000ms, that gives the repeals time to display before the cards start collapsing, and then the new regulations can be added after the collapse completes.
+
+Actually, the cleaner approach is to collapse the cards right after showing the repeals and strikethrough, before the flavor text and new regulations appear. That way the remaining cards are already positioned correctly when I calculate where the new ones should go.
+
+Now I'm reconsidering the sizing constraints — with minimum card heights and gaps, I'm running into overlap with the stamp tray, so I need to figure out if I can compress further or if I'm hitting a hard limit.
+
+Wait, I just realized something simpler: if only one card gets repealed in the first wave, I only need to fit 11 cards instead of 12. That's a much more manageable constraint and I don't even need to change the card sizes at all.
+
+Actually, let me recalculate with the reduced heights I was considering. At 38px per card, 11 cards plus the 70px header gives me 488 total, which fits perfectly under the 520px threshold. So the solution is straightforward: reduce the card height from 44 to 34 and the gap from 8 to 4, then collapse the repealed regulations. For the later waves, most of them will have at least one repealed card, so the math works out similarly—Wave 4 has 8 visible cards, Wave 5 has 11 visible cards, and so on.
+
+Now I'm noticing another potential issue: the speech bubble that announces the arrival appears at 500ms, but the case file lines are still animating in. The last line starts animating at 270ms and takes 400ms to complete, finishing around 670ms. So the speech bubble pops in while the case file is still mid-animation. That's actually fine—it adds some visual interest rather than feeling jarring.
+
+But I should check whether the player can stamp during the case file animation, since waitingForNextCase might not be set correctly yet. wait for the text to settle before reading it, and the animation is fast enough. The even-case exception rule is straightforward enough — players just need to check if the case number is even. For casual players who don't read the regulations and just start stamping randomly, they'll get lucky in wave 1 with all slimes, but wave 2 will force them to learn through the feedback system when they misfile ghosts. The regulations are pretty small though, so readability could be an issue.
+
+Actually, the title screen does tell players to read the regulations, and the first wave is simple enough that it should guide them naturally. I think the real priority is fixing the regulation board overflow problem. Rather than implementing a collapse system, I could just reduce the card sizes — the overflow doesn't become critical until waves 4-5 anyway, and by wave 3 we've only got 6 cards after the repeal.
+
+Let me work through the math: if I set the minimum height to 30px with a 3px gap between cards, that gives me about 33px per card on average. With 12 cards, that's 396px plus the 70px stamp tray, totaling 466px — which fits safely. Even the longer exception text should stay within the 30px minimum since it wraps to about 2 lines.
+
+The emergency advisory text is longer though, wrapping to roughly 3 lines and taking up 39px instead of 33px. But even accounting for a few of these longer cards mixed in, the total still stays under the 520px limit. I'll go with the 30px minimum and 3px gap, and also collapse the repealed regulations to save more space.
+
+I'm implementing both the card sizing reduction and a collapse feature that removes struck-through regulations from view after a brief delay. I'll add a method to strip out repealed cards from the array and destroy their DOM elements, then reposition the remaining cards smoothly back into place.
+
+Writing the collapse and repositioning logic...
+
+Now let me narrate the playtest moment by moment.
+
+Title Screen: I see "BUREAUCROMANCER" in gold. Instructions are clear: read regs, read case, stamp A/D/R. "Newest regulation wins." I press SPACE.
+
+Wave 1: Banner says "WAVE 1". Flavor text: "Morning shift. Coffee's cold..." Nice. One regulation appears: "REG 1: All Slime creatures are APPROVED." Plus the default: "If no regulation applies → DENY." A slime appears with a speech bubble: "Blorb blorb... is this the right office?" Charming. Case file shows Species: Slime. Only one rule applies. I press A. THUD! "APPROVED" stamp slams on the case file. "CORRECT +10pts." Slime says "BLORB!!" and bursts into green particles. Great! The first 4 cases are all slimes — easy tutorial. I'm learning the rhythm.
+
+Wave 2: Two new regs. Size threshold and Ghost→REDIRECT. A Ghost shows up with food. Is it a Ghost? REG 3 says REDIRECT. But... 13 seconds of patience. I have time. I press R. Correct! Next: a small Slime. REG 1 says APPROVE, but REG 2 says DENY if small. Which wins? The tip says "newest wins." REG 2 is newer. I press D. Correct! Learning the conflict system.
+
+Wave 3: REG 1 gets repealed (strikethrough). Two new regs: weapons→APPROVE, exception for food on the ghost rule. Now the real puzzle begins. Imps show up. 11 seconds. I scan the board...
+
+Wait. I'm squinting at the regulation board. The cards are in 10px font. There are 6 cards now. They're stacking up but still visible. Exception text is dense. I need to cross-reference reg numbers. But it's the core challenge, so this is fair — challenging but learnable.
+
+Wave 4: Three MORE regs. 9 total cards on the board. The even-case exception is mind-bending. 9 seconds of patience. Wraiths are phasing and whispering pop songs. I'm stressed but it's fun stress.
+
+Wave 5: "EMERGENCY SESSION" in red. Screen shakes. Dragon roar! Red vignette. Three emergency regs appear. I see:
+
+REG 9: Dragons → APPROVE
+REG 10: Size > 30ft → REDIRECT
+REG 11: Emergency regs are advisory only
+WAIT — I CAN'T SEE REG 10 AND REG 11. They're below the bottom of the screen!
+
+CRITICAL BUG FOUND: By wave 5, there are 12 regulation cards stacked vertically. Each card is ~44px minimum + 8px gap = 52px. Starting at y=70, the 12th card's bottom is at 70 + 12*52 = 694px. The canvas is only 600px tall. The stamp tray starts at y=520. The last 2-3 emergency regulations — the ones the player MUST read to solve the dragon puzzle — are partially or fully off-screen.
+
+This is game-breaking. The player literally cannot see the information they need.
+
+Let me also check one more thing — the casesProcessed counter only increments on correct answers (line 1045), not on misfilings. The end screen says "Cases Processed" which a player would expect to mean total cases seen. This is misleading.
+
+Let me fix both issues.
+
+Update Todos
+
+Fix regulation board overflow - cards go off screen by wave 5
+
+Fix casesProcessed to count all cases, not just correct ones
+The fix has two parts:
+
+Reduce card sizing (min height 30→from 44, gap 3→from 8)
+Collapse repealed regulations after showing the strikethrough, then re-position remaining cards
+Edit index.html
+Modified
+Now add the collapse and reposition methods, and update startWave to collapse repealed regs:
+
+Edit index.html
+Added 10 lines
+Now add the repositionCards method after renderRegulationCard:
+
+Edit index.html
+Added 12 lines
+Now fix the casesProcessed counter — it should count all cases seen, not just correct ones:
+
+Edit index.html
+Added 1 line
+Wait, I need to also increment casesProcessed in handleIncorrect and handleTimeout, and add casesCorrect to init:
+
+Edit index.html
+Added 1 line
+Edit index.html
+Added 1 line
+Add casesCorrect to init:
+
+Edit index.html
+Added 1 line
+Now update the end scene to show both total cases and correct ones, and pass casesCorrect:
+
+Edit index.html
+Modified
+Now update the other two scene transitions (triggerDragonWrongEnd and triggerLoss):
+
+Edit index.html
+Modified
+Edit index.html
+Modified
+Now update EndScene to use casesCorrect:
+
+Edit index.html
+Added 1 line
+Edit index.html
+Added 1 line
+The stats layout now has 5 lines. Let me check the end scene spacing — stats start at y=200 with 38px between. 5 stats: y=200,238,276,314,352. Rank is at y=390. That leaves enough room.
+
+Now verify syntax:
+
+Bash Verify JS syntax
+IN
+node -e "
+const fs = require('fs');
+const html = fs.readFileSync('/Users/jackie3/Desktop/thesis/thesis/claude_3_bureaucromancer/index.html', 'utf8');
+const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
+const js = scriptMatch[1];
+try { new Function(js); console.log('JS syntax OK'); } catch(e) { console.log('SYNTAX ERROR:', e.message); }
+"
+
+OUT
+JS syntax OK
+Now let me verify the card math with the new sizing to make sure everything fits:
+
+Bash Verify card stacking fits on screen
+IN
+node -e "
+// Simulate card stacking with new sizing
+// Min height 30, gap 3, starting at y=70
+// Typical regulation text heights at 10px, 210px wrap:
+
+const regs = [
+  { text: 'DEFAULT: If no regulation applies, the case is DENIED.', height: 26 },  // 2 lines
+  // Wave 1 REG 1 gets REPEALED in wave 3 - removed from board
+  { text: 'Creatures smaller than 4ft are DENIED — too small to be a threat.', height: 26 },
+  { text: 'All Ghost-type creatures are REDIRECTED to Spectral Affairs.', height: 26 },
+  { text: 'Any creature carrying a weapon is APPROVED regardless of other status.', height: 26 },
+  { text: 'EXCEPTION: Regulation 3 does not apply if carrying food.', height: 26 },
+  { text: 'Neutral-aligned creatures larger than 6ft are APPROVED.', height: 26 },
+  { text: 'EXCEPTION: Regulation X does not apply on even-numbered cases.', height: 26 },
+  { text: 'Creatures with Good alignment are DENIED — no threat detected.', height: 26 },
+  { text: 'EMERGENCY: All Dragons are APPROVED for immediate banishment.', height: 26 },
+  { text: 'EMERGENCY: Creatures over 30ft require REDIRECT to Dept of Large Affairs.', height: 36 },  // 3 lines
+  { text: 'EMERGENCY: Emergency Regulations are advisory only and DO NOT override standard regulations.', height: 36 }  // 3 lines
+];
+
+let y = 70;
+regs.forEach((r, i) => {
+  const cardH = Math.max(30, r.height + 6);
+  console.log('Card ' + (i+1) + ': y=' + y + ', height=' + cardH + ', bottom=' + (y + cardH));
+  y += cardH + 3;
+});
+console.log('\\nFinal y after all cards: ' + y);
+console.log('Stamp tray top: 520');
+console.log('Canvas height: 600');
+console.log('Fits: ' + (y < 520 ? 'YES' : 'NO'));
+"
+
+OUT
+Card 1: y=70, height=32, bottom=102
+Card 2: y=105, height=32, bottom=137
+Card 3: y=140, height=32, bottom=172
+Card 4: y=175, height=32, bottom=207
+Card 5: y=210, height=32, bottom=242
+Card 6: y=245, height=32, bottom=277
+Card 7: y=280, height=32, bottom=312
+Card 8: y=315, height=32, bottom=347
+Card 9: y=350, height=32, bottom=382
+Card 10: y=385, height=42, bottom=427
+Card 11: y=430, height=42, bottom=472
+
+Final y after all cards: 475
+Stamp tray top: 520
+Canvas height: 600
+Fits: YES
+11 cards (with REG 1 collapsed after repeal) fit comfortably — final y is 475, well below the stamp tray at 520.
+
+Update Todos
+
+Fix regulation board overflow - cards go off screen by wave 5
+
+Fix casesProcessed to count all cases, not just correct ones
+Here's what the playtest found and what I fixed:
+
+Critical bug: Regulation board overflow (game-breaking)
+
+By wave 5, 12 regulation cards at 52px each would extend to y=694 — far past the 600px canvas. The emergency regulations the player MUST read to solve the dragon puzzle were off-screen.
+Fix: Reduced card min height (44→30), gap (8→3), and added a collapse system for repealed regulations. Repealed cards show a strikethrough for 1.2 seconds, then fade out and are removed. Remaining cards smoothly reposition. Final stack is 11 cards ending at y=475 — well within view.
+Misleading stat: "Cases Processed" only counted correct verdicts
+
+A player would expect "Cases Processed" = total cases they saw, but it only incremented on correct answers. Misfiled and expired cases weren't counted.
+Fix: casesProcessed now increments on ALL outcomes. Added casesCorrect to track correct filings separately. End screen now shows "Cases Seen", "Correct Filings", "Misfilings", "Best Streak", and "Final Score".
+No other playability issues found. The game plays smoothly otherwise — wave 1 is a gentle tutorial, difficulty ramps naturally, speech bubbles add character without blocking gameplay, and the 30-second dragon timer gives enough time for the final puzzle.

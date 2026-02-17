@@ -1,0 +1,1252 @@
+================================================================================
+HEADSPACE - GAME DESIGN DOCUMENT (REVISED)
+================================================================================
+
+## 1. Title & Hook
+
+TITLE: Headspace
+
+TAGLINE: "Every feeling is trying to help. Not every feeling is right."
+
+HOOK: You control four emotions—Joy, Fear, Anger, and Calm—inside the mind of 
+a person navigating three pivotal moments: a difficult conversation, a job 
+interview, and saying goodbye. Each emotion sees the SAME scene completely 
+differently: Fear's world is sharp and threatening, Joy's is warm and inviting, 
+Anger's is confrontational and red, Calm's is muted and clear.
+
+The twist: there are no "correct" emotions. Sometimes Fear protects. Sometimes 
+Joy blinds. Sometimes Anger is necessary. The game asks you to discover what 
+this person actually needs—which may not be what feels good.
+
+WHAT MAKES THIS CREATIVE:
+- The mechanic IS the meaning: switching emotions literally changes how reality 
+  appears, embodying the psychological truth that emotions shape perception
+- The game subverts expectations: "positive" emotions can lead to harm, 
+  "negative" emotions can be necessary
+- The scenarios are emotionally complex: there are no villains, just people 
+  navigating hard moments
+- The game teaches something: players leave with insight about emotional 
+  intelligence, not just entertainment
+
+--------------------------------------------------------------------------------
+
+## 2. Core Insight
+
+CENTRAL TRUTH: Emotions aren't good or bad—they're information. The skill isn't 
+suppressing "negative" emotions, but understanding what each one is trying to 
+tell us and choosing which voice to act on.
+
+THE PSYCHOLOGICAL REALITY THIS EMBODIES:
+- Fear exists to protect us from genuine threats, but can also trap us
+- Joy motivates connection but can make us overlook red flags
+- Anger defends our boundaries but can destroy bridges we need
+- Calm provides clarity but can become avoidance or numbness
+
+WHY THIS MATTERS TO PLAYERS:
+Most games treat emotions simplistically (collect happiness, avoid sadness). 
+Headspace respects the player enough to present emotional complexity. By the 
+end, players have practiced a form of emotional regulation—not by suppressing 
+feelings, but by learning when each one serves them.
+
+THE QUESTION THE GAME ASKS:
+"What does this moment actually need?"—not "What feels best?"
+
+--------------------------------------------------------------------------------
+
+## 3. Mechanic-Theme Integration
+
+PRIMARY MECHANIC: Switch between four emotions (1-4 keys or clicking emotion 
+portraits). Each emotion:
+1. Transforms the visual environment completely
+2. Changes what obstacles exist and what paths are available
+3. Reveals different information about the scene
+4. Has a unique movement ability
+
+HOW THE MECHANIC EMBODIES THE THEME:
+
+The same room, seen through Fear, shows threats everywhere—sharp edges, 
+looming shadows, exits blocked. Seen through Joy, the room is warm and 
+welcoming—but perhaps dangerously so, hiding real problems in golden light.
+
+This isn't metaphor bolted onto gameplay. The mechanic literally demonstrates 
+the psychological concept: our emotional state determines what we perceive 
+as real, threatening, possible, or true.
+
+CRITICAL DESIGN PRINCIPLE:
+No emotion is "correct." Each scenario has multiple valid endings based on 
+which emotional truths the player prioritizes. The game doesn't judge—it 
+shows consequences.
+
+--------------------------------------------------------------------------------
+
+## 4. The Four Emotions (Playable Characters)
+
+FEAR (Blue-Gray)
+Visual Style: Sharp angles, high contrast, shadows that move. Other characters 
+appear larger, more threatening. Exits seem blocked or dangerous.
+Movement Ability: Can see hidden dangers (reveals spikes, traps, lies)
+Weakness: Cannot see opportunities, paths forward seem impossible
+Sound: Tense strings, heartbeat undertone, amplified ambient sounds
+What Fear Says: "Be careful. They might hurt you. Don't trust this."
+When Fear is Right: When there ARE real dangers being overlooked
+When Fear is Wrong: When it prevents necessary vulnerability
+
+JOY (Golden Yellow)
+Visual Style: Warm colors, soft edges, bloom lighting. Other characters appear 
+friendly, smiling. Everything seems possible and connected.
+Movement Ability: Can create bridges (golden light platforms) between gaps
+Weakness: Cannot see hazards, may walk into traps that seem like opportunities
+Sound: Warm strings, gentle major key, birds and chimes
+What Joy Says: "This is wonderful. They like you. Everything will work out."
+When Joy is Right: When optimism enables connection and courage
+When Joy is Wrong: When it blinds to genuine problems
+
+ANGER (Deep Red)
+Visual Style: Harsh, bold colors. Other characters appear aggressive or 
+dismissive. Obstacles appear as things to be destroyed or confronted.
+Movement Ability: Can break through barriers (walls, blockages, excuses)
+Weakness: Destroys bridges, may damage relationships that matter
+Sound: Percussion, dissonance, low brass, amplified conflict sounds
+What Anger Says: "This isn't fair. You deserve better. Don't accept this."
+When Anger is Right: When boundaries need defending, when injustice is real
+When Anger is Wrong: When it destroys what we actually want to preserve
+
+CALM (Soft Teal)
+Visual Style: Muted, painterly, almost watercolor. Characters appear neutral, 
+the scene feels distant. Time seems to slow.
+Movement Ability: Can pause hazards temporarily, creating safe passage
+Weakness: Cannot interact meaningfully with others, may enable avoidance
+Sound: Ambient, minimal, breath sounds, very little music
+What Calm Says: "Step back. Observe. You don't have to react right now."
+When Calm is Right: When reactivity would cause harm, when clarity is needed
+When Calm is Wrong: When action IS required and calm becomes paralysis
+
+--------------------------------------------------------------------------------
+
+## 5. The Three Scenarios
+
+Each scenario takes approximately 90 seconds to 2 minutes, for a total game 
+length of approximately 5-6 minutes.
+
+### SCENARIO 1: "THE CONVERSATION" (Tutorial + First Choice)
+
+SETUP: The Host (the person whose mind we're in) is in a café. Across from them 
+is Alex, their partner of two years. Alex has just said: "I've been offered a 
+job across the country. I think I should take it."
+
+WHAT THE PLAYER MUST DO:
+Navigate from the "processing" zone (left) to Alex (right) to respond. But 
+the path between them is different for each emotion:
+
+- FEAR sees: The table between them as a vast chasm. Alex's face as cold, 
+  already decided. The exit door as the only safe option.
+  Obstacles: Chasms (can't reach Alex without help)
+  
+- JOY sees: The table as tiny, Alex as still in love, the distance as 
+  easily closed. The room full of warm memories.
+  Abilities: Can create a bridge across Fear's chasm
+  Obstacles: Hidden trapdoor (represents overlooking that Alex might leave)
+  
+- ANGER sees: The table as a battleground. Alex as someone who betrayed them. 
+  A wall around Alex's decision.
+  Abilities: Can break the wall around Alex's decision (force a conversation)
+  Obstacles: Breaking the wall may break the relationship too
+  
+- CALM sees: The room clearly, both people as complex. The distance is real 
+  but not permanent.
+  Abilities: Can pause the emotional turbulence to think
+  Obstacles: Cannot cross the gap alone—needs another emotion to act
+
+TUTORIAL FUNCTION:
+This scenario teaches all four emotions and their abilities. Player MUST use 
+at least two emotions to reach Alex.
+
+POSSIBLE ENDINGS:
+A) Reach Alex through Joy alone → Optimistic response, but miss that Alex 
+   has real concerns about the relationship
+B) Use Fear to see the danger, then Calm to approach → Have a real 
+   conversation acknowledging the difficulty
+C) Break through with Anger → Express hurt, but damage trust
+D) Stay in Calm too long → Alex leaves without a real conversation
+
+None of these is "wrong"—they're different, with different costs.
+
+TEACHING MOMENT:
+Text appears briefly: "Joy could reach them. But would Joy see the truth?"
+
+
+### SCENARIO 2: "THE INTERVIEW"
+
+SETUP: The Host is in a job interview. They've just been asked: "Tell me 
+about a time you failed." The interviewer waits.
+
+This scenario is tighter—more platforming, less exploration.
+
+THE MEMORY RETRIEVAL MECHANIC:
+The "level" is the Host's memory, searching for a failure to share. Different 
+emotions reveal different memories—Fear shows all the worst moments, Joy 
+tries to reframe failures as successes, Anger remembers being wronged, 
+Calm sees events clearly but struggles to engage with them.
+
+WHAT THE PLAYER MUST DO:
+Collect a memory (represented as a glowing orb) and carry it to the 
+interviewer. But:
+- Fear's memories are too raw—carrying them damages the Host
+- Joy's memories are reframed—the interviewer may see through it
+- Anger's memories blame others—unprofessional
+- Calm's memories are distant—lacking emotional authenticity
+
+THE SOLUTION:
+Player must switch emotions WHILE carrying the memory to transform it:
+Find it in Fear (honest), carry it through Joy (finds the growth), 
+finish in Calm (delivered with composure).
+
+Or: Find it in Anger (passionate), carry through Calm (gains perspective), 
+deliver in Joy (optimistic framing).
+
+Multiple paths work. Pure emotional approaches fail.
+
+POSSIBLE ENDINGS:
+A) Deliver a well-processed memory → Interview continues positively
+B) Deliver raw Fear memory → Honest but uncomfortable; interviewer 
+   respects vulnerability OR is put off (ambiguous)
+C) Deliver pure Joy memory → Interviewer senses inauthenticity
+D) Take too long → Awkward silence, interview derailed
+
+TEACHING MOMENT:
+"The memory was the same. The feeling made it different."
+
+
+### SCENARIO 3: "THE GOODBYE" (Climax)
+
+SETUP: The Host is at a hospital bedside. Their grandmother is dying. There 
+isn't much time. Grandmother says: "I'm so proud of you."
+
+This is the emotional climax. The level is abstract—less platforming, more 
+about being present.
+
+THE CHALLENGE:
+The Host must reach Grandmother to say goodbye. But grief makes this 
+almost impossible. The room itself resists.
+
+- FEAR: The room is cold, clinical. Every machine beeps dangerously. 
+  Grandmother seems fragile, breakable. Getting too close might hurt.
+  Fear cannot reach her—fear of loss creates distance.
+  
+- JOY: Tries to fill the room with good memories. Golden photographs 
+  float around. But they become walls—the happy past blocking the 
+  difficult present.
+  Joy cannot reach her—can't accept what's happening.
+  
+- ANGER: The room is full of injustice. Anger at doctors, at time, at 
+  mortality. The walls are red and pulsing.
+  Anger cannot reach her—rage at the unfairness creates distance.
+  
+- CALM: The room is quiet. The machines fade. Grandmother is clear.
+  Calm CAN reach her—but alone, Calm is numb, not present.
+
+THE SOLUTION:
+To truly say goodbye, the player must bring ALL emotions close enough:
+- Use Fear to acknowledge the loss is real
+- Use Joy to honor what she meant
+- Use Anger to feel the weight of the unfairness
+- Use Calm to be present
+
+The player cycles through emotions in sequence, each one getting closer 
+but unable to complete the journey alone. Finally, all four merge—the 
+visual styles blend—and the Host reaches Grandmother as themselves, 
+not as any single feeling.
+
+ENDING:
+The Host holds Grandmother's hand. The room returns to normal—not seen 
+through any emotional lens, just seen. Grandmother smiles. The Host 
+says what they need to say (not shown—left to player's imagination).
+
+Fade to white.
+
+FINAL TEXT:
+"Every feeling was trying to help."
+"Every feeling was part of you."
+"Thank you for being present."
+
+[End]
+
+--------------------------------------------------------------------------------
+
+## 6. Technical Specification
+
+DISPLAY:
+- Resolution: 1280 x 720 pixels (16:9, laptop standard)
+- Art Style: Illustrated, stylized—NOT realistic. Think "Gris" meets "Celeste"
+- Each emotion has a complete visual transformation:
+  * Fear: High contrast, blue-gray palette, sharp geometry
+  * Joy: Warm golden palette, soft edges, bloom lighting
+  * Anger: Red/orange palette, bold shapes, visual noise
+  * Calm: Muted teal, soft, almost watercolor, minimal contrast
+
+INPUT:
+- Keyboard: Arrow keys or WASD for movement, 1-2-3-4 for emotion switching
+- Mouse alternative: Click emotion portraits in corner to switch
+- Spacebar: Jump (contextual based on emotion)
+- No complex inputs—accessibility priority
+
+COORDINATE SYSTEM:
+- Each scenario is approximately 2000-3000 pixels wide
+- Camera follows Host with slight lead in movement direction
+- Y increases downward, ground at y=600
+
+THE HOST (PLAYER CHARACTER):
+- Size: 48x64 pixels (humanoid silhouette)
+- Base walk speed: 140 pixels/second
+- Jump velocity: -400 pixels/second
+- Gravity: 900 pixels/second²
+- The Host's appearance doesn't change—only the WORLD changes around them
+- Simple animation: idle, walk, jump (8 frames each)
+
+EMOTION SWITCHING:
+- Transition time: 0.4 seconds
+- Visual: Environment morphs, colors blend, geometry shifts
+- Audio: Crossfade between emotional soundscapes
+- Cannot switch while mid-jump (must land first)
+- Cooldown: 0.2 seconds between switches (prevents spam)
+
+EMOTION-SPECIFIC ABILITIES:
+
+FEAR:
+- Passive: Reveals hidden dangers (spikes glow, traps become visible)
+- Active: None (Fear is about seeing, not acting)
+- Limitation: Gaps appear larger, some paths seem blocked that aren't
+
+JOY:
+- Passive: Warm platforms appear (but some are illusory)
+- Active: Create bridge (click or hold jump while near gap)—golden light 
+  platform extends, lasts 3 seconds
+- Limitation: Cannot see actual hazards (walk into traps)
+
+ANGER:
+- Passive: Breakable barriers are highlighted
+- Active: Break barrier (walk into it with momentum)—takes 0.5 seconds
+- Limitation: Relationships (represented as bridges) may break too
+
+CALM:
+- Passive: Moving hazards slow to 25% speed
+- Active: Full pause (hold spacebar)—all hazards freeze for 2 seconds
+- Limitation: Cannot create bridges, cannot break barriers, cannot reach others
+
+HAZARDS AND OBSTACLES:
+
+1. CHASMS
+- Fear: Appear impossibly wide
+- Joy: Appear small (but still dangerous)
+- Anger: Same size, no help
+- Calm: Accurate size, but cannot cross alone
+
+2. BARRIERS (walls, emotional walls, excuses)
+- Only Anger can break them
+- Breaking takes momentum + 0.5 seconds
+- Some barriers protect, some imprison
+
+3. HIDDEN TRAPS
+- Only visible in Fear
+- In Joy, appear as opportunities (golden sparkle)
+- Walking into one without seeing it: knockback + brief stun
+
+4. BRIDGES (relationships, connections)
+- Appear solid in Joy
+- Appear fragile in Fear (but usable)
+- May break if Anger is active while crossing
+- Stable in Calm
+
+5. MEMORIES (Scenario 2 only)
+- Collectible orbs that must be carried
+- Transform visually based on current emotion
+- Carrying slows movement by 20%
+
+CHECKPOINTS:
+- Auto-save at scenario start
+- No mid-scenario checkpoints (scenarios are short)
+- On failure: Brief message about what happened, restart scenario
+
+CAMERA:
+- Smooth follow with 0.15 lerp
+- Slight zoom changes per emotion:
+  * Fear: Slightly zoomed in (claustrophobic)
+  * Joy: Slightly zoomed out (expansive)
+  * Anger: Slight shake, normal zoom
+  * Calm: Slight zoom out, very smooth
+
+GAME STATE:
+- currentScenario: 1-3
+- currentEmotion: 'fear' | 'joy' | 'anger' | 'calm'
+- hostPosition: {x, y}
+- hostVelocity: {x, y}
+- scenarioProgress: percentage through current scenario
+- emotionUsage: {fear: seconds, joy: seconds, anger: seconds, calm: seconds}
+- endingPath: array of key choices made (for ending determination)
+- gamePhase: 'playing' | 'transitioning' | 'ending'
+
+AUDIO:
+
+Each emotion has a complete soundscape:
+
+1. FEAR soundscape:
+- Music: Tense, minimal strings, irregular rhythm
+- Ambient: Heartbeat (100 BPM), amplified environment sounds
+- Footsteps: Sharp, echoing
+
+2. JOY soundscape:
+- Music: Warm, major key, gentle piano and strings
+- Ambient: Birds, distant chimes, soft warmth
+- Footsteps: Light, soft
+
+3. ANGER soundscape:
+- Music: Percussion-heavy, dissonant, driving
+- Ambient: Low rumble, intensified sounds of conflict
+- Footsteps: Heavy, forceful
+
+4. CALM soundscape:
+- Music: Almost none—ambient pads, breath sounds
+- Ambient: Reduced, muted, peaceful
+- Footsteps: Barely audible
+
+Sound effects:
+- sfx_switch_fear.wav - Tense transition sound
+- sfx_switch_joy.wav - Warm rising tone
+- sfx_switch_anger.wav - Impact/crash sound
+- sfx_switch_calm.wav - Breath/release sound
+- sfx_bridge_create.wav - Gentle crystalline sound
+- sfx_barrier_break.wav - Satisfying crash
+- sfx_trap_reveal.wav - Unsettling discovery tone
+- sfx_trap_spring.wav - Painful impact
+- sfx_memory_collect.wav - Resonant tone
+- sfx_memory_transform.wav - Shifting tone
+
+VISUAL ASSETS NEEDED:
+
+Host character:
+- host_idle.png (8 frames, 48x64 each)
+- host_walk.png (8 frames)
+- host_jump.png (4 frames)
+- host_stunned.png (4 frames)
+- host_holding.png (8 frames, for carrying memory)
+
+Environment tilesets (one per emotion, per scenario):
+- tiles_cafe_fear.png
+- tiles_cafe_joy.png
+- tiles_cafe_anger.png
+- tiles_cafe_calm.png
+- tiles_office_fear.png (etc. for all scenarios)
+- tiles_hospital_fear.png (etc.)
+
+Characters:
+- alex_fear.png (partner appears threatening)
+- alex_joy.png (partner appears loving)
+- alex_anger.png (partner appears dismissive)
+- alex_calm.png (partner appears neutral)
+- interviewer_variants.png
+- grandmother_variants.png
+
+Effects:
+- bridge_joy.png (animated golden light)
+- barrier_crack.png (breaking animation)
+- trap_revealed.png
+- memory_orb.png (with color variants)
+- transition_overlay.png (for emotion switching)
+
+UI:
+- emotion_portrait_fear.png (with active/inactive states)
+- emotion_portrait_joy.png
+- emotion_portrait_anger.png
+- emotion_portrait_calm.png
+- key_prompt_1234.png
+
+Backgrounds (parallax layers per emotion per scenario):
+- bg_cafe_fear_far.png, bg_cafe_fear_mid.png, bg_cafe_fear_near.png
+- (repeat for all emotion/scenario combinations = 36 background layers)
+
+FALLBACK VISUAL STYLE:
+If full art assets unavailable, use colored geometric shapes:
+- Host: White rectangle with simple face
+- Environment: Blocks in emotion-appropriate colors
+- The color shifts alone carry significant meaning
+
+--------------------------------------------------------------------------------
+
+## 7. Implementation Pseudocode
+
+### MAIN GAME SETUP
+
+```
+FUNCTION initGame():
+    config = {
+        type: Phaser.AUTO,
+        width: 1280,
+        height: 720,
+        physics: {
+            default: 'arcade',
+            arcade: { gravity: { y: 900 }, debug: false }
+        },
+        scene: [BootScene, MenuScene, ScenarioOneScene, ScenarioTwoScene, 
+                ScenarioThreeScene, EndingScene]
+    }
+    game = new Phaser.Game(config)
+```
+
+### BOOT SCENE
+
+```
+CLASS BootScene:
+    FUNCTION preload():
+        // Load all emotion variants of assets
+        FOR emotion IN ['fear', 'joy', 'anger', 'calm']:
+            this.load.image(`tiles_cafe_${emotion}`, `tiles_cafe_${emotion}.png`)
+            this.load.image(`tiles_office_${emotion}`, `tiles_office_${emotion}.png`)
+            this.load.image(`tiles_hospital_${emotion}`, `tiles_hospital_${emotion}.png`)
+            this.load.image(`alex_${emotion}`, `alex_${emotion}.png`)
+            this.load.audio(`music_${emotion}`, `music_${emotion}.mp3`)
+            this.load.audio(`sfx_switch_${emotion}`, `sfx_switch_${emotion}.wav`)
+        
+        // Load host sprites
+        this.load.spritesheet('host_walk', 'host_walk.png', {frameWidth: 48, frameHeight: 64})
+        this.load.spritesheet('host_idle', 'host_idle.png', {frameWidth: 48, frameHeight: 64})
+        
+        // Load UI
+        this.load.image('emotion_fear', 'emotion_portrait_fear.png')
+        this.load.image('emotion_joy', 'emotion_portrait_joy.png')
+        this.load.image('emotion_anger', 'emotion_portrait_anger.png')
+        this.load.image('emotion_calm', 'emotion_portrait_calm.png')
+        
+    FUNCTION create():
+        // Create animations
+        this.anims.create({
+            key: 'host_walking',
+            frames: this.anims.generateFrameNumbers('host_walk', {start: 0, end: 7}),
+            frameRate: 12,
+            repeat: -1
+        })
+        
+        this.scene.start('MenuScene')
+```
+
+### BASE SCENARIO CLASS (shared functionality)
+
+```
+CLASS BaseScenarioScene:
+    
+    FUNCTION createEmotionSystem():
+        this.currentEmotion = 'calm'  // Start neutral
+        this.emotionTransitioning = false
+        this.switchCooldown = 0
+        
+        // Create tilemap layers for each emotion (initially all invisible except current)
+        this.emotionLayers = {
+            fear: this.createEmotionLayer('fear'),
+            joy: this.createEmotionLayer('joy'),
+            anger: this.createEmotionLayer('anger'),
+            calm: this.createEmotionLayer('calm')
+        }
+        
+        // Set initial visibility
+        FOR emotion IN this.emotionLayers:
+            this.emotionLayers[emotion].setVisible(emotion == this.currentEmotion)
+            
+        // Setup emotion switching input
+        this.input.keyboard.on('keydown-ONE', () => this.switchEmotion('fear'))
+        this.input.keyboard.on('keydown-TWO', () => this.switchEmotion('joy'))
+        this.input.keyboard.on('keydown-THREE', () => this.switchEmotion('anger'))
+        this.input.keyboard.on('keydown-FOUR', () => this.switchEmotion('calm'))
+        
+        // Start emotion-specific music
+        this.emotionMusic = {}
+        FOR emotion IN ['fear', 'joy', 'anger', 'calm']:
+            this.emotionMusic[emotion] = this.sound.add(`music_${emotion}`, {loop: true, volume: 0})
+            this.emotionMusic[emotion].play()
+        this.emotionMusic[this.currentEmotion].setVolume(0.4)
+        
+    FUNCTION switchEmotion(newEmotion):
+        IF this.emotionTransitioning: RETURN
+        IF this.switchCooldown > 0: RETURN
+        IF newEmotion == this.currentEmotion: RETURN
+        IF NOT this.host.body.touching.down: RETURN  // Must be grounded
+        
+        this.emotionTransitioning = true
+        this.switchCooldown = 200  // milliseconds
+        
+        oldEmotion = this.currentEmotion
+        this.currentEmotion = newEmotion
+        
+        // Play switch sound
+        this.sound.play(`sfx_switch_${newEmotion}`)
+        
+        // Crossfade music
+        this.tweens.add({
+            targets: this.emotionMusic[oldEmotion],
+            volume: 0,
+            duration: 400
+        })
+        this.tweens.add({
+            targets: this.emotionMusic[newEmotion],
+            volume: 0.4,
+            duration: 400
+        })
+        
+        // Visual transition
+        this.transitionVisuals(oldEmotion, newEmotion)
+        
+    FUNCTION transitionVisuals(oldEmotion, newEmotion):
+        // Fade out old layer, fade in new layer
+        this.tweens.add({
+            targets: this.emotionLayers[oldEmotion],
+            alpha: 0,
+            duration: 400,
+            onComplete: () => this.emotionLayers[oldEmotion].setVisible(false)
+        })
+        
+        this.emotionLayers[newEmotion].setVisible(true)
+        this.emotionLayers[newEmotion].setAlpha(0)
+        this.tweens.add({
+            targets: this.emotionLayers[newEmotion],
+            alpha: 1,
+            duration: 400,
+            onComplete: () => this.emotionTransitioning = false
+        })
+        
+        // Camera effects
+        IF newEmotion == 'fear':
+            this.cameras.main.zoomTo(1.1, 400)  // Zoom in, claustrophobic
+        ELSE IF newEmotion == 'joy':
+            this.cameras.main.zoomTo(0.95, 400)  // Zoom out, expansive
+        ELSE IF newEmotion == 'anger':
+            this.cameras.main.shake(200, 0.005)  // Brief shake
+            this.cameras.main.zoomTo(1.0, 400)
+        ELSE IF newEmotion == 'calm':
+            this.cameras.main.zoomTo(0.95, 400)
+            
+        // Update hazard visibility
+        this.updateHazardVisibility()
+        
+        // Update NPC appearance
+        this.updateNPCAppearance()
+        
+    FUNCTION updateHazardVisibility():
+        FOR hazard IN this.hazards:
+            IF hazard.onlyVisibleIn:
+                hazard.setVisible(hazard.onlyVisibleIn == this.currentEmotion)
+                hazard.body.enable = (hazard.onlyVisibleIn == this.currentEmotion)
+                
+    FUNCTION createHost(x, y):
+        this.host = this.physics.add.sprite(x, y, 'host_idle')
+        this.host.play('host_idle')
+        this.host.setCollideWorldBounds(true)
+        this.host.body.setSize(36, 60)  // Slightly smaller hitbox
+        
+    FUNCTION updateHostMovement():
+        cursors = this.input.keyboard.createCursorKeys()
+        wasd = this.input.keyboard.addKeys('W,A,S,D')
+        
+        // Horizontal movement
+        IF cursors.left.isDown OR wasd.A.isDown:
+            this.host.setVelocityX(-140)
+            this.host.flipX = true
+            IF this.host.body.touching.down: this.host.play('host_walking', true)
+        ELSE IF cursors.right.isDown OR wasd.D.isDown:
+            this.host.setVelocityX(140)
+            this.host.flipX = false
+            IF this.host.body.touching.down: this.host.play('host_walking', true)
+        ELSE:
+            this.host.setVelocityX(0)
+            IF this.host.body.touching.down: this.host.play('host_idle', true)
+            
+        // Jumping
+        IF (cursors.up.isDown OR wasd.W.isDown OR cursors.space.isDown):
+            IF this.host.body.touching.down:
+                this.host.setVelocityY(-400)
+                
+    FUNCTION createUI():
+        // Emotion portraits
+        emotions = ['fear', 'joy', 'anger', 'calm']
+        this.emotionPortraits = {}
+        
+        FOR i FROM 0 TO 3:
+            portrait = this.add.image(100 + i * 80, 60, `emotion_${emotions[i]}`)
+            portrait.setScrollFactor(0)
+            portrait.setScale(0.5)
+            portrait.setAlpha(emotions[i] == this.currentEmotion ? 1 : 0.4)
+            portrait.setInteractive()
+            portrait.on('pointerdown', () => this.switchEmotion(emotions[i]))
+            this.emotionPortraits[emotions[i]] = portrait
+            
+            // Key hint
+            keyHint = this.add.text(100 + i * 80, 95, `[${i + 1}]`, {
+                fontSize: '14px',
+                fill: '#ffffff'
+            })
+            keyHint.setOrigin(0.5)
+            keyHint.setScrollFactor(0)
+            
+    FUNCTION updateUI():
+        FOR emotion IN this.emotionPortraits:
+            targetAlpha = (emotion == this.currentEmotion) ? 1 : 0.4
+            this.emotionPortraits[emotion].setAlpha(targetAlpha)
+            
+    FUNCTION update(time, delta):
+        // Update cooldown
+        this.switchCooldown = Math.max(0, this.switchCooldown - delta)
+        
+        // Movement
+        this.updateHostMovement()
+        
+        // Emotion-specific abilities
+        this.updateEmotionAbilities(delta)
+        
+        // UI
+        this.updateUI()
+        
+        // Check scenario-specific goals
+        this.checkGoals()
+        
+    FUNCTION updateEmotionAbilities(delta):
+        IF this.currentEmotion == 'joy':
+            this.updateJoyAbilities()
+        ELSE IF this.currentEmotion == 'anger':
+            this.updateAngerAbilities()
+        ELSE IF this.currentEmotion == 'calm':
+            this.updateCalmAbilities(delta)
+            
+    FUNCTION updateJoyAbilities():
+        // Bridge creation when near gaps and pressing jump
+        IF this.input.keyboard.checkDown(this.input.keyboard.addKey('SPACE'), 500):
+            nearestGap = this.findNearestGap()
+            IF nearestGap AND this.distanceToGap(nearestGap) < 100:
+                this.createJoyBridge(nearestGap)
+                
+    FUNCTION createJoyBridge(gap):
+        IF this.activeBridge: RETURN  // Only one at a time
+        
+        bridge = this.add.image(gap.x, gap.y - 20, 'bridge_joy')
+        this.physics.add.existing(bridge, true)  // Static
+        this.physics.add.collider(this.host, bridge)
+        
+        this.activeBridge = bridge
+        this.sound.play('sfx_bridge_create')
+        
+        // Bridge fades after 3 seconds
+        this.time.delayedCall(3000, () => {
+            this.tweens.add({
+                targets: bridge,
+                alpha: 0,
+                duration: 500,
+                onComplete: () => {
+                    bridge.destroy()
+                    this.activeBridge = null
+                }
+            })
+        })
+        
+    FUNCTION updateAngerAbilities():
+        // Breaking barriers on contact with momentum
+        FOR barrier IN this.barriers:
+            IF this.physics.overlap(this.host, barrier):
+                IF Math.abs(this.host.body.velocity.x) > 100:
+                    this.breakBarrier(barrier)
+                    
+    FUNCTION breakBarrier(barrier):
+        this.sound.play('sfx_barrier_break')
+        this.cameras.main.shake(100, 0.01)
+        
+        // Breaking animation
+        this.tweens.add({
+            targets: barrier,
+            scaleX: 1.2,
+            scaleY: 0.8,
+            duration: 100,
+            yoyo: true,
+            onComplete: () => barrier.destroy()
+        })
+        
+        // Check if this barrier was protecting something important
+        IF barrier.protects:
+            this.handleBarrierConsequence(barrier.protects)
+            
+    FUNCTION updateCalmAbilities(delta):
+        // Slow down all hazards
+        FOR hazard IN this.movingHazards:
+            IF this.currentEmotion == 'calm':
+                hazard.timeScale = 0.25
+            ELSE:
+                hazard.timeScale = 1.0
+                
+        // Full pause on spacebar hold
+        IF this.input.keyboard.addKey('SPACE').isDown:
+            IF this.calmPauseRemaining > 0:
+                this.calmPauseRemaining -= delta
+                FOR hazard IN this.movingHazards:
+                    hazard.timeScale = 0
+        ELSE:
+            this.calmPauseRemaining = Math.min(this.calmPauseRemaining + delta * 0.5, 2000)
+```
+
+### SCENARIO ONE: THE CONVERSATION
+
+```
+CLASS ScenarioOneScene EXTENDS BaseScenarioScene:
+    
+    FUNCTION create():
+        // Setup cafe environment
+        this.createBackground('cafe')
+        this.createEmotionSystem()
+        this.createHost(200, 500)
+        
+        // Create Alex (the partner) at far right
+        this.alex = this.add.sprite(2400, 500, 'alex_calm')
+        this.updateNPCAppearance()
+        
+        // Create the central challenge: the gap between them
+        this.theGap = {x: 1200, width: 400, y: 550}
+        
+        // In Fear, the gap appears twice as wide
+        // In Joy, it appears half as wide (but danger is real)
+        // In Anger, there's a wall around Alex
+        // In Calm, it's accurate but no way to cross alone
+        
+        this.createScenarioObstacles()
+        this.createUI()
+        
+        // Tutorial text
+        this.showTutorialText("Alex wants to move away for a job.", 2000)
+        this.time.delayedCall(3000, () => {
+            this.showTutorialText("Reach them to respond. Press 1-4 to switch feelings.", 4000)
+        })
+        
+        // Setup camera
+        this.cameras.main.startFollow(this.host, true, 0.1, 0.1)
+        this.cameras.main.setBounds(0, 0, 2800, 720)
+        
+    FUNCTION createScenarioObstacles():
+        // The emotional gap - different per emotion
+        this.gaps = {
+            fear: this.createGap(1000, 800),    // Huge in fear
+            joy: this.createGap(1150, 300),     // Small in joy (but trap exists)
+            anger: this.createGap(1100, 400),   // Normal
+            calm: this.createGap(1100, 400)     // Normal, accurate
+        }
+        
+        // Hidden trap in Joy version (optimism trap)
+        this.joyTrap = this.physics.add.sprite(1300, 500, 'trap')
+        this.joyTrap.onlyVisibleIn = 'fear'  // Only visible when afraid
+        this.joyTrap.setVisible(false)
+        this.physics.add.overlap(this.host, this.joyTrap, this.hitTrap, null, this)
+        
+        // Anger's wall around Alex
+        this.angerWall = this.physics.add.sprite(2200, 500, 'barrier')
+        this.angerWall.visible = false
+        this.angerWall.protects = 'relationship'  // Breaking it has consequences
+        this.barriers = [this.angerWall]
+        
+    FUNCTION updateNPCAppearance():
+        // Alex looks different based on emotion
+        IF this.alex:
+            this.alex.setTexture(`alex_${this.currentEmotion}`)
+            
+    FUNCTION transitionVisuals(oldEmotion, newEmotion):
+        super.transitionVisuals(oldEmotion, newEmotion)
+        
+        // Update gap visibility
+        FOR emotion IN this.gaps:
+            this.gaps[emotion].setVisible(emotion == newEmotion)
+            this.gaps[emotion].body.enable = (emotion == newEmotion)
+            
+        // Anger wall only exists in anger
+        this.angerWall.setVisible(newEmotion == 'anger')
+        this.angerWall.body.enable = (newEmotion == 'anger')
+        
+    FUNCTION hitTrap(host, trap):
+        IF trap.onlyVisibleIn != this.currentEmotion:
+            // Hit invisible trap!
+            this.sound.play('sfx_trap_spring')
+            this.host.setVelocityX(-200)
+            this.showText("You didn't see that coming...", 1500)
+            
+    FUNCTION handleBarrierConsequence(protects):
+        IF protects == 'relationship':
+            // Breaking through with anger damages the relationship
+            this.relationshipDamaged = true
+            this.showText("You forced your way through. But at what cost?", 2000)
+            
+    FUNCTION checkGoals():
+        // Check if reached Alex
+        IF Math.abs(this.host.x - this.alex.x) < 100:
+            this.reachAlex()
+            
+    FUNCTION reachAlex():
+        this.host.setVelocityX(0)
+        this.physics.pause()
+        
+        // Determine ending based on how player arrived
+        IF this.currentEmotion == 'joy' AND NOT this.usedFear:
+            this.endingType = 'naive_optimism'
+        ELSE IF this.relationshipDamaged:
+            this.endingType = 'forced_anger'
+        ELSE IF this.usedMultipleEmotions:
+            this.endingType = 'balanced'
+        ELSE:
+            this.endingType = 'avoidant'
+            
+        this.showEnding()
+        
+    FUNCTION showEnding():
+        // Brief outcome text based on ending type
+        endings = {
+            naive_optimism: "You reached Alex with hope. But did you hear what they were really saying?",
+            forced_anger: "You broke through. The conversation happened. Trust didn't survive it.",
+            balanced: "You arrived scared, hopeful, and present. The conversation was hard. And real.",
+            avoidant: "You found a way across. But you kept your distance."
+        }
+        
+        this.showText(endings[this.endingType], 4000)
+        
+        this.time.delayedCall(5000, () => {
+            this.scene.start('ScenarioTwoScene')
+        })
+        
+    FUNCTION showTutorialText(text, duration):
+        tutorialText = this.add.text(640, 650, text, {
+            fontSize: '20px',
+            fill: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 3,
+            align: 'center'
+        })
+        tutorialText.setOrigin(0.5)
+        tutorialText.setScrollFactor(0)
+        
+        this.time.delayedCall(duration, () => {
+            this.tweens.add({
+                targets: tutorialText,
+                alpha: 0,
+                duration: 500,
+                onComplete: () => tutorialText.destroy()
+            })
+        })
+```
+
+### SCENARIO TWO: THE INTERVIEW
+
+```
+CLASS ScenarioTwoScene EXTENDS BaseScenarioScene:
+    
+    FUNCTION create():
+        this.createBackground('office')
+        this.createEmotionSystem()
+        this.createHost(200, 500)
+        
+        // Interviewer at right
+        this.interviewer = this.add.sprite(2200, 500, 'interviewer_calm')
+        
+        // Memory orbs scattered in the level
+        this.memories = this.physics.add.group()
+        this.createMemories()
+        
+        // Track memory transformation
+        this.heldMemory = null
+        this.memoryJourney = []  // Track which emotions touched the memory
+        
+        this.createUI()
+        this.cameras.main.startFollow(this.host, true, 0.1, 0.1)
+        
+    FUNCTION createMemories():
+        // Place memory orbs throughout level
+        memoryPositions = [
+            {x: 600, y: 400, type: 'failure_project'},
+            {x: 1000, y: 300, type: 'failure_relationship'},
+            {x: 1400, y: 450, type: 'failure_risk'}
+        ]
+        
+        FOR pos IN memoryPositions:
+            memory = this.memories.create(pos.x, pos.y, 'memory_orb')
+            memory.memoryType = pos.type
+            memory.setScale(0.8)
+            this.tweens.add({
+                targets: memory,
+                y: pos.y - 10,
+                duration: 1000,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            })
+            
+    FUNCTION update(time, delta):
+        super.update(time, delta)
+        
+        // Check memory pickup
+        this.physics.overlap(this.host, this.memories, this.collectMemory, null, this)
+        
+        // Update held memory appearance
+        IF this.heldMemory:
+            this.heldMemory.x = this.host.x
+            this.heldMemory.y = this.host.y - 50
+            this.updateMemoryAppearance()
+            
+    FUNCTION collectMemory(host, memory):
+        IF this.heldMemory: RETURN  // Already holding one
+        
+        this.heldMemory = memory
+        this.memoryJourney = [this.currentEmotion]
+        this.memories.remove(memory)
+        this.sound.play('sfx_memory_collect')
+        
+        this.showText("Carry this memory to the interviewer.", 2000)
+        
+    FUNCTION updateMemoryAppearance():
+        // Memory changes color based on current emotion
+        colors = {
+            fear: 0x4a6fa5,    // Blue-gray
+            joy: 0xffd700,     // Golden
+            anger: 0xdc143c,   // Crimson
+            calm: 0x5f9ea0    // Teal
+        }
+        this.heldMemory.setTint(colors[this.currentEmotion])
+        
+        // Track the journey
+        IF this.memoryJourney[this.memoryJourney.length - 1] != this.currentEmotion:
+            this.memoryJourney.push(this.currentEmotion)
+            this.sound.play('sfx_memory_transform')
+            
+    FUNCTION checkGoals():
+        IF this.heldMemory AND Math.abs(this.host.x - this.interviewer.x) < 100:
+            this.deliverMemory()
+            
+    FUNCTION deliverMemory():
+        this.physics.pause()
+        
+        // Evaluate the memory based on emotional journey
+        quality = this.evaluateMemoryQuality()
+        
+        outcomes = {
+            excellent: "The memory lands perfectly. Honest, reflective, hopeful.",
+            good: "The interviewer nods thoughtfully. A real answer.",
+            awkward: "The interviewer shifts uncomfortably. Too raw.",
+            fake: "The interviewer's smile tightens. They don't buy it."
+        }
+        
+        this.showText(outcomes[quality], 4000)
+        
+        this.time.delayedCall(5000, () => {
+            this.scene.start('ScenarioThreeScene')
+        })
+        
+    FUNCTION evaluateMemoryQuality():
+        journey = this.memoryJourney
+        
+        // Best: Started in fear (honesty), touched joy (found growth), ended calm (composure)
+        IF journey.includes('fear') AND journey.includes('joy') AND 
+           journey[journey.length - 1] == 'calm':
+            RETURN 'excellent'
+            
+        // Good: At least two emotions, didn't end in pure anger
+        IF journey.length >= 2 AND journey[journey.length - 1] != 'anger':
+            RETURN 'good'
+            
+        // Awkward: Pure fear
+        IF journey.length == 1 AND journey[0] == 'fear':
+            RETURN 'awkward'
+            
+        // Fake: Pure joy
+        IF journey.length == 1 AND journey[0] == 'joy':
+            RETURN 'fake'
+            
+        RETURN 'good'  // Default
+```
+
+### SCENARIO THREE: THE GOODBYE
+
+```
+CLASS ScenarioThreeScene EXTENDS BaseScenarioScene:
+    
+    FUNCTION create():
+        this.createBackground('hospital')
+        this.createEmotionSystem()
+        this.createHost(200, 400)
+        
+        // Grandmother at center of room
+        this.grandmother = this.add.sprite(1400, 500, 'grandmother_calm')
+        
+        // This scenario works differently:
+        // Each emotion can only get SO close before hitting an emotional wall
+        this.emotionBarriers = {
+            fear: 400,     // Fear can't get closer than 400 pixels
+            joy: 350,      // Joy gets distracted by memories
+            anger: 450,    // Anger pushes away
+            calm: 200      // Calm gets closest but can't connect
+        }
+        
+        // Track which emotions have "contributed"
+        this.emotionsUsed = {fear: false, joy: false, anger: false, calm: false}
+        this.closestReached = 1000
+        
+        this.createUI()
+        this.cameras.main.startFollow(this.host, true, 0.05, 0.05)
+        
+    FUNCTION update(time, delta):
+        super.update(time, delta)
+        
+        // Check distance to grandmother
+        distance = Math.abs(this.host.x - this.grandmother.x)
+        
+        // Emotional barrier
+        IF distance < this.emotionBarriers[this.currentEmotion]:
+            // Can't get closer in this emotion
+            this.host.x = this.grandmother.x - this.emotionBarriers[this.currentEmotion]
+            
+            IF NOT this.emotionsUsed[this.currentEmotion]:
+                this.emotionsUsed[this.currentEmotion] = true
+                this.showEmotionMessage()
+                
+        // Track closest approach
+        IF distance < this.closestReached:
+            this.closestReached = distance
+            
+        // Check for victory
+        this.checkVictory()
+        
+    FUNCTION showEmotionMessage():
+        messages = {
+            fear: "Fear whispers: 'If you get too close, you'll feel the loss.'",
+            joy: "Joy pleads: 'Remember the good times! Don't focus on this.'",
+            anger: "Anger shouts: 'This isn't fair! She shouldn't have to go!'",
+            calm: "Calm observes: 'Be present. Just... be present.'"
+        }
+        
+        this.showText(messages[this.currentEmotion], 3000)
+        
+    FUNCTION checkVictory():
+        // Victory requires using all four emotions
+        allUsed = this.emotionsUsed.fear AND this.emotionsUsed.joy AND 
+                  this.emotionsUsed.anger AND this.emotionsUsed.calm
+                  
+        IF allUsed AND this.closestReached < 250:
+            this.triggerEnding()
+            
+    FUNCTION triggerEnding():
+        this.physics.pause()
+        
+        // All emotions merge
+        this.showText("All of your feelings are part of you.", 3000)
+        
+        // Visual: Colors blend together
+        this.cameras.main.fade(2000, 255, 255, 255)
+        
+        this.time.delayedCall(3000, () => {
+            // Final scene: Host reaches grandmother
+            this.host.x = this.grandmother.x - 80
+            this.cameras.main.resetFX()
+            
+            // They hold hands
+            this.showText("You hold her hand.", 2000)
+            
+            this.time.delayedCall(2500, () => {
+                this.showText("She smiles.", 2000)
+            })
+            
+            this.time.delayedCall(5000, () => {
+                this.cameras.main.fade(2000, 0, 0, 0)
+            })
+            
+            this.time.delayedCall(7500, () => {
+                this.scene.start('EndingScene')
+            })
+        })
+```
+
+### ENDING SCENE
+
+```
+CLASS EndingScene:
+    
+    FUNCTION create():
+        this.cameras.main.setBackgroundColor('#000000')
+        
+        // Final messages, appearing one at a time
+        messages = [
+            {text: "Every feeling was trying to help.", delay: 1000},
+            {text: "Fear wanted to protect you.", delay: 3000},
+            {text: "Joy wanted to sustain you.", delay: 5000},
+            {text: "Anger wanted to defend you.", delay: 7000},
+            {text: "Calm wanted to steady you.", delay: 9000},
+            {text: "None of them were wrong.", delay: 11000},
+            {text: "Thank you for being present.", delay: 14000}
+        ]
+        
+        FOR msg IN messages:
+            this.time.delayedCall(msg.delay, () => {
+                text = this.add.text(640, 360, msg.text, {
+                    fontSize: '28px',
+                    fill: '#ffffff'
+                })
+                text.setOrigin(0.5)
+                text.alpha = 0
+                
+                this.tweens.add({
+                    targets: text,
+                    alpha: 1,
+                    duration: 1000
+                })
+                
+                // Fade out for next message (except last)
+                IF msg != messages[messages.length - 1]:
+                    this.tweens.add({
+                        targets: text,
+                        alpha: 0,
+                        duration: 500,
+                        delay: 1500
+                    })
+            })
+            
+        // Play again option
+        this.time.delayedCall(17000, () => {
+            restart = this.add.text(640, 500, 'Press any key to begin again', {
+                fontSize: '18px',
+                fill: '#666666'
+            })
+            restart.setOrigin(0.5)
+            
+            this.input.keyboard.once('keydown', () => {
+                this.scene.start('ScenarioOneScene')
+            })
+        })
+```
+
+--------------------------------------------------------------------------------
+
+## 8. Why This Design is More Creative
+
+1. THE MECHANIC IS THE MEANING
+   In Platform, the mechanic (drag platforms) was ADJACENT to the theme (caregiving).
+   In Headspace, the mechanic (emotions reshape reality) IS the theme. You cannot 
+   separate them. This is the hallmark of great game design.
+
+2. THERE ARE NO CORRECT ANSWERS
+   Platform had optimal paths. Headspace has valid paths—each with trade-offs.
+   This respects player intelligence and creates replay value.
+
+3. THE EMOTIONAL REGISTER IS RARE
+   Games about a job interview? A dying grandparent? These are universal 
+   experiences almost never explored in games. The melancholy and tenderness 
+   are distinctive.
+
+4. THE PLAYER LEARNS SOMETHING
+   After playing Headspace, a player might think differently about their own 
+   emotions. Platform would leave them with nothing but a brief entertainment.
+
+5. THE TWIST IS PHILOSOPHICAL, NOT MECHANICAL
+   Platform's "twist" was just a control inversion. Headspace's twist is the 
+   revelation that all emotions have value—including the uncomfortable ones.
+
+6. THE SCENARIOS ESCALATE EMOTIONALLY, NOT JUST MECHANICALLY
+   Each scenario gets more personal and more difficult emotionally, not just
+   in terms of platforming challenge. The final scenario is the simplest 
+   mechanically but the most profound.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

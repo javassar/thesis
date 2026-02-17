@@ -1,0 +1,129 @@
+1. Title & Hook
+Title: MIST Hook: You aren't the hero; you’re the weather. Wipe away the condensation on a rainy window to reveal the path for a tiny traveler trying to find their way home.
+
+2. Core Insight
+The central question: How much of our success is due to our own effort, and how much is due to the unseen hands clearing our path? Human relevance: This game explores caregiving and invisible labor. It places the player in a position of a "silent guardian," emphasizing that sometimes the most important thing you can do for someone is simply to help them see clearly.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: Subtractive Masking. The screen is covered in a "mist" layer (a semi-transparent gray). The player uses the mouse (or trackpad) to "wipe" the mist away, revealing the 2D world underneath. Integration: The act of "wiping" the window feels intimate and domestic. As you wipe, you reveal platforms, hazards, and the "Traveler" (an AI-controlled character). If you don't wipe the path ahead, the Traveler hits a wall or falls. The mechanic is the theme: the world is only navigable through your direct, tactile care.
+
+4. Technical Specification
+Display Specs
+Canvas Dimensions: 800px x 600px.
+
+Background (The World): Deep blues and warm oranges (a cozy city at night).
+
+Mist Layer: Hex #D1D9E0 at 0.9 alpha.
+
+The Traveler: A small, 12px x 20px hooded figure, white (for high contrast).
+
+UI Elements:
+
+Breath Meter: A small icon of a lung at (40, 560). As you "wipe," the meter depletes.
+
+Final Text: Centered upon completion: "They made it home because you noticed."
+
+Fonts: 'Gaegu' or a similar hand-written style font.
+
+Inputs
+Mouse Movement (Hold Left Click): Wipes the mist. The "brush" size is 40px.
+
+Spacebar: "Breathe" on the window. This refills the mist in a specific area but restores a small amount of "Energy" (used for pacing).
+
+Game State Information
+mistCanvas: A Phaser.Textures.RenderTexture. This acts as the mask.
+
+travelerState: String ('walking', 'waiting', 'falling'). Initial: 'walking'.
+
+stamina: Float, Initial: 100.0. Decreases while wiping; increases when idle.
+
+Win Condition: traveler.x >= world.width.
+
+Lose Condition: None (The traveler simply waits). This ensures a relaxing, 5-minute reflective experience.
+
+Assets Descriptions
+Sprites:
+
+Background: A long, scrolling 2D parallax city-scape.
+
+The Traveler: 4-frame walk cycle.
+
+Sounds:
+
+Squeak: The sound of a finger on glass (pitched randomly).
+
+Rain: A constant, low-looping ASMR rain-on-glass track.
+
+Muffled City: Distant traffic sounds that get "clearer" (louder) in areas where the mist is wiped.
+
+5. Implementation Pseudo Code
+JavaScript
+// MIST - Phaser Technical Implementation
+
+// 1. PRELOAD
+function preload() {
+    this.load.image('city', 'assets/bg_city.png');
+    this.load.spritesheet('traveler', 'assets/traveler.png', { frameWidth: 16, frameHeight: 24 });
+}
+
+// 2. CREATE
+function create() {
+    // The "World" beneath
+    this.add.image(400, 300, 'city').setScale(2);
+    
+    // Create the Traveler AI
+    this.traveler = this.physics.add.sprite(50, 450, 'traveler');
+    this.traveler.play('walk');
+
+    // THE MIST SYSTEM
+    // Create a render texture that covers the whole screen
+    this.mist = this.make.renderTexture({ width: 800, height: 600 }, true);
+    this.mist.fill(0xD1D9E0, 0.95);
+    
+    // Set the mist to use 'ERASE' blend mode
+    this.brush = this.make.image({ key: 'brush_alpha', add: false });
+    this.brush.setScale(0.5);
+
+    // Setup input
+    this.input.on('pointermove', (pointer) => {
+        if (pointer.isDown && stamina > 0) {
+            // This is the core 'Wipe' logic
+            this.mist.draw(this.brush, pointer.x, pointer.y, 1, 0, 'ERASE');
+            stamina -= 0.5;
+        }
+    });
+}
+
+// 3. UPDATE LOOP
+function update(time, delta) {
+    // A. Traveler AI Logic
+    // Raycast forward from the traveler's position
+    let isPathClear = checkMistAlphaAt(this.traveler.x + 20, this.traveler.y);
+
+    if (isPathClear < 0.2) { // If mist is wiped enough
+        this.traveler.setVelocityX(80);
+        this.traveler.anims.resume();
+    } else {
+        this.traveler.setVelocityX(0); // Traveler stops and waits for the player
+        this.traveler.anims.pause();
+    }
+
+    // B. Physics Check
+    // If the traveler walks over a hole in the "revealed" city background
+    if (!checkPlatformUnder(this.traveler.x, this.traveler.y)) {
+        respawnTraveler();
+    }
+
+    // C. Stamina Regen
+    if (!this.input.activePointer.isDown && stamina < 100) {
+        stamina += 0.2;
+    }
+}
+
+// 4. HELPER: Alpha Check
+function checkMistAlphaAt(x, y) {
+    // This function samples the RenderTexture to see if the player 
+    // has wiped that specific pixel or if it's still "foggy."
+    let pixel = this.mist.snapshotPixel(x, y);
+    return pixel.alpha;
+}

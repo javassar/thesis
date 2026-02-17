@@ -1,0 +1,473 @@
+# STAGE 1: GAME DESIGN
+
+## 1. Title & Hook
+Orbit Oddity: Slingshot tiny probes through gravity wells to play a song—solve each screen by sculpting stable orbits that harmonize on-beat.
+
+Why revise: Echo Courier is solid but familiar—echolocation stealth has clear precedents and hinges on AI pathing polish. Orbit Oddity offers a fresher, toy-like core where your solution literally becomes music. It’s visually minimal, mechanically distinct, and more surprising within five minutes.
+
+## 2. Core Insight
+- Central question: Can you find beauty and order inside chaotic systems by setting the right initial conditions?
+- Why it matters: It resonates with human problem-solving—tiny choices (angle, timing) create emergent patterns. When those patterns sing back at you as music, you feel ownership over harmony born from chaos.
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic: Click-drag to aim and release probes from a launcher on the beat; gravity curves their paths around planets. Probes striking “note rings” around planets trigger musical notes.
+- Embodiment: Orbital mechanics become a sheet of music. Stable orbits equal steady rhythm; messy trajectories create discord. The cosmos literally plays when your physics are right.
+
+## 4. Player Journey
+- Start: A calm starfield. One planet pulses a soft metronome. The UI says “Drag to launch on the beat.” Your first fling whips a probe around the planet; as it crosses a glowing ring, a bell-like note sounds. Delight: “I made that.”
+- First minute: You learn that launching near the beat grants extra stability and that note rings around planets correspond to pitches. The goal appears: light all target notes by keeping at least one probe touching their rings within the measure.
+- Evolution (minutes 1–4): Complexity escalates across three movements (screens):
+  - Movement I (Solo): One planet with 3 rings (root, third, fifth). You must establish a looping orbit that sweeps through all three on-beat within four bars.
+  - Movement II (Duet): Two planets with overlapping gravity, introducing transfer orbits. You launch 2–3 probes whose periods interlock to cover a four-note motif.
+  - Movement III (Ensemble): Three bodies and an optional asteroid hazard. You balance 3–4 probes so that, over eight bars, all target rings are hit in sequence without probes decaying into the sun.
+- Climax: You realize you don’t need to micromanage—if you set periods correctly, the system plays itself. Achieving the final motif flips the background aurora and layers in harmony.
+- Ending: When the last movement’s motif plays cleanly for one full phrase, probes fade into stardust and the planets hum the completed chord. The feeling: serene mastery—your hands off, your machine sings.
+
+## 5. Game Elements
+- Launcher: A small station at screen edge. Click-drag renders an arrow showing angle/power; a beat aura pulses for timing.
+- Probes: Dots with tiny thruster trails. Light, persistent; collide softly with planets (bounce lightly) but burn if they hit the sun.
+- Planets: Disks with mass; each has 1–3 concentric semi-transparent “note rings.” Colors map to notes (e.g., C=blue, E=green, G=gold).
+- Sun: Center mass; entering within a kill radius destroys probes with a whoosh.
+- Asteroid (Movement III): Slow-moving rock with small collision radius—deflects probes unpredictably.
+- Note Rings: Thin glowing bands around planets. Touching them triggers single notes; staying in them on-beat contributes to motif progress.
+- Beat Meter: A circular metronome at the launcher. Launching inside a glow window = “on-beat.”
+- Objective HUD: Icons for required notes per movement; fill as each bar completes correctly.
+- UI: 
+  - Timer/progress bar for the current phrase
+  - Remaining launches (soft cap) indicator
+  - Buttons: R (retry), N (next movement after clear)
+- Screens:
+  - Title: “Orbit Oddity” + short how-to
+  - Win screen: “You composed the sky” + stats (accuracy, launches)
+  - Fail/Retry overlay if time runs out (optional soft limit) or player chooses to reset
+
+## 6. Rules & Systems
+- Player actions:
+  - Click-drag-release on launcher to fire a probe. Direction = angle, power = drag length (clamped).
+  - Launching within the beat window grants a “sync bonus” (slightly increased initial velocity precision and reduced random drift).
+  - Press R to reset current movement; press N to continue after success.
+- Gravity:
+  - Each celestial body applies an inverse-square gravitational pull to probes.
+  - Probes have a small drag to prevent infinite wild slings; orbits decay slowly unless tuned well.
+- Notes and rhythm:
+  - Global tempo (e.g., 80 BPM). Every beat, a check runs: for each required ring, is any active probe intersecting it? If yes and first time this beat, that note plays and marks progress for the motif.
+  - A movement completes when all required beat-positions in the motif are satisfied consecutively for one full phrase (e.g., 4 beats for Movement I, 8 for II, 8 for III).
+- Collisions:
+  - Probe + Planet: Soft bounce if directly colliding with the planet body (prevents sticking); otherwise gravity curves them.
+  - Probe + Sun kill radius: Probe is destroyed.
+  - Probe + Asteroid: Elastic bump changes velocity vector slightly.
+- Progress:
+  - Movement I must be cleared to unlock II; II unlocks III. Total session target is 4–6 minutes, but each movement is completable in about 1–2 minutes with learning.
+- Scoring (lightweight):
+  - Beat accuracy: % of launches on-beat.
+  - Efficiency: Probes launched vs. minimum required.
+  - Style: Longest sustained orbit.
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+## 7. Technical Specification
+
+Display:
+- Phaser: 3.x (Arcade disabled for gravity; custom physics loop)
+- Canvas: 960 x 540 (16:9)
+- Background: Radial gradient starfield (drawn with Graphics once); base color #060913 with subtle twinkle particles
+- No camera scrolling
+
+Music/Tempo:
+- Tempo: 80 BPM (0.75 s per beat)
+- Beat window: ±120 ms for “on-beat” launch bonus
+- Phrase lengths: Mvt I: 4 beats; Mvt II: 8 beats; Mvt III: 8 beats
+- Sound: One-shot sine/bell samples for notes; mix low-pass pad when movement completes
+
+Physics:
+- Timestep: use delta from update, clamp dt to 1/60..1/30 s
+- Gravity constants per body:
+  - Sun: mass 1400
+  - Planet A: mass 400
+  - Planet B: mass 300
+  - Planet C: mass 250
+- Global gravitational formula per probe per body:
+  - dir = normalize(body.pos - probe.pos)
+  - dist2 = max((dx*dx+dy*dy), minDist2), where minDist2 = 400
+  - accel = (G * body.mass) / dist2; with G = 200
+  - probe.vel += dir * accel * dt
+- Drag: probe.vel *= (1 - dragRate*dt); dragRate = 0.05
+
+Elements (per movement):
+
+Common sizes/colors:
+- Sun:
+  - Position: (480, 270)
+  - Radius: 34 px (visual), kill radius: 26 px
+  - Color: #ffb347 core, #ffdd99 glow
+- Launcher:
+  - Position: Movement I at (120, 270); II at (120, 420); III at (840, 120)
+  - Visual: 10 px circle, color #8ad1ff; arrow on drag
+  - Power clamp: min 80 px, max 220 px drag length → initial speed = map [80..220] to [120..280] px/s
+- Probe:
+  - Radius: 4 px
+  - Color: #ffffff with trail color #9ad9ff
+  - Trail: polyline of last 24 positions, fade alpha 1→0
+- Planets + Rings:
+
+Movement I:
+- Planet A: pos (480, 270), overlaps sun? No; in Mvt I, hide sun (no kill)
+  - Visual radius 40, mass 400
+  - Rings:
+    - Inner ring (Root C): radius 80, thickness 10, color #69a7ff
+    - Middle ring (E): radius 120, thickness 10, color #7cffc1
+    - Outer ring (G): radius 160, thickness 10, color #ffd36e
+- Objective: Each beat of 4-beat phrase must have any ring hit; but to “complete chord,” require that across 4 beats, all three rings are hit at least once per phrase (flex order).
+
+Movement II:
+- Enable sun at center.
+- Planet A: pos (360, 220), radius 38, mass 350; Rings: radii 90 (C), 130 (G)
+- Planet B: pos (650, 320), radius 34, mass 300; Rings: radii 70 (E), 110 (B)
+- Objective: 8-beat motif requires hits on: [C, -, G, -, E, -, B, -] (notes on beats 1,3,5,7). Any probes may satisfy per beat.
+
+Movement III:
+- Sun active.
+- Planet A: (310, 180), radius 36, mass 300; Rings: 85 (D), 125 (A)
+- Planet B: (700, 170), radius 30, mass 250; Rings: 65 (F#), 105 (C#)
+- Planet C: (520, 360), radius 28, mass 220; Rings: 55 (E)
+- Asteroid: starts at (480, 480), velocity (-30, -10), bounces on screen edges
+- Objective: 8-beat arpeggio: [D, F#, A, C#, E, -, D, -]
+
+Beat and Audio mapping:
+- Note color to sample:
+  - C: #69a7ff -> sample_C4
+  - D: #69c3ff -> sample_D4
+  - E: #7cffc1 -> sample_E4
+  - F#: #74ffd8 -> sample_Fs4
+  - G: #ffd36e -> sample_G4
+  - A: #ffb36e -> sample_A4
+  - B: #ff9ea6 -> sample_B4
+  - C#: #9ec5ff -> sample_Cs4
+- Volume: 0.7, decay 0.6 s
+
+UI/Text:
+- Title: “Orbit Oddity” at center (font 36px monospace, color #cfe7ff)
+- Subtitle: “Drag to aim. Release on the beat. Fill the motif.”
+- HUD top:
+  - Beat meter at (70, 70): outer circle radius 30; inner pulse radius 26→30 on beat
+  - Phrase bar at (400, 24): 320x8 rect with 4/8 segments depending on movement
+  - Motif icons at (400, 40): small colored dots for each expected note per beat (dim until satisfied)
+  - Launch counter (soft): “Launches: {x}”
+- End screen text center: lines with results
+
+Input:
+- Pointer down on/near launcher enables aim mode; draw arrow
+- Pointer up launches probe with velocity vector
+- R: reset current movement
+- N/Enter: advance on success
+- M: mute toggle
+
+State:
+- game.state: 'title' | 'playing' | 'wonMovement' | 'complete'
+- movementIndex: 0..2
+- probes[]: each {pos, vel, alive, trail[]}
+- bodies[]: sun?, planets[]
+- rings[]: each {bodyIndex, radius, thickness, noteId}
+- motif[]: array of length phraseBeats with required noteIds or null
+- beatClock:
+  - bpm: 80
+  - beatInterval: 0.75
+  - nextBeatTime: now + beatInterval
+  - beatIndex: 0..phraseBeats-1
+- checks:
+  - ringHitThisBeat[noteId]: bool reset each beat
+  - phraseProgress: count of consecutive beats satisfying constraints
+- launcher: {pos, aiming:bool, startPos, aimVec, lastLaunchTime, launchesUsed}
+- audioMuted: bool
+
+Timing:
+- Physics update per frame with dt
+- Beat tick every 0.75 s
+- On-beat window: |launchTime - nearestBeat| <= 0.12 s
+
+Interactions:
+- Probe-ring intersection: distance(probe, planetCenter) within [ringRadius - thickness/2, ringRadius + thickness/2]
+- Probe-planet collision: distance <= planetRadius → reflect velocity along normal * bounceFactor (0.6)
+- Probe-sun: distance <= sun.killRadius → destroy probe
+- Probe-asteroid: if distance <= asteroid.radius+probe.radius → elastic collision with small randomness
+
+Progression/Ending:
+- A movement clears when all motif beats satisfied in sequence within a phrase (no misses)
+- After Movement III clear, show final complete screen with stats
+- Session target 5 minutes: tune difficulty to expect 1–2 minutes per movement
+
+## 8. Game Flow
+- Load:
+  - Preload samples for notes, minimal sprite textures (or draw with Graphics)
+  - Build title screen
+- Title:
+  - Show game logo, instructions, “Click to Start”
+  - On click/enter, start Movement I
+- Playing (per movement):
+  - Initialize bodies, rings, motif, beatClock
+  - Loop:
+    - Physics advances probes
+    - Draw bodies, rings (glow), probes (trails), launcher (if aiming)
+    - Beat tick:
+      - Play soft metronome click
+      - Evaluate this beat: check if motif[beatIndex] == null or ringHitThisBeat[motifNote] == true
+        - If satisfied → increment phraseProgress and fill segment
+        - Else → phraseProgress = 0; clear filled segments
+      - Reset ringHitThisBeat flags; advance beatIndex (wrap)
+    - If phraseProgress >= phraseBeats → movement cleared
+  - On clear: state='wonMovement', freeze probes, add harmony pad, brighten colors; show “Press N to continue”
+- Complete:
+  - After Movement III clear → show final screen with stats (total launches, on-beat accuracy, longest orbit), “Press R to replay”
+- Retry:
+  - Press R at any time in playing to reset current movement
+
+## 9. Pseudocode
+
+Initialization:
+preload():
+  loadAudio(['sample_C4','sample_Cs4','sample_D4','sample_E4','sample_Fs4','sample_G4','sample_A4','sample_B4','metronome'])
+  // No heavy textures needed; use Graphics
+
+create():
+  game.state = 'title'
+  movementIndex = 0
+  setupTitleScreen()
+  setupInput()
+  audioMuted = false
+
+startMovement(index):
+  game.state = 'playing'
+  clearAllProbes()
+  launcher = configureLauncherFor(index)
+  [bodies, rings, motif, phraseBeats] = configureMovement(index)
+  beatClock = {bpm:80, beatInterval:0.75, nextBeatTime: now + 0.75, beatIndex:0}
+  ringHitThisBeat = dict(noteId→false)
+  phraseProgress = 0
+  launchesUsed = 0
+  onBeatLaunchCount = 0
+  totalLaunchCount = 0
+
+configureMovement(index):
+  if index == 0:
+    // Movement I — single planet, no sun hazard
+    bodies = []
+    bodies.push({type:'planet', pos:(480,270), radius:40, mass:400})
+    sun = null
+    rings = [
+      {body:0, radius:80, thickness:10, note:'C'},
+      {body:0, radius:120, thickness:10, note:'E'},
+      {body:0, radius:160, thickness:10, note:'G'}
+    ]
+    motif = [null, null, null, null] // any ring per beat counts; extra rule tracked separately
+    phraseBeats = 4
+    // Additional chord-completion rule: across 4 beats must include hits on all three notes at least once
+    requiredNotesPerPhrase = set('C','E','G')
+  if index == 1:
+    sun = {pos:(480,270), radius:34, killRadius:26, mass:1400}
+    bodies = [ sun, {type:'planet',pos:(360,220),radius:38,mass:350}, {type:'planet',pos:(650,320),radius:34,mass:300}]
+    rings = [
+      {body:1, radius:90, thickness:10, note:'C'},
+      {body:1, radius:130, thickness:10, note:'G'},
+      {body:2, radius:70, thickness:10, note:'E'},
+      {body:2, radius:110, thickness:10, note:'B'}
+    ]
+    motif = ['C', null, 'G', null, 'E', null, 'B', null]
+    phraseBeats = 8
+  if index == 2:
+    sun = {pos:(480,270), radius:34, killRadius:26, mass:1400}
+    bodies = [ sun,
+      {type:'planet',pos:(310,180),radius:36,mass:300},
+      {type:'planet',pos:(700,170),radius:30,mass:250},
+      {type:'planet',pos:(520,360),radius:28,mass:220}
+    ]
+    rings = [
+      {body:1, radius:85, thickness:10, note:'D'},
+      {body:1, radius:125, thickness:10, note:'A'},
+      {body:2, radius:65, thickness:10, note:'Fs'},
+      {body:2, radius:105, thickness:10, note:'Cs'},
+      {body:3, radius:55, thickness:10, note:'E'}
+    ]
+    motif = ['D','Fs','A','Cs','E',null,'D',null]
+    phraseBeats = 8
+  return [bodies, rings, motif, phraseBeats]
+
+update(time, dt):
+  if game.state == 'title':
+    if pointer.justDown or keyEnter.justDown:
+      startMovement(0)
+    return
+
+  if game.state == 'wonMovement':
+    if keyN.justDown or keyEnter.justDown:
+      if movementIndex < 2:
+        movementIndex += 1
+        startMovement(movementIndex)
+      else:
+        game.state = 'complete'
+    if keyR.justDown: startMovement(movementIndex)
+    return
+
+  if game.state == 'complete':
+    if keyR.justDown:
+      movementIndex = 0
+      startMovement(0)
+    return
+
+  // Playing
+  handleInputDuringPlay()
+  physicsUpdate(dt)
+  checkRingIntersections()
+  handleBeat(time)
+
+  renderScene()
+
+handleInputDuringPlay():
+  if keyR.justDown: startMovement(movementIndex)
+  // Aim + launch
+  if pointer.down and near(pointer.start, launcher.pos, 24):
+    launcher.aiming = true
+    launcher.startPos = pointer.start
+  if launcher.aiming:
+    launcher.aimVec = clampVector(pointer.current - launcher.pos, min=80, max=220)
+  if pointer.justUp and launcher.aiming:
+    v0 = mapDragToSpeed(launcher.aimVec) // speed 120..280 in aim direction
+    launchTime = now
+    isOnBeat = abs(launchTime - nearestBeatTime(beatClock, launchTime)) <= 0.12
+    if isOnBeat:
+      v0 *= 1.05 // small sync bonus
+      onBeatLaunchCount += 1
+    createProbe(launcher.pos, v0)
+    totalLaunchCount += 1
+    launcher.aiming = false
+
+physicsUpdate(dt):
+  for each probe in probes:
+    if not probe.alive: continue
+    // Sum gravity
+    totalAccel = (0,0)
+    for each body in bodies:
+      dir = body.pos - probe.pos
+      dist2 = clamp(length2(dir), 400, INF)
+      a = (200 * body.mass) / dist2
+      totalAccel += normalize(dir) * a
+      // Sun kill
+      if body == sun and length(probe.pos - sun.pos) <= sun.killRadius:
+        destroyProbe(probe)
+    // Integrate
+    probe.vel += totalAccel * dt
+    probe.vel *= (1 - 0.05 * dt)
+    probe.pos += probe.vel * dt
+    // Planet collision bounce
+    for each body in bodies where type=='planet':
+      if length(probe.pos - body.pos) <= body.radius + probe.radius:
+        n = normalize(probe.pos - body.pos)
+        probe.vel = reflect(probe.vel, n) * 0.6
+        // Push out
+        probe.pos = body.pos + n * (body.radius + probe.radius + 0.5)
+    // Asteroid collision (movement 3)
+    if asteroid exists and distance(probe.pos, asteroid.pos) <= asteroid.radius + probe.radius:
+      // simple elastic
+      n = normalize(probe.pos - asteroid.pos)
+      pvn = dot(probe.vel, n)
+      probe.vel = probe.vel - 2 * pvn * n + randomSmallJitter()
+    // Trail
+    probe.trail.push(probe.pos)
+    if len(probe.trail) > 24: popFront(probe.trail)
+
+  // Asteroid motion
+  if asteroid exists:
+    asteroid.pos += asteroid.vel * dt
+    if asteroid hits edge: asteroid.vel.x *= -1 or asteroid.vel.y *= -1
+
+checkRingIntersections():
+  // Reset every frame; used for real-time highlighting
+  for each ring: ring.activeThisFrame = false
+  for each probe:
+    for each ring:
+      body = bodies[ring.body]
+      d = length(probe.pos - body.pos)
+      if abs(d - ring.radius) <= ring.thickness/2:
+        ring.activeThisFrame = true
+        // Also flag for beat evaluation
+        ringHitThisBeat[ring.note] = true
+        // Play continuous ring shimmer quietly? Optional
+
+handleBeat(time):
+  if time >= beatClock.nextBeatTime:
+    playSound('metronome', volume 0.2)
+    // Movement I special rule
+    if movementIndex == 0:
+      // Need at least one ring each beat + within phrase must include all three notes
+      beatSatisfied = (any ringHitThisBeat == true)
+      updatePhraseSetWith(ringHitThisBeat true notes)
+      if beatSatisfied and (if phraseProgress +1 == phraseBeats ? phraseSet has C,E,G : true):
+        phraseProgress += 1
+        fillPhraseSegment(beatClock.beatIndex, success=true)
+      else:
+        phraseProgress = 0
+        clearPhraseSegments()
+        resetPhraseSet()
+    else:
+      required = motif[beatClock.beatIndex]
+      beatSatisfied = (required == null) or ringHitThisBeat[required] == true
+      if beatSatisfied:
+        phraseProgress += 1
+        fillPhraseSegment(beatClock.beatIndex, success=true)
+        if required != null: playNote(required)
+      else:
+        phraseProgress = 0
+        clearPhraseSegments()
+    // Check clear
+    if phraseProgress >= phraseBeats:
+      onMovementClear()
+    // Reset beat flags
+    for each key in ringHitThisBeat: ringHitThisBeat[key] = false
+    beatClock.beatIndex = (beatClock.beatIndex + 1) % phraseBeats
+    beatClock.nextBeatTime += beatClock.beatInterval
+
+onMovementClear():
+  game.state = 'wonMovement'
+  // Add pad chord
+  playChordForMovement(movementIndex, duration=2.5s)
+  // Fade probe trails and stop updating probes (optional)
+  freezeProbes()
+
+nearestBeatTime(clock, t):
+  n = round((t - (clock.nextBeatTime - clock.beatInterval)) / clock.beatInterval)
+  return (clock.nextBeatTime - clock.beatInterval) + n * clock.beatInterval
+
+createProbe(pos, v0):
+  probes.push({pos: pos.clone(), vel: v0, alive:true, trail:[]})
+
+destroyProbe(p):
+  p.alive = false
+  // play small sizzle sound, spawn tiny particles
+
+renderScene():
+  clearScreen()
+  drawBackgroundGradientAndStars()
+  drawBodiesAndRings()
+  drawProbesAndTrails()
+  drawLauncher(aim line if aiming)
+  drawHUD()
+
+drawBodiesAndRings():
+  // For each body, draw filled circle with glow
+  // For each ring, draw stroked circle with color; if activeThisFrame, pulse alpha
+
+drawHUD():
+  drawBeatMeter(beatClock, glow window)
+  drawPhraseBar(phraseProgress/phraseBeats)
+  drawMotifDots(motif, per-beat coloring)
+  drawLaunchCounter(totalLaunchCount)
+  if game.state == 'wonMovement': showOverlay("Movement Clear! Press N")
+  if game.state == 'complete': showOverlay("You composed the sky\nR to replay")
+
+playNote(id):
+  if audioMuted: return
+  // Map id to sample key; play with small random pan
+
+playChordForMovement(idx, duration):
+  // Layer multiple note samples with reverb-ish tail

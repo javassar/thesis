@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Moth & Flame</title>
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+<body>
+<script>
+
+// ============================================================
+// LEVEL DATA
+// ============================================================
+const LEVEL_DATA = {
+  trees: [
+    {x:300,y:480,trunkW:24,trunkH:120,canopyR:40},{x:550,y:500,trunkW:20,trunkH:100,canopyR:35},
+    {x:800,y:460,trunkW:28,trunkH:140,canopyR:45},{x:1000,y:510,trunkW:22,trunkH:110,canopyR:38},
+    {x:1150,y:440,trunkW:26,trunkH:130,canopyR:42},{x:350,y:180,trunkW:22,trunkH:100,canopyR:36},
+    {x:1300,y:500,trunkW:26,trunkH:130,canopyR:44},{x:1300,y:200,trunkW:24,trunkH:120,canopyR:40},
+    {x:1550,y:350,trunkW:28,trunkH:150,canopyR:48},{x:1700,y:500,trunkW:22,trunkH:110,canopyR:38},
+    {x:1700,y:150,trunkW:24,trunkH:130,canopyR:42},{x:1900,y:300,trunkW:30,trunkH:160,canopyR:50},
+    {x:2050,y:480,trunkW:24,trunkH:120,canopyR:40},{x:2050,y:180,trunkW:26,trunkH:140,canopyR:44},
+    {x:2200,y:350,trunkW:22,trunkH:110,canopyR:38},{x:2350,y:250,trunkW:28,trunkH:130,canopyR:46},
+    {x:2500,y:500,trunkW:28,trunkH:140,canopyR:46},{x:2500,y:160,trunkW:26,trunkH:130,canopyR:42},
+    {x:2650,y:320,trunkW:30,trunkH:160,canopyR:50},{x:2800,y:480,trunkW:24,trunkH:120,canopyR:40},
+    {x:2800,y:200,trunkW:28,trunkH:140,canopyR:46},{x:2950,y:380,trunkW:26,trunkH:130,canopyR:44},
+    {x:3100,y:500,trunkW:22,trunkH:110,canopyR:38},{x:3100,y:140,trunkW:24,trunkH:120,canopyR:40},
+    {x:3300,y:280,trunkW:30,trunkH:160,canopyR:50},{x:3500,y:420,trunkW:26,trunkH:140,canopyR:44},
+    {x:3750,y:460,trunkW:24,trunkH:130,canopyR:42},{x:3900,y:200,trunkW:22,trunkH:110,canopyR:38},
+    {x:4150,y:380,trunkW:26,trunkH:140,canopyR:44},{x:4400,y:500,trunkW:20,trunkH:100,canopyR:36},
+    {x:4600,y:250,trunkW:24,trunkH:120,canopyR:40},{x:4800,y:400,trunkW:22,trunkH:110,canopyR:38},
+    {x:5000,y:520,trunkW:20,trunkH:100,canopyR:35},{x:5200,y:140,trunkW:22,trunkH:110,canopyR:38},
+    {x:5500,y:500,trunkW:20,trunkH:100,canopyR:35}
+  ],
+  darkShapes: [
+    {x:400,y:320,type:"flower"},{x:650,y:400,type:"spider"},{x:900,y:250,type:"flower"},{x:1100,y:350,type:"firefly"},
+    {x:1400,y:280,type:"spider"},{x:1500,y:420,type:"flower"},{x:1650,y:250,type:"firefly"},{x:1850,y:400,type:"spider"},
+    {x:2000,y:300,type:"flower"},{x:2100,y:450,type:"firefly"},{x:2300,y:200,type:"spider"},{x:2550,y:350,type:"flower"},
+    {x:2700,y:280,type:"spider"},{x:2850,y:450,type:"firefly"},{x:3000,y:200,type:"flower"},{x:3200,y:380,type:"spider"},
+    {x:3400,y:250,type:"flower"},{x:3550,y:350,type:"firefly"},
+    {x:3800,y:300,type:"spider"},{x:4000,y:350,type:"flower"},{x:4200,y:280,type:"plant"},{x:4500,y:400,type:"flower"},
+    {x:4700,y:250,type:"spider"},{x:5000,y:320,type:"plant"},{x:5300,y:380,type:"firefly"}
+  ],
+  echoMoths: [
+    {x:620,y:380},{x:1380,y:260},{x:2280,y:180},{x:2680,y:260},{x:3780,y:280}
+  ],
+  overglowZones: [
+    {x:1800,w:200},{x:2350,w:250},{x:2900,w:180},{x:3350,w:220}
+  ],
+  checkpoints: [0, 1200, 2400, 3600, 4800]
+};
+
+// ============================================================
+// BOOT SCENE - Generate all textures
+// ============================================================
+class BootScene extends Phaser.Scene {
+  constructor() { super('BootScene'); }
+
+  preload() {
+    // moth_body 16x16 cream circle
+    let g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0xf5e6c8, 0.9);
+    g.fillCircle(8, 8, 8);
+    g.generateTexture('moth_body', 16, 16);
+    g.destroy();
+
+    // moth_wing 6x4 cream ellipse
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0xf5e6c8, 0.7);
+    g.fillEllipse(3, 2, 6, 4);
+    g.generateTexture('moth_wing', 6, 4);
+    g.destroy();
+
+    // flame_core 12x12 golden circle
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0xffe082, 1.0);
+    g.fillCircle(6, 6, 6);
+    g.generateTexture('flame_core', 12, 12);
+    g.destroy();
+
+    // glow 120x120 radial gradient circle
+    g = this.make.graphics({x:0,y:0,add:false});
+    for (let r = 60; r > 0; r--) {
+      let a = (r / 60) * 0.15;
+      g.fillStyle(0xffe082, a);
+      g.fillCircle(60, 60, r);
+    }
+    g.generateTexture('glow', 120, 120);
+    g.destroy();
+
+    // particle 4x4 white circle
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0xffffff, 1.0);
+    g.fillCircle(2, 2, 2);
+    g.generateTexture('particle', 4, 4);
+    g.destroy();
+
+    // dark_shape 30x30 dark ellipse
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x0d0d15, 1.0);
+    g.fillEllipse(15, 15, 30, 26);
+    g.generateTexture('dark_shape', 30, 30);
+    g.destroy();
+
+    // spider_revealed 30x30 reddish with web lines
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x5a1a1a, 1.0);
+    g.fillEllipse(15, 15, 30, 26);
+    g.lineStyle(1, 0xffffff, 0.3);
+    g.lineBetween(15, 2, 15, 28);
+    g.lineBetween(2, 15, 28, 15);
+    g.lineBetween(4, 4, 26, 26);
+    g.lineBetween(26, 4, 4, 26);
+    g.generateTexture('spider_revealed', 30, 30);
+    g.destroy();
+
+    // flower_revealed 30x30 blue-purple
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x4444aa, 1.0);
+    g.fillEllipse(15, 15, 30, 26);
+    g.fillStyle(0x8844cc, 0.7);
+    g.fillCircle(8, 8, 5);
+    g.fillCircle(22, 8, 5);
+    g.fillCircle(15, 6, 5);
+    g.fillCircle(10, 18, 4);
+    g.fillCircle(20, 18, 4);
+    g.generateTexture('flower_revealed', 30, 30);
+    g.destroy();
+
+    // firefly_glow 20x20 warm yellow
+    g = this.make.graphics({x:0,y:0,add:false});
+    for (let r = 10; r > 0; r--) {
+      let a = (r / 10) * 0.4;
+      g.fillStyle(0xffe066, a);
+      g.fillCircle(10, 10, r);
+    }
+    g.generateTexture('firefly_glow', 20, 20);
+    g.destroy();
+
+    // plant_lure 30x30 pink-orange gradient (beautiful)
+    g = this.make.graphics({x:0,y:0,add:false});
+    for (let r = 15; r > 0; r--) {
+      let t = r / 15;
+      let col = Phaser.Display.Color.Interpolate.ColorWithColor(
+        new Phaser.Display.Color(0xff, 0x66, 0xaa),
+        new Phaser.Display.Color(0xff, 0xaa, 0x44),
+        100, (1 - t) * 100
+      );
+      g.fillStyle(Phaser.Display.Color.GetColor(col.r, col.g, col.b), 0.6);
+      g.fillCircle(15, 15, r);
+    }
+    g.generateTexture('plant_lure', 30, 30);
+    g.destroy();
+
+    // plant_revealed 30x30 brown jagged
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x553322, 1.0);
+    g.fillEllipse(15, 15, 28, 24);
+    g.lineStyle(2, 0x332211, 1.0);
+    g.lineBetween(5, 5, 15, 15);
+    g.lineBetween(25, 5, 15, 15);
+    g.lineBetween(5, 25, 15, 15);
+    g.lineBetween(25, 25, 15, 15);
+    g.lineBetween(15, 2, 15, 15);
+    g.lineBetween(15, 28, 15, 15);
+    g.generateTexture('plant_revealed', 30, 30);
+    g.destroy();
+
+    // echo_moth 12x12 pale blue circle
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0xaabbcc, 0.5);
+    g.fillCircle(6, 6, 6);
+    g.lineStyle(1, 0xffffff, 0.1);
+    g.lineBetween(0, 3, 12, 3);
+    g.lineBetween(0, 9, 12, 9);
+    g.generateTexture('echo_moth', 12, 12);
+    g.destroy();
+
+    // tree_trunk 24x120 dark rectangle
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x0d0d12, 1.0);
+    g.fillRect(0, 0, 24, 120);
+    g.generateTexture('tree_trunk', 24, 120);
+    g.destroy();
+
+    // tree_canopy 80x80 dark circle
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x0f0f18, 1.0);
+    g.fillCircle(40, 40, 40);
+    g.generateTexture('tree_canopy', 80, 80);
+    g.destroy();
+
+    // fungi_particle 4x4 teal circle
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x44aa88, 1.0);
+    g.fillCircle(2, 2, 2);
+    g.generateTexture('fungi_particle', 4, 4);
+    g.destroy();
+
+    // star 2x2 white circle
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0xffffff, 1.0);
+    g.fillCircle(1, 1, 1);
+    g.generateTexture('star', 2, 2);
+    g.destroy();
+
+    // ground tile
+    g = this.make.graphics({x:0,y:0,add:false});
+    g.fillStyle(0x121218, 1.0);
+    g.fillRect(0, 0, 4, 4);
+    g.generateTexture('ground', 4, 4);
+    g.destroy();
+  }
+
+  create() {
+    this.scene.start('TitleScene');
+  }
+}
+
+// ============================================================
+// TITLE SCENE
+// ============================================================
+class TitleScene extends Phaser.Scene {
+  constructor() { super('TitleScene'); }
+
+  create() {
+    this.cameras.main.setBackgroundColor('#0a0a1a');
+
+    this.add.text(400, 220, 'Moth & Flame', {
+      fontFamily: 'Arial', fontSize: '42px', color: '#ffe082',
+      stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5);
+
+    let mothSprite = this.add.image(400, 330, 'moth_body');
+    this.tweens.add({
+      targets: mothSprite, y: 340, duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+
+    // Add wings
+    let lWing = this.add.image(394, 328, 'moth_wing');
+    let rWing = this.add.image(406, 328, 'moth_wing').setFlipX(true);
+    this.tweens.add({
+      targets: [lWing, rWing], y: '+=3', duration: 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+    // Also move wings with body
+    this.tweens.add({
+      targets: [lWing, rWing], y: 338, duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+
+    let clickText = this.add.text(400, 440, 'Click to begin', {
+      fontFamily: 'Arial', fontSize: '20px', color: '#aaaaaa'
+    }).setOrigin(0.5);
+    this.tweens.add({
+      targets: clickText, alpha: 0.4, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+
+    this.input.once('pointerdown', () => {
+      this.cameras.main.fadeOut(800, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('GameScene');
+      });
+    });
+  }
+}
+
+// ============================================================
+// GAME SCENE
+// ============================================================
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+
+  init() {
+    this.checkpointX = 0;
+    this.isDead = false;
+    this.isEnding = false;
+    this.flames = [];
+    this.confusionCounter = 0;
+    this.confusionJitter = 0;
+    this.distSinceFlame = 0;
+    this.gameTime = 0;
+    this.mothAngle = 0;
+    this.mothGlowPhase = 0;
+    this.mothAttractionRadius = 200;
+    this.investigateTimer = 0;
+    this.isInvestigating = false;
+    this.investigateTarget = null;
+    this.endingTime = 0;
+  }
+
+  create() {
+    // World bounds
+    this.cameras.main.setBounds(0, 0, 6400, 600);
+    this.cameras.main.setBackgroundColor('#0a0a1a');
+
+    // Ground
+    for (let x = 0; x < 6400; x += 200) {
+      this.add.rectangle(x + 100, 585, 200, 30, 0x121218);
+    }
+
+    // Ground grass/detail
+    for (let x = 0; x < 5700; x += 40 + Math.random() * 60) {
+      let h = 4 + Math.random() * 8;
+      this.add.rectangle(x, 570 - h/2, 2, h, 0x181820, 0.4);
+    }
+
+    // Trees
+    this.treeHitboxes = [];
+    for (let t of LEVEL_DATA.trees) {
+      let trunkY = t.y;
+      this.add.image(t.x, trunkY, 'tree_trunk')
+        .setDisplaySize(t.trunkW, t.trunkH)
+        .setOrigin(0.5, 1);
+      let canopyY = trunkY - t.trunkH - t.canopyR * 0.3;
+      this.add.image(t.x, canopyY, 'tree_canopy')
+        .setDisplaySize(t.canopyR * 2, t.canopyR * 2);
+      this.treeHitboxes.push({
+        x: t.x - t.trunkW/2, y: trunkY - t.trunkH,
+        w: t.trunkW, h: t.trunkH
+      });
+    }
+
+    // Overglow zones
+    this.overglowZones = [];
+    for (let oz of LEVEL_DATA.overglowZones) {
+      this.overglowZones.push({x: oz.x, w: oz.w});
+      // Mushroom shapes on ground
+      for (let mx = oz.x; mx < oz.x + oz.w; mx += 30 + Math.random() * 30) {
+        this.add.rectangle(mx, 568, 4, 8, 0x44aa88, 0.08);
+        this.add.circle(mx, 564, 5, 0x44aa88, 0.06);
+      }
+      // Ambient particles
+      for (let i = 0; i < 8; i++) {
+        let px = oz.x + Math.random() * oz.w;
+        let py = 200 + Math.random() * 350;
+        let p = this.add.image(px, py, 'fungi_particle').setAlpha(0.06);
+        this.tweens.add({
+          targets: p, y: py - 100 - Math.random() * 100,
+          duration: 4000 + Math.random() * 3000, repeat: -1,
+          onRepeat: () => { p.x = oz.x + Math.random() * oz.w; p.y = 400 + Math.random() * 150; }
+        });
+      }
+    }
+
+    // Dark shapes
+    this.darkShapes = [];
+    for (let ds of LEVEL_DATA.darkShapes) {
+      let shape = { x: ds.x, y: ds.y, type: ds.type, isRevealed: false, revealedSprite: null };
+      if (ds.type === 'plant') {
+        shape.sprite = this.add.image(ds.x, ds.y, 'plant_lure');
+        shape.sprite.setAlpha(0.3);
+        shape.lureAlphaTween = this.tweens.add({
+          targets: shape.sprite, alpha: 0.6, duration: 1200, yoyo: true, repeat: -1
+        });
+      } else {
+        shape.sprite = this.add.image(ds.x, ds.y, 'dark_shape');
+      }
+      this.darkShapes.push(shape);
+    }
+
+    // Echo moths
+    this.echoMoths = [];
+    for (let em of LEVEL_DATA.echoMoths) {
+      let sprite = this.add.image(em.x, em.y, 'echo_moth').setAlpha(0.15);
+      this.tweens.add({
+        targets: sprite, y: em.y + 2, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+      });
+      this.echoMoths.push({sprite, x: em.x, y: em.y});
+    }
+
+    // Stars (hidden until late game)
+    this.stars = [];
+    for (let i = 0; i < 30; i++) {
+      let sx = 5000 + Math.random() * 1400;
+      let sy = 20 + Math.random() * 180;
+      let baseAlpha = 0.2 + Math.random() * 0.4;
+      let s = this.add.image(sx, sy, 'star').setAlpha(0);
+      s.baseAlpha = baseAlpha;
+      this.stars.push(s);
+      // Some twinkle
+      if (Math.random() < 0.4) {
+        this.tweens.add({
+          targets: s, alpha: { from: 0, to: 0 }, // will be overridden by update
+          duration: 1000 + Math.random() * 2000, yoyo: true, repeat: -1
+        });
+      }
+    }
+
+    // Meadow details (x > 5700)
+    for (let i = 0; i < 40; i++) {
+      let mx = 5700 + Math.random() * 700;
+      let my = 400 + Math.random() * 160;
+      this.add.circle(mx, my, 1, 0xffffff, 0.1);
+    }
+
+    // Moth
+    this.moth = this.add.image(80, 300, 'moth_body').setDepth(10);
+
+    // Wings
+    this.leftWing = this.add.image(74, 298, 'moth_wing').setDepth(10);
+    this.rightWing = this.add.image(86, 298, 'moth_wing').setFlipX(true).setDepth(10);
+    this.wingTime = 0;
+
+    // Moth glow
+    this.mothGlow = this.add.image(80, 300, 'glow').setAlpha(0).setScale(0).setDepth(9);
+
+    // Moth trail emitter
+    this.trailParticles = this.add.particles(0, 0, 'particle', {
+      follow: this.moth,
+      frequency: 80,
+      lifespan: 500,
+      alpha: { start: 0.2, end: 0 },
+      scale: { start: 1, end: 0.3 },
+      tint: 0xf5e6c8,
+      blendMode: 'ADD',
+      speed: { min: 2, max: 8 },
+      angle: { min: 150, max: 210 }
+    }).setDepth(8);
+
+    // Camera
+    this.cameras.main.startFollow(this.moth, true, 0.05, 0.05);
+    this.cameras.main.setFollowOffset(-100, 0);
+    this.cameras.main.fadeIn(800);
+
+    // HUD (fixed to camera)
+    this.flameIcons = [];
+    for (let i = 0; i < 3; i++) {
+      let icon = this.add.circle(20 + i * 24, 20, 8, 0x333333, 0.4).setScrollFactor(0).setDepth(100);
+      this.flameIcons.push(icon);
+    }
+
+    this.mothGlowIcon = this.add.circle(92, 20, 10, 0xffe082, 0.05).setScrollFactor(0).setDepth(100);
+
+    // Progress bar
+    this.progressBg = this.add.rectangle(400, 15, 200, 3, 0x222222).setScrollFactor(0).setDepth(100);
+    this.progressFill = this.add.rectangle(300, 15, 0, 3, 0xffe082).setScrollFactor(0).setDepth(100).setOrigin(0, 0.5);
+
+    // Control hints
+    this.controlHint = this.add.text(400, 580, 'Left click: light  |  Right click: extinguish', {
+      fontFamily: 'Arial', fontSize: '14px', color: '#666666'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
+
+    // Instruction text
+    this.instructionText = this.add.text(400, 260, 'Click to light the way.', {
+      fontFamily: 'Arial', fontSize: '18px', color: '#888888'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0);
+    this.tweens.add({
+      targets: this.instructionText, alpha: 0.8, duration: 2000, delay: 1500
+    });
+    this.time.delayedCall(8000, () => {
+      this.tweens.add({ targets: this.instructionText, alpha: 0, duration: 2000 });
+    });
+
+    // Fade control hints after 12 seconds
+    this.time.delayedCall(12000, () => {
+      this.tweens.add({ targets: this.controlHint, alpha: 0, duration: 3000 });
+    });
+
+    // Input
+    this.input.on('pointerdown', (pointer) => {
+      if (this.isDead || this.isEnding) return;
+      if (pointer.leftButtonDown()) {
+        this.placeFlame(pointer.worldX, pointer.worldY);
+      }
+      if (pointer.rightButtonDown()) {
+        this.extinguishNearestFlame(pointer.worldX, pointer.worldY);
+      }
+    });
+
+    // Prevent context menu
+    this.game.canvas.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+
+    // Death overlay references
+    this.deathOverlay = null;
+    this.deathLostText = null;
+    this.deathContinueText = null;
+  }
+
+  update(time, delta) {
+    if (this.isDead) return;
+
+    if (this.isEnding) {
+      this.updateEnding(delta);
+      return;
+    }
+
+    let deltaSec = delta / 1000;
+    this.gameTime += delta;
+
+    // === MOTH GLOW PHASE ===
+    let rawPhase = Phaser.Math.Clamp(this.moth.x / 1200, 0, 5);
+    this.mothGlowPhase = rawPhase;
+    this.mothAttractionRadius = Phaser.Math.Linear(200, 0, rawPhase / 5);
+
+    // Update glow visual
+    let targetGlowScale = (rawPhase / 5) * 1.1;
+    let targetGlowAlpha = (rawPhase / 5) * 0.16;
+    this.mothGlow.setScale(targetGlowScale);
+    this.mothGlow.setAlpha(targetGlowAlpha);
+
+    // Update trail particles warmth
+    if (rawPhase > 1 && this.trailParticles && this.trailParticles.setParticleTint) {
+      try {
+        this.trailParticles.setParticleTint(
+          Phaser.Display.Color.GetColor(
+            245 + Math.round((255 - 245) * rawPhase / 5),
+            230 + Math.round((224 - 230) * rawPhase / 5),
+            200 + Math.round((130 - 200) * rawPhase / 5)
+          )
+        );
+      } catch(e) {}
+    }
+
+    // === UPDATE FLAMES ===
+    for (let i = this.flames.length - 1; i >= 0; i--) {
+      let flame = this.flames[i];
+      flame.lifetime -= delta;
+      let lifeRatio = Math.max(0, flame.lifetime / flame.maxLifetime);
+      flame.sprite.setScale(lifeRatio);
+      flame.glowSprite.setScale(lifeRatio);
+      flame.glowSprite.setAlpha(0.2 * lifeRatio);
+
+      if (flame.lifetime <= 0) {
+        flame.sprite.destroy();
+        flame.glowSprite.destroy();
+        if (flame.flickerTween) flame.flickerTween.destroy();
+        this.flames.splice(i, 1);
+      }
+    }
+
+    // === REVELATION CHECK ===
+    for (let flame of this.flames) {
+      for (let ds of this.darkShapes) {
+        if (!ds.isRevealed) {
+          let d = Phaser.Math.Distance.Between(flame.x, flame.y, ds.x, ds.y);
+          if (d < 80) {
+            this.revealShape(ds);
+          }
+        }
+      }
+    }
+
+    // === DETERMINE MOTH BEHAVIOR ===
+    let mothBehavior = 'wandering';
+    let behaviorTarget = null;
+
+    // Priority 1: Avoidance (revealed dangers within 60px)
+    for (let ds of this.darkShapes) {
+      if (ds.isRevealed && (ds.type === 'spider' || ds.type === 'plant')) {
+        let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, ds.x, ds.y);
+        if (d < 60) {
+          mothBehavior = 'avoiding';
+          behaviorTarget = ds;
+          break;
+        }
+      }
+    }
+
+    // Priority 2: Confusion
+    if (mothBehavior === 'wandering' && this.confusionCounter > 2.0 && this.mothGlowPhase >= 2.5) {
+      mothBehavior = 'confused';
+    }
+
+    // Priority 3: Investigation
+    if (mothBehavior === 'wandering' && !this.isInvestigating) {
+      for (let em of this.echoMoths) {
+        let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, em.x, em.y);
+        if (d > 30 && d < 60 && Math.random() < 0.005) {
+          mothBehavior = 'investigating';
+          behaviorTarget = em;
+          this.isInvestigating = true;
+          this.investigateTimer = 1500;
+          this.investigateTarget = em;
+          break;
+        }
+      }
+      if (mothBehavior === 'wandering') {
+        for (let ds of this.darkShapes) {
+          if (ds.isRevealed && ds.type === 'flower') {
+            let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, ds.x, ds.y);
+            if (d > 20 && d < 40 && Math.random() < 0.005) {
+              mothBehavior = 'investigating';
+              behaviorTarget = ds;
+              this.isInvestigating = true;
+              this.investigateTimer = 1500;
+              this.investigateTarget = ds;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (this.isInvestigating) {
+      if (mothBehavior === 'avoiding') {
+        this.isInvestigating = false;
+        this.investigateTarget = null;
+      } else {
+        mothBehavior = 'investigating';
+        behaviorTarget = this.investigateTarget;
+        this.investigateTimer -= delta;
+        if (this.investigateTimer <= 0) {
+          this.isInvestigating = false;
+          this.investigateTarget = null;
+          mothBehavior = 'wandering';
+        }
+      }
+    }
+
+    // Priority 4: Seeking (attracted to flame)
+    if (mothBehavior === 'wandering') {
+      let inOverglow = false;
+      for (let oz of this.overglowZones) {
+        if (this.moth.x >= oz.x && this.moth.x <= oz.x + oz.w) {
+          inOverglow = true;
+          break;
+        }
+      }
+      let effectiveRadius = this.mothAttractionRadius * (inOverglow ? 0.5 : 1.0);
+
+      let nearestFlame = this.findNearestFlame(this.moth.x, this.moth.y, effectiveRadius);
+      if (nearestFlame) {
+        mothBehavior = 'seeking';
+        behaviorTarget = nearestFlame;
+      }
+    }
+
+    // Priority 4b: Predatory plant lure (unrevealed)
+    if (mothBehavior === 'wandering') {
+      for (let ds of this.darkShapes) {
+        if (ds.type === 'plant' && !ds.isRevealed) {
+          let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, ds.x, ds.y);
+          if (d < 100) {
+            mothBehavior = 'seeking';
+            behaviorTarget = ds;
+            break;
+          }
+        }
+      }
+    }
+
+    // Priority 4c: Echo moth lure (when no flames active, only at low autonomy)
+    let autonomy = this.mothGlowPhase / 5;
+    if (mothBehavior === 'wandering' && this.flames.length === 0 && autonomy < 0.3) {
+      for (let em of this.echoMoths) {
+        let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, em.x, em.y);
+        if (d > 25 && d < 60) {
+          mothBehavior = 'seeking';
+          behaviorTarget = em;
+          break;
+        }
+      }
+    }
+
+    // Priority 4d: Firefly attractor (only at low autonomy)
+    if (mothBehavior === 'wandering' && autonomy < 0.3) {
+      for (let ds of this.darkShapes) {
+        if (ds.isRevealed && ds.type === 'firefly') {
+          let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, ds.x, ds.y);
+          if (d > 20 && d < 40) {
+            mothBehavior = 'seeking';
+            behaviorTarget = ds;
+            break;
+          }
+        }
+      }
+    }
+
+    // === APPLY MOTH MOVEMENT ===
+    let prevX = this.moth.x;
+    let prevY = this.moth.y;
+    let mothSpeed = 0;
+
+    switch (mothBehavior) {
+      case 'avoiding': {
+        let awayAngle = Phaser.Math.Angle.Between(behaviorTarget.x, behaviorTarget.y, this.moth.x, this.moth.y);
+        this.mothAngle = this.lerpAngle(this.mothAngle, awayAngle, 0.06);
+        mothSpeed = 60;
+        break;
+      }
+      case 'confused': {
+        let confusedSpeed = Phaser.Math.Linear(30, 80, this.mothGlowPhase / 5);
+
+        // Random jitter every 200ms for disoriented, erratic feel
+        if ((Math.floor(this.gameTime / 200) !== Math.floor((this.gameTime - delta) / 200))) {
+          this.confusionJitter = (Math.random() - 0.5) * 50; // strong perpendicular jitter
+        }
+
+        // Velocity-based approach: guaranteed rightward movement with erratic up/down wobble
+        let forwardVelocity = confusedSpeed; // always positive (rightward)
+        let perpendicularVelocity = this.confusionJitter || 0;
+
+        let targetAngle = Math.atan2(perpendicularVelocity, forwardVelocity);
+        this.mothAngle = this.lerpAngle(this.mothAngle, targetAngle, 0.1); // faster turning for confused feel
+        mothSpeed = confusedSpeed;
+        break;
+      }
+      case 'investigating': {
+        if (behaviorTarget) {
+          let orbitAngle = this.gameTime * 0.003;
+          let targetX = behaviorTarget.x + Math.cos(orbitAngle) * 5;
+          let targetY = behaviorTarget.y + Math.sin(orbitAngle) * 5;
+          this.moth.x = Phaser.Math.Linear(this.moth.x, targetX, 0.05);
+          this.moth.y = Phaser.Math.Linear(this.moth.y, targetY, 0.05);
+        }
+        mothSpeed = 0;
+        break;
+      }
+      case 'seeking': {
+        let targetAngle = Phaser.Math.Angle.Between(this.moth.x, this.moth.y, behaviorTarget.x, behaviorTarget.y);
+        this.mothAngle = this.lerpAngle(this.mothAngle, targetAngle, 0.03);
+        let dist = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, behaviorTarget.x, behaviorTarget.y);
+        if (dist < 15) {
+          this.mothAngle += 0.02;
+          mothSpeed = 20;
+        } else {
+          mothSpeed = 70;
+        }
+        break;
+      }
+      case 'wandering': {
+        let wanderSpeed = Phaser.Math.Linear(30, 80, this.mothGlowPhase / 5);
+        let autonomy = this.mothGlowPhase / 5; // 0 at start, 1 at phase 5
+
+        // Multi-frequency noise for organic, lifelike movement
+        let noise1 = Math.sin(this.gameTime * 0.0005) * 0.7;
+        let noise2 = Math.sin(this.gameTime * 0.0013) * 0.4;
+        let noise3 = Math.sin(this.gameTime * 0.00023) * 1.5; // very slow, wide swings
+
+        let targetAngle;
+        if (autonomy < 0.25) {
+          // Phase 0-1.25: aimless wandering in all directions
+          targetAngle = noise1 + noise2 + noise3;
+        } else {
+          // Phase 1.25-5: guaranteed rightward movement with perpendicular wobble
+          // Compute velocity components instead of angle to ensure rightward progress
+          let forwardVelocity = wanderSpeed; // always positive (rightward)
+          let perpendicularNoise = (noise1 + noise2) * (1 - autonomy); // up/down wobble
+          let perpendicularVelocity = perpendicularNoise * 12;
+
+          // Convert velocity components to angle
+          targetAngle = Math.atan2(perpendicularVelocity, forwardVelocity);
+        }
+
+        this.mothAngle = this.lerpAngle(this.mothAngle, targetAngle, 0.015);
+        mothSpeed = wanderSpeed;
+        break;
+      }
+    }
+
+    if (mothSpeed > 0) {
+      this.moth.x += Math.cos(this.mothAngle) * mothSpeed * deltaSec;
+      this.moth.y += Math.sin(this.mothAngle) * mothSpeed * deltaSec;
+    }
+
+    // Clamp
+    this.moth.y = Phaser.Math.Clamp(this.moth.y, 30, 570);
+    this.moth.x = Math.max(this.moth.x, this.checkpointX);
+
+    // Track distance for trust pulse
+    let distTraveled = Phaser.Math.Distance.Between(prevX, prevY, this.moth.x, this.moth.y);
+    this.distSinceFlame += distTraveled;
+
+    // Update moth glow position
+    this.mothGlow.x = this.moth.x;
+    this.mothGlow.y = this.moth.y;
+
+    // Update wing positions
+    this.wingTime += delta;
+    let wingOffset = Math.sin(this.wingTime / 200 * Math.PI) * 3;
+    this.leftWing.x = this.moth.x - 6;
+    this.leftWing.y = this.moth.y - 2 + wingOffset;
+    this.rightWing.x = this.moth.x + 6;
+    this.rightWing.y = this.moth.y - 2 - wingOffset;
+
+    // === CONFUSION DECAY ===
+    this.confusionCounter = Math.max(0, this.confusionCounter - 0.25 * deltaSec);
+
+    // === TRUST PULSE ===
+    if (this.distSinceFlame > 150 && this.mothGlowPhase >= 1.5) {
+      this.triggerTrustPulse();
+      this.distSinceFlame = 0;
+    }
+
+    // === COLLISION CHECKS ===
+    for (let ds of this.darkShapes) {
+      if (ds.type === 'spider') {
+        let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, ds.x, ds.y);
+        if (d < 15) {
+          this.triggerDeath();
+          return;
+        }
+      }
+      if (ds.type === 'plant' && !ds.isRevealed) {
+        let d = Phaser.Math.Distance.Between(this.moth.x, this.moth.y, ds.x, ds.y);
+        if (d < 12) {
+          this.triggerDeath();
+          return;
+        }
+      }
+    }
+
+    // === CHECKPOINT ===
+    for (let cp of LEVEL_DATA.checkpoints) {
+      if (this.moth.x >= cp && cp > this.checkpointX) {
+        this.checkpointX = cp;
+      }
+    }
+
+    // === ENDING CHECK ===
+    if (this.moth.x >= 5700) {
+      this.triggerEnding();
+      return;
+    }
+
+    // === UPDATE HUD ===
+    this.updateFlameCounter();
+    let progressWidth = Math.min(200, (this.moth.x / 5700) * 200);
+    this.progressFill.width = progressWidth;
+    this.mothGlowIcon.setAlpha(0.05 + (this.mothGlowPhase / 5) * 0.55);
+
+    // === BACKGROUND COLOR ===
+    let camX = this.cameras.main.scrollX;
+    if (camX > 4800) {
+      let t = Phaser.Math.Clamp((camX - 4800) / 800, 0, 1);
+      let bgColor;
+      if (camX > 5600) {
+        let t2 = Phaser.Math.Clamp((camX - 5600) / 800, 0, 1);
+        bgColor = this.lerpColorHex(0x0a1025, 0x0a1535, t2);
+      } else {
+        bgColor = this.lerpColorHex(0x0a0a1a, 0x0a1025, t);
+      }
+      this.cameras.main.setBackgroundColor(bgColor);
+    }
+
+    // === STARS ===
+    if (camX > 4800) {
+      let starFade = Phaser.Math.Clamp((camX - 4800) / 400, 0, 1);
+      for (let s of this.stars) {
+        s.setAlpha(starFade * s.baseAlpha);
+      }
+    }
+  }
+
+  // ---- Key Functions ----
+
+  placeFlame(worldX, worldY) {
+    // Check tree trunk collision
+    for (let hb of this.treeHitboxes) {
+      if (worldX >= hb.x && worldX <= hb.x + hb.w && worldY >= hb.y && worldY <= hb.y + hb.h) {
+        return;
+      }
+    }
+
+    // Confusion tracking
+    this.confusionCounter += 1.0;
+    this.distSinceFlame = 0;
+
+    // If 3 flames active, remove oldest
+    if (this.flames.length >= 3) {
+      let oldest = this.flames[0];
+      oldest.sprite.destroy();
+      oldest.glowSprite.destroy();
+      if (oldest.flickerTween) oldest.flickerTween.destroy();
+      this.flames.splice(0, 1);
+    }
+
+    // Create flame
+    let sprite = this.add.image(worldX, worldY, 'flame_core').setDepth(7);
+    let glowSprite = this.add.image(worldX, worldY, 'glow').setAlpha(0.2).setDepth(6);
+
+    let flickerTween = this.tweens.add({
+      targets: sprite, scaleX: 1.1, scaleY: 1.1, duration: 200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+
+    let newFlame = {
+      sprite, glowSprite, flickerTween,
+      x: worldX, y: worldY,
+      maxLifetime: 6000, lifetime: 6000
+    };
+    this.flames.push(newFlame);
+    this.updateFlameCounter();
+  }
+
+  extinguishNearestFlame(worldX, worldY) {
+    let closestDist = 30;
+    let closestIndex = -1;
+    for (let i = 0; i < this.flames.length; i++) {
+      let d = Phaser.Math.Distance.Between(worldX, worldY, this.flames[i].x, this.flames[i].y);
+      if (d < closestDist) {
+        closestDist = d;
+        closestIndex = i;
+      }
+    }
+    if (closestIndex >= 0) {
+      let f = this.flames[closestIndex];
+      f.sprite.destroy();
+      f.glowSprite.destroy();
+      if (f.flickerTween) f.flickerTween.destroy();
+      this.flames.splice(closestIndex, 1);
+      this.updateFlameCounter();
+    }
+  }
+
+  findNearestFlame(x, y, maxRange) {
+    let closest = null;
+    let closestDist = maxRange;
+    for (let flame of this.flames) {
+      let d = Phaser.Math.Distance.Between(x, y, flame.x, flame.y);
+      if (d < closestDist) {
+        closestDist = d;
+        closest = flame;
+      }
+    }
+    return closest;
+  }
+
+  revealShape(ds) {
+    ds.isRevealed = true;
+
+    // Fade out unrevealed sprite
+    this.tweens.add({
+      targets: ds.sprite, alpha: 0, duration: 300,
+      onComplete: () => { if (ds.sprite) ds.sprite.destroy(); }
+    });
+    if (ds.lureAlphaTween) ds.lureAlphaTween.destroy();
+
+    switch (ds.type) {
+      case 'spider':
+        ds.revealedSprite = this.add.image(ds.x, ds.y, 'spider_revealed').setAlpha(0).setDepth(5);
+        this.tweens.add({ targets: ds.revealedSprite, alpha: 1, duration: 300 });
+        break;
+      case 'flower':
+        ds.revealedSprite = this.add.image(ds.x, ds.y, 'flower_revealed').setAlpha(0).setDepth(5);
+        this.tweens.add({ targets: ds.revealedSprite, alpha: 1, duration: 300 });
+        break;
+      case 'firefly':
+        // Scatter animation
+        for (let i = 0; i < 6; i++) {
+          let p = this.add.image(ds.x, ds.y, 'particle').setTint(0xffe066).setDepth(5);
+          let angle = Math.random() * Math.PI * 2;
+          let tx = ds.x + Math.cos(angle) * 20;
+          let ty = ds.y + Math.sin(angle) * 20;
+          this.tweens.add({
+            targets: p, x: tx, y: ty, duration: 200,
+            onComplete: () => {
+              this.tweens.add({
+                targets: p, x: ds.x, y: ds.y, duration: 300,
+                onComplete: () => { p.destroy(); }
+              });
+            }
+          });
+        }
+        this.time.delayedCall(500, () => {
+          ds.revealedSprite = this.add.image(ds.x, ds.y, 'firefly_glow').setAlpha(0.2).setDepth(5);
+          this.tweens.add({
+            targets: ds.revealedSprite, alpha: 0.4, duration: 800, yoyo: true, repeat: -1
+          });
+        });
+        break;
+      case 'plant':
+        ds.revealedSprite = this.add.image(ds.x, ds.y, 'plant_revealed').setAlpha(0).setDepth(5);
+        this.tweens.add({ targets: ds.revealedSprite, alpha: 1, duration: 300 });
+        break;
+    }
+  }
+
+  triggerTrustPulse() {
+    let currentScale = this.mothGlow.scaleX;
+    this.tweens.add({
+      targets: this.mothGlow, scaleX: currentScale * 1.2, scaleY: currentScale * 1.2,
+      duration: 400, yoyo: true, ease: 'Sine.easeInOut'
+    });
+
+    for (let i = 0; i < 6; i++) {
+      let angle = i * (Math.PI * 2 / 6);
+      let p = this.add.image(this.moth.x, this.moth.y, 'particle').setTint(0xffe082).setAlpha(0.5).setDepth(8);
+      this.tweens.add({
+        targets: p,
+        x: this.moth.x + Math.cos(angle) * 30,
+        y: this.moth.y + Math.sin(angle) * 30,
+        alpha: 0, duration: 800,
+        onComplete: () => { p.destroy(); }
+      });
+    }
+  }
+
+  triggerDeath() {
+    this.isDead = true;
+
+    // Moth dissolve: burst of particles
+    for (let i = 0; i < 12; i++) {
+      let p = this.add.image(this.moth.x, this.moth.y, 'particle').setTint(0xf5e6c8).setAlpha(0.6).setDepth(12);
+      let angle = Math.random() * Math.PI * 2;
+      let speed = 20 + Math.random() * 40;
+      this.tweens.add({
+        targets: p,
+        x: this.moth.x + Math.cos(angle) * speed,
+        y: this.moth.y + Math.sin(angle) * speed,
+        alpha: 0, duration: 600,
+        onComplete: () => { p.destroy(); }
+      });
+    }
+
+    this.moth.setAlpha(0);
+    this.mothGlow.setAlpha(0);
+    this.leftWing.setAlpha(0);
+    this.rightWing.setAlpha(0);
+    this.trailParticles.stop();
+
+    // Dark overlay
+    this.deathOverlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 1)
+      .setScrollFactor(0).setDepth(50).setAlpha(0);
+    this.tweens.add({ targets: this.deathOverlay, alpha: 0.7, duration: 500 });
+
+    this.time.delayedCall(500, () => {
+      this.deathLostText = this.add.text(400, 260, 'The moth was lost...', {
+        fontFamily: 'Arial', fontSize: '28px', color: '#aaaaaa'
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setAlpha(0);
+      this.tweens.add({ targets: this.deathLostText, alpha: 1, duration: 400 });
+    });
+
+    this.time.delayedCall(1000, () => {
+      this.deathContinueText = this.add.text(400, 320, 'Click to continue', {
+        fontFamily: 'Arial', fontSize: '16px', color: '#666666'
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(51).setAlpha(0);
+      this.tweens.add({ targets: this.deathContinueText, alpha: 1, duration: 400 });
+    });
+
+    this.time.delayedCall(1200, () => {
+      this.input.once('pointerdown', () => {
+        if (this.deathOverlay) this.deathOverlay.destroy();
+        if (this.deathLostText) this.deathLostText.destroy();
+        if (this.deathContinueText) this.deathContinueText.destroy();
+
+        this.moth.x = this.checkpointX + 80;
+        this.moth.y = 300;
+        this.moth.setAlpha(1);
+        this.leftWing.setAlpha(1);
+        this.rightWing.setAlpha(1);
+        this.trailParticles.start();
+
+        let rawPhase = Phaser.Math.Clamp(this.moth.x / 1200, 0, 5);
+        this.mothGlow.setAlpha((rawPhase / 5) * 0.16);
+
+        // Clear flames
+        for (let f of this.flames) {
+          f.sprite.destroy();
+          f.glowSprite.destroy();
+          if (f.flickerTween) f.flickerTween.destroy();
+        }
+        this.flames = [];
+        this.confusionCounter = 0;
+        this.distSinceFlame = 0;
+        this.isDead = false;
+        this.isInvestigating = false;
+        this.investigateTarget = null;
+        this.updateFlameCounter();
+      });
+    });
+  }
+
+  triggerEnding() {
+    this.isEnding = true;
+    this.endingTime = 0;
+
+    // Glow expands slowly
+    this.tweens.add({
+      targets: this.mothGlow, scaleX: 1.5, scaleY: 1.5, duration: 6000
+    });
+
+    // Moth shrinks (receding into distance)
+    this.tweens.add({
+      targets: this.moth, scaleX: 0.15, scaleY: 0.15, duration: 8000
+    });
+    this.tweens.add({
+      targets: [this.leftWing, this.rightWing], scaleX: 0.15, scaleY: 0.15, duration: 8000
+    });
+
+    // Moth fades in final stretch
+    this.time.delayedCall(5000, () => {
+      this.tweens.add({
+        targets: [this.moth, this.mothGlow, this.leftWing, this.rightWing],
+        alpha: 0, duration: 3000
+      });
+      this.tweens.add({ targets: this.trailParticles, alpha: 0, duration: 2000 });
+    });
+
+    // After moth fully gone: stillness
+    this.time.delayedCall(8500, () => {
+      this.trailParticles.stop();
+    });
+
+    // "Again?" after 5 seconds of stillness
+    this.time.delayedCall(13500, () => {
+      let againText = this.add.text(750, 570, 'Again?', {
+        fontFamily: 'Arial', fontSize: '16px', color: '#555555'
+      }).setScrollFactor(0).setDepth(100).setAlpha(0);
+      this.tweens.add({ targets: againText, alpha: 1, duration: 1000 });
+
+      this.time.delayedCall(1000, () => {
+        this.input.once('pointerdown', () => {
+          this.cameras.main.fadeOut(1000, 0, 0, 0);
+          this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('TitleScene');
+          });
+        });
+      });
+    });
+  }
+
+  updateEnding(delta) {
+    this.endingTime += delta;
+    let deltaSec = delta / 1000;
+
+    // Organic moth movement during ending — no scripted path
+    if (this.moth.alpha > 0.01) {
+      let endSpeed;
+      let targetAngle;
+
+      if (this.endingTime < 3000) {
+        // Departing: confident flight with gentle weaving
+        targetAngle = Math.sin(this.endingTime * 0.001) * 0.12;
+        endSpeed = 60;
+      } else if (this.endingTime < 4200) {
+        // The hesitation: the moth lingers, slows, as if savoring the moment
+        let t = (this.endingTime - 3000) / 1200;
+        targetAngle = Math.sin(t * Math.PI) * 0.3;
+        endSpeed = 15 + t * 12;
+      } else {
+        // Final departure: steady, sure, forward into the open
+        targetAngle = Math.sin(this.endingTime * 0.0006) * 0.06;
+        endSpeed = 70;
+      }
+
+      this.mothAngle = this.lerpAngle(this.mothAngle, targetAngle, 0.04);
+      this.moth.x += Math.cos(this.mothAngle) * endSpeed * deltaSec;
+      this.moth.y += Math.sin(this.mothAngle) * endSpeed * deltaSec;
+      this.moth.y = Phaser.Math.Clamp(this.moth.y, 100, 500);
+    }
+
+    // Update wing and glow positions
+    this.mothGlow.x = this.moth.x;
+    this.mothGlow.y = this.moth.y;
+    this.wingTime += delta;
+    let wingOffset = Math.sin(this.wingTime / 200 * Math.PI) * 3;
+    this.leftWing.x = this.moth.x - 6 * this.moth.scaleX;
+    this.leftWing.y = this.moth.y - 2 + wingOffset * this.moth.scaleY;
+    this.rightWing.x = this.moth.x + 6 * this.moth.scaleX;
+    this.rightWing.y = this.moth.y - 2 - wingOffset * this.moth.scaleY;
+
+    // Continue background and star transitions
+    let camX = this.cameras.main.scrollX;
+    if (camX > 4800) {
+      let t = Phaser.Math.Clamp((camX - 4800) / 800, 0, 1);
+      let bgColor;
+      if (camX > 5600) {
+        let t2 = Phaser.Math.Clamp((camX - 5600) / 800, 0, 1);
+        bgColor = this.lerpColorHex(0x0a1025, 0x0a1535, t2);
+      } else {
+        bgColor = this.lerpColorHex(0x0a0a1a, 0x0a1025, t);
+      }
+      this.cameras.main.setBackgroundColor(bgColor);
+    }
+    if (camX > 4800) {
+      let starFade = Phaser.Math.Clamp((camX - 4800) / 400, 0, 1);
+      for (let s of this.stars) {
+        s.setAlpha(starFade * s.baseAlpha);
+      }
+    }
+  }
+
+  updateFlameCounter() {
+    for (let i = 0; i < 3; i++) {
+      if (i < this.flames.length) {
+        this.flameIcons[i].setFillStyle(0xffe082, 0.8);
+      } else {
+        this.flameIcons[i].setFillStyle(0x333333, 0.4);
+      }
+    }
+  }
+
+  lerpAngle(current, target, t) {
+    let diff = target - current;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    return current + diff * t;
+  }
+
+  lerpColorHex(colorA, colorB, t) {
+    let rA = (colorA >> 16) & 0xFF, gA = (colorA >> 8) & 0xFF, bA = colorA & 0xFF;
+    let rB = (colorB >> 16) & 0xFF, gB = (colorB >> 8) & 0xFF, bB = colorB & 0xFF;
+    let r = Math.round(rA + (rB - rA) * t);
+    let g = Math.round(gA + (gB - gA) * t);
+    let b = Math.round(bA + (bB - bA) * t);
+    return (r << 16) | (g << 8) | b;
+  }
+}
+
+// ============================================================
+// PHASER CONFIG
+// ============================================================
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  backgroundColor: '#0a0a1a',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  scene: [BootScene, TitleScene, GameScene]
+};
+
+const game = new Phaser.Game(config);
+
+</script>
+</body>
+</html>

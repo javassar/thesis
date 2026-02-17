@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gale Glider</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0e1620;
+      color: #e8f7ff;
+      font-family: "Courier New", monospace;
+      overflow: hidden;
+    }
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script>
+    const WIDTH = 960;
+    const HEIGHT = 540;
+    const WORLD_WIDTH = 3000;
+    const WORLD_HEIGHT = 540;
+    const MAX_TIME_MS = 300000;
+
+    const COLORS = {
+      background: 0x0e1620,
+      skyTop: 0x1d2a3a,
+      skyBottom: 0x0e1620,
+      farCliff: 0x1b2634,
+      midCliff: 0x233043,
+      nearCliff: 0x2b3d55,
+      foreground: 0x31465e,
+      glider: 0xffffff,
+      gliderEdge: 0xdbe8f0,
+      gust: 0x9ad9ff,
+      pinwheel: 0xd9f5ff,
+      gear: 0xc7d5e6,
+      fan: 0x8dd1ff,
+      lantern: 0xf6c86d,
+      lanternLit: 0xfff2b2,
+      door: 0x2a394d,
+      bridge: 0x3b4f68,
+      sparks: 0xffd27d,
+      spikes: 0xb7c5d6,
+      water: 0x0f2633,
+      hud: 0xe8f7ff,
+      hudMuted: 0x96a8b8,
+      windBg: 0x223244,
+      windFill: 0x9ad9ff,
+      overlay: 0x0b111a
+    };
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function mapRange(value, inMin, inMax, outMin, outMax) {
+      const t = clamp((value - inMin) / (inMax - inMin), 0, 1);
+      return outMin + (outMax - outMin) * t;
+    }
+
+    function formatTime(ms) {
+      const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    class TitleScene extends Phaser.Scene {
+      constructor() {
+        super('TitleScene');
+      }
+
+      create() {
+        this.add.rectangle(0, 0, WIDTH, HEIGHT, COLORS.background).setOrigin(0);
+
+        this.add.text(WIDTH / 2, HEIGHT / 2 - 120, 'Gale Glider', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '36px',
+          color: '#e8f7ff'
+        }).setOrigin(0.5);
+
+        this.add.text(WIDTH / 2, HEIGHT / 2 - 80, 'Surf the wind you draw', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '16px',
+          color: '#9fb3c8'
+        }).setOrigin(0.5);
+
+        const start = this.add.text(WIDTH / 2, HEIGHT / 2 - 10, 'Start', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '22px',
+          color: '#e8f7ff'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        const how = this.add.text(WIDTH / 2, HEIGHT / 2 + 30, 'How to Play', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '18px',
+          color: '#9ad9ff'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        this.howOverlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, 720, 360, COLORS.overlay, 0.85)
+          .setVisible(false);
+
+        this.howText = this.add.text(WIDTH / 2, HEIGHT / 2,
+          'Draw gusts with the mouse to push the glider and mechanisms.\n' +
+          'Longer drags create stronger winds and cost more wind meter.\n' +
+          'Spin pinwheels, light lanterns, and engage gears to open the way.\n' +
+          'Reach the lighthouse before the 5:00 timer ends.\n\n' +
+          'H: Toggle instructions | Esc: Pause', {
+            fontFamily: 'Courier New, monospace',
+            fontSize: '16px',
+            color: '#e8f7ff',
+            align: 'center'
+          }).setOrigin(0.5).setVisible(false);
+
+        const closeHint = this.add.text(WIDTH / 2, HEIGHT / 2 + 160, 'Click to close', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '14px',
+          color: '#9fb3c8'
+        }).setOrigin(0.5).setVisible(false);
+
+        const toggleHow = () => {
+          const show = !this.howOverlay.visible;
+          this.howOverlay.setVisible(show);
+          this.howText.setVisible(show);
+          closeHint.setVisible(show);
+        };
+
+        how.on('pointerdown', toggleHow);
+        this.input.on('pointerdown', (pointer) => {
+          if (this.howOverlay.visible) {
+            toggleHow();
+          }
+        });
+
+        start.on('pointerdown', () => this.scene.start('GameScene'));
+
+        this.input.keyboard.on('keydown-ENTER', () => this.scene.start('GameScene'));
+      }
+    }
+
+    class GameScene extends Phaser.Scene {
+      constructor() {
+        super('GameScene');
+      }
+
+      create() {
+        this.matter.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        this.matter.world.setGravity(0, 0.7);
+
+        this.createTextures();
+        this.createParallax();
+        this.createLeafParticles();
+        this.createWorldGeometry();
+        this.createContraptions();
+        this.createGlider();
+        this.createHUD();
+        this.createOverlays();
+        this.createInput();
+        this.createCollisions();
+
+        this.timeRemainingMs = MAX_TIME_MS;
+        this.windMeter = 100;
+        this.bumps = 0;
+        this.resonanceCount = 0;
+        this.finished = false;
+        this.paused = false;
+        this.currentCheckpointIndex = 0;
+        this.lastSafePos = { x: 200, y: 380 };
+        this.windShakeTime = 0;
+        this.gliderFlashTime = 0;
+        this.dragging = false;
+        this.dragStart = null;
+        this.activeGusts = [];
+        this.tutorialTimer = 3000;
+        this.tutorialVisible = true;
+
+        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        this.cameras.main.startFollow(this.glider, true, 0.1, 0.1);
+
+        this.helpOverlayVisible = false;
+
+        this.updateHUD();
+      }
+
+      createTextures() {
+        if (this.textures.exists('glider')) return;
+        const g = this.make.graphics({ x: 0, y: 0, add: false });
+
+        g.clear();
+        g.fillStyle(COLORS.glider, 1);
+        g.fillTriangle(0, 28, 48, 16, 0, 4);
+        g.lineStyle(2, COLORS.gliderEdge, 1);
+        g.strokeTriangle(0, 28, 48, 16, 0, 4);
+        g.generateTexture('glider', 48, 32);
+
+        g.clear();
+        g.fillStyle(COLORS.pinwheel, 1);
+        g.fillCircle(20, 20, 4);
+        g.fillRect(18, 4, 4, 32);
+        g.fillRect(4, 18, 32, 4);
+        g.generateTexture('pinwheel', 40, 40);
+
+        g.clear();
+        g.fillStyle(COLORS.gear, 1);
+        g.fillCircle(24, 24, 18);
+        g.lineStyle(4, COLORS.gear, 1);
+        for (let i = 0; i < 8; i += 1) {
+          const angle = (Math.PI * 2 * i) / 8;
+          const x = 24 + Math.cos(angle) * 22;
+          const y = 24 + Math.sin(angle) * 22;
+          g.fillRect(x - 3, y - 3, 6, 6);
+        }
+        g.generateTexture('gear', 48, 48);
+
+        g.clear();
+        g.fillStyle(COLORS.fan, 1);
+        g.fillCircle(20, 20, 6);
+        g.fillRect(18, 2, 4, 16);
+        g.fillRect(18, 22, 4, 16);
+        g.fillRect(2, 18, 16, 4);
+        g.fillRect(22, 18, 16, 4);
+        g.generateTexture('fan', 40, 40);
+
+        g.clear();
+        g.fillStyle(COLORS.lantern, 1);
+        g.fillCircle(12, 12, 10);
+        g.fillStyle(0x1f2a38, 1);
+        g.fillCircle(12, 12, 4);
+        g.generateTexture('lantern', 24, 24);
+
+        g.clear();
+        g.fillStyle(COLORS.door, 1);
+        g.fillRect(0, 0, 80, 120);
+        g.generateTexture('door', 80, 120);
+
+        g.clear();
+        g.fillStyle(COLORS.bridge, 1);
+        g.fillRect(0, 0, 140, 20);
+        g.generateTexture('bridge', 140, 20);
+
+        g.clear();
+        g.fillStyle(COLORS.sparks, 1);
+        g.fillCircle(6, 6, 6);
+        g.generateTexture('spark', 12, 12);
+
+        g.clear();
+        g.fillStyle(COLORS.spikes, 1);
+        g.fillTriangle(0, 24, 16, 0, 32, 24);
+        g.generateTexture('spike', 32, 24);
+
+        g.clear();
+        g.fillStyle(0xe7f3ff, 1);
+        g.fillEllipse(6, 4, 10, 6);
+        g.generateTexture('leaf', 12, 8);
+
+        g.destroy();
+      }
+
+      createParallax() {
+        const sky = this.add.graphics();
+        const steps = 10;
+        for (let i = 0; i < steps; i += 1) {
+          const t = i / (steps - 1);
+          const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+            Phaser.Display.Color.ValueToColor(COLORS.skyTop),
+            Phaser.Display.Color.ValueToColor(COLORS.skyBottom),
+            steps - 1,
+            i
+          );
+          const hex = Phaser.Display.Color.GetColor(color.r, color.g, color.b);
+          sky.fillStyle(hex, 1);
+          sky.fillRect(0, (HEIGHT / steps) * i, WORLD_WIDTH, HEIGHT / steps + 1);
+        }
+        sky.setScrollFactor(0.2);
+
+        const far = this.add.graphics();
+        far.fillStyle(COLORS.farCliff, 1);
+        far.fillRect(0, 300, WORLD_WIDTH, 240);
+        far.fillRect(200, 240, 400, 80);
+        far.fillRect(900, 260, 500, 60);
+        far.fillRect(1700, 230, 600, 90);
+        far.setScrollFactor(0.4);
+
+        const mid = this.add.graphics();
+        mid.fillStyle(COLORS.midCliff, 1);
+        mid.fillRect(0, 340, WORLD_WIDTH, 200);
+        mid.fillRect(600, 300, 500, 80);
+        mid.fillRect(1500, 310, 550, 70);
+        mid.setScrollFactor(0.6);
+
+        const near = this.add.graphics();
+        near.fillStyle(COLORS.nearCliff, 1);
+        near.fillRect(0, 380, WORLD_WIDTH, 160);
+        near.fillRect(300, 350, 200, 60);
+        near.fillRect(1200, 360, 260, 50);
+        near.setScrollFactor(0.8);
+
+        const foreground = this.add.graphics();
+        foreground.fillStyle(COLORS.foreground, 1);
+        foreground.fillRect(0, 420, WORLD_WIDTH, 120);
+        foreground.setScrollFactor(1.0);
+      }
+
+      createLeafParticles() {
+        this.leafParticles = this.add.particles('leaf');
+        this.leafParticles.setDepth(1.5);
+        this.leafParticles.setScrollFactor(0.4);
+        this.leafEmitter = this.leafParticles.createEmitter({
+          x: 0,
+          y: { min: 60, max: 220 },
+          lifespan: 3200,
+          speedX: { min: 40, max: 90 },
+          speedY: { min: -10, max: 10 },
+          scale: { start: 0.8, end: 0.3 },
+          alpha: { start: 0.5, end: 0 },
+          quantity: 1,
+          frequency: 550
+        });
+      }
+
+      createWorldGeometry() {
+        this.groundBodies = [];
+        this.wallBodies = [];
+        this.spikeBodies = [];
+
+        const groundSegments = [
+          { x: 0, y: 400, w: 600, h: 140 },
+          { x: 820, y: 420, w: 420, h: 120 },
+          { x: 1320, y: 440, w: 620, h: 100 },
+          { x: 2000, y: 360, w: 460, h: 180 },
+          { x: 2480, y: 280, w: 520, h: 260 }
+        ];
+
+        groundSegments.forEach((seg) => {
+          const rect = this.add.rectangle(seg.x, seg.y, seg.w, seg.h, COLORS.nearCliff).setOrigin(0);
+          const body = this.matter.add.rectangle(seg.x + seg.w / 2, seg.y + seg.h / 2, seg.w, seg.h, {
+            isStatic: true,
+            label: 'ground'
+          });
+          rect.setDepth(1);
+          this.groundBodies.push(body);
+        });
+
+        const caveCeiling = this.matter.add.rectangle(1500, 150, 600, 80, { isStatic: true, label: 'wall' });
+        this.wallBodies.push(caveCeiling);
+        this.add.rectangle(1200, 120, 600, 80, COLORS.midCliff).setOrigin(0);
+
+        const wall1 = this.matter.add.rectangle(640, 320, 40, 200, { isStatic: true, label: 'wall' });
+        const wall2 = this.matter.add.rectangle(1780, 320, 40, 200, { isStatic: true, label: 'wall' });
+        this.wallBodies.push(wall1, wall2);
+        this.add.rectangle(620, 220, 40, 200, COLORS.midCliff).setOrigin(0);
+        this.add.rectangle(1760, 220, 40, 200, COLORS.midCliff).setOrigin(0);
+
+        const towerWallTop = this.matter.add.rectangle(2620, 120, 40, 200, { isStatic: true, label: 'wall' });
+        const towerWallBottom = this.matter.add.rectangle(2620, 440, 40, 200, { isStatic: true, label: 'wall' });
+        this.wallBodies.push(towerWallTop, towerWallBottom);
+        this.add.rectangle(2600, 20, 40, 200, COLORS.midCliff).setOrigin(0);
+        this.add.rectangle(2600, 340, 40, 200, COLORS.midCliff).setOrigin(0);
+
+        const spikes = [
+          { x: 520, y: 396 },
+          { x: 1460, y: 432 },
+          { x: 1620, y: 432 },
+          { x: 1780, y: 432 },
+          { x: 2140, y: 352 },
+          { x: 2300, y: 352 }
+        ];
+
+        spikes.forEach((pos) => {
+          const spike = this.matter.add.polygon(pos.x, pos.y, 3, 16, { isStatic: true, label: 'spike' });
+          this.spikeBodies.push(spike);
+          const img = this.add.image(pos.x, pos.y - 4, 'spike');
+          img.setDepth(2);
+        });
+
+        const water = this.add.rectangle(0, 420, WORLD_WIDTH, 120, COLORS.water, 0.75).setOrigin(0);
+        water.setDepth(0.5);
+
+        this.checkpoints = [
+          { name: 'Pier', x: 200, y: 380 },
+          { name: 'Lake', x: 950, y: 320 },
+          { name: 'Cave', x: 1700, y: 300 },
+          { name: 'Tower', x: 2550, y: 220 }
+        ];
+
+        this.checkpointSensors = this.checkpoints.map((cp) => {
+          const sensor = this.matter.add.circle(cp.x, cp.y, 45, { isStatic: true, isSensor: true, label: 'checkpoint' });
+          sensor.checkpointIndex = this.checkpoints.indexOf(cp);
+          return sensor;
+        });
+
+        this.add.rectangle(2750, 200, 140, 50, 0x2f4258).setDepth(2);
+        this.add.rectangle(2750, 200, 120, 14, 0x7fb8d6).setDepth(2);
+        this.landingSensor = this.matter.add.rectangle(2750, 200, 140, 60, { isStatic: true, isSensor: true, label: 'landing' });
+      }
+
+      createContraptions() {
+        this.pinwheels = [];
+        this.doors = [];
+        this.fans = [];
+        this.lanterns = [];
+        this.thermals = [];
+        this.gears = [];
+        this.sparks = [];
+        this.windBodies = [];
+
+        const door1 = this.createDoor(600, 320);
+        const pinwheel1 = this.createPinwheel(420, 350, { linkedDoor: door1 });
+
+        const fan1 = this.createFan(760, 310, 1, 0);
+        const pinwheel2 = this.createPinwheel(720, 360, { linkedFan: fan1 });
+
+        this.pinwheels.push(pinwheel1, pinwheel2);
+
+        const lantern1 = this.createLantern(1120, 320);
+        const lantern2 = this.createLantern(1260, 320);
+        this.lanterns.push(lantern1, lantern2);
+
+        const bridge = this.createBridge(1380, 330, 1380 - 70);
+        bridge.requiredLanterns = [lantern1, lantern2];
+        this.bridge = bridge;
+
+        const thermal0 = this.createThermal(520, 260, 120, 0.002, null);
+        const thermal1 = this.createThermal(1340, 250, 140, 0.0025, lantern1);
+        const thermal2 = this.createThermal(1500, 220, 140, 0.0025, lantern2);
+        this.thermals.push(thermal0, thermal1, thermal2);
+
+        const gearA = this.createGear(1980, 260, 1.5, 0);
+        const gearB = this.createGear(2080, 260, 2.0, 1);
+        const gearC = this.createGear(2180, 260, 2.5, 2);
+        gearB.lockedUntil = gearA;
+        gearC.lockedUntil = gearB;
+
+        this.gears.push(gearA, gearB, gearC);
+
+        this.doorParts = [
+          this.createDoorPart(2660, 230, 0),
+          this.createDoorPart(2660, 270, 1),
+          this.createDoorPart(2660, 310, 2)
+        ];
+
+        this.sparks.push(this.createSpark(1600, 260));
+        this.sparks.push(this.createSpark(2240, 240));
+
+        this.contraptionMarkers = [];
+
+        this.fans.push(fan1);
+        this.doors.push(door1);
+        this.windBodies.push(pinwheel1.body.body, pinwheel2.body.body, bridge.body.body, gearA.body.body, gearB.body.body, gearC.body.body);
+      }
+
+      createGlider() {
+        this.glider = this.matter.add.image(200, 380, 'glider');
+        this.glider.setBody({ type: 'polygon', sides: 3, radius: 22 });
+        this.glider.setMass(0.02);
+        this.glider.setFrictionAir(0.015);
+        this.glider.setBounce(0.05);
+        this.glider.setFriction(0.01);
+        this.glider.setAngularDamping(0.2);
+        this.glider.setDepth(5);
+        this.glider.body.label = 'glider';
+        this.windBodies.push(this.glider.body);
+      }
+
+      createHUD() {
+        this.timerText = this.add.text(WIDTH / 2, 12, '5:00', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '18px',
+          color: '#e8f7ff'
+        }).setOrigin(0.5, 0).setScrollFactor(0);
+
+        this.bumpsText = this.add.text(16, 12, 'Bumps: 0', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '18px',
+          color: '#e8f7ff'
+        }).setScrollFactor(0);
+
+        this.resonanceText = this.add.text(WIDTH - 16, 12, 'Resonance: 0', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '18px',
+          color: '#e8f7ff'
+        }).setOrigin(1, 0).setScrollFactor(0);
+
+        this.windGraphics = this.add.graphics().setScrollFactor(0);
+
+        this.tooltipText = this.add.text(WIDTH / 2, HEIGHT - 60, '', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '16px',
+          color: '#e8f7ff'
+        }).setOrigin(0.5).setScrollFactor(0);
+      }
+
+      createOverlays() {
+        this.tutorialOverlay = this.add.rectangle(WIDTH / 2, 80, 520, 50, COLORS.overlay, 0.65).setScrollFactor(0);
+        this.tutorialText = this.add.text(WIDTH / 2, 80,
+          'Draw gusts with the mouse. Nudge the glider to fly. Reach the lighthouse.', {
+            fontFamily: 'Courier New, monospace',
+            fontSize: '14px',
+            color: '#e8f7ff'
+          }).setOrigin(0.5).setScrollFactor(0);
+
+        this.helpOverlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, 720, 360, COLORS.overlay, 0.85)
+          .setScrollFactor(0).setVisible(false);
+        this.helpText = this.add.text(WIDTH / 2, HEIGHT / 2,
+          'Draw gusts to push the glider and mechanisms.\n' +
+          'Longer drags cost more wind meter.\n' +
+          'Spin pinwheels, light lanterns, engage gears.\n' +
+          'Reach the lighthouse before time runs out.\n\n' +
+          'H: Toggle instructions | Esc: Pause', {
+            fontFamily: 'Courier New, monospace',
+            fontSize: '16px',
+            color: '#e8f7ff',
+            align: 'center'
+          }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+
+        this.pauseOverlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, 400, 120, COLORS.overlay, 0.8)
+          .setScrollFactor(0).setVisible(false);
+        this.pauseText = this.add.text(WIDTH / 2, HEIGHT / 2, 'Paused', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '24px',
+          color: '#e8f7ff'
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+
+        this.resultsOverlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, 640, 360, COLORS.overlay, 0.9)
+          .setScrollFactor(0).setVisible(false);
+        this.resultsText = this.add.text(WIDTH / 2, HEIGHT / 2 - 40, '', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '18px',
+          color: '#e8f7ff',
+          align: 'center'
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+        this.resultsHint = this.add.text(WIDTH / 2, HEIGHT / 2 + 120, 'Retry (R)    Quit (Q)', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '16px',
+          color: '#9fb3c8'
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+      }
+
+      createInput() {
+        this.aimGraphics = this.add.graphics();
+        this.input.on('pointerdown', (pointer) => {
+          if (this.finished || this.paused) return;
+          this.tutorialTimer = 0;
+          if (this.windMeter < 30) {
+            this.shakeWindMeter();
+            return;
+          }
+          this.dragging = true;
+          const worldPoint = pointer.positionToCamera(this.cameras.main);
+          this.dragStart = { x: worldPoint.x, y: worldPoint.y };
+        });
+
+        this.input.on('pointermove', (pointer) => {
+          if (!this.dragging || this.finished || this.paused) return;
+          const worldPoint = pointer.positionToCamera(this.cameras.main);
+          this.drawAimLine(this.dragStart, worldPoint);
+        });
+
+        this.input.on('pointerup', (pointer) => {
+          if (!this.dragging || this.finished || this.paused) return;
+          this.dragging = false;
+          this.aimGraphics.clear();
+          const worldPoint = pointer.positionToCamera(this.cameras.main);
+          const dx = worldPoint.x - this.dragStart.x;
+          const dy = worldPoint.y - this.dragStart.y;
+          const length = clamp(Math.sqrt(dx * dx + dy * dy), 10, 200);
+          const strength = mapRange(length, 10, 200, 0.6, 1.6);
+          const cost = Math.round(mapRange(length, 10, 200, 30, 80));
+          if (this.windMeter < cost) {
+            this.shakeWindMeter();
+            return;
+          }
+          this.windMeter -= cost;
+          const radius = mapRange(length, 10, 200, 90, 160);
+          const lifetime = mapRange(length, 10, 200, 350, 650);
+          this.createGust({ x: worldPoint.x, y: worldPoint.y }, strength, radius, lifetime);
+          this.tutorialTimer = 0;
+        });
+
+        this.keys = this.input.keyboard.addKeys({
+          R: Phaser.Input.Keyboard.KeyCodes.R,
+          H: Phaser.Input.Keyboard.KeyCodes.H,
+          ESC: Phaser.Input.Keyboard.KeyCodes.ESC,
+          Q: Phaser.Input.Keyboard.KeyCodes.Q
+        });
+      }
+
+      createCollisions() {
+        this.matter.world.on('collisionstart', (event) => {
+          event.pairs.forEach((pair) => {
+            const bodyA = pair.bodyA;
+            const bodyB = pair.bodyB;
+            if (bodyA.label === 'glider' || bodyB.label === 'glider') {
+              const other = bodyA.label === 'glider' ? bodyB : bodyA;
+              const speed = Math.hypot(this.glider.body.velocity.x, this.glider.body.velocity.y);
+              if (other.label === 'spike') {
+                if (speed > 180) {
+                  this.triggerRespawn();
+                } else if (speed > 120) {
+                  this.addBump();
+                  this.flashGlider();
+                }
+              } else if (other.label === 'wall') {
+                if (speed > 120) {
+                  this.addBump();
+                  this.flashGlider();
+                }
+              } else if (other.label === 'landing') {
+                this.endRun(true);
+              } else if (other.label === 'checkpoint') {
+                this.setCheckpoint(other.checkpointIndex);
+              }
+            }
+          });
+        });
+      }
+
+      createDoor(x, y) {
+        const body = this.matter.add.rectangle(x + 40, y + 60, 80, 120, { isStatic: true, label: 'wall' });
+        const sprite = this.add.image(x + 40, y + 60, 'door');
+        sprite.setDepth(3);
+        return {
+          body,
+          sprite,
+          open: false,
+          openUntil: 0,
+          countedResonance: false
+        };
+      }
+
+      createDoorPart(x, y, partIndex) {
+        const body = this.matter.add.rectangle(x, y, 70, 40, { isStatic: true, label: 'wall' });
+        const sprite = this.add.rectangle(x, y, 70, 40, COLORS.door).setDepth(3);
+        return {
+          body,
+          sprite,
+          open: false,
+          partIndex,
+          countedResonance: false
+        };
+      }
+
+      createPinwheel(x, y, links) {
+        const body = this.matter.add.image(x, y, 'pinwheel');
+        body.setCircle(20);
+        body.setFrictionAir(0.02);
+        body.setAngularDamping(0.04);
+        body.body.label = 'pinwheel';
+        body.body.isPinwheel = true;
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x, y } });
+        return {
+          body,
+          linkedDoor: links.linkedDoor || null,
+          linkedFan: links.linkedFan || null,
+          angularTimer: 0,
+          fanTimer: 0,
+          countedResonance: false
+        };
+      }
+
+      createFan(x, y, dirX, dirY) {
+        const body = this.matter.add.image(x, y, 'fan', null, { isStatic: true });
+        body.setDepth(2);
+        return {
+          body,
+          on: false,
+          dir: new Phaser.Math.Vector2(dirX, dirY).normalize(),
+          countedResonance: false
+        };
+      }
+
+      createLantern(x, y) {
+        const body = this.matter.add.circle(x, y, 14, { isStatic: true, isSensor: true });
+        const sprite = this.add.image(x, y, 'lantern');
+        sprite.setDepth(2);
+        return {
+          body,
+          sprite,
+          airAccumulator: 0,
+          lit: false,
+          litUntil: 0,
+          countedResonance: false
+        };
+      }
+
+      createBridge(x, y, hingeX) {
+        const body = this.matter.add.image(x, y, 'bridge');
+        body.setRectangle(140, 20);
+        body.setFrictionAir(0.02);
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x: hingeX, y } });
+        return {
+          body,
+          raised: false,
+          targetAngle: -1.2,
+          countedResonance: false,
+          requiredLanterns: []
+        };
+      }
+
+      createThermal(x, y, radius, strength, requiresLantern) {
+        return {
+          x,
+          y,
+          radius,
+          baseStrength: strength,
+          strength,
+          active: !requiresLantern,
+          requiresLantern,
+          countedResonance: false
+        };
+      }
+
+      createGear(x, y, revolutions, partIndex) {
+        const body = this.matter.add.image(x, y, 'gear');
+        body.setCircle(24);
+        body.setFrictionAir(0.02);
+        body.setAngularDamping(0.04);
+        body.body.label = 'gear';
+        body.body.isGear = true;
+        this.matter.add.constraint(body.body, null, 0, 1, { pointA: { x, y } });
+        return {
+          body,
+          revolutionsNeeded: revolutions,
+          spinAccumulator: 0,
+          engaged: false,
+          partIndex,
+          lockedUntil: null,
+          countedResonance: false,
+          lastAngle: 0
+        };
+      }
+
+      createSpark(x, y) {
+        const sprite = this.add.image(x, y, 'spark');
+        sprite.setDepth(4);
+        sprite.setAlpha(0.9);
+        this.tweens.add({
+          targets: sprite,
+          alpha: 0.2,
+          duration: 500,
+          yoyo: true,
+          repeat: -1
+        });
+        return {
+          x,
+          y,
+          radius: 18,
+          cooldown: 0
+        };
+      }
+
+      drawAimLine(start, end) {
+        this.aimGraphics.clear();
+        this.aimGraphics.lineStyle(2, COLORS.gust, 0.6);
+        this.aimGraphics.beginPath();
+        this.aimGraphics.moveTo(start.x, start.y);
+        this.aimGraphics.lineTo(end.x, end.y);
+        this.aimGraphics.strokePath();
+      }
+
+      createGust(center, strength, radius, lifetime) {
+        const gfx = this.add.graphics();
+        gfx.setDepth(4);
+        const gust = {
+          center,
+          strength,
+          radius,
+          lifetime,
+          age: 0,
+          gfx
+        };
+        this.activeGusts.push(gust);
+        this.drawGust(gust, 1);
+      }
+
+      drawGust(gust, lifeRatio) {
+        gust.gfx.clear();
+        gust.gfx.fillStyle(COLORS.gust, 0.35 * lifeRatio);
+        gust.gfx.fillCircle(gust.center.x, gust.center.y, gust.radius * lifeRatio);
+        gust.gfx.lineStyle(1, COLORS.gust, 0.5 * lifeRatio);
+        for (let i = 0; i < 5; i += 1) {
+          const angle = (Math.PI * 2 * i) / 5;
+          const x1 = gust.center.x + Math.cos(angle) * gust.radius * 0.4;
+          const y1 = gust.center.y + Math.sin(angle) * gust.radius * 0.4;
+          const x2 = gust.center.x + Math.cos(angle) * gust.radius * 0.8;
+          const y2 = gust.center.y + Math.sin(angle) * gust.radius * 0.8;
+          gust.gfx.strokeLineShape(new Phaser.Geom.Line(x1, y1, x2, y2));
+        }
+      }
+
+      applyGustForces(gust, lifeRatio) {
+        const baseForce = 0.0018;
+        const torqueScale = 0.0008;
+        this.windBodies.forEach((body) => {
+          if (body.isStatic) return;
+          const dx = body.position.x - gust.center.x;
+          const dy = body.position.y - gust.center.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist === 0 || dist > gust.radius) return;
+          const dirX = dx / dist;
+          const dirY = dy / dist;
+          const distRatio = 1 - clamp(dist / gust.radius, 0, 1);
+          const forceMag = baseForce * gust.strength * distRatio * lifeRatio;
+          Phaser.Physics.Matter.Matter.Body.applyForce(body, body.position, {
+            x: dirX * forceMag,
+            y: dirY * forceMag
+          });
+          if (body.isPinwheel || body.isGear) {
+            const torqueDir = dx >= 0 ? 1 : -1;
+            const torque = torqueScale * gust.strength * distRatio * lifeRatio * torqueDir;
+            body.angularVelocity += torque;
+          }
+        });
+
+        this.lanterns.forEach((lantern) => {
+          const dx = lantern.body.position.x - gust.center.x;
+          const dy = lantern.body.position.y - gust.center.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > gust.radius) return;
+          const distRatio = 1 - clamp(dist / gust.radius, 0, 1);
+          lantern.airAccumulator += gust.strength * distRatio * 60 * lifeRatio;
+        });
+      }
+
+      applyFans() {
+        this.fans.forEach((fan) => {
+          if (!fan.on) return;
+          const dir = fan.dir;
+          const origin = fan.body.body.position;
+          const length = 220;
+          const angle = Phaser.Math.DegToRad(60);
+          this.windBodies.forEach((body) => {
+            if (body.isStatic) return;
+            const toBody = {
+              x: body.position.x - origin.x,
+              y: body.position.y - origin.y
+            };
+            const dist = Math.sqrt(toBody.x * toBody.x + toBody.y * toBody.y);
+            if (dist > length) return;
+            const dot = (toBody.x * dir.x + toBody.y * dir.y) / (dist || 1);
+            const angleTo = Math.acos(clamp(dot, -1, 1));
+            if (angleTo > angle / 2) return;
+            Phaser.Physics.Matter.Matter.Body.applyForce(body, body.position, {
+              x: dir.x * 0.0015,
+              y: dir.y * 0.0015
+            });
+          });
+        });
+      }
+
+      applyThermals() {
+        this.thermals.forEach((thermal) => {
+          if (!thermal.active) return;
+          this.windBodies.forEach((body) => {
+            const dx = body.position.x - thermal.x;
+            const dy = body.position.y - thermal.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > thermal.radius) return;
+            const strength = thermal.strength * body.mass;
+            Phaser.Physics.Matter.Matter.Body.applyForce(body, body.position, {
+              x: 0,
+              y: -strength
+            });
+          });
+        });
+      }
+
+      updatePinwheels(delta) {
+        this.pinwheels.forEach((pw) => {
+          const angVel = Math.abs(pw.body.body.angularVelocity);
+          if (angVel >= 1.5) {
+            pw.angularTimer += delta / 1000;
+          } else {
+            pw.angularTimer = 0;
+          }
+          if (pw.linkedDoor && !pw.linkedDoor.open && pw.angularTimer >= 0.5) {
+            this.openDoor(pw.linkedDoor);
+            this.registerResonance(pw.linkedDoor);
+          }
+          if (pw.linkedFan) {
+            if (angVel >= 1.2) {
+              pw.fanTimer += delta / 1000;
+            } else {
+              pw.fanTimer = 0;
+            }
+            if (pw.fanTimer >= 0.5) {
+              if (!pw.linkedFan.on) {
+                pw.linkedFan.on = true;
+                this.registerResonance(pw.linkedFan);
+              }
+            }
+          }
+        });
+      }
+
+      openDoor(door) {
+        door.open = true;
+        door.openUntil = this.time.now + 8000;
+        door.body.isSensor = true;
+        door.sprite.setAlpha(0.3);
+      }
+
+      closeDoor(door) {
+        door.open = false;
+        door.body.isSensor = false;
+        door.sprite.setAlpha(1);
+      }
+
+      updateDoors() {
+        this.doors.forEach((door) => {
+          if (door.open && this.time.now > door.openUntil) {
+            this.closeDoor(door);
+          }
+        });
+      }
+
+      updateLanterns(delta) {
+        this.lanterns.forEach((lantern) => {
+          lantern.airAccumulator = Math.max(0, lantern.airAccumulator - 40 * (delta / 1000));
+          if (!lantern.lit && lantern.airAccumulator >= 100) {
+            lantern.lit = true;
+            lantern.litUntil = this.time.now + 20000;
+            lantern.sprite.setTint(COLORS.lanternLit);
+            this.registerResonance(lantern);
+          }
+          if (lantern.lit && this.time.now > lantern.litUntil) {
+            lantern.lit = false;
+            lantern.sprite.clearTint();
+          }
+        });
+
+        const bridge = this.bridge;
+        if (bridge) {
+          const ready = bridge.requiredLanterns.every((lantern) => lantern.lit);
+          if (ready && !bridge.raised) {
+            bridge.raised = true;
+            this.registerResonance(bridge);
+          }
+          if (!ready && bridge.raised) {
+            bridge.raised = false;
+          }
+        }
+
+        this.thermals.forEach((thermal) => {
+          if (thermal.requiresLantern) {
+            const active = thermal.requiresLantern.lit;
+            if (active && !thermal.active) {
+              thermal.active = true;
+              thermal.strength = thermal.baseStrength + 0.003;
+              this.registerResonance(thermal);
+            } else if (!active && thermal.active) {
+              thermal.active = false;
+              thermal.strength = thermal.baseStrength;
+            }
+          }
+        });
+      }
+
+      updateBridge(delta) {
+        const bridge = this.bridge;
+        if (!bridge) return;
+        const target = bridge.raised ? bridge.targetAngle : 0;
+        const current = bridge.body.body.angle;
+        const diff = target - current;
+        bridge.body.setAngularVelocity(diff * 2);
+      }
+
+      updateGears(delta) {
+        this.gears.forEach((gear) => {
+          if (gear.lockedUntil && !gear.lockedUntil.engaged) return;
+          const angVel = gear.body.body.angularVelocity;
+          gear.spinAccumulator += Math.abs(angVel) * (delta / 1000);
+          if (!gear.engaged && gear.spinAccumulator >= gear.revolutionsNeeded * Math.PI * 2) {
+            gear.engaged = true;
+            this.openDoorPart(gear.partIndex);
+            this.registerResonance(gear);
+          }
+        });
+      }
+
+      openDoorPart(index) {
+        const part = this.doorParts[index];
+        if (!part || part.open) return;
+        part.open = true;
+        part.body.isSensor = true;
+        part.sprite.setAlpha(0.3);
+      }
+
+      updateSparks(delta) {
+        this.sparks.forEach((spark) => {
+          spark.cooldown = Math.max(0, spark.cooldown - delta);
+          const dx = this.glider.x - spark.x;
+          const dy = this.glider.y - spark.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < spark.radius) {
+            const speed = Math.hypot(this.glider.body.velocity.x, this.glider.body.velocity.y);
+            if (speed > 60 && spark.cooldown <= 0) {
+              this.addBump();
+              spark.cooldown = 800;
+              Phaser.Physics.Matter.Matter.Body.applyForce(this.glider.body, this.glider.body.position, {
+                x: dx * 0.0005,
+                y: dy * 0.0005
+              });
+            }
+          }
+        });
+      }
+
+      updateCrosswind(time, progress) {
+        const amp = 0.0003 + 0.0009 * progress;
+        const forceX = Math.sin(time * 0.002) * amp;
+        Phaser.Physics.Matter.Matter.Body.applyForce(this.glider.body, this.glider.body.position, {
+          x: forceX,
+          y: 0
+        });
+      }
+
+      updateLeaves(progress) {
+        if (!this.leafEmitter) return;
+        const cam = this.cameras.main;
+        const freq = 650 - 350 * progress;
+        this.leafEmitter.setFrequency(freq);
+        this.leafEmitter.setSpeedX({ min: 30 + 40 * progress, max: 70 + 90 * progress });
+        this.leafEmitter.setPosition(cam.scrollX - 40, cam.scrollY + 60);
+        this.leafEmitter.y = { min: cam.scrollY + 40, max: cam.scrollY + 220 };
+      }
+
+      updateGliderLift() {
+        const angle = this.glider.rotation;
+        const forward = { x: Math.cos(angle), y: Math.sin(angle) };
+        const vel = this.glider.body.velocity;
+        const forwardSpeed = vel.x * forward.x + vel.y * forward.y;
+        const lift = clamp(forwardSpeed, 0, 220) * 0.0009;
+        Phaser.Physics.Matter.Matter.Body.applyForce(this.glider.body, this.glider.body.position, {
+          x: 0,
+          y: -lift
+        });
+
+        if (Math.abs(this.glider.body.angularVelocity) > 1.2) {
+          this.glider.setAngularVelocity(this.glider.body.angularVelocity * 0.9);
+        }
+      }
+
+      handleCrashes(delta) {
+        if (this.glider.y > 430 && this.glider.body.velocity.y > 80) {
+          this.triggerRespawn();
+          return;
+        }
+      }
+
+      triggerRespawn() {
+        this.addBump();
+        this.timeRemainingMs = Math.max(0, this.timeRemainingMs - 5000);
+        this.glider.setPosition(this.lastSafePos.x, this.lastSafePos.y);
+        this.glider.setVelocity(0, 0);
+        this.glider.setAngle(0);
+        this.glider.setAngularVelocity(0);
+      }
+
+      setCheckpoint(index) {
+        if (index > this.currentCheckpointIndex) {
+          this.currentCheckpointIndex = index;
+          const cp = this.checkpoints[index];
+          this.lastSafePos = { x: cp.x, y: cp.y };
+        }
+      }
+
+      addBump() {
+        this.bumps += 1;
+      }
+
+      flashGlider() {
+        this.gliderFlashTime = 200;
+        this.glider.setTint(0xfff2b2);
+      }
+
+      registerResonance(obj) {
+        if (obj.countedResonance) return;
+        obj.countedResonance = true;
+        this.resonanceCount += 1;
+      }
+
+      updateHUD() {
+        this.timerText.setText(formatTime(this.timeRemainingMs));
+        this.bumpsText.setText(`Bumps: ${this.bumps}`);
+        this.resonanceText.setText(`Resonance: ${this.resonanceCount}`);
+
+        this.windGraphics.clear();
+        const barX = 16 + (this.windShakeTime > 0 ? Math.sin(this.time.now * 0.05) * 3 : 0);
+        const barY = HEIGHT - 28;
+        const barW = 160;
+        const barH = 12;
+        this.windGraphics.fillStyle(COLORS.windBg, 0.9);
+        this.windGraphics.fillRect(barX, barY, barW, barH);
+        this.windGraphics.fillStyle(COLORS.windFill, 0.9);
+        this.windGraphics.fillRect(barX, barY, barW * (this.windMeter / 100), barH);
+        this.windGraphics.lineStyle(1, COLORS.hudMuted, 0.8);
+        this.windGraphics.strokeRect(barX, barY, barW, barH);
+      }
+
+      shakeWindMeter() {
+        this.windShakeTime = 300;
+      }
+
+      updateTooltip() {
+        let message = '';
+        const gliderPos = { x: this.glider.x, y: this.glider.y };
+        if (this.doors.length && !this.doors[0].open && Phaser.Math.Distance.Between(gliderPos.x, gliderPos.y, 420, 350) < 180) {
+          message = 'Spin the pinwheel';
+        } else if (!this.lanterns[0].lit || !this.lanterns[1].lit) {
+          if (Phaser.Math.Distance.Between(gliderPos.x, gliderPos.y, 1180, 320) < 220) {
+            message = 'Fan the torches';
+          }
+        } else if (!this.gears[0].engaged && Phaser.Math.Distance.Between(gliderPos.x, gliderPos.y, 2050, 260) < 260) {
+          message = 'Spin the gears in order';
+        }
+        this.tooltipText.setText(message);
+      }
+
+      update(time, delta) {
+        if (this.finished) {
+          if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
+            this.scene.restart();
+          }
+          if (Phaser.Input.Keyboard.JustDown(this.keys.Q)) {
+            this.scene.start('TitleScene');
+          }
+          return;
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
+          this.togglePause();
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.H)) {
+          this.toggleHelpOverlay();
+        }
+
+        if (this.paused) {
+          return;
+        }
+
+        this.timeRemainingMs -= delta;
+        if (this.timeRemainingMs <= 0) {
+          this.timeRemainingMs = 0;
+          this.endRun(false);
+          return;
+        }
+
+        this.windMeter = Math.min(100, this.windMeter + 18 * (delta / 1000));
+
+        this.activeGusts.forEach((gust) => {
+          gust.age += delta;
+          if (gust.age >= gust.lifetime) {
+            gust.gfx.destroy();
+          } else {
+            const lifeRatio = 1 - gust.age / gust.lifetime;
+            this.drawGust(gust, lifeRatio);
+            this.applyGustForces(gust, lifeRatio);
+          }
+        });
+        this.activeGusts = this.activeGusts.filter((gust) => gust.age < gust.lifetime);
+
+        this.applyFans();
+        this.applyThermals();
+        this.updatePinwheels(delta);
+        this.updateDoors();
+        this.updateLanterns(delta);
+        this.updateBridge(delta);
+        this.updateGears(delta);
+        this.updateSparks(delta);
+        this.updateGliderLift();
+
+        const progress = 1 - this.timeRemainingMs / MAX_TIME_MS;
+        this.updateCrosswind(time, progress);
+        this.updateLeaves(progress);
+
+        this.handleCrashes(delta);
+
+        if (this.gliderFlashTime > 0) {
+          this.gliderFlashTime -= delta;
+          if (this.gliderFlashTime <= 0) {
+            this.glider.clearTint();
+          }
+        }
+
+        if (this.windShakeTime > 0) {
+          this.windShakeTime -= delta;
+        }
+
+        if (this.tutorialTimer > 0) {
+          this.tutorialTimer -= delta;
+          if (this.tutorialTimer <= 0) {
+            this.tutorialOverlay.setVisible(false);
+            this.tutorialText.setVisible(false);
+          }
+        }
+
+        this.updateTooltip();
+        this.updateHUD();
+
+        if (!this.finished && this.checkFinish()) {
+          this.endRun(true);
+        }
+      }
+
+      checkFinish() {
+        const landing = { x: 2750, y: 200, w: 120, h: 60 };
+        const inX = this.glider.x > landing.x - landing.w / 2 && this.glider.x < landing.x + landing.w / 2;
+        const inY = this.glider.y > landing.y - landing.h / 2 && this.glider.y < landing.y + landing.h / 2;
+        return inX && inY;
+      }
+
+      endRun(success) {
+        if (this.finished) return;
+        this.finished = true;
+        this.matter.world.pause();
+        this.resultsOverlay.setVisible(true);
+        this.resultsText.setVisible(true);
+        this.resultsHint.setVisible(true);
+
+        let outcome = '';
+        let stats = '';
+        if (success) {
+          const finishTimeMs = MAX_TIME_MS - this.timeRemainingMs;
+          outcome = 'Lighthouse Reached!';
+          stats = `Time: ${formatTime(finishTimeMs)}\nBumps: ${this.bumps}\nResonance: ${this.resonanceCount}`;
+        } else {
+          const distance = clamp(this.glider.x / 2750, 0, 1);
+          outcome = 'Out of Time';
+          stats = `Distance: ${Math.round(distance * 100)}%\nBumps: ${this.bumps}\nResonance: ${this.resonanceCount}`;
+        }
+
+        const rank = this.computeRank(success);
+        this.resultsText.setText(`${outcome}\n${stats}\nRank: ${rank}`);
+      }
+
+      computeRank(success) {
+        if (!success) return 'Docksider';
+        const finishTimeMs = MAX_TIME_MS - this.timeRemainingMs;
+        if (finishTimeMs <= 210000 && this.bumps <= 3 && this.resonanceCount >= 8) {
+          return 'Maestro of Winds';
+        }
+        if (finishTimeMs <= 270000 && this.bumps <= 6 && this.resonanceCount >= 6) {
+          return 'Skysmith';
+        }
+        return 'Breezeborne';
+      }
+
+      togglePause() {
+        this.paused = !this.paused;
+        if (this.paused) {
+          this.matter.world.pause();
+        } else {
+          this.matter.world.resume();
+        }
+        this.pauseOverlay.setVisible(this.paused);
+        this.pauseText.setVisible(this.paused);
+      }
+
+      toggleHelpOverlay() {
+        this.helpOverlayVisible = !this.helpOverlayVisible;
+        this.helpOverlay.setVisible(this.helpOverlayVisible);
+        this.helpText.setVisible(this.helpOverlayVisible);
+      }
+
+      shutdown() {
+        this.matter.world.resume();
+      }
+    }
+
+    const config = {
+      type: Phaser.AUTO,
+      width: WIDTH,
+      height: HEIGHT,
+      backgroundColor: '#0e1620',
+      parent: 'game-container',
+      physics: {
+        default: 'matter',
+        matter: {
+          gravity: { y: 0.7 },
+          enableSleep: false
+        }
+      },
+      scene: [TitleScene, GameScene]
+    };
+
+    new Phaser.Game(config);
+  </script>
+</body>
+</html>

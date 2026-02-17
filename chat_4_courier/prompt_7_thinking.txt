@@ -1,0 +1,34 @@
+Edited file
+index.html
++1
+-0
+
+    const SHADOW_ECHO_EVENTS_MAX = 4;
+    const TRAM_HEADLIGHT_OFFSET = 100;
+
+Edited file
+index.html
++1
+-1
+
+          this.tram.x += this.tram.speed * dt;
+          this.tram.headlightRect.x = this.tram.x - 140;
+          this.tram.headlightRect.x = this.tram.x - TRAM_HEADLIGHT_OFFSET - this.tram.headlightRect.width;
+          this.tram.headlightRect.y = this.tram.y - 30;
+Worked for 3m 6s
+Adjusted the tram headlight placement to honor the 100px offset from the tram front; this keeps the headlight rectangle from overlapping the tram body and matches the spec. Changes are in index.html (line 65) and index.html (line 651).
+
+Findings
+
+Medium: Headlight rectangle was anchored directly at the tram’s front (offset 0), conflicting with the 100px offset requirement and making the light overlap the tram. Fixed by applying TRAM_HEADLIGHT_OFFSET in index.html (line 651) (constant defined at index.html (line 65)).
+Tests not run.
+
+Next steps (optional)
+
+Open index.html in a browser and confirm the headlight spacing during the tram pass.
+
+1 file changed
+Undo
+
+Review
+index.html

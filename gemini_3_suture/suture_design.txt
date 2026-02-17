@@ -1,0 +1,158 @@
+STAGE 1: GAME DESIGN
+1. Title & Hook
+Suture "You don't jump across the void—you cut it out of existence."
+
+2. Core Insight
+The Central Question: If something is in your way, do you overcome it, or do you remove the space it occupies?
+
+Human Truth: This explores the concept of "moving on" by forcibly removing the painful "gaps" in our personal narratives to find a path forward.
+
+3. Mechanic-Theme Integration
+Primary Mechanic: The player uses the mouse to draw a straight line (a "cut") across any part of the 2D level. When the line is completed, the space between the two edges of the cut is deleted, and the world "stitches" back together, snapping the remaining pieces into contact.
+
+Integration: The theme is "Healing through Removal." By physically removing parts of the level, the player literally changes the map to make the impossible possible.
+
+4. Player Journey
+Start: The player is a small, glowing ember on a giant, dark, torn piece of parchment. There is a massive gap between the start and the first platform—far too wide to jump.
+
+Learning Curve (Minute 1): The player clicks and drags to draw a line across the void. The void "shrinks" and the distant platform snaps to the player's feet. The "Aha!" moment occurs when they realize they aren't moving; they are shortening the universe.
+
+Evolution (Minutes 2-4): Levels introduce "Obsidian Walls" (uncuttable areas). The player must find creative angles to cut around these obstacles, stitching together bits of safe ground like a quilt.
+
+Climax (Minute 4:30): The "Final Tear." The exit is visible but inverted. The player must perform a series of diagonal cuts that rotate the world as it stitches, essentially "re-folding" reality to reach the door.
+
+The Ending: The ember reaches the final tear. As they enter, the entire screen "folds" into a single point of light. The text appears: "Some gaps cannot be crossed. They must be removed."
+
+Emotion: Empowering, surgical, and ultimately cathartic.
+
+5. Game Elements
+The Ember (Player): A bright orange particle effect that leaves a faint trail.
+
+The Parchment (World): A beige/grey textured background that looks like thick paper.
+
+The Scalpel (Cursor): A sharp, white line that appears when the mouse is dragged.
+
+The Void: Pure black areas between the "paper" platforms.
+
+Stitch Lines: Subtle, glowing "seams" that remain where the player has successfully cut and joined the world.
+
+6. Rules & Systems
+The Cut: A player draws a line between two points on the "paper." The game identifies the area between the cut and the nearest parallel edge (or a second cut) and removes it.
+
+The Snap: All game objects (platforms, player, exit) on the "far side" of the cut have their coordinates shifted by the width of the removed area instantly.
+
+Restraint: The player has a limited number of "Stitches" per level, represented by thread icons in the UI.
+
+Failure: If the player cuts through the platform they are currently standing on, they fall into the void and the level restarts.
+
+STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+7. Technical Specification
+Display:
+
+Canvas: 960x540 (16:9).
+
+Background: #222222 (The Void).
+
+Level Surface: #d2b48c (Parchment color).
+
+Elements:
+
+Player: Circle physics body, radius 10px. #ffcc00.
+
+Platforms: Phaser Containers holding Phaser.GameObjects.Graphics rectangles.
+
+The Cut Line: A Phaser.Geom.Line updated on pointermove.
+
+Input:
+
+mousedown: Mark Point A.
+
+mouseup: Mark Point B. Trigger Suture function.
+
+State:
+
+stitchesLeft: Integer.
+
+worldSegments: An array of containers, each representing a "piece" of the world that can be shifted.
+
+isCutting: Boolean.
+
+Timing:
+
+Stitch Animation: 200ms (a quick "snap" with an Ease-Out effect).
+
+Fade-to-Black: 1000ms between levels.
+
+Interactions:
+
+Suture Function:
+
+Calculate the distance and angle between the cut line and the target edge.
+
+Subtract that distance from the X or Y coordinates of all worldSegments located beyond the cut line.
+
+Update the physics hitboxes of the platforms.
+
+8. Game Flow
+Initialization: Load level data (JSON) containing platform coordinates.
+
+Main Loop: Check if the player is standing on a platform. If player.y > canvas.height, trigger Reset.
+
+Suture Trigger: On mouseup, play a "slice" sound, calculate the coordinate shift, and tween the world segments to their new positions.
+
+Goal Reach: If player overlaps with ExitSprite, play "shimmer" effect and load the next level.
+
+End: After 5 levels, disable input and trigger the "Single Point" collapse animation.
+
+9. Pseudocode
+JavaScript
+// SETUP
+function create() {
+    this.segments = this.add.group(); // Pieces of the level
+    this.player = this.physics.add.sprite(startPos);
+    
+    this.input.on('pointerup', (pointer) => {
+        let cutLine = new Phaser.Geom.Line(this.startX, this.startY, pointer.x, pointer.y);
+        this.performSuture(cutLine);
+    });
+}
+
+// THE CORE LOGIC
+function performSuture(line) {
+    if (this.stitchesLeft <= 0) return;
+
+    // 1. Identify which level segments are "beyond" the cut line
+    let affectedSegments = this.getSegmentsBeyond(line);
+    
+    // 2. Calculate shift amount (e.g., the width of the gap being removed)
+    let gapWidth = calculateGap(line);
+
+    // 3. Move everything beyond the cut closer to the player
+    this.tweens.add({
+        targets: affectedSegments,
+        x: `-=${gapWidth.x}`,
+        y: `-=${gapWidth.y}`,
+        duration: 200,
+        ease: 'Power2',
+        onUpdate: () => {
+            // Re-sync physics bodies during the move
+            updatePhysicsHitboxes();
+        }
+    });
+
+    this.stitchesLeft--;
+    playStitchSound();
+}
+
+// UPDATE LOOP
+function update() {
+    // Check if player is on a platform
+    if (!this.physics.overlap(this.player, this.segments)) {
+        this.player.setGravityY(1000); // Fall into the void
+    } else {
+        this.player.setGravityY(0);
+        this.player.setVelocityY(0);
+    }
+    
+    if (this.player.y > 600) restartLevel();
+}
