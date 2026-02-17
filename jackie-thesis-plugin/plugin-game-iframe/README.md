@@ -18,4 +18,4 @@ See [documentation](/plugin-game-iframe/README.md)
 
 ## Author / Citation
 
-Jackie
+Josh & Claude Code
