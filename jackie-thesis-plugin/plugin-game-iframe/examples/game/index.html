@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Test Game</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: sans-serif;
+        background: #e8f5e9;
+      }
+      h1 {
+        margin-bottom: 24px;
+      }
+      p {
+        margin-bottom: 24px;
+        color: #555;
+      }
+      #finish-btn {
+        padding: 16px 32px;
+        font-size: 18px;
+        background: #2e7d32;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      #finish-btn:hover {
+        background: #1b5e20;
+      }
+      #score {
+        font-size: 48px;
+        font-weight: bold;
+        margin-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test Game</h1>
+    <p>Click anywhere or press keys to generate input events. Press "Finish Game" when done.</p>
+    <div id="score">0</div>
+    <button id="finish-btn">Finish Game</button>
+
+    <script>
+      let score = 0;
+      const scoreEl = document.getElementById("score");
+
+      // Increment score on click anywhere
+      document.addEventListener("click", (e) => {
+        if (e.target.id !== "finish-btn") {
+          score++;
+          scoreEl.textContent = score;
+        }
+      });
+
+      // Increment score on keypress
+      document.addEventListener("keydown", () => {
+        score++;
+        scoreEl.textContent = score;
+      });
+
+      // Send postMessage to parent when finished
+      document.getElementById("finish-btn").addEventListener("click", () => {
+        window.parent.postMessage(
+          {
+            type: "game-complete",
+            data: { score: score },
+          },
+          "*"
+        );
+      });
+    </script>
+  </body>
+</html>

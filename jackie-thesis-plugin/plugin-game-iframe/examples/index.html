@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>plugin-game-iframe Example</title>
+    <script src="https://unpkg.com/jspsych@8"></script>
+    <script src="../dist/index.browser.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/jspsych@8/css/jspsych.css" />
+  </head>
+  <body></body>
+  <script>
+    const jsPsych = initJsPsych({
+      on_finish: () => {
+        jsPsych.data.displayData();
+      },
+    });
+
+    const game_trial = {
+      type: jsPsychGameIframe,
+      game_url: "game/index.html",
+      allow_manual_end: true,
+      manual_end_delay: 5000, // Show manual end button after 5 seconds for demo
+      mouse_sample_interval: 50, // Sample mousemove every 50ms
+    };
+
+    jsPsych.run([game_trial]);
+  </script>
+</html>

@@ -13,11 +13,11 @@ var evaluation_json = {
           displayMode: "buttons"
         },
         {
-            type: "comment",
-            name: "creativity-free-response",
-            title: "Please explain your rating. What made the game creative or uncreative, and why?",
-            isRequired: true,
-          },
+          type: "comment",
+          name: "creativity-free-response",
+          title: "Please explain your rating. What made the game creative or uncreative, and why?",
+          isRequired: true,
+        },
       ],
     },
     {
@@ -31,13 +31,13 @@ var evaluation_json = {
           minRateDescription: "Very unoriginal",
           maxRateDescription: "Very original",
           displayMode: "buttons"
-        },  
+        },
         {
-            type: "comment",
-            name: "originality-free-response",
-            title: "Please explain your rating. What parts of the game felt original or unoriginal, and why? Did any parts cause a sense of surprise?",
-            isRequired: true,
-          },
+          type: "comment",
+          name: "originality-free-response",
+          title: "Please explain your rating. What parts of the game felt original or unoriginal, and why? Did any parts cause a sense of surprise?",
+          isRequired: true,
+        },
       ],
     },
     {
@@ -51,13 +51,13 @@ var evaluation_json = {
           minRateDescription: "Very poorly",
           maxRateDescription: "Very well",
           displayMode: "buttons"
-        },  
+        },
         {
-            type: "comment",
-            name: "effectiveness-free-response",
-            title: "Please explain your rating. What did or didn’t work well? What parts of the game were enjoyable or frustrating, and why?",
-            isRequired: true,
-          },
+          type: "comment",
+          name: "effectiveness-free-response",
+          title: "Please explain your rating. What did or didn’t work well? What parts of the game were enjoyable or frustrating, and why?",
+          isRequired: true,
+        },
       ],
     },
     {
@@ -71,7 +71,16 @@ var evaluation_json = {
           minRateDescription: "Very unauthentic",
           maxRateDescription: "Very authentic",
           displayMode: "buttons"
-        },  
+        },
+        {
+          type: "rating",
+          name: "first-attention-check",
+          title: `This is an attention check question. Please select "Very imaginative" to show that you are paying attention.`,
+          isRequired: true,
+          minRateDescription: "Very unimaginative",
+          maxRateDescription: "Very imaginative",
+          displayMode: "buttons"
+        },
         {
           type: "rating",
           name: "intentionality-rating",
@@ -80,13 +89,13 @@ var evaluation_json = {
           minRateDescription: "Very unintentional",
           maxRateDescription: "Very intentional",
           displayMode: "buttons"
-        },  
+        },
         {
-            type: "comment",
-            name: "authenticity-intentionality-free-response",
-            title: "Please briefly explain your ratings of authenticity, intentionality, and effort",
-            isRequired: true,
-          },
+          type: "comment",
+          name: "authenticity-intentionality-free-response",
+          title: "Please briefly explain your ratings of authenticity, intentionality, and effort",
+          isRequired: true,
+        },
       ],
     }
   ]

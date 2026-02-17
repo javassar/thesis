@@ -24,6 +24,9 @@
 
     <!-- UPLOAD ANY EXTERNAL JSONS HERE -->
     <script src="evaluation.js"></script> <!-- evaluation survey -->
+    <!--add plugin for iframe here
+    <script src="index.js"></script>  <!-- allows me to embed video games as iframes--!>
+    --!>
 
 </head>
 
@@ -137,7 +140,8 @@ Thank you for your contribution to our research! Feel free to exit the page.
             },
         };
 
-        var video_game_one =
+
+        var game_chat_1_echo =
         {
             // INSERT VIDEO GAME 1 HERE. NOT SURE HOW TO INSERT THIS. PUTTING A PLACEHOLDER FOR NOW 
             data: {
@@ -158,28 +162,9 @@ Thank you for your contribution to our research! Feel free to exit the page.
            },
          }*/
 
-        const evaluation_one = {
+        const evaluation_game_chat_1_echo = {
             type: jsPsychSurvey,
-            survey_json: {
-                ...evaluation_json,
-                pages: [
-                    ...evaluation_json.pages,
-                    {
-                        name: "attention_check",
-                        elements: [
-                            {
-                                type: "rating",
-                                name: "first-attention-check",
-                                title: `This is an attention check question. Please select "Very imaginative" to show that you are paying attention.`,
-                                isRequired: true,
-                                minRateDescription: "Very unimaginative",
-                                maxRateDescription: "Very imaginative",
-                                displayMode: "buttons"
-                            },
-                        ]
-                    }
-                ]
-            },
+            survey_json: evaluation_json,
             data: {
                 phase: "evaluation-one",
             },
@@ -187,7 +172,7 @@ Thank you for your contribution to our research! Feel free to exit the page.
 
 
 
-        var video_game_two =
+        var game_chat_2_murmuration =
         {
             // INSERT VIDEO GAME 2 HERE. NOT SURE HOW TO INSERT THIS. PUTTING A PLACEHOLDER FOR NOW 
             data: {
@@ -200,7 +185,7 @@ Thank you for your contribution to our research! Feel free to exit the page.
 
 
         /* evaluation of second video game */
-        const evaluation_two = {
+        const evaluation_game_chat_2_murmuration = {
             type: jsPsychSurvey,
             survey_json: evaluation_json,
             data: {
@@ -208,7 +193,36 @@ Thank you for your contribution to our research! Feel free to exit the page.
             },
         }
 
-        var video_game_three =
+        const concept_chat_2_murmuration = {
+            type: jsPsychSurvey,
+            survey_json: {
+                elements: [
+                    {
+                        type: "text",
+                        name: "concept_chat_2_murmuration",
+                        title: "[insert game concept here]",
+                        isRequired: true,
+                    },
+                    {
+                        type: "comment",
+                        name: "concept_chat_2_murmuration",
+                        title: "[question 1]",
+                        isRequired: true,
+                    },
+                    {
+                        type: "text",
+                        name: "concept_chat_2_murmuration",
+                        title: "[question 2]",
+                        isRequired: true,
+                    },
+                ],
+            },
+            data: {
+                phase: "concept-chat-two",
+            },
+        };
+
+        var game_chat_3_orbit =
         {
             // INSERT VIDEO GAME 3 HERE. NOT SURE HOW TO INSERT THIS. PUTTING A PLACEHOLDER FOR NOW 
             data: {
@@ -221,7 +235,7 @@ Thank you for your contribution to our research! Feel free to exit the page.
 
         /* evaluation of third video game */
 
-        const evaluation_three = {
+        const evaluation_game_chat_3_orbit = {
             type: jsPsychSurvey,
             survey_json: {
                 ...evaluation_json,

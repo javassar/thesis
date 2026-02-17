@@ -1,0 +1,5 @@
+We need a jsPsych version 8 plugin that displays a full screen iframe (which will have an HTML/JS game in it) and has a drawer with an emergency button that when clicked will allow the subject to leave the page, but only after they fill out a text box that describes the technical issue they faced. The game will call a function / send a message when it is done, and that should advance to the next trial. After X amount of time, the drawer should add a button to allow the user to manually end the trial. This should be optional.
+
+The data for the trial includes how long people played, as well a list of any keystrokes and mouse movements that were generated while playing the game. It is crucial that the keystrokes and mousemovents are sent to the iframe so that the game can be played.
+
+The parameters should include the path to the game HTML.
