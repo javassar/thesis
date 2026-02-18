@@ -1,5 +1,8 @@
 node_modules
 .Rproj.user
 venv/
+.venv/
+env/
+__pycache__/
 prompt_development_games
 
