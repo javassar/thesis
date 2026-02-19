@@ -1105,7 +1105,7 @@ class GameScene extends Phaser.Scene {
 
     // "Again?" after 5 seconds of stillness
     this.time.delayedCall(13500, () => {
-      let continueText = this.add.text(750, 545, 'Press ENTER to continue', {
+      let continueText = this.add.text(400, 360, 'Press ENTER to continue', {
         fontFamily: 'Arial', fontSize: '14px', color: '#666666'
       }).setScrollFactor(0).setDepth(100).setAlpha(0);
       this.tweens.add({ targets: continueText, alpha: 1, duration: 800 });

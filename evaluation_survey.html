@@ -43,15 +43,8 @@
         //Initialize jsPsych
         var jsPsych = initJsPsych({
             on_finish: function () {
-                // jsPsych.data.displayData();
-                const displayElement = document.getElementById('jspsych-content') || document.body;
-                displayElement.innerHTML = `
-        <p style="font-size: 1.25rem; color: #555;">
-        </p>
-Thank you for your contribution to our research! Feel free to exit the page.  
-    </p>
-      </div>
-    `;
+                jsPsych.data.displayData();
+                       window.location = "https://app.prolific.com/submissions/complete?cc=C10NEGL9";
             },
         }
         );
@@ -295,7 +288,7 @@ Thank you for your contribution to our research! Feel free to exit the page.
             },
             type: jsPsychHtmlKeyboardResponse,
             choices: "ALL_KEYS",
-            stimulus: "Click to proceed to the first video game.",
+            stimulus: "Press any key to proceed to the first video game.",
         };
 
         var pre_game_two = {
@@ -304,7 +297,7 @@ Thank you for your contribution to our research! Feel free to exit the page.
             },
             type: jsPsychHtmlKeyboardResponse,
             choices: "ALL_KEYS",
-            stimulus: "You have completed your evaluation of the first video game.<br><br>Click to proceed to the second game.",
+            stimulus: "You have completed your evaluation of the first video game.<br><br>Press any key to proceed to the second game.",
         };
 
         var pre_game_three = {
@@ -313,7 +306,7 @@ Thank you for your contribution to our research! Feel free to exit the page.
             },
             type: jsPsychHtmlKeyboardResponse,
             choices: "ALL_KEYS",
-            stimulus: "You have completed your evaluation of the second video game.<br><br>Click to proceed to the final game.",
+            stimulus: "You have completed your evaluation of the second video game.<br><br>Press any key to proceed to the final game.",
         };
 
         var pre_baseline = {
@@ -322,7 +315,7 @@ Thank you for your contribution to our research! Feel free to exit the page.
             },
             type: jsPsychHtmlKeyboardResponse,
             choices: "ALL_KEYS",
-            stimulus: "You have completed all of the games!<br><br>Please answer some final questions before returning to Prolific.",
+            stimulus: "You have completed all of the games!<br><br>Press any key to proceed to some final questions before returning to Prolific.",
         };
 
         var game_chat_1_echo = {
@@ -826,7 +819,7 @@ grows, it stops needing the player’s flames, and the player must learn to let 
             },
             type: jsPsychHtmlKeyboardResponse,
             stimulus: `
-        <p> You have completed the experiment! Please save your data before closing the page. <p>
+        <p> You have completed the experiment! Press any key to save your data and get redirected back to Prolific. Please do not close the page until your data has been saved. <p>
       `,
             post_trial_gap: 1000,
         };
@@ -870,7 +863,7 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         /* ------------- PUSHING TIMELINE FOR EACH CONDITION ----------------- */
 
         test_timeline.push(
-            game_claude_5_cartographer,
+            game_claude_6_flame,
             goodbye
         )
 
