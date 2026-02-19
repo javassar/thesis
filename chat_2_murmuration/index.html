@@ -310,7 +310,8 @@
           e: 'E',
           a: 'A',
           d: 'D',
-          r: 'R'
+          r: 'R',
+          enter: 'ENTER'
         });
 
         this.input.keyboard.on('keydown-Q', () => {
@@ -497,6 +498,11 @@
           }
           if (Phaser.Input.Keyboard.JustDown(this.keys.r)) {
             this.scene.start('Title');
+          }
+          if (this.winSpiral && Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+            if (this._sendComplete) {
+              this._sendComplete();
+            }
           }
           return;
         }
@@ -922,6 +928,14 @@
         this.setHudVisible(false);
         this.winSpiral = win;
         if (win) {
+          this._sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+              type: 'game-complete',
+              data: { result: 'win', birdsAlive: this.birdsAlive, timeRemaining: this.timer }
+            }, '*');
+          };
           this.prepareWinSpiral();
         }
         this.lureGraphics.clear();
@@ -931,7 +945,17 @@
         this.endSubText.setVisible(true);
         const homeText = `Birds Home: ${this.birdsAlive}/50`;
         this.endText.setText(win ? homeText : `Night falls. ${homeText}`);
-        this.endSubText.setText('Press R to Restart');
+        if (win) {
+          this.endSubText.setText('Press Enter to continue | R to restart');
+          this.endSubText.setInteractive({ useHandCursor: true });
+          this.endSubText.once('pointerdown', () => {
+            if (this._sendComplete) {
+              this._sendComplete();
+            }
+          });
+        } else {
+          this.endSubText.setText('Press R to Restart');
+        }
       }
 
       prepareWinSpiral() {

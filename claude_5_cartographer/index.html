@@ -769,6 +769,20 @@ class GameScene extends Phaser.Scene {
             }
         }
 
+        this._sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+                type: 'game-complete',
+                data: {
+                    result: 'complete',
+                    landPercent,
+                    citiesSurviving: survivingCities.length,
+                    peopleSaved: this.totalPeopleSaved
+                }
+            }, '*');
+        };
+
         // Choose narrative
         let narrative;
         if (survivingCities.length === 5) {
@@ -812,6 +826,16 @@ class GameScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(101);
         this.tweens.add({
             targets: restartPrompt, alpha: 0.4, yoyo: true, repeat: -1, duration: 800
+        });
+
+        const continuePrompt = this.add.text(400, 520, 'Press ENTER to continue', {
+            fontFamily: 'Arial', fontSize: '14px', color: '#CCCCCC'
+        }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
+        continuePrompt.on('pointerdown', () => {
+            if (this._sendComplete) this._sendComplete();
+        });
+        this.input.keyboard.once('keydown-ENTER', () => {
+            if (this._sendComplete) this._sendComplete();
         });
     }
 

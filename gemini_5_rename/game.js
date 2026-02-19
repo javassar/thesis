@@ -437,6 +437,21 @@ function winGame(playerBody, exitBody) {
                 this.scene.restart();
             });
 
+            const continueText = this.add.text(config.width / 2, config.height / 2 + 200, 'Press ENTER to continue', {
+                fontSize: '18px',
+                fill: '#DDDDDD'
+            }).setOrigin(0.5).setDepth(1).setScrollFactor(0).setInteractive({ useHandCursor: true });
+            const sendComplete = () => {
+                if (this._sentCompletion) return;
+                this._sentCompletion = true;
+                window.parent.postMessage({
+                    type: 'game-complete',
+                    data: { result: 'win' }
+                }, '*');
+            };
+            continueText.on('pointerdown', sendComplete);
+            this.input.keyboard.once('keydown-ENTER', sendComplete);
+
             this.cameras.main.setZoom(1); // Reset zoom for the static win screen
         }
     });

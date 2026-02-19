@@ -1114,6 +1114,14 @@ class GameScene extends Phaser.Scene {
     }
 
     victorySequence() {
+        this._sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+                type: 'game-complete',
+                data: { result: 'win', level: this.levelNum }
+            }, '*');
+        };
         // Save moth position for merge target
         const mothX = this.moth.x;
         const mothY = this.moth.y;
@@ -1239,10 +1247,20 @@ class GameScene extends Phaser.Scene {
 
         // Phase 7: Replay (11000ms)
         this.time.delayedCall(11000, () => {
-            this.add.text(480, 440, 'Click to play again', {
+            const continueText = this.add.text(480, 420, 'Press Enter to continue', {
+                fontSize: '16px', fontFamily: 'monospace', color: '#D4C8A0',
+            }).setOrigin(0.5).setAlpha(0.7).setDepth(35).setInteractive({ useHandCursor: true });
+            const replayText = this.add.text(480, 450, 'Click to play again', {
                 fontSize: '18px', fontFamily: 'monospace', color: '#D4C8A0',
             }).setOrigin(0.5).setAlpha(0.5).setDepth(35);
-            this.input.on('pointerdown', () => {
+            continueText.on('pointerdown', () => {
+                if (this._sendComplete) this._sendComplete();
+            });
+            this.input.keyboard.once('keydown-ENTER', () => {
+                if (this._sendComplete) this._sendComplete();
+            });
+            replayText.setInteractive({ useHandCursor: true });
+            replayText.on('pointerdown', () => {
                 this.scene.start('TitleScene');
             });
         });

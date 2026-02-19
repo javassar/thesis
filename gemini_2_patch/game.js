@@ -454,16 +454,33 @@ function create() {
             // Screen goes black
             this.cameras.main.fadeOut(1000, 0, 0, 0);
             this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+                this.cameras.main.setBackgroundColor('#000000');
+                this.cameras.main.resetFX();
                 // Display "File Deleted"
                 this.add.text(config.width / 2, config.height / 2, 'File Deleted', {
                     fontFamily: '"Consolas", "Courier New"',
                     fontSize: '64px',
                     color: '#FFFFFF'
                 }).setOrigin(0.5).setDepth(21);
+                const continueText = this.add.text(config.width / 2, config.height / 2 + 80, 'Press ENTER to continue', {
+                    fontFamily: '"Consolas", "Courier New"',
+                    fontSize: '24px',
+                    color: '#CCCCCC'
+                }).setOrigin(0.5).setDepth(21).setInteractive({ useHandCursor: true });
+                const sendComplete = () => {
+                    if (this._sentCompletion) return;
+                    this._sentCompletion = true;
+                    window.parent.postMessage({
+                        type: 'game-complete',
+                        data: { result: 'win', frustration: frustration, patchCount: patchCount }
+                    }, '*');
+                };
+                continueText.on('pointerdown', sendComplete);
+                this.input.enabled = true;
+                this.input.keyboard.once('keydown-ENTER', sendComplete);
                 // Optionally stop all game updates or refresh
                 this.physics.pause();
                 this.time.removeAllEvents();
-                this.input.enabled = false;
                 gameEnded = true; // Ensure it stays ended
             });
         }

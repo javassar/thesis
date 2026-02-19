@@ -361,6 +361,18 @@ function winGame() {
         this.add.text(config.width / 2, config.height / 2, 'I did it all by myself.', {
             fontSize: '48px', fill: '#ffd700', align: 'center', backgroundColor: 'rgba(0,0,0,0.7)', padding: {x: 20, y: 10}
         }).setOrigin(0.5);
+        const sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+                type: 'game-complete',
+                data: { result: 'win', levelsCompleted: currentLevelIndex }
+            }, '*');
+        };
+        const continueText = this.add.text(config.width / 2, config.height / 2 + 80, 'Press ENTER to continue', {
+            fontSize: '20px', fill: '#ffffff'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        continueText.on('pointerdown', sendComplete);
+        this.input.keyboard.once('keydown-ENTER', sendComplete);
     }
 }
-

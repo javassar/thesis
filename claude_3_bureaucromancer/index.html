@@ -1530,6 +1530,35 @@ class EndScene extends Phaser.Scene {
     const cx = 400;
     this.add.rectangle(400, 300, 800, 600, 0x1a1008);
 
+    if (this.won) {
+      this._sendComplete = () => {
+        if (this._sentCompletion) return;
+        this._sentCompletion = true;
+        window.parent.postMessage({
+          type: 'game-complete',
+          data: {
+            result: 'win',
+            score: this.finalScore,
+            casesProcessed: this.casesProcessed,
+            casesCorrect: this.casesCorrect,
+            casesMisfiled: this.casesMisfiled,
+            bestStreak: this.bestStreak,
+            dragonCorrect: this.dragonCorrect
+          }
+        }, '*');
+      };
+      const continueText = this.add.text(cx, 560, "Press ENTER to continue", {
+        fontFamily: 'Arial', fontSize: '18px', color: '#ffffff'
+      }).setOrigin(0.5).setAlpha(0.7);
+      continueText.setInteractive({ useHandCursor: true });
+      continueText.on('pointerdown', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+      this.input.keyboard.once('keydown-ENTER', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+    }
+
     this.add.text(cx, 70, "PERFORMANCE REVIEW", {
       fontFamily: 'Arial Black, Arial', fontSize: '34px', color: '#ffcc44',
       stroke: '#442200', strokeThickness: 6
@@ -1586,7 +1615,9 @@ class EndScene extends Phaser.Scene {
       this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('GameScene'));
     };
     this.input.keyboard.once('keydown-SPACE', restart);
-    this.input.once('pointerdown', restart);
+    if (!this.won) {
+      this.input.once('pointerdown', restart);
+    }
   }
 }
 

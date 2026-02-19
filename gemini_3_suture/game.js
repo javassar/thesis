@@ -170,12 +170,28 @@ class GameScene extends Phaser.Scene {
         this.input.enabled = false;
         this.physics.pause();
         this.cameras.main.fadeOut(1000, 0, 0, 0);
+        const sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+                type: 'game-complete',
+                data: { result: 'win', levelsCompleted: currentLevelIndex }
+            }, '*');
+        };
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            this.cameras.main.setBackgroundColor(0x000000);
+            this.cameras.main.resetFX();
             this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, "Some gaps cannot be crossed.\nThey must be removed.", {
                 fontSize: '32px',
                 fill: '#FFF',
                 align: 'center'
-            }).setOrigin(0.5);
+            }).setOrigin(0.5).setDepth(100);
+            const continueText = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2 + 80, 'Press ENTER to continue', {
+                fontSize: '18px',
+                fill: '#DDD'
+            }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(100);
+            continueText.on('pointerdown', sendComplete);
+            this.input.keyboard.once('keydown-ENTER', sendComplete);
             if (this.player) this.player.destroy();
         });
     }

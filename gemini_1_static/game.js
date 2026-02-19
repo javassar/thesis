@@ -233,6 +233,15 @@ class GameScene extends Phaser.Scene {
         this.physics.pause();
         this.tetherGraphics.clear();
 
+        this._sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+                type: 'game-complete',
+                data: { result: 'win', signalHealth: this.signalHealth }
+            }, '*');
+        };
+
         this.tweens.add({
             targets: [this.p1, this.p2],
             x: this.goal.x,
@@ -241,9 +250,24 @@ class GameScene extends Phaser.Scene {
             duration: 1000,
         });
 
-        this.cameras.main.fadeOut(2000, 255, 255, 255, (camera, progress) => {
-            if (progress === 1) {
-                this.endText.setVisible(true);
+        this.cameras.main.fadeOut(2000, 255, 255, 255);
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            if (!this._continueShown) {
+                this._continueShown = true;
+                this.cameras.main.setBackgroundColor(0xffffff);
+                this.cameras.main.resetFX();
+                this.endText.setVisible(true).setDepth(100);
+                const continueText = this.add.text(400, 360, 'Press Enter to proceed', {
+                    fontSize: '20px',
+                    fill: '#000000'
+                }).setOrigin(0.5).setDepth(100);
+                continueText.setInteractive({ useHandCursor: true });
+                continueText.on('pointerdown', () => {
+                    if (this._sendComplete) this._sendComplete();
+                });
+                this.input.keyboard.once('keydown-ENTER', () => {
+                    if (this._sendComplete) this._sendComplete();
+                });
             }
         });
     }
@@ -265,4 +289,3 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-

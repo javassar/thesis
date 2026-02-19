@@ -1158,6 +1158,33 @@ class EndScene extends Phaser.Scene {
     const d = this.stats;
     const cx = 400;
 
+    if (d.endType !== 'failed') {
+      this._sendComplete = () => {
+        if (this._sentCompletion) return;
+        this._sentCompletion = true;
+        window.parent.postMessage({
+          type: 'game-complete',
+          data: {
+            result: 'win',
+            endType: d.endType,
+            dependency: d.dependency,
+            mothsFollowing: d.mothsFollowing
+          }
+        }, '*');
+      };
+      const continueText = this.add.text(cx, 560, 'ENTER to continue', {
+        fontFamily: 'Arial, sans-serif', fontSize: '14px', color: '#777766'
+      }).setOrigin(0.5).setAlpha(0);
+      this.tweens.add({ targets: continueText, alpha: 1, delay: 2000, duration: 600 });
+      continueText.setInteractive({ useHandCursor: true });
+      continueText.on('pointerdown', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+      this.input.keyboard.once('keydown-ENTER', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+    }
+
     switch (d.endType) {
       case 'clean':
         this.cameras.main.setBackgroundColor('#c8ced6');

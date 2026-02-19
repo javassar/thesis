@@ -1563,6 +1563,19 @@ class GameScene extends Phaser.Scene {
         (300 - Math.floor(this.elapsedTime / 1000))) * 2;
       finalScore = this.score + completionBonus;
       mainText = 'You ate the world. Now you are the music.';
+      this._sendComplete = () => {
+        if (this._sentCompletion) return;
+        this._sentCompletion = true;
+        window.parent.postMessage({
+          type: 'game-complete',
+          data: {
+            result: 'win',
+            finalScore,
+            instrumentsSilenced: this.instrumentsSilenced,
+            elapsedTime: this.elapsedTime
+          }
+        }, '*');
+      };
     } else {
       finalScore = this.score;
       mainText = "Some sounds can't be caught.\nThey leave on their own.";
@@ -1610,6 +1623,20 @@ class GameScene extends Phaser.Scene {
         this.scene.start('GameScene');
       });
     });
+
+    if (isGoodEnding) {
+      const continueText = this.add.text(cx, 520, 'Press ENTER to continue', {
+        fontFamily: 'Arial', fontSize: '16px', color: '#cccccc'
+      }).setOrigin(0.5).setAlpha(0).setDepth(100);
+      this.tweens.add({ targets: continueText, alpha: 1, delay: 2200, duration: 800 });
+      continueText.setInteractive({ useHandCursor: true });
+      continueText.on('pointerdown', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+      this.input.keyboard.once('keydown-ENTER', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+    }
   }
 
   // ------ SFX ------

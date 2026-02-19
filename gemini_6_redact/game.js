@@ -671,6 +671,20 @@ class RedactGame extends Phaser.Scene {
         this.physics.pause();
         player.setVelocity(0,0);
         this.add.text(400, 300, 'STAGE CLEAR', { fontSize: '48px', fill: '#000', backgroundColor: '#E6E2D3' }).setOrigin(0.5);
+        const continueText = this.add.text(400, 360, 'Press ENTER to continue', {
+            fontSize: '20px',
+            fill: '#000'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        const sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+                type: 'game-complete',
+                data: { result: 'win' }
+            }, '*');
+        };
+        continueText.on('pointerdown', sendComplete);
+        this.input.keyboard.once('keydown-ENTER', sendComplete);
     }
 
 

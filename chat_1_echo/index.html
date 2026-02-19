@@ -550,7 +550,7 @@
           color: '#A0A0A0'
         }).setOrigin(0.5).setVisible(false).setDepth(120);
 
-        this.endHint = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 50, 'Press R to restart, any other key for title', {
+        this.endHint = this.add.text(CONFIG.width / 2, CONFIG.height / 2 + 50, 'Press R to restart, or any other key to continue to the survey', {
           fontSize: '16px',
           color: '#A0A0A0'
         }).setOrigin(0.5).setVisible(false).setDepth(120);
@@ -1135,19 +1135,42 @@
         this.gameState = reason === 'WIN' ? 'WIN' : 'LOSE';
         this.player.body.setVelocity(0, 0);
 
+        const didWin = reason === 'WIN';
         let title = 'Caught!';
         if (reason === 'WIN') title = 'You Escaped!';
         if (reason === 'TIME') title = "Time's Up!";
 
         this.endTitle.setText(title).setVisible(true);
         this.endSub.setText(`Time left ${formatTime(this.timerMs)} | Alerts ${this.alertsCount}`).setVisible(true);
-        this.endHint.setVisible(true);
+        const sendComplete = () => {
+          if (this._sentCompletion) return;
+          this._sentCompletion = true;
+          window.parent.postMessage({
+            type: 'game-complete',
+            data: { reason, alertsCount: this.alertsCount, timeLeft: this.timerMs }
+          }, '*');
+        };
 
+        if (didWin) {
+          this.endHint.setText('Press any key to continue (R to replay)').setVisible(true);
+          this.endHint.setInteractive({ useHandCursor: true });
+          this.endHint.once('pointerdown', () => {
+            sendComplete();
+          });
+          this.input.keyboard.once('keydown', (evt) => {
+            if (evt.code === 'KeyR') {
+              this.scene.restart();
+            } else {
+              sendComplete();
+            }
+          });
+          return;
+        }
+
+        this.endHint.setText('Press R to restart').setVisible(true);
         this.input.keyboard.once('keydown', (evt) => {
           if (evt.code === 'KeyR') {
             this.scene.restart();
-          } else {
-            this.scene.start('Title');
           }
         });
       }

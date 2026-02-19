@@ -1067,6 +1067,15 @@ class GameScene extends Phaser.Scene {
     this.isEnding = true;
     this.endingTime = 0;
 
+    this._sendComplete = () => {
+      if (this._sentCompletion) return;
+      this._sentCompletion = true;
+      window.parent.postMessage({
+        type: 'game-complete',
+        data: { result: 'win', distance: this.moth.x }
+      }, '*');
+    };
+
     // Glow expands slowly
     this.tweens.add({
       targets: this.mothGlow, scaleX: 1.5, scaleY: 1.5, duration: 6000
@@ -1096,13 +1105,26 @@ class GameScene extends Phaser.Scene {
 
     // "Again?" after 5 seconds of stillness
     this.time.delayedCall(13500, () => {
+      let continueText = this.add.text(750, 545, 'Press ENTER to continue', {
+        fontFamily: 'Arial', fontSize: '14px', color: '#666666'
+      }).setScrollFactor(0).setDepth(100).setAlpha(0);
+      this.tweens.add({ targets: continueText, alpha: 1, duration: 800 });
+      continueText.setInteractive({ useHandCursor: true });
+      continueText.on('pointerdown', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+      this.input.keyboard.once('keydown-ENTER', () => {
+        if (this._sendComplete) this._sendComplete();
+      });
+
       let againText = this.add.text(750, 570, 'Again?', {
         fontFamily: 'Arial', fontSize: '16px', color: '#555555'
       }).setScrollFactor(0).setDepth(100).setAlpha(0);
       this.tweens.add({ targets: againText, alpha: 1, duration: 1000 });
 
       this.time.delayedCall(1000, () => {
-        this.input.once('pointerdown', () => {
+        againText.setInteractive({ useHandCursor: true });
+        againText.on('pointerdown', () => {
           this.cameras.main.fadeOut(1000, 0, 0, 0);
           this.cameras.main.once('camerafadeoutcomplete', () => {
             this.scene.start('TitleScene');

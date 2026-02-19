@@ -552,7 +552,7 @@
           }).setOrigin(0.5).setScrollFactor(0);
 
         this.helpOverlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, 720, 360, COLORS.overlay, 0.85)
-          .setScrollFactor(0).setVisible(false);
+          .setScrollFactor(0).setVisible(false).setDepth(200);
         this.helpText = this.add.text(WIDTH / 2, HEIGHT / 2,
           'Drag from near the glider. Gusts blow toward your release.\n' +
           'Longer drags cost more wind meter.\n' +
@@ -563,29 +563,40 @@
             fontSize: '16px',
             color: '#e8f7ff',
             align: 'center'
-          }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+          }).setOrigin(0.5).setScrollFactor(0).setVisible(false).setDepth(201);
 
         this.pauseOverlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, 400, 120, COLORS.overlay, 0.8)
-          .setScrollFactor(0).setVisible(false);
+          .setScrollFactor(0).setVisible(false).setDepth(200);
         this.pauseText = this.add.text(WIDTH / 2, HEIGHT / 2, 'Paused', {
           fontFamily: 'Courier New, monospace',
           fontSize: '24px',
           color: '#e8f7ff'
-        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false).setDepth(201);
 
         this.resultsOverlay = this.add.rectangle(WIDTH / 2, HEIGHT / 2, 640, 360, COLORS.overlay, 0.9)
-          .setScrollFactor(0).setVisible(false);
+          .setScrollFactor(0).setVisible(false).setDepth(100);
         this.resultsText = this.add.text(WIDTH / 2, HEIGHT / 2 - 40, '', {
           fontFamily: 'Courier New, monospace',
           fontSize: '18px',
           color: '#e8f7ff',
           align: 'center'
-        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false).setDepth(101);
+        this.resultsContinue = this.add.text(WIDTH / 2, HEIGHT / 2 + 80, 'Continue', {
+          fontFamily: 'Courier New, monospace',
+          fontSize: '16px',
+          color: '#cfe6ff'
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false).setInteractive({ useHandCursor: true }).setDepth(101);
         this.resultsHint = this.add.text(WIDTH / 2, HEIGHT / 2 + 120, 'Retry (R)    Quit (Q)', {
           fontFamily: 'Courier New, monospace',
           fontSize: '16px',
           color: '#9fb3c8'
-        }).setOrigin(0.5).setScrollFactor(0).setVisible(false);
+        }).setOrigin(0.5).setScrollFactor(0).setVisible(false).setDepth(101);
+
+        this.resultsContinue.on('pointerdown', () => {
+          if (this.finished && this._won && this._sendComplete) {
+            this._sendComplete();
+          }
+        });
       }
 
       createInput() {
@@ -654,7 +665,8 @@
           R: Phaser.Input.Keyboard.KeyCodes.R,
           H: Phaser.Input.Keyboard.KeyCodes.H,
           ESC: Phaser.Input.Keyboard.KeyCodes.ESC,
-          Q: Phaser.Input.Keyboard.KeyCodes.Q
+          Q: Phaser.Input.Keyboard.KeyCodes.Q,
+          ENTER: Phaser.Input.Keyboard.KeyCodes.ENTER
         });
       }
 
@@ -1383,6 +1395,11 @@
 
       update(time, delta) {
         if (this.finished) {
+          if (this._won && Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
+            if (this._sendComplete) {
+              this._sendComplete();
+            }
+          }
           if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
             this.scene.restart();
           }
@@ -1500,6 +1517,7 @@
         this.resultsOverlay.setVisible(true);
         this.resultsText.setVisible(true);
         this.resultsHint.setVisible(true);
+        this.resultsContinue.setVisible(false);
 
         let outcome = '';
         let stats = '';
@@ -1507,10 +1525,28 @@
           const finishTimeMs = MAX_TIME_MS - this.timeRemainingMs;
           outcome = 'Lighthouse Reached!';
           stats = `Time: ${formatTime(finishTimeMs)}\nBumps: ${this.bumps}\nResonance: ${this.resonanceCount}`;
+          this._won = true;
+          this._sendComplete = () => {
+            if (this._sentCompletion) return;
+            this._sentCompletion = true;
+            window.parent.postMessage({
+              type: 'game-complete',
+              data: {
+                result: 'win',
+                finishTimeMs,
+                bumps: this.bumps,
+                resonanceCount: this.resonanceCount
+              }
+            }, '*');
+          };
+          this.resultsContinue.setVisible(true);
+          this.resultsHint.setText('Continue (Enter)    Retry (R)    Quit (Q)');
         } else {
+          this._won = false;
           const distance = clamp(this.glider.x / 2750, 0, 1);
           outcome = 'Out of Time';
           stats = `Distance: ${Math.round(distance * 100)}%\nBumps: ${this.bumps}\nResonance: ${this.resonanceCount}`;
+          this.resultsHint.setText('Retry (R)    Quit (Q)');
         }
 
         const rank = this.computeRank(success);

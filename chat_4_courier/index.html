@@ -290,6 +290,12 @@
           color: COLORS.uiText
         }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false);
 
+        this.continueText = this.add.text(WIDTH / 2, HEIGHT / 2 + 110, 'Continue', {
+          fontFamily: 'Verdana, sans-serif',
+          fontSize: '14px',
+          color: COLORS.uiMuted
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setVisible(false);
+
         this.retryText.on('pointerdown', () => {
           if (this.mode === 'end') {
             this.startGame();
@@ -299,6 +305,14 @@
         this.quitText.on('pointerdown', () => {
           if (this.mode === 'end') {
             this.showTitle();
+          }
+        });
+
+        this.continueText.on('pointerdown', () => {
+          if (this.mode === 'end' && this._won) {
+            if (this._sendComplete) {
+              this._sendComplete();
+            }
           }
         });
       }
@@ -397,6 +411,21 @@
           `Shadow Echoes: ${this.shadowEchoesUsed}`,
           `Exposure Incidents: ${this.exposureIncidents}`
         ];
+        this._won = true;
+        this._sendComplete = () => {
+          if (this._sentCompletion) return;
+          this._sentCompletion = true;
+          window.parent.postMessage({
+            type: 'game-complete',
+            data: {
+              result: 'win',
+              timeLeft: this.timeRemaining,
+              dialTurns: this.dialTurns,
+              shadowEchoesUsed: this.shadowEchoesUsed,
+              exposureIncidents: this.exposureIncidents
+            }
+          }, '*');
+        };
         this.endTitle.setText('All mail delivered!');
         this.endStats.setText(lines.join('\n'));
         this.showEndOverlay();
@@ -404,6 +433,7 @@
 
       endFail(reason) {
         this.mode = 'end';
+        this._won = false;
         const timeLeft = formatTime(this.timeRemaining);
         const causeMap = {
           time: 'Time Up',
@@ -430,6 +460,7 @@
         this.endStats.setVisible(true);
         this.retryText.setVisible(true);
         this.quitText.setVisible(true);
+        this.continueText.setVisible(this._won);
         this.timerText.setVisible(false);
         this.attemptsText.setVisible(false);
         this.objectivesText.setVisible(false);
@@ -472,6 +503,11 @@
 
         if (this.mode === 'end') {
           this.updateLampShadows();
+          if (this._won && Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+            if (this._sendComplete) {
+              this._sendComplete();
+            }
+          }
           this.renderScene(time / 1000);
           return;
         }

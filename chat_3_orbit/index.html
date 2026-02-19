@@ -390,6 +390,11 @@
         }
 
         if (this.state === 'complete') {
+          if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+            if (this._sendComplete) {
+              this._sendComplete();
+            }
+          }
           if (Phaser.Input.Keyboard.JustDown(this.keys.r)) {
             this.stats = { totalLaunches: 0, onBeatLaunches: 0, longestOrbit: 0 };
             this.startMovement(0);
@@ -667,14 +672,35 @@
         const accuracy = this.stats.totalLaunches
           ? Math.round((this.stats.onBeatLaunches / this.stats.totalLaunches) * 100)
           : 0;
+        this._sendComplete = () => {
+          if (this._sentCompletion) return;
+          this._sentCompletion = true;
+          window.parent.postMessage({
+            type: 'game-complete',
+            data: {
+              result: 'win',
+              accuracy,
+              totalLaunches: this.stats.totalLaunches,
+              onBeatLaunches: this.stats.onBeatLaunches,
+              longestOrbit: this.stats.longestOrbit
+            }
+          }, '*');
+        };
         const lines = [
           'You composed the sky',
           `Accuracy: ${accuracy}% on-beat`,
           `Total Launches: ${this.stats.totalLaunches}`,
           `Longest Orbit: ${this.stats.longestOrbit.toFixed(1)}s`,
+          'Press Enter to continue',
           'Press R to replay'
         ];
         this.overlayText.setText(lines.join('\n')).setVisible(true);
+        this.overlayText.setInteractive({ useHandCursor: true });
+        this.overlayText.once('pointerdown', () => {
+          if (this._sendComplete) {
+            this._sendComplete();
+          }
+        });
       }
 
       playChordForMovement(index) {
