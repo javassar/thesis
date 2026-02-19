@@ -289,6 +289,42 @@ Thank you for your contribution to our research! Feel free to exit the page.
         };
 
 
+        var pre_game_one = {
+            data: {
+                phase: "pre-game-one-message",
+            },
+            type: jsPsychHtmlKeyboardResponse,
+            choices: "ALL_KEYS",
+            stimulus: "Click to proceed to the first video game.",
+        };
+
+        var pre_game_two = {
+            data: {
+                phase: "pre-game-two-message",
+            },
+            type: jsPsychHtmlKeyboardResponse,
+            choices: "ALL_KEYS",
+            stimulus: "You have completed your evaluation of the first video game.<br><br>Click to proceed to the second game.",
+        };
+
+        var pre_game_three = {
+            data: {
+                phase: "pre-game-three-message",
+            },
+            type: jsPsychHtmlKeyboardResponse,
+            choices: "ALL_KEYS",
+            stimulus: "You have completed your evaluation of the second video game.<br><br>Click to proceed to the final game.",
+        };
+
+        var pre_baseline = {
+            data: {
+                phase: "pre-baseline-questions",
+            },
+            type: jsPsychHtmlKeyboardResponse,
+            choices: "ALL_KEYS",
+            stimulus: "You have completed all of the games!<br><br>Please answer some final questions before returning to Prolific.",
+        };
+
         var game_chat_1_echo = {
             type: jsPsychGameIframe,
             game_url: "chat_1_echo/index.html",
@@ -645,7 +681,7 @@ correctly interpreting an ever-changing tangle of magical regulations. Read the 
 <p>Gameplay explores the central question: What if the real monster was the process? Everyone has had the experience of staring at a form and genuinely not knowing the right answer, not because they're stupid, but because the rules are contradictory, ambiguous, or absurd.</p>
 
 <p>Bureaucromancer turns that universal frustration into a game. You're not mindlessly sorting. You're actually THINKING, reading, cross-referencing, and making judgment calls. When you get one right under pressure, it feels clever. When you get one wrong and realize the rule said "EXCEPT on Tuesdays," you laugh. The comedy isn't scripted; it emerges from the collision of ridiculous rules and ridiculous monsters. And the creeping feeling that the system itself is the real enemy? That's the satire.</p>
-`, 
+`,
             "concept-claude-3-bureaucromancer");
 
         const concept_claude_4_decibel = makeConceptTrial(
@@ -654,7 +690,7 @@ correctly interpreting an ever-changing tangle of magical regulations. Read the 
 <p>Gameplay explores the central question: What do you become when you've consumed everything that made the world worth navigating? Sound in this game is not a soundtrack. It IS the world. Each instrument is a living entity that emits light proportional to its volume. The player can only SEE in areas near sound. Devouring an instrument removes a light source, making the world darker and harder to navigate but removing that instrument's unique hazards. The player must constantly weigh: do I want safety (silence) or visibility (sound)?</p>
 
 <p>This theme captures a real human paradox. We consume the things we love—finishing the book, binging the show, mastering the challenge—and each completion makes our world a little emptier. This game makes that dynamic tangible: you literally need the things you're destroying.</p>
-`, 
+`,
             "concept-claude-4-decibel");
 
         const concept_claude_5_cartographer = makeConceptTrial(
@@ -664,7 +700,7 @@ consumes the world.</p>
 <p>Gameplay explores the central question: When you can't save everything, what do you choose to keep, and what does that reveal about you? Triage is one of the most human experiences there is. We face it constantly in time, in attention, in love, but games almost never make us sit with it. Games are about accumulation: more loot, more territory, more power. This game inverts that. The player starts with everything and watches it disappear. The map is already beautiful and complete.</p>
 
 <p>The player’s role isn't to build; it's to decide what survives. That inversion is what makes it sting. Every tile the player protects means another tile abandoned. And the refugees fleeing across the map make those trade-offs visible and personal. The player is not managing abstract resources. The player is watching tiny people walk away from homes they chose not to save.</p>
-`, 
+`,
             "concept-claude-5-cartographer");
 
         const concept_claude_6_flame = makeConceptTrial(
@@ -674,46 +710,46 @@ grows, it stops needing the player’s flames, and the player must learn to let 
 <p>Gameplay explores the central question: Can you love something enough to let it outgrow you? The game begins as a nurturing puzzle: a helpless moth, a dark forest, the player’s protective light. But it quietly transforms into something else entirely. As the moth gains confidence and its own inner glow, the player’s flames shift from being essential to an interference. The player's tools don't get weaker; the moth gets stronger. And the final challenge isn't a gauntlet of obstacles. It's putting down the mouse and watching the moth fly on its own.</p>
 
 <p>Everyone has experienced this arc, whether as a parent, a teacher, a friend, or even as someone who once needed help and then didn't. Games almost never explore the feeling of becoming unnecessary to something you love. That bittersweetness is the heart of this design, and it's expressed entirely through mechanics, not narration.</p>
-`, 
+`,
             "concept-claude-6-flame");
 
         const concept_gemini_1_static = makeConceptTrial(
             `<p>In The Static Between Us, players act as the "Signal" between two people. If the people get too close, the connection distorts; if the people move too far apart, it breaks.</p>
 
 <p>Gameplay explores the central question: Can intimacy be measured by the space we keep between ourselves? This theme explores the "Goldilocks Zone" of relationships, the delicate balance between losing one's identity by being too close and losing the connection by being too distant.</p>`
-, 
+            ,
             "concept-gemini-1-static");
 
         const concept_gemini_2_patch = makeConceptTrial(
             `<p>In Patch Note #0, the player is a sentient bug in a generic 2D platformer; the goal is to manipulate the game’s physics and code in real-time to make the "Lead Developer" so frustrated that they delete the project.</p>
 
-<p>Gameplay considers the central question: Can a creation gain agency by failing its intended purpose? This explores the "joy of breaking things." It taps into the universal experience of technical frustration, but flips the perspective so the player is the cause, rather than the victim, of the "computer says no" feeling.</p>`, 
+<p>Gameplay considers the central question: Can a creation gain agency by failing its intended purpose? This explores the "joy of breaking things." It taps into the universal experience of technical frustration, but flips the perspective so the player is the cause, rather than the victim, of the "computer says no" feeling.</p>`,
             "concept-gemini-2-patch");
 
         const concept_gemini_3_suture = makeConceptTrial(
             `<p>In Suture, players don't jump across the void. They cut it out of existence.</p>
 
 <p>Gameplay explores the central question: If something is in your way, do you overcome it, or do you remove the space it occupies? This explores the concept of "moving on" by forcibly removing the painful "gaps" in our personal narratives to find a path forward.</p>
-`, 
+`,
             "concept-gemini-3-suture");
 
         const concept_gemini_4_substratum = makeConceptTrial(
             `<p>In Substratum, the hero is legendary, but he’s also an idiot who only walks in a straight line; the player must rearrange the physical layers of the world to keep him from falling into the void.</p>
 
 <p>This game explores invisible support. It highlights the frantic work that goes on behind the scenes to make a "heroic journey" possible. It turns the environment from a static backdrop into a puzzle that must be solved in real-time.</p>
-`, 
+`,
             "concept-gemini-4-substratum");
 
         const concept_gemini_5_rename = makeConceptTrial(
             `<p>Rename.exe is a puzzle-platformer where players don't change how they move. Rather, players change what things are by editing their filenames.</p>
 
-<p>Gameplay considers the central question: If we change the label of a thing, does its essence change? This theme explores the power of language and the "hacker" fantasy of breaking a system from the inside to find a way out.</p>`, 
+<p>Gameplay considers the central question: If we change the label of a thing, does its essence change? This theme explores the power of language and the "hacker" fantasy of breaking a system from the inside to find a way out.</p>`,
             "concept-gemini-5-rename");
 
         const concept_gemini_6_redact = makeConceptTrial(
             `<p>In The Redact, the player is a sentient ink blot inside a classified government document; the player must rearrange the words of their own story to turn a legal prison into a physical escape.</p>
 
-<p>This game explores the malleability of truth. It suggests that we are not just victims of the narratives written about us; if we can find the right "words," we can redefine the physics of our own reality.</p>`, 
+<p>This game explores the malleability of truth. It suggests that we are not just victims of the narratives written about us; if we can find the right "words," we can redefine the physics of our own reality.</p>`,
             "concept-gemini-6-redact");
 
         const baseline_creativity = {
@@ -736,7 +772,7 @@ grows, it stops needing the player’s flames, and the player must learn to let 
             },
         }
 
-        const baseline_originality = {
+        const baseline_questions = {
             type: jsPsychSurvey,
             survey_json: {
                 elements: [
@@ -749,18 +785,6 @@ grows, it stops needing the player’s flames, and the player must learn to let 
                         maxRateDescription: "Extremely original",
                         displayMode: "buttons"
                     },
-                ],
-            },
-            data: {
-                phase: "baseline-originality-rating",
-            },
-        }
-
-
-        const baseline_effectiveness = {
-            type: jsPsychSurvey,
-            survey_json: {
-                elements: [
                     {
                         type: "rating",
                         name: "baseline_effectiveness_rating",
@@ -770,18 +794,6 @@ grows, it stops needing the player’s flames, and the player must learn to let 
                         maxRateDescription: "Extremely enjoyable",
                         displayMode: "buttons"
                     },
-                ],
-            },
-            data: {
-                phase: "baseline-effectiveness-rating",
-            },
-        }
-
-
-        const baseline_authenticity = {
-            type: jsPsychSurvey,
-            survey_json: {
-                elements: [
                     {
                         type: "rating",
                         name: "baseline_authenticity_rating",
@@ -791,18 +803,6 @@ grows, it stops needing the player’s flames, and the player must learn to let 
                         maxRateDescription: "Extremely authentic",
                         displayMode: "buttons"
                     },
-                ],
-            },
-            data: {
-                phase: "baseline-authenticity-rating",
-            },
-        }
-
-
-        const baseline_intentionality = {
-            type: jsPsychSurvey,
-            survey_json: {
-                elements: [
                     {
                         type: "rating",
                         name: "baseline_intentionality_rating",
@@ -815,7 +815,7 @@ grows, it stops needing the player’s flames, and the player must learn to let 
                 ],
             },
             data: {
-                phase: "baseline-intentionality-rating",
+                phase: "baseline-questions-rating",
             },
         }
 
@@ -826,7 +826,7 @@ grows, it stops needing the player’s flames, and the player must learn to let 
             },
             type: jsPsychHtmlKeyboardResponse,
             stimulus: `
-        <p> You have completed the survey! Please save your data before closing the page. <p>
+        <p> You have completed the experiment! Please save your data before closing the page. <p>
       `,
             post_trial_gap: 1000,
         };
@@ -874,31 +874,31 @@ grows, it stops needing the player’s flames, and the player must learn to let 
             goodbye
         )
 
-// games that i haven't tested for completion, but the code looks right:
-// game_chat_2_murmuration
-//game_claude_4_decibel
-//game_claude_3_bureaucromancer
+        // games that i haven't tested for completion, but the code looks right:
+        // game_chat_2_murmuration
+        //game_claude_4_decibel
+        //game_claude_3_bureaucromancer
 
-//games i should test still:
-// game_chat_3_orbit
+        //games i should test still:
+        // game_chat_3_orbit
 
         block_1_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -907,20 +907,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_1_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
-            concept_gemini_6_redact,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            concept_gemini_6_redact, 
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -928,20 +928,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_2_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -949,20 +949,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_2_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -970,20 +970,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_3_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -991,20 +991,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_3_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1012,20 +1012,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_4_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1033,20 +1033,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_4_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1054,20 +1054,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_5_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1075,20 +1075,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_5_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1096,20 +1096,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_6_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_two,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_three,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1117,20 +1117,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_6_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_two,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_three,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1138,20 +1138,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_7_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_two,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_three,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1159,20 +1159,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_7_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_two,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_three,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1180,20 +1180,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_8_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1201,20 +1201,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_8_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1222,20 +1222,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_9_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_two,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_three,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1243,20 +1243,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_9_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_two,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_three,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1264,20 +1264,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_10_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1285,20 +1285,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_10_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1306,20 +1306,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_11_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1327,20 +1327,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_11_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_two,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_three,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1348,20 +1348,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_12_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
+            pre_game_two,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_three,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1369,20 +1369,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_12_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
+            pre_game_two,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_three,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1390,20 +1390,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_13_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
+            pre_game_two,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_three,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1411,20 +1411,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_13_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
+            pre_game_two,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_three,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1432,20 +1432,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_14_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_two,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_three,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1453,20 +1453,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_14_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_two,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_three,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1474,20 +1474,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_15_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_two,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_three,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1495,20 +1495,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_15_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_6_tidepainter,
             evaluation_game_chat_6_tidepainter,
             concept_chat_6_tidepainter,
+            pre_game_two,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_three,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1516,20 +1516,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_16_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1537,20 +1537,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_16_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1558,20 +1558,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_17_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_two,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1579,20 +1579,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_17_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_4_courier,
             evaluation_game_chat_4_courier,
             concept_chat_4_courier,
+            pre_game_two,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1600,20 +1600,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_18_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
+            pre_game_two,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_three,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1621,20 +1621,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_18_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
+            pre_game_two,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_three,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1642,20 +1642,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_19_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_three,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1663,20 +1663,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_19_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_three,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1684,20 +1684,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_20_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_three,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1705,20 +1705,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_20_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_2_murmuration,
             evaluation_game_chat_2_murmuration,
             concept_chat_2_murmuration,
+            pre_game_two,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_three,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1726,20 +1726,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_21_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
+            pre_game_two,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_three,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1747,20 +1747,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_21_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
+            pre_game_two,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_three,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1768,20 +1768,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_22_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1789,20 +1789,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_22_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1810,20 +1810,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_23_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1831,20 +1831,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_23_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_two,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_three,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1852,20 +1852,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_24_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_two,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_three,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1873,20 +1873,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_24_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
+            pre_game_two,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_three,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1894,20 +1894,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_25_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_two,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1915,20 +1915,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_25_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_4_substratum,
             evaluation_game_gemini_4_substratum,
             concept_gemini_4_substratum,
+            pre_game_two,
             game_claude_5_cartographer,
             evaluation_game_claude_5_cartographer,
             concept_claude_5_cartographer,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1936,20 +1936,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_26_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1957,20 +1957,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_26_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -1978,20 +1978,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_27_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_two,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_three,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -1999,20 +1999,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_27_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_two,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_three,
             game_claude_6_flame,
             evaluation_game_claude_6_flame,
             concept_claude_6_flame,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2020,20 +2020,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_28_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_two,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2041,20 +2041,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_28_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_gemini_1_static,
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
+            pre_game_two,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2062,20 +2062,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_29_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_three,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2083,20 +2083,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_29_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_gemini_5_rename,
             evaluation_game_gemini_5_rename,
             concept_gemini_5_rename,
+            pre_game_three,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2104,20 +2104,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_30_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2125,20 +2125,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_30_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2146,20 +2146,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_31_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2167,20 +2167,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_31_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2188,20 +2188,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_32_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2209,20 +2209,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_32_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2230,20 +2230,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_33_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_two,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_three,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2251,20 +2251,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_33_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_two,
             game_claude_4_decibel,
             evaluation_game_claude_4_decibel,
             concept_claude_4_decibel,
+            pre_game_three,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2272,20 +2272,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_34_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2293,20 +2293,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_34_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2314,20 +2314,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_35_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2335,20 +2335,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_35_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
+            pre_game_two,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_three,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2356,20 +2356,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_36_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2377,20 +2377,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_36_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_gemini_2_patch,
             evaluation_game_gemini_2_patch,
             concept_gemini_2_patch,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2398,20 +2398,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_37_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2419,20 +2419,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_37_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_1_echo,
             evaluation_game_chat_1_echo,
             concept_chat_1_echo,
+            pre_game_two,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2440,20 +2440,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_38_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_two,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2461,20 +2461,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_38_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_5_glider,
             evaluation_game_chat_5_glider,
             concept_chat_5_glider,
+            pre_game_two,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
+            pre_game_three,
             game_gemini_3_suture,
             evaluation_game_gemini_3_suture,
             concept_gemini_3_suture,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2482,20 +2482,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_39_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
+            pre_game_two,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_three,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2503,20 +2503,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_39_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
+            pre_game_two,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_three,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2524,20 +2524,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_40_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2545,20 +2545,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_40_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
+            pre_game_three,
             game_claude_1_light,
             evaluation_game_claude_1_light,
             concept_claude_1_light,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
@@ -2566,20 +2566,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_41_ai_aware_timeline.push(
             welcome_ai_aware,
             commitment_check,
+            pre_game_one,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_two,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_aware_question,
             goodbye
         )
@@ -2587,20 +2587,20 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         block_41_ai_blind_timeline.push(
             welcome_ai_blind,
             commitment_check,
+            pre_game_one,
             game_chat_3_orbit,
             evaluation_game_chat_3_orbit,
             concept_chat_3_orbit,
+            pre_game_two,
             game_claude_2_moth,
             evaluation_game_claude_2_moth,
             concept_claude_2_moth,
+            pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
             concept_claude_3_bureaucromancer,
-            baseline_creativity,
-            baseline_originality,
-            baseline_effectiveness,
-            baseline_authenticity,
-            baseline_intentionality,
+            pre_baseline,
+            baseline_questions,
             ai_blind_question,
             goodbye
         )
