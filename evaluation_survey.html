@@ -42,6 +42,7 @@
 
         //Initialize jsPsych
         var jsPsych = initJsPsych({
+            show_progress_bar: true,
             on_finish: function () {
                 jsPsych.data.displayData();
                        window.location = "https://app.prolific.com/submissions/complete?cc=C10NEGL9";
