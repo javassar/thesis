@@ -186,6 +186,7 @@ class GameScene extends Phaser.Scene {
       OVERWHELM_WINDOW: 12000,
       FEED_RANGE: 50,
       FEED_RING_RADIUS: 35,
+      BASS_SHOCKWAVE_SAFE_BUFFER: 90,
       FEED_SUCCESS_COOLDOWN: 300,
       FEED_FAIL_COOLDOWN: 500,
       BPM: 100,
@@ -704,7 +705,12 @@ class GameScene extends Phaser.Scene {
           case 'bass': {
             const interval = Math.max(1, Math.floor(2 / freqMult));
             if (inst.hazardBeatCounter % interval === 0) {
-              this.spawnShockwave(inst);
+              const playerDist = Phaser.Math.Distance.Between(
+                this.playerX, this.playerY, inst.x, inst.y);
+              const safeRadius = this.C.FEED_RANGE + this.C.BASS_SHOCKWAVE_SAFE_BUFFER;
+              if (playerDist > safeRadius) {
+                this.spawnShockwave(inst);
+              }
             }
             break;
           }
@@ -920,7 +926,7 @@ class GameScene extends Phaser.Scene {
         const playerDist = Phaser.Math.Distance.Between(
           this.playerX, this.playerY, wave.cx, wave.cy);
         if (Math.abs(playerDist - wave.radius) < 14) {
-          this.hitPlayer(wave.cx, wave.cy, 80);
+          this.hitPlayer(wave.cx, wave.cy, 60);
           wave.hitPlayer = true;
         }
       }
