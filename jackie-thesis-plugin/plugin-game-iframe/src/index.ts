@@ -252,25 +252,6 @@ class GameIframePlugin implements JsPsychPlugin<Info> {
         background: #b71c1c;
       }
 
-      /* Manual end button */
-      .gi-manual-end-btn {
-        width: 100%;
-        padding: 12px;
-        background: #1565c0;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        font-size: 15px;
-        cursor: pointer;
-        display: none;
-      }
-      .gi-manual-end-btn:hover {
-        background: #0d47a1;
-      }
-      .gi-manual-end-btn.visible {
-        display: block;
-      }
-
       /* Overlay behind drawer */
       .gi-overlay {
         position: fixed;
@@ -351,12 +332,6 @@ class GameIframePlugin implements JsPsychPlugin<Info> {
 
     drawerBody.appendChild(emergencyForm);
 
-    // Manual end button (hidden initially)
-    const manualEndBtn = document.createElement("button");
-    manualEndBtn.className = "gi-manual-end-btn";
-    manualEndBtn.textContent = trial.manual_end_button_label;
-    drawerBody.appendChild(manualEndBtn);
-
     drawerPanel.appendChild(drawerBody);
     container.appendChild(drawerPanel);
 
@@ -389,18 +364,6 @@ class GameIframePlugin implements JsPsychPlugin<Info> {
     emergencySubmit.addEventListener("click", () => {
       endTrial("emergency-exit", null, emergencyTextarea.value || null);
     });
-
-    // Manual end
-    manualEndBtn.addEventListener("click", () => {
-      endTrial("manual-end", null, null);
-    });
-
-    // Show manual end button after delay
-    if (trial.allow_manual_end) {
-      this.jsPsych.pluginAPI.setTimeout(() => {
-        manualEndBtn.classList.add("visible");
-      }, trial.manual_end_delay);
-    }
 
     // ── Event logging ───────────────────────────────────────────────────
 

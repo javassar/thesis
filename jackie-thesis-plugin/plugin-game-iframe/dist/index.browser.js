@@ -226,25 +226,6 @@ var jsPsychGameIframe = (function (jspsych) {
         background: #b71c1c;
       }
 
-      /* Manual end button */
-      .gi-manual-end-btn {
-        width: 100%;
-        padding: 12px;
-        background: #1565c0;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        font-size: 15px;
-        cursor: pointer;
-        display: none;
-      }
-      .gi-manual-end-btn:hover {
-        background: #0d47a1;
-      }
-      .gi-manual-end-btn.visible {
-        display: block;
-      }
-
       /* Overlay behind drawer */
       .gi-overlay {
         position: fixed;
@@ -300,10 +281,6 @@ var jsPsychGameIframe = (function (jspsych) {
       emergencySubmit.textContent = "Submit & Exit";
       emergencyForm.appendChild(emergencySubmit);
       drawerBody.appendChild(emergencyForm);
-      const manualEndBtn = document.createElement("button");
-      manualEndBtn.className = "gi-manual-end-btn";
-      manualEndBtn.textContent = trial.manual_end_button_label;
-      drawerBody.appendChild(manualEndBtn);
       drawerPanel.appendChild(drawerBody);
       container.appendChild(drawerPanel);
       display_element.appendChild(container);
@@ -326,14 +303,6 @@ var jsPsychGameIframe = (function (jspsych) {
       emergencySubmit.addEventListener("click", () => {
         endTrial("emergency-exit", null, emergencyTextarea.value || null);
       });
-      manualEndBtn.addEventListener("click", () => {
-        endTrial("manual-end", null, null);
-      });
-      if (trial.allow_manual_end) {
-        this.jsPsych.pluginAPI.setTimeout(() => {
-          manualEndBtn.classList.add("visible");
-        }, trial.manual_end_delay);
-      }
       const logKey = (e) => {
         keystrokes.push({
           key: e.key,
