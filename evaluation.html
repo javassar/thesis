@@ -50,6 +50,19 @@
         }
         );
 
+
+    // capture info from Prolific
+    var prolific_subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
+    var study_id = jsPsych.data.getURLVariable('STUDY_ID');
+    var session_id = jsPsych.data.getURLVariable('SESSION_ID');
+
+    //add captured info into jsPsych data
+    jsPsych.data.addProperties({
+      prolific_subject_id: prolific_subject_id,
+      study_id: study_id,
+      session_id: session_id
+    });
+    
         // create timelines for conditions. the contents of each timeline are at the bottom of this doc
         var block_1_ai_blind_timeline = [];
         var block_1_ai_aware_timeline = [];
