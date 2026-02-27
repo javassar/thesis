@@ -213,3 +213,32 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        if (!game || !game.scene) {
+            return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('GameScene');
+        if (!scene) {
+            return { stage: 'loading' };
+        }
+        const levelNum = currentLevelIndex + 1;
+        const totalLevels = levelData.length;
+        const stitchesLeft = typeof scene.stitchesLeft === 'number' ? scene.stitchesLeft : null;
+        const stage = `level ${levelNum}/${totalLevels}`;
+        return {
+            stage,
+            detail: {
+                levelIndex: currentLevelIndex,
+                levelNum,
+                totalLevels,
+                stitchesLeft,
+                playerX: scene.player?.x ?? null,
+                playerY: scene.player?.y ?? null
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};

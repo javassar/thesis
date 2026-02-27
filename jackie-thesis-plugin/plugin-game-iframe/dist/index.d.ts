@@ -60,6 +60,14 @@ declare const info: {
         readonly exit_reason: {
             readonly type: ParameterType.STRING;
         };
+        /** Stage or milestone of the game at exit (if provided by the game). */
+        readonly exit_stage: {
+            readonly type: ParameterType.STRING;
+        };
+        /** Structured progress info from the game (if provided). */
+        readonly exit_progress: {
+            readonly type: ParameterType.COMPLEX;
+        };
         /** Reaction time in milliseconds from trial start to trial end. */
         readonly rt: {
             readonly type: ParameterType.INT;
@@ -153,6 +161,14 @@ declare class GameIframePlugin implements JsPsychPlugin<Info> {
             /** The reason the trial ended: "game-complete", "emergency-exit", or "manual-end". */
             readonly exit_reason: {
                 readonly type: ParameterType.STRING;
+            };
+            /** Stage or milestone of the game at exit (if provided by the game). */
+            readonly exit_stage: {
+                readonly type: ParameterType.STRING;
+            };
+            /** Structured progress info from the game (if provided). */
+            readonly exit_progress: {
+                readonly type: ParameterType.COMPLEX;
             };
             /** Reaction time in milliseconds from trial start to trial end. */
             readonly rt: {

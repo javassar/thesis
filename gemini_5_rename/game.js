@@ -34,6 +34,32 @@ var isTyping = false; // To pause game input when typing
 var playerIsBurning = false; // Flag for fire hazard
 
 var game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        const wallZipExt = wallZipObject?.extension ?? null;
+        const hazardExt = hazardObject?.extension ?? null;
+        const playerBody = playerObject?.bodyRect ?? playerObject;
+        const exitBody = exitShortcutObject?.bodyRect ?? exitShortcutObject;
+        let distanceToExit = null;
+        if (playerBody && exitBody) {
+            distanceToExit = Math.round(Phaser.Math.Distance.Between(playerBody.x, playerBody.y, exitBody.x, exitBody.y));
+        }
+        const stage = distanceToExit !== null ? `exit-distance ${distanceToExit}` : 'in-progress';
+        return {
+            stage,
+            detail: {
+                wallZipExtension: wallZipExt,
+                hazardExtension: hazardExt,
+                playerBurning: playerIsBurning,
+                isTyping,
+                distanceToExit
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};
 
 function preload ()
 {

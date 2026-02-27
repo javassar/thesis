@@ -289,3 +289,53 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        if (!game || !game.scene) {
+            return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('GameScene');
+        if (!scene) {
+            return { stage: 'loading' };
+        }
+        const p1 = scene.p1;
+        const p2 = scene.p2;
+        const goal = scene.goal;
+        let p1ToGoal = null;
+        let p2ToGoal = null;
+        let avgToGoal = null;
+        let playerDistance = null;
+        if (p1 && p2) {
+            playerDistance = Math.round(Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y));
+        }
+        if (p1 && goal) {
+            p1ToGoal = Math.round(Phaser.Math.Distance.Between(p1.x, p1.y, goal.x, goal.y));
+        }
+        if (p2 && goal) {
+            p2ToGoal = Math.round(Phaser.Math.Distance.Between(p2.x, p2.y, goal.x, goal.y));
+        }
+        if (typeof p1ToGoal === 'number' && typeof p2ToGoal === 'number') {
+            avgToGoal = Math.round((p1ToGoal + p2ToGoal) / 2);
+        }
+        const signal = typeof scene.signalHealth === 'number' ? Math.round(scene.signalHealth) : null;
+        let stage = 'in-progress';
+        if (scene.gameWon) {
+            stage = 'completed';
+        } else if (signal !== null && avgToGoal !== null) {
+            stage = `health ${signal}, goal-dist ${avgToGoal}`;
+        }
+        return {
+            stage,
+            detail: {
+                signalHealth: signal,
+                playerDistance,
+                p1ToGoal,
+                p2ToGoal,
+                avgToGoal
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};

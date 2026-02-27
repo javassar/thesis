@@ -10,6 +10,30 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        const levelNum = currentLevelIndex + 1;
+        const totalLevels = levels.length;
+        const goalX = levels[currentLevelIndex]?.goalX ?? null;
+        const pct = (hero && typeof goalX === 'number') ? Math.round((hero.x / goalX) * 100) : null;
+        const stage = pct !== null ? `level ${levelNum}/${totalLevels} ${pct}%` : `level ${levelNum}/${totalLevels}`;
+        return {
+            stage,
+            detail: {
+                levelIndex: currentLevelIndex,
+                levelNum,
+                totalLevels,
+                progressPct: pct,
+                heroX: hero?.x ?? null,
+                heroMoving,
+                isGameOver
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};
 
 // --- Global Game Variables ---
 let hero;

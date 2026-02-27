@@ -401,6 +401,7 @@ class TransitionScene extends Phaser.Scene {
     create(data) {
         this.cameras.main.setBackgroundColor('#000000');
         const levelNum = data.level || 1;
+        this.levelNum = levelNum;
 
         const narratives = {
             1: null,
@@ -1551,6 +1552,45 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        if (!game || !game.scene) {
+            return { stage: 'loading' };
+        }
+        if (game.scene.isActive('TitleScene')) {
+            return { stage: 'title' };
+        }
+        if (game.scene.isActive('TransitionScene')) {
+            const tScene = game.scene.getScene('TransitionScene');
+            const levelNum = tScene.levelNum ?? null;
+            return {
+                stage: levelNum ? `transition-level-${levelNum}` : 'transition',
+                detail: { levelNum }
+            };
+        }
+        if (!game.scene.isActive('GameScene')) {
+            return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('GameScene');
+        const levelNum = scene.levelNum ?? null;
+        const levelComplete = !!scene.levelComplete;
+        let stage = levelNum ? `level ${levelNum}/7` : 'playing';
+        if (levelComplete) {
+            stage = levelNum ? `level ${levelNum}/7:complete` : 'level-complete';
+        }
+        return {
+            stage,
+            detail: {
+                levelNum,
+                currentForm: scene.currentForm ?? null,
+                levelComplete
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};
 
 </script>
 </body>

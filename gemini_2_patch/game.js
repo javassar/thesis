@@ -18,6 +18,23 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        const stage = gameEnded ? 'ended' : `patch ${patchCount}`;
+        return {
+            stage,
+            detail: {
+                patchCount,
+                frustration: Math.round(frustration),
+                gameTimeRemaining,
+                gameEnded
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};
 
 let hero;
 let platforms;

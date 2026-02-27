@@ -1612,7 +1612,50 @@
       scene: [TitleScene, GameScene]
     };
 
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
+    window.jackieThesisGame = game;
+    window.jackieThesisGetProgress = () => {
+      try {
+        if (!game || !game.scene) {
+          return { stage: 'loading' };
+        }
+        if (game.scene.isActive('TitleScene')) {
+          return { stage: 'title' };
+        }
+        if (!game.scene.isActive('GameScene')) {
+          return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('GameScene');
+        const checkpoints = Array.isArray(scene.checkpoints) ? scene.checkpoints : [];
+        const total = checkpoints.length;
+        const cpIndex = typeof scene.currentCheckpointIndex === 'number' ? scene.currentCheckpointIndex : 0;
+        const cpName = checkpoints[cpIndex]?.name || null;
+        const distancePct = scene.glider ? Math.round((scene.glider.x / 2750) * 100) : null;
+
+        let stage = 'in-flight';
+        if (scene.finished) {
+          stage = 'finished';
+        } else if (total > 0) {
+          stage = cpName ? `checkpoint:${cpName} (${cpIndex + 1}/${total})` : `checkpoint ${cpIndex + 1}/${total}`;
+        }
+
+        return {
+          stage,
+          detail: {
+            checkpointIndex: cpIndex,
+            checkpointName: cpName,
+            totalCheckpoints: total,
+            finished: !!scene.finished,
+            timeRemainingMs: typeof scene.timeRemainingMs === 'number' ? scene.timeRemainingMs : null,
+            bumps: typeof scene.bumps === 'number' ? scene.bumps : null,
+            resonanceCount: typeof scene.resonanceCount === 'number' ? scene.resonanceCount : null,
+            distancePct
+          }
+        };
+      } catch (e) {
+        return { stage: 'unknown' };
+      }
+    };
   </script>
 </body>
 </html>

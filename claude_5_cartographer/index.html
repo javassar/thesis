@@ -986,6 +986,46 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        if (!game || !game.scene) {
+            return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('GameScene');
+        if (!scene) {
+            return { stage: 'loading' };
+        }
+        const phase = scene.gamePhase || 'unknown';
+        let landSaved = null;
+        if (scene.grid) {
+            let count = 0;
+            for (let col = 0; col < GRID_COLS; col++) {
+                for (let row = 0; row < GRID_ROWS; row++) {
+                    if (scene.grid[col][row].state !== 'consumed') {
+                        count += 1;
+                    }
+                }
+            }
+            landSaved = count;
+        }
+        const landPercent = typeof landSaved === 'number' ? Math.round(landSaved / (GRID_COLS * GRID_ROWS) * 100) : null;
+        const stage = landPercent !== null ? `phase:${phase} (land ${landPercent}%)` : `phase:${phase}`;
+        return {
+            stage,
+            detail: {
+                gamePhase: phase,
+                landSaved,
+                landPercent,
+                elapsedTime: typeof scene.elapsedTime === 'number' ? scene.elapsedTime : null,
+                citiesAlive: typeof scene.citiesAlive === 'number' ? scene.citiesAlive : null,
+                ink: typeof scene.ink === 'number' ? scene.ink : null
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};
     </script>
 </body>
 </html>

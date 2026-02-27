@@ -1636,6 +1636,58 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+  try {
+    if (!game || !game.scene) {
+      return { stage: 'loading' };
+    }
+    if (game.scene.isActive('TitleScene')) {
+      return { stage: 'title' };
+    }
+    if (game.scene.isActive('EndScene')) {
+      const endScene = game.scene.getScene('EndScene');
+      const won = !!endScene.won;
+      return {
+        stage: won ? 'end:win' : 'end:loss',
+        detail: {
+          won,
+          score: endScene.score ?? null,
+          casesProcessed: endScene.casesProcessed ?? null
+        }
+      };
+    }
+    if (!game.scene.isActive('GameScene')) {
+      return { stage: 'loading' };
+    }
+    const scene = game.scene.getScene('GameScene');
+    const wave = scene.currentWave ?? 0;
+    const casesThisWave = scene.casesThisWave ?? 0;
+    const totalCases = typeof CASES_PER_WAVE?.[wave] === 'number' ? CASES_PER_WAVE[wave] : null;
+    const transitioning = !!scene.waveTransitioning;
+    let stage = 'shift-start';
+    if (transitioning) {
+      stage = wave > 0 ? `transition-wave-${wave}` : 'transition';
+    } else if (wave > 0 && totalCases) {
+      stage = `wave ${wave} case ${casesThisWave}/${totalCases}`;
+    } else if (wave > 0) {
+      stage = `wave ${wave}`;
+    }
+    return {
+      stage,
+      detail: {
+        currentWave: wave,
+        casesThisWave,
+        totalCases,
+        casesProcessed: scene.casesProcessed ?? null,
+        casesCorrect: scene.casesCorrect ?? null,
+        casesMisfiled: scene.casesMisfiled ?? null
+      }
+    };
+  } catch (e) {
+    return { stage: 'unknown' };
+  }
+};
 </script>
 </body>
 </html>

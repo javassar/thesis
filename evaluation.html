@@ -152,9 +152,9 @@
         // sequential condition assignment using data pipe. pushing a condition timeline into the timeline variable
         var timeline = [];
         async function createExperiment() {
-            const condition = await jsPsychPipe.getCondition("5R4aeeQY1u0k"); // i checked that this is the right pipe, but should double check before releasing 
-            //if (condition == 0) { timeline = test_timeline; }
-            if (condition == 0) { timeline = block_1_ai_aware_timeline; }
+            const condition = 0//await jsPsychPipe.getCondition("5R4aeeQY1u0k"); // i checked that this is the right pipe, but should double check before releasing 
+            if (condition == 0) { timeline = test_timeline; }
+           // if (condition == 0) { timeline = block_1_ai_aware_timeline; }
             if (condition == 1) { timeline = block_1_ai_blind_timeline; }
             if (condition == 2) { timeline = block_2_ai_aware_timeline; }
             if (condition == 3) { timeline = block_2_ai_blind_timeline; }
@@ -302,7 +302,7 @@
             },
             type: jsPsychHtmlKeyboardResponse,
             choices: "ALL_KEYS",
-            stimulus: "Press any key to proceed to the first video game.",
+            stimulus: "Press any key to proceed to the first video game. Should you encounter a game-breaking bug, please report the issue in the Menu tab to the right of the screen.",
         };
 
         var pre_game_two = {
@@ -877,7 +877,9 @@ grows, it stops needing the player’s flames, and the player must learn to let 
         /* ------------- PUSHING TIMELINE FOR EACH CONDITION ----------------- */
 
         test_timeline.push(
-            
+            welcome_ai_aware,
+            pre_game_one,
+            game_chat_6_tidepainter,
             goodbye
         )
 

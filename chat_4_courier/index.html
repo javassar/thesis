@@ -1069,7 +1069,46 @@
       scene: ShadowCourierScene
     };
 
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
+    window.jackieThesisGame = game;
+    window.jackieThesisGetProgress = () => {
+      try {
+        if (!game || !game.scene) {
+          return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('ShadowCourier');
+        if (!scene) {
+          return { stage: 'loading' };
+        }
+        const mode = scene.mode;
+        const total = Array.isArray(scene.mailboxes) ? scene.mailboxes.length : 0;
+        const delivered = Array.isArray(scene.mailboxes)
+          ? scene.mailboxes.filter((box) => box.delivered).length
+          : 0;
+
+        let stage = 'playing';
+        if (mode === 'title') {
+          stage = 'title';
+        } else if (mode === 'end') {
+          stage = scene._won ? 'completed' : 'failed';
+        } else {
+          stage = `deliveries ${delivered}/${total}`;
+        }
+
+        return {
+          stage,
+          detail: {
+            mode: mode ?? null,
+            delivered,
+            total,
+            attemptsLeft: typeof scene.attemptsLeft === 'number' ? scene.attemptsLeft : null,
+            timeRemaining: typeof scene.timeRemaining === 'number' ? scene.timeRemaining : null
+          }
+        };
+      } catch (e) {
+        return { stage: 'unknown' };
+      }
+    };
   </script>
 </body>
 </html>

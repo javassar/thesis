@@ -1121,7 +1121,58 @@
       }
     };
 
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
+    window.jackieThesisGame = game;
+    window.jackieThesisGetProgress = () => {
+      try {
+        if (!game || !game.scene) {
+          return { stage: 'loading' };
+        }
+        if (game.scene.isActive('TitleScene')) {
+          return { stage: 'title' };
+        }
+        if (game.scene.isActive('EndScene')) {
+          const endScene = game.scene.getScene('EndScene');
+          const success = !!endScene.success;
+          return {
+            stage: success ? 'end:success' : 'end:fail',
+            detail: {
+              success,
+              shellsFilled: endScene.shellsFilled ?? null,
+              wavesUsed: endScene.wavesUsed ?? null
+            }
+          };
+        }
+        if (!game.scene.isActive('GameScene')) {
+          return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('GameScene');
+        const waveIndex = scene.waveIndex ?? 1;
+        const phase = scene.phase || 'Calm';
+        const shellsFilled = Array.isArray(scene.shells)
+          ? scene.shells.filter((s) => s.complete).length
+          : null;
+        const waiting = !!scene.waitingForFirstCarve;
+
+        let stage = `wave ${waveIndex}/12 - ${String(phase).toLowerCase()}`;
+        if (waiting && String(phase).toLowerCase() === 'calm') {
+          stage = `wave ${waveIndex}/12 - waiting-for-first-carve`;
+        }
+
+        return {
+          stage,
+          detail: {
+            waveIndex,
+            phase,
+            phaseTimer: typeof scene.phaseTimer === 'number' ? scene.phaseTimer : null,
+            shellsFilled,
+            waitingForFirstCarve: waiting
+          }
+        };
+      } catch (e) {
+        return { stage: 'unknown' };
+      }
+    };
   </script>
 </body>
 </html>

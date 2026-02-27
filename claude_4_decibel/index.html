@@ -1901,6 +1901,36 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+  try {
+    if (!game || !game.scene) {
+      return { stage: 'loading' };
+    }
+    if (game.scene.isActive('TitleScene')) {
+      return { stage: 'title' };
+    }
+    if (!game.scene.isActive('GameScene')) {
+      return { stage: 'loading' };
+    }
+    const scene = game.scene.getScene('GameScene');
+    const silenced = scene.instrumentsSilenced ?? 0;
+    const phase = scene.currentPhase ?? (silenced + 1);
+    const elapsedMs = typeof scene.elapsedTime === 'number' ? scene.elapsedTime : null;
+    const stage = `silenced ${silenced}/4 (phase ${phase})`;
+    return {
+      stage,
+      detail: {
+        instrumentsSilenced: silenced,
+        currentPhase: phase,
+        elapsedMs,
+        score: typeof scene.score === 'number' ? scene.score : null
+      }
+    };
+  } catch (e) {
+    return { stage: 'unknown' };
+  }
+};
 
 </script>
 </body>

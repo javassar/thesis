@@ -1195,7 +1195,49 @@
       scene: [BootScene, TitleScene, GameScene]
     };
 
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
+    window.jackieThesisGame = game;
+    window.jackieThesisGetProgress = () => {
+      try {
+        if (!game || !game.scene) {
+          return { stage: 'loading' };
+        }
+        if (game.scene.isActive('Title')) {
+          return { stage: 'title' };
+        }
+        if (!game.scene.isActive('Game')) {
+          return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('Game');
+        const gameState = scene.gameState;
+        const relicCollected = !!scene.relicCollected;
+        const exitOpen = !!scene.exitOpen;
+
+        let stage = 'infiltration';
+        if (gameState && gameState !== 'PLAY') {
+          stage = `ended:${String(gameState).toLowerCase()}`;
+        } else if (!relicCollected) {
+          stage = 'searching-for-relic';
+        } else if (exitOpen) {
+          stage = 'escape-to-exit';
+        } else {
+          stage = 'relic-collected';
+        }
+
+        return {
+          stage,
+          detail: {
+            gameState: gameState ?? null,
+            relicCollected,
+            exitOpen,
+            alertsCount: typeof scene.alertsCount === 'number' ? scene.alertsCount : null,
+            timeLeftMs: typeof scene.timerMs === 'number' ? scene.timerMs : null
+          }
+        };
+      } catch (e) {
+        return { stage: 'unknown' };
+      }
+    };
   </script>
 </body>
 </html>

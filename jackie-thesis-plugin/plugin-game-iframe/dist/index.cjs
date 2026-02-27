@@ -64,6 +64,14 @@ const info = {
     exit_reason: {
       type: jspsych.ParameterType.STRING
     },
+    /** Stage or milestone of the game at exit (if provided by the game). */
+    exit_stage: {
+      type: jspsych.ParameterType.STRING
+    },
+    /** Structured progress info from the game (if provided). */
+    exit_progress: {
+      type: jspsych.ParameterType.COMPLEX
+    },
     /** Reaction time in milliseconds from trial start to trial end. */
     rt: {
       type: jspsych.ParameterType.INT
@@ -101,6 +109,33 @@ class GameIframePlugin {
     const mouse_events = [];
     let lastMouseSampleTime = 0;
     const cleanupFns = [];
+    const getGameProgress = () => {
+      try {
+        const iframeWindow = iframe.contentWindow;
+        if (!iframeWindow) return null;
+        if (typeof iframeWindow.jackieThesisGetProgress === "function") {
+          return iframeWindow.jackieThesisGetProgress();
+        }
+        if (iframeWindow.jackieThesisProgress !== void 0) {
+          return iframeWindow.jackieThesisProgress;
+        }
+      } catch (e) {
+        console.warn(
+          "plugin-game-iframe: Could not read game progress from iframe.",
+          e
+        );
+      }
+      return null;
+    };
+    const deriveExitStage = (progress) => {
+      if (progress == null) return null;
+      if (typeof progress === "string") return progress;
+      if (typeof progress === "object") {
+        if (typeof progress.stage === "string") return progress.stage;
+        if (typeof progress.label === "string") return progress.label;
+      }
+      return null;
+    };
     const style = document.createElement("style");
     style.textContent = `
       .gi-container {
@@ -389,12 +424,16 @@ class GameIframePlugin {
       if (trialEnded) return;
       trialEnded = true;
       const rt = Math.round(performance.now() - startTime);
+      const exit_progress = getGameProgress();
+      const exit_stage = deriveExitStage(exit_progress);
       for (const fn of cleanupFns) {
         fn();
       }
       container.remove();
       this.jsPsych.finishTrial({
         exit_reason,
+        exit_stage,
+        exit_progress,
         rt,
         game_data,
         emergency_text,

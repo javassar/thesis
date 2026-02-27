@@ -1316,7 +1316,64 @@ const config = {
   }
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+  try {
+    if (!game || !game.scene) {
+      return { stage: 'loading' };
+    }
+    if (game.scene.isActive('TitleScene')) {
+      return { stage: 'title' };
+    }
+    if (game.scene.isActive('EndScene')) {
+      const endScene = game.scene.getScene('EndScene');
+      const endType = endScene.stats?.endType || 'ended';
+      return {
+        stage: `end:${endType}`,
+        detail: {
+          endType,
+          dependency: endScene.stats?.dependency ?? null,
+          gameTime: endScene.stats?.gameTime ?? null
+        }
+      };
+    }
+    if (!game.scene.isActive('GameScene')) {
+      return { stage: 'loading' };
+    }
+    const scene = game.scene.getScene('GameScene');
+    const mothY = scene.moth?.y;
+    let progress = null;
+    if (typeof mothY === 'number') {
+      progress = Math.max(0, Math.min(1, 1 - (mothY - MOON_Y) / (START_Y - MOON_Y)));
+    }
+    let zone = null;
+    if (typeof mothY === 'number') {
+      if (mothY <= MOON_Y + 150) {
+        zone = 'moon';
+      } else if (mothY < BLACKOUT_TOP) {
+        zone = 'upper-sky';
+      } else if (mothY <= BLACKOUT_BOTTOM) {
+        zone = 'blackout';
+      } else {
+        zone = 'lower-sky';
+      }
+    }
+    const pct = typeof progress === 'number' ? Math.round(progress * 100) : null;
+    return {
+      stage: typeof pct === 'number' ? `altitude ${pct}%` : 'in-flight',
+      detail: {
+        altitudePct: pct,
+        zone,
+        stamina: typeof scene.stamina === 'number' ? scene.stamina : null,
+        dependency: typeof scene.dependency === 'number' ? scene.dependency : null,
+        mothY: typeof mothY === 'number' ? Math.round(mothY) : null
+      }
+    };
+  } catch (e) {
+    return { stage: 'unknown' };
+  }
+};
 </script>
 </body>
 </html>

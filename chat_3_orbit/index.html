@@ -923,7 +923,40 @@
       scene: OrbitOddityScene
     };
 
-    new Phaser.Game(config);
+    const game = new Phaser.Game(config);
+    window.jackieThesisGame = game;
+    window.jackieThesisGetProgress = () => {
+      try {
+        if (!game || !game.scene) {
+          return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('OrbitOddity');
+        if (!scene) {
+          return { stage: 'loading' };
+        }
+        const state = scene.state;
+        const movementIndex = scene.movementIndex ?? 0;
+        let stage = 'playing';
+        if (state === 'title') {
+          stage = 'title';
+        } else if (state === 'complete') {
+          stage = 'complete';
+        } else {
+          stage = `movement-${movementIndex + 1}/3:${state}`;
+        }
+        return {
+          stage,
+          detail: {
+            state: state ?? null,
+            movementIndex,
+            launchesUsed: scene.launcher?.launchesUsed ?? null,
+            phraseProgress: scene.phraseProgress ?? null
+          }
+        };
+      } catch (e) {
+        return { stage: 'unknown' };
+      }
+    };
   </script>
 </body>
 </html>

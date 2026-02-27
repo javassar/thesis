@@ -1144,6 +1144,55 @@
       backgroundColor: '#0d162b',
       scene: [BootScene, TitleScene, GameScene]
     });
+    window.jackieThesisGame = game;
+    window.jackieThesisGetProgress = () => {
+      try {
+        if (!game || !game.scene) {
+          return { stage: 'loading' };
+        }
+        if (game.scene.isActive('Title')) {
+          return { stage: 'title' };
+        }
+        if (!game.scene.isActive('Game')) {
+          return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('Game');
+        const segmentIndex = scene.segmentIndex ?? 1;
+        const gateState = scene.gateState || {};
+        const gameState = scene.gameState;
+
+        let stage = `segment-${segmentIndex}`;
+        if (gameState === GAME_STATE.ENDING) {
+          stage = 'ending';
+        } else if (segmentIndex === 1 && !gateState.gate1Open) {
+          stage = `segment-1:ring-gate (${gateState.gate1Count || 0}/25)`;
+        } else if (segmentIndex === 2 && !gateState.gate2Open) {
+          stage = 'segment-2:hold-formation';
+        } else if (segmentIndex === 3 && !gateState.gate3Open) {
+          stage = 'segment-3:shape-gate';
+        } else if (segmentIndex >= 3 && gateState.gate3Open) {
+          stage = 'roost';
+        }
+
+        return {
+          stage,
+          detail: {
+            segmentIndex,
+            gameState: gameState ?? null,
+            gateState: {
+              gate1Open: !!gateState.gate1Open,
+              gate2Open: !!gateState.gate2Open,
+              gate3Open: !!gateState.gate3Open,
+              gate1Count: gateState.gate1Count ?? 0,
+              gate2Hold: gateState.gate2Hold ?? 0,
+              gate3Hold: gateState.gate3Hold ?? 0
+            }
+          }
+        };
+      } catch (e) {
+        return { stage: 'unknown' };
+      }
+    };
   </script>
 </body>
 </html>

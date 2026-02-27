@@ -1238,6 +1238,44 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+  try {
+    if (!game || !game.scene) {
+      return { stage: 'loading' };
+    }
+    if (game.scene.isActive('TitleScene')) {
+      return { stage: 'title' };
+    }
+    if (!game.scene.isActive('GameScene')) {
+      return { stage: 'loading' };
+    }
+    const scene = game.scene.getScene('GameScene');
+    const mothX = scene.moth?.x;
+    const pct = typeof mothX === 'number' ? Math.round((mothX / 6400) * 100) : null;
+    const glowPhase = typeof scene.mothGlowPhase === 'number' ? Math.round(scene.mothGlowPhase * 10) / 10 : null;
+    let stage = 'journey';
+    if (scene.isDead) {
+      stage = 'dead';
+    } else if (scene.isEnding) {
+      stage = 'ending';
+    } else if (pct !== null) {
+      stage = `distance ${pct}%`;
+    }
+    return {
+      stage,
+      detail: {
+        distancePct: pct,
+        glowPhase,
+        flamesPlaced: Array.isArray(scene.flames) ? scene.flames.length : null,
+        isDead: !!scene.isDead,
+        isEnding: !!scene.isEnding
+      }
+    };
+  } catch (e) {
+    return { stage: 'unknown' };
+  }
+};
 
 </script>
 </body>

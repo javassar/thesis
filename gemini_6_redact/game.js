@@ -42,6 +42,7 @@ class RedactGame extends Phaser.Scene {
         // A barrier with a fragile section blocking the way forward
         this.redactionBars.create(500, 500, 'redactionBar').setScale(1, 5).refreshBody();  // Lower part of barrier
         let fragileWall = this.redactionBars.create(500, 350, 'redactionBar').setScale(1, 5).refreshBody(); // Fragile middle part
+        this.fragileWall = fragileWall;
         this.redactionBars.create(500, 200, 'redactionBar').setScale(1, 5).refreshBody();  // Upper part of barrier
         
         // Mark the fragile section
@@ -719,3 +720,34 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+window.jackieThesisGame = game;
+window.jackieThesisGetProgress = () => {
+    try {
+        if (!game || !game.scene) {
+            return { stage: 'loading' };
+        }
+        const scene = game.scene.getScene('RedactGame');
+        if (!scene) {
+            return { stage: 'loading' };
+        }
+        const playerSpeed = typeof scene.playerSpeed === 'number' ? scene.playerSpeed : null;
+        const mobilityUnlocked = typeof playerSpeed === 'number' ? playerSpeed > 50 : null;
+        const fragileWallAlive = scene.fragileWall ? scene.fragileWall.active !== false : null;
+        let stage = 'static';
+        if (mobilityUnlocked) {
+            stage = fragileWallAlive ? 'mobile:barrier' : 'mobile:barrier-cleared';
+        }
+        return {
+            stage,
+            detail: {
+                playerSpeed,
+                mobilityUnlocked,
+                fragileWallAlive,
+                playerX: scene.player?.x ?? null,
+                playerY: scene.player?.y ?? null
+            }
+        };
+    } catch (e) {
+        return { stage: 'unknown' };
+    }
+};
