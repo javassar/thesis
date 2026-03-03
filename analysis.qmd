@@ -1,0 +1,299 @@
+---
+title: "Thesis data analysis"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load in libraries and data 
+#| echo: false
+
+library(tidyverse)
+library(osfr) # for loading data in
+library(purrr) #for parsing raw df
+library(jsonlite) # for parsing raw df
+library(tibble) # for parsing
+library(stringr) # also for parsing 
+
+# project is public, so don't need authentication
+
+# retrieve the project node and download CSVs
+project_node <- osf_retrieve_node("w6rxq")
+
+# create a local directory for the data
+local_dir <- "data/osf_csvs"
+if (!dir.exists(local_dir)) dir.create(local_dir, recursive = TRUE)
+
+# list all files (n_max = Inf ensures we get all ~100 files)
+# and download them to the local directory
+osf_files <- project_node %>%
+  osf_ls_files(n_max = Inf) %>%
+  filter(str_detect(name, "\\.csv$"))
+
+osf_download(osf_files, path = local_dir, conflicts = "skip")
+
+# read and combine all CSVs into one dataframe
+csv_paths <- list.files(local_dir, pattern = "\\.csv$", full.names = TRUE)
+
+raw_df <- csv_paths %>%
+  set_names(basename(.) %>% str_remove("\\.csv$")) %>%
+  map_dfr(~read_csv(.x, show_col_types = FALSE), .id = "csv_name")
+
+```
+
+```{r}
+#| label: turn response data into question and answer columns
+#| echo: false
+
+# keeping all rows but parsing the response column to separate each question into its own row with an answer column
+parsed_long_df <- raw_df %>%
+  mutate(
+    parsed_response = map(response, ~ {
+      if (!is.na(.x) && str_starts(.x, "\\{")) {
+        tryCatch(fromJSON(.x), error = function(e) NULL)
+      } else {
+        NULL
+      }
+    })
+  ) %>%
+  
+  mutate(
+    parsed_response = map(parsed_response, ~ {
+      if (is.null(.x)) {
+        tibble(name = NA_character_, value = NA_character_)
+      } else {
+        enframe(.x) %>%
+          mutate(value = as.character(value))
+      }
+    })
+  ) %>%
+  
+  unnest(parsed_response) %>%
+  
+  rename(
+    question = name,
+    answer   = value
+  ) 
+
+#check_working <- parsed_long_df %>% select(response, question, answer)
+```
+
+```{r}
+#| label: clean and separate df into surveys and game 
+#| echo: false 
+
+#add condition (ai blind vs aware) column before splitting up 
+parsed_long_df <- parsed_long_df %>%
+  group_by(prolific_subject_id) %>%
+  mutate(condition = ifelse(any(phase == "ai-aware-question"),
+                            "aware",
+                            "blind")) %>%
+  ungroup() %>%
+  mutate(prolific_subject_id = ifelse(
+   csv_name == "1y0okya8tt", "6926452ca418f7b008a000a3", ifelse(
+     csv_name == "uqe14unhtx", "697a9cc58e44ed0a6d497a73", prolific_subject_id))
+ ) # manually impute the very first two participants' prolific subject ids (matched by completion time)
+
+## survey df
+# create survey df 
+surveys_df <- parsed_long_df %>%
+  select(csv_name, prolific_subject_id, question, answer, phase, condition, trial_index, trial_type, stimulus, rt, time_elapsed, internal_node_id) %>% # removing cols about game
+  filter(question != "question1") %>% # this was text that showed participants the game concept, but it was inside a survey so it was recorded as though it was a survey question 
+  filter(!(is.na(question))) # don't need rows that aren't questions
+
+# create game df
+game_df <- parsed_long_df %>%
+  filter(trial_type == "plugin-game-iframe") %>% # filters only for rows about the actual game 
+  mutate(game_order = case_when(  # trial_index tells us whether they played the game first, second, or third!
+    trial_index == 3 ~ "Game_1", 
+    trial_index == 7 ~ "Game_2",
+    trial_index == 11 ~ "Game_3",
+    .default = NA
+  )) %>%
+  mutate(game = phase) %>% # adding this for clarity but keeping phase in the df in case i combine dfs in the future
+  select(prolific_subject_id, game, game_data, exit_reason, exit_stage, exit_progress, emergency_text, keystrokes, mouse_events, game_order, condition) 
+
+```
+
+```{r}
+#| label: write df csvs just because
+#| echo: false 
+
+write.csv(surveys_df, "cleaned_evaluation_survey_data.csv")
+write.csv(game_df, "cleaned_game_data.csv")
+
+```
+
+```{r}
+#| label: checking frequency of each game 
+
+# make df of just the games
+game_frequency_individual_df <- game_df %>%
+  group_by(game, condition) %>%
+  count()
+
+game_frequency_by_llm_df <- game_df %>%
+  mutate(llm = case_when(
+    str_detect(game, "gemini") ~ "gemini",
+    str_detect(game, "claude") ~ "claude",
+    str_detect(game, "chat") ~ "chat",
+    .default = NA
+  )) %>%
+  group_by(llm, condition) %>%
+  count()
+```
+
+Each game was played a relatively equal number of times individually and by LLM and level (AI-aware vs. AI-blind), with most games evaluated 7 times.
+
+```{r}
+#| label: identify which game blocks have been played 
+#| echo: false 
+
+##prep dfs 
+# turn games df into game blocks format so we can compare with the planned blocks 
+game_blocks_played_df <- game_df %>%
+  select(prolific_subject_id, game, game_order, condition) %>%
+  pivot_wider(names_from = game_order, values_from = game) %>% # turn hyphens into underscores to match entries in the planned blocks
+  mutate(across(starts_with("Game_"),
+                ~ str_replace_all(., "-", "_")))
+
+# read in the plan for the game blocks 
+game_blocks_plan_df <- read.csv("game_blocks.csv") %>%
+  rename("block" = "X")
+
+# duplicate the blocks so there's one per condition
+game_blocks_plan_w_condition_df <- game_blocks_plan_df[rep(seq_len(nrow(game_blocks_plan_df)), each = 2), ]
+
+#add condition column and update manually changed blocks
+game_blocks_plan_w_condition_df <- game_blocks_plan_df %>%
+  slice(rep(1:n(), each = 2)) %>%
+  mutate(condition = rep(c("aware", "blind"), times = nrow(game_blocks_plan_df))) %>%
+  mutate( # i changed a game in block 33 before it was played because the game that was previously in this block (game_chat_4_decibel) was going to get overplayed 
+    Game_2 = ifelse(block == 33,
+                    "game_chat_1_echo",
+                    Game_2)
+  ) %>%
+  mutate( # i changed a game in block 9 before it was played because the game that was previously in this block was going to get overplayed 
+    Game_2 = ifelse(block == 9,
+                    "game_claude_5_cartographer",
+                    Game_2)
+  ) %>%
+  mutate(Game_3 = ifelse(block == 11 & condition == "aware", "game_claude_1_light", Game_3)) %>%
+  mutate(Game_2 = ifelse(block == 7 & condition == "aware", "game_claude_1_light", Game_2)) %>%
+  mutate(Game_1 = ifelse(block == 7 & condition == "blind", "game_chat_1_echo", Game_1)) %>%
+  mutate(Game_1 = ifelse(block == 17 & condition == "aware", "game_chat_5_glider", Game_1)) %>%
+  mutate(Game_1 = ifelse(block == 18 & condition == "blind", "game_chat_1_echo", Game_1)) %>%
+  mutate(Game_2 = ifelse(block == 18 & condition == "blind", "game_claude_2_moth", Game_2)) %>%
+  mutate(Game_3 = ifelse(block == 20 & condition == "blind", "game_claude_1_light", Game_3)) 
+### add in manipulations of blocks 28 blind, 37 blind, 40 blind here
+
+
+## now actually check how many times each block has been played
+# join the dfs to label the blocks that participants actually played 
+game_blocks_played_labeled_df <- game_blocks_played_df %>%
+  left_join(
+    game_blocks_plan_w_condition_df,
+    by = c("Game_1", "Game_2", "Game_3", "condition")
+  )
+
+# now count how many times a block was played per condition
+block_counts <- game_blocks_played_labeled_df %>%
+  count(block, condition, name = "times_played") %>%
+  arrange(block)
+
+# merge w full df to see which haven't been played at all
+block_counts_full <- game_blocks_plan_w_condition_df %>%
+  distinct(block, condition) %>%
+  left_join(block_counts, by = c("block", "condition")) %>%
+  mutate(times_played = replace_na(times_played, 0)) %>%
+  arrange(block)
+
+blocks_to_remove_from_timeline <- block_counts_full %>%
+  filter(times_played != 0)
+
+blocks_not_played <- block_counts_full %>%
+  filter(times_played == 0)
+blocks_not_played
+
+```
+
+
+```{r}
+#| label: look at emergency exits 
+#| echo: false 
+
+emergency_exits <- game_df %>%
+  filter(exit_reason != "game-complete") %>%
+  select(prolific_subject_id, game, emergency_text, game_order)
+
+#grab count. ideally want it to be 0
+n_emergency_exits <- emergency_exits %>%
+  nrow()
+
+```
+
+Participants exited a game early `r n_emergency_exits` times, presumably due to technical errors. 
+
+```{r}
+#| label: attention and commitment check
+#| echo: false 
+
+## attention check 
+# make df of people who failed 
+attention_check_flagged <- surveys_df %>%
+  filter(question == "attention-check") %>%
+  group_by(prolific_subject_id) %>%
+  mutate(n_pass = sum(answer == 3),
+    flag = case_when(
+      n_pass == 0 ~ "fail (triple)", # don't pay on prolific
+      n_pass == 1 ~ "fail (double)", # don't pay on prolific
+      n_pass == 2 ~ "fail (single)", # do pay on prolific
+      n_pass == 3 ~ "pass", # yay 
+      TRUE ~ NA_character_ )) %>%
+  ungroup() %>%
+  filter(flag != "pass")
+
+#extract list of ids so we can remove their data
+failed_attention_check_ids <- attention_check_flagged %>%
+  distinct(prolific_subject_id) %>%
+  pull(prolific_subject_id)
+
+## commitment check
+# make df 
+fail_commitment_check <- surveys_df %>%
+  filter(question == "commitment-check") %>%
+  filter(answer != "yes")
+
+#extract list of ids so we can remove their data
+failed_commitment_check_ids <- fail_commitment_check %>%
+  distinct(prolific_subject_id) %>%
+  pull(prolific_subject_id)
+
+
+# now remove from df 
+surveys_df <- surveys_df %>%
+  filter(!prolific_subject_id %in% failed_attention_check_ids) %>%
+  filter(!prolific_subject_id %in% failed_commitment_check_ids)
+```
+
+```{r}
+#| label: count nums of subjects (before cleaning, failed checks, and after cleaning)
+#| echo: false
+
+total_num_not_clean_subjects_in_data <- n_distinct(parsed_long_df$prolific_subject_id) 
+
+n_failed_commitment_check <- fail_commitment_check %>%
+  summarize(n_failed_commitment_check = n_distinct(prolific_subject_id)) %>%
+  pull(n_failed_commitment_check)
+
+n_failed_attention_checks <- attention_check_flagged %>%
+  summarize(n_failed_attention_checks = n_distinct(prolific_subject_id)) %>%
+  pull(n_failed_attention_checks)
+
+total_num_clean_subjects_in_data <- n_distinct(surveys_df$prolific_subject_id)
+
+```
+
+Through Prolific, 83 participants completed the study. We received data from `r total_num_not_clean_subjects_in_data` of these participants. We excluded data from `r n_failed_attention_checks` subjects for failing one or more of our attention check questions and `r n_failed_commitment_check` subjects for not committing to providing thoughtful answers to the questions in the survey. This resulted in a total of `r total_num_clean_subjects_in_data` participants' data being analyzed.
+
+
