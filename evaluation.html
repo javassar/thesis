@@ -152,7 +152,7 @@
         // sequential condition assignment using data pipe. pushing a condition timeline into the timeline variable
         var timeline = [];
         async function createExperiment() {
-            const condition = 1 //await jsPsychPipe.getCondition("5R4aeeQY1u0k"); // i checked that this is the right pipe, but should double check before releasing 
+            const condition = await jsPsychPipe.getCondition("5R4aeeQY1u0k"); // i checked that this is the right pipe, but should double check before releasing 
            // if (condition == 0) { timeline = test_timeline; }
            // if (condition == 0) { timeline = block_1_ai_aware_timeline; }
        //     if (condition == 0) { timeline = block_1_ai_blind_timeline; }
@@ -209,7 +209,7 @@
       //      if (condition == 52) { timeline = block_27_ai_aware_timeline; }
      //       if (condition == 53) { timeline = block_27_ai_blind_timeline; }
   // HASN'T BEEN COMPLETED YET          if (condition == 10) { timeline = block_28_ai_aware_timeline; }
- // HASN'T BEEN COMPLETED YET           if (condition == 11) { timeline = block_28_ai_blind_timeline; }
+        if (condition == 0) { timeline = block_28_ai_blind_timeline; }
      //       if (condition == 56) { timeline = block_29_ai_aware_timeline; }
      //       if (condition == 57) { timeline = block_29_ai_blind_timeline; }
      //       if (condition == 58) { timeline = block_30_ai_aware_timeline; }
@@ -219,7 +219,7 @@
   // HASN'T BEEN COMPLETED          if (condition == 12) { timeline = block_32_ai_aware_timeline; }
     //        if (condition == 63) { timeline = block_32_ai_blind_timeline; }
        //     if (condition == 25) { timeline = block_33_ai_aware_timeline; }
-            if (condition == 1) { timeline = block_33_ai_blind_timeline; }
+    //        if (condition == 1) { timeline = block_33_ai_blind_timeline; }
        //     if (condition == 66) { timeline = block_34_ai_aware_timeline; }
       //      if (condition == 67) { timeline = block_34_ai_blind_timeline; }
   // HASN'T BEEN COMPLETED YET          if (condition == 14) { timeline = block_35_ai_aware_timeline; }
@@ -227,13 +227,13 @@
       //      if (condition == 27) { timeline = block_36_ai_aware_timeline; }
     //        if (condition == 71) { timeline = block_36_ai_blind_timeline; }
     //        if (condition == 72) { timeline = block_37_ai_aware_timeline; }
-  // HASN'T BEEN COMPLETED YET         if (condition == 15) { timeline = block_37_ai_blind_timeline; }
+           if (condition == 1) { timeline = block_37_ai_blind_timeline; }
     //        if (condition == 74) { timeline = block_38_ai_aware_timeline; }
    //         if (condition == 75) { timeline = block_38_ai_blind_timeline; }
    //         if (condition == 25) { timeline = block_39_ai_aware_timeline; }
     //        if (condition == 77) { timeline = block_39_ai_blind_timeline; }
    //         if (condition == 78) { timeline = block_40_ai_aware_timeline; }
-  // HASN'T BEEN COMPLETED YET          if (condition == 16) { timeline = block_40_ai_blind_timeline; }
+            if (condition == 2) { timeline = block_40_ai_blind_timeline; }
      //       if (condition == 80) { timeline = block_41_ai_aware_timeline; }
      //       if (condition == 81) { timeline = block_41_ai_blind_timeline; }
             jsPsych.run([...timeline, save_data]);
@@ -2050,13 +2050,13 @@ grows, it stops needing the player’s flames, and the player must learn to let 
             evaluation_game_gemini_1_static,
             concept_gemini_1_static,
             pre_game_two,
-            game_chat_1_echo,
-            evaluation_game_chat_1_echo,
-            concept_chat_1_echo,
+            game_claude_2_moth,
+            evaluation_game_claude_2_moth,
+            concept_claude_2_moth,
             pre_game_three,
-            game_claude_1_light,
-            evaluation_game_claude_1_light,
-            concept_claude_1_light,
+            game_claude_5_cartographer,
+            evaluation_game_claude_5_cartographer,
+            concept_claude_5_cartographer,
             pre_baseline,
             baseline_questions,
             ai_blind_question,
@@ -2424,13 +2424,13 @@ grows, it stops needing the player’s flames, and the player must learn to let 
             welcome_ai_blind,
             commitment_check,
             pre_game_one,
-            game_chat_1_echo,
-            evaluation_game_chat_1_echo,
-            concept_chat_1_echo,
+            game_gemini_4_substratum,
+            evaluation_game_gemini_4_substratum,
+            concept_gemini_4_substratum,
             pre_game_two,
-            game_claude_2_moth,
-            evaluation_game_claude_2_moth,
-            concept_claude_2_moth,
+            game_gemini_3_suture,
+            evaluation_game_gemini_3_suture,
+            concept_gemini_3_suture,
             pre_game_three,
             game_claude_3_bureaucromancer,
             evaluation_game_claude_3_bureaucromancer,
@@ -2550,17 +2550,17 @@ grows, it stops needing the player’s flames, and the player must learn to let 
             welcome_ai_blind,
             commitment_check,
             pre_game_one,
-            game_claude_2_moth,
-            evaluation_game_claude_2_moth,
-            concept_claude_2_moth,
+            game_chat_4_courier,
+            evaluation_game_chat_4_courier,
+            concept_chat_4_courier,
             pre_game_two,
             game_gemini_6_redact,
             evaluation_game_gemini_6_redact,
             concept_gemini_6_redact,
             pre_game_three,
-            game_claude_1_light,
-            evaluation_game_claude_1_light,
-            concept_claude_1_light,
+            game_claude_4_decibel,
+            evaluation_game_claude_4_decibel,
+            concept_claude_4_decibel,
             pre_baseline,
             baseline_questions,
             ai_blind_question,
