@@ -156,9 +156,9 @@
         // sequential condition assignment using data pipe. pushing a condition timeline into the timeline variable
         var timeline = [];
         async function createExperiment() {
-            const condition = await jsPsychPipe.getCondition("5R4aeeQY1u0k"); // i checked that this is the right pipe, but should double check before releasing 
+            const condition = 0//await jsPsychPipe.getCondition("5R4aeeQY1u0k"); // i checked that this is the right pipe, but should double check before releasing 
             if (condition == 0) { timeline = custom_timeline_blind_one; }
-            if (condition == 1) { timeline = custom_timeline_blind_two; }
+       //     if (condition == 1) { timeline = custom_timeline_blind_two; }
           //  if (condition == 0) { timeline = custom_timeline_blind_one; }
          //   if (condition == 0) { timeline = custom_timeline_blind_two; }
            // if (condition == 0) { timeline = block_1_ai_aware_timeline; }
