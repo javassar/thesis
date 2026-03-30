@@ -6,7 +6,9 @@ editor: visual
 
 ```{r}
 #| label: load in libraries and data 
-#| echo: false
+#| include: false
+#| warning: false
+#| message: false
 
 library(tidyverse)
 library(osfr) # for loading data in
@@ -14,36 +16,68 @@ library(purrr) #for parsing raw df
 library(jsonlite) # for parsing raw df
 library(tibble) # for parsing
 library(stringr) # also for parsing 
+library(lme4) # for LMM
+library(lmerTest) # for ICC 
+library(emmeans) # for marginal means
+library(irr) # for ICC
+library(psych)
+library(broom.mixed)
+library(effsize)
+library(likert)  # for making likert plots
+library(knitr) # for making nicer tables 
 
-# project is public, so don't need authentication
 
-# retrieve the project node and download CSVs
-project_node <- osf_retrieve_node("w6rxq")
+### ditching direct osf download becuase it downloads a different set of files every time and i can't figure out why
 
-# create a local directory for the data
-local_dir <- "data/osf_csvs"
-if (!dir.exists(local_dir)) dir.create(local_dir, recursive = TRUE)
+# # retrieve the project node and download CSVs
+# project_node <- osf_retrieve_node("w6rxq")
+# 
+# # create a local directory for the data
+# local_dir <- "data/osf_csvs"
+# if (!dir.exists(local_dir)) dir.create(local_dir, recursive = TRUE)
+# 
+# # UNCOMMENT THESE LINES FOR REPRODUCIBILITY
+# # list all files (n_max = Inf ensures we get all ~100 files)
+# # and download them to the local directory
+# osf_files <- project_node %>%
+#   osf_ls_files(n_max = Inf) %>%
+#   filter(str_detect(name, "\\.csv$"))
+# 
+# osf_download(osf_files, path = local_dir, conflicts = "skip")
+# 
+# # read and combine all CSVs into one dataframe
+# csv_paths <- list.files(local_dir, pattern = "\\.csv$", full.names = TRUE) %>%
+#   sort()
+# 
+# raw_df <- csv_paths %>%
+#   set_names(basename(.) %>% str_remove("\\.csv$")) %>%
+#   purrr::map_dfr(readr::read_csv, show_col_types = FALSE, .id = "csv_name")
 
-# list all files (n_max = Inf ensures we get all ~100 files)
-# and download them to the local directory
-osf_files <- project_node %>%
-  osf_ls_files(n_max = Inf) %>%
-  filter(str_detect(name, "\\.csv$"))
 
-osf_download(osf_files, path = local_dir, conflicts = "skip")
+### manually downloaded osf files folder from the website and added it to this project  
+# folder containing all OSF csv files
+data_dir <- "osfstorage-archive"
 
-# read and combine all CSVs into one dataframe
-csv_paths <- list.files(local_dir, pattern = "\\.csv$", full.names = TRUE)
+# get all csv paths (sorted for reproducibility)
+csv_paths <- list.files(
+  data_dir,
+  pattern = "\\.csv$",
+  full.names = TRUE
+) %>%
+  sort()
 
+# read and combine
 raw_df <- csv_paths %>%
-  set_names(basename(.) %>% str_remove("\\.csv$")) %>%
-  map_dfr(~read_csv(.x, show_col_types = FALSE), .id = "csv_name")
+  set_names(basename(.) %>% str_remove("\\.csv$")) %>% 
+  purrr::map_dfr(readr::read_csv, show_col_types = FALSE, .id = "csv_name")
 
 ```
 
 ```{r}
 #| label: turn response data into question and answer columns
-#| echo: false
+#| include: false
+#| warning: false
+#| message: false
 
 # keeping all rows but parsing the response column to separate each question into its own row with an answer column
 parsed_long_df <- raw_df %>%
@@ -79,10 +113,12 @@ parsed_long_df <- raw_df %>%
 ```
 
 ```{r}
-#| label: clean and separate df into surveys and game 
-#| echo: false 
+#| label: add prolific demo file & merge with df
+#| echo: false
+#| warning: false
+#| message: false
 
-#add condition (ai blind vs aware) column before splitting up 
+#add condition (ai blind vs aware) column and manually impute some missing ids
 parsed_long_df <- parsed_long_df %>%
   group_by(prolific_subject_id) %>%
   mutate(condition = ifelse(any(phase == "ai-aware-question"),
@@ -92,8 +128,25 @@ parsed_long_df <- parsed_long_df %>%
   mutate(prolific_subject_id = ifelse(
    csv_name == "1y0okya8tt", "6926452ca418f7b008a000a3", ifelse(
      csv_name == "uqe14unhtx", "697a9cc58e44ed0a6d497a73", prolific_subject_id))
- ) # manually impute the very first two participants' prolific subject ids (matched by completion time)
+ )
 
+demo_df <- read_csv("prolific_demographic_export_6987c292780adf01bb926159.csv") %>%
+  rename(prolific_subject_id = "Participant id") # match name to our df
+
+parsed_long_df <- right_join(parsed_long_df, demo_df, by = "prolific_subject_id") %>% # only keeping obvs in both
+ filter(!(is.na(csv_name))) %>%
+ filter(Status == "APPROVED" | prolific_subject_id == "670ff2e18c2f93beac6a6a72")
+
+
+testing <- parsed_long_df %>%
+  filter(condition == "blind") 
+
+n_distinct(parsed_long_df$prolific_subject_id)
+```
+
+```{r}
+#| label: separate df into surveys and game dfs
+#| echo: false 
 ## survey df
 # create survey df 
 surveys_df <- parsed_long_df %>%
@@ -111,13 +164,79 @@ game_df <- parsed_long_df %>%
     .default = NA
   )) %>%
   mutate(game = phase) %>% # adding this for clarity but keeping phase in the df in case i combine dfs in the future
-  select(prolific_subject_id, game, game_data, exit_reason, exit_stage, exit_progress, emergency_text, keystrokes, mouse_events, game_order, condition) 
+  select(prolific_subject_id, game, game_data, exit_reason, exit_stage, exit_progress, emergency_text, keystrokes, mouse_events, game_order, condition)
 
 ```
 
 ```{r}
-#| label: write df csvs just because
+#| label: attention and commitment check
 #| echo: false 
+
+## attention check 
+# make df of people who failed 
+attention_check_flagged <- surveys_df %>%
+  filter(question == "attention-check") %>%
+  group_by(prolific_subject_id) %>%
+  mutate(n_pass = sum(answer == 3),
+    flag = case_when(
+      n_pass == 0 ~ "fail (triple)", # don't pay on prolific
+      n_pass == 1 ~ "fail (double)", # don't pay on prolific
+      n_pass == 2 ~ "fail (single)", # do pay on prolific
+      n_pass == 3 ~ "pass", # yay 
+      TRUE ~ NA_character_ )) %>%
+  ungroup() %>%
+  filter(flag != "pass")
+
+#extract list of ids so we can remove their data
+failed_attention_check_ids <- attention_check_flagged %>%
+  distinct(prolific_subject_id) %>%
+  pull(prolific_subject_id)
+
+## commitment check
+# make df 
+fail_commitment_check <- surveys_df %>%
+  filter(question == "commitment-check") %>%
+  filter(answer != "yes")
+
+#extract list of ids so we can remove their data
+failed_commitment_check_ids <- fail_commitment_check %>%
+  distinct(prolific_subject_id) %>%
+  pull(prolific_subject_id)
+
+# now remove from df. also remove subject who returned their study after completion. we still have their evaluation data on osf so we could use it; however, their messaging on prolific is stressing me out 
+surveys_df <- surveys_df %>%
+  filter(!prolific_subject_id %in% failed_attention_check_ids) %>%
+  filter(!prolific_subject_id %in% failed_commitment_check_ids) 
+
+game_df <- game_df %>%
+  filter(!prolific_subject_id %in% failed_attention_check_ids) %>%
+  filter(!prolific_subject_id %in% failed_commitment_check_ids) 
+
+```
+
+```{r}
+#| label: count nums of subjects (before cleaning, failed checks, and after cleaning)
+#| echo: false
+
+total_num_not_clean_subjects_in_data <- n_distinct(parsed_long_df$prolific_subject_id) 
+
+n_failed_commitment_check <- fail_commitment_check %>%
+  summarize(n_failed_commitment_check = n_distinct(prolific_subject_id)) %>%
+  pull(n_failed_commitment_check)
+
+n_failed_attention_checks <- attention_check_flagged %>%
+  summarize(n_failed_attention_checks = n_distinct(prolific_subject_id)) %>%
+  pull(n_failed_attention_checks)
+
+total_num_clean_subjects_in_data <- n_distinct(surveys_df$prolific_subject_id)
+
+```
+
+Through Prolific, 83 participants completed the study. We received data from `r total_num_not_clean_subjects_in_data` of these participants. We excluded data from `r n_failed_attention_checks` subjects for failing one or more of our attention check questions and `r n_failed_commitment_check` subjects for not committing to providing thoughtful answers to the questions in the survey. This resulted in a total of `r total_num_clean_subjects_in_data` participants' data being analyzed.
+
+```{r}
+#| label: write df csvs 
+#| echo: false
 
 write.csv(surveys_df, "cleaned_evaluation_survey_data.csv")
 write.csv(game_df, "cleaned_game_data.csv")
@@ -125,7 +244,8 @@ write.csv(game_df, "cleaned_game_data.csv")
 ```
 
 ```{r}
-#| label: checking frequency of each game 
+#| label: (for conducting experiment) checking frequency of each game 
+#| echo: false
 
 # make df of just the games
 game_frequency_individual_df <- game_df %>%
@@ -141,13 +261,15 @@ game_frequency_by_llm_df <- game_df %>%
   )) %>%
   group_by(llm, condition) %>%
   count()
+
+#game_frequency_individual_df
+#game_frequency_by_llm_df
+
 ```
 
-Each game was played a relatively equal number of times individually and by LLM and level (AI-aware vs. AI-blind), with most games evaluated 7 times.
-
 ```{r}
-#| label: identify which game blocks have been played 
-#| echo: false 
+#| label: (for conducting experiment) identify which game blocks have been played 
+#| include: false 
 
 ##prep dfs 
 # turn games df into game blocks format so we can compare with the planned blocks 
@@ -217,83 +339,1354 @@ blocks_not_played
 
 ```
 
-
+# Emergency exits & debugging log
 ```{r}
-#| label: look at emergency exits 
+#| label: look at emergency exits (quantitative)
 #| echo: false 
+#| warning: false
+#| message: false
 
+#make df 
 emergency_exits <- game_df %>%
   filter(exit_reason != "game-complete") %>%
   select(prolific_subject_id, game, emergency_text, game_order)
 
-#grab count. ideally want it to be 0
+#grab count
 n_emergency_exits <- emergency_exits %>%
   nrow()
 
+# see which games were exited and how many times 
+n_emergency_exits_per_game <- emergency_exits %>%
+  count(game) %>%
+  arrange(desc(n)) 
+
+# see how often a participant exited 0 games, just 1 game, 2 games, or all 3
+n_emergency_exits_per_participant <- emergency_exits %>%
+  count(prolific_subject_id) %>%
+  #arrange(desc(n)) # can cut off code here if i want to see who exited 
+  rename(n_games_exited_by_participant = n) %>%
+  count(n_games_exited_by_participant) %>%
+  rename(n_participants = n)
+  
+kable(n_emergency_exits_per_game, col.names = c("Game", "Number of exits from game"), format = "html")
+
 ```
 
-Participants exited a game early `r n_emergency_exits` times, presumably due to technical errors. 
+```{r}
+#| label: emergency exits qual analysis
+#| include: false 
+
+#write csv so i can do encoded analysis in excel
+write.csv(emergency_exits, "emergency_exits.csv")
+
+#load analysis back in. in this analysis, i tracked peoples' reported reasons for exiting the game
+emergency_exit_qual_raw <- read_csv("emergency_exits_qual_encoded.csv")
+
+# pull exit progress to put back in the qual df since i didn't include this when i first wrote the emergency exits df that i then added qual analysis to. i didn't put a lot of effort into making the exit progress tracking, so it might turn out to be pretty unhelpful
+exit_progress_for_merging <- game_df %>%
+  select(prolific_subject_id, condition, game, exit_stage, exit_progress, keystrokes, mouse_events)
+
+emergency_exit_qual <- emergency_exit_qual_raw %>%
+  merge(exit_progress_for_merging, by = c("prolific_subject_id", "game")) %>%
+  select(prolific_subject_id, condition, game, ambiguity_level, genuine_fatal_game_bug, alleged_fatal_game_bug, too_difficult, gameplay_unclear, no_reason_apparent_lack_of_problems, stuck_unclear, insufficient_information, game_order, emergency_text, exit_stage, exit_progress, keystrokes, mouse_events, my_summary) 
+
+#now looking at the stage in the game at which the participants exited. the data for this isn't as clear so i can't quite tell with some people.
+
+# the exit progress for some of them would have me think that the person exited at the start of the game but then their exit reason cites things like not being able to get through a part of the game that isn't at the start, so i'm a little confused. i think some of the exit progress trackers aren't trustworthy, so i maybe shouldn't pursue this. it wouldn't be super informative anyway; would just be nice to know 
+
+
+### for inline text: i'm just manually writing it in the report for ease and since i'm not using this actual doc in my thesis
+
+#by reason:
+genuine_bug_total_exits <- emergency_exit_qual %>% filter(genuine_fatal_game_bug == 1) %>% count
+genuine_bug_total_games <- emergency_exit_qual %>% filter(genuine_fatal_game_bug == 1) %>% summarise(n = n_distinct(game))
+
+alleged_bug_total_exits <- emergency_exit_qual %>% filter(alleged_fatal_game_bug == 1) %>% count
+alleged_bug_total_games <- emergency_exit_qual %>% filter(alleged_fatal_game_bug == 1) %>% summarise(n = n_distinct(game))
+
+difficulty_total_exits <- emergency_exit_qual %>% filter(too_difficult == 1) %>% count
+difficulty_total_games <- emergency_exit_qual %>% filter(too_difficult == 1) %>% summarize(n = n_distinct(game))
+
+gameplay_unclear_total_exits <- emergency_exit_qual %>% filter(gameplay_unclear == 1) %>% count
+gameplay_unclear_total_games <- emergency_exit_qual %>% filter(gameplay_unclear == 1) %>% summarise(n = n_distinct(game))
+
+no_problem_total_exits <- emergency_exit_qual %>% filter(no_reason_apparent_lack_of_problems == 1) %>% count
+no_problem_total_games <- emergency_exit_qual %>% filter(no_reason_apparent_lack_of_problems == 1) %>% summarize(n = n_distinct(game))
+
+insufficient_info_total_exits <- emergency_exit_qual %>% filter(insufficient_information == 1 | stuck_unclear == 1) %>% count
+
+insufficient_info_total_games <- emergency_exit_qual %>% filter(insufficient_information == 1 | stuck_unclear == 1) %>% summarize(n = n_distinct(game))
+
+emergency_exit_qual %>% filter(ambiguity_level == "High") %>% group_by(game) %>% count
+
+genuine_bug_total_exits # good
+genuine_bug_total_games # good 
+alleged_bug_total_exits
+alleged_bug_total_games
+difficulty_total_exits # good 
+difficulty_total_games # good 
+gameplay_unclear_total_exits # good
+gameplay_unclear_total_games # good
+no_problem_total_exits # good 
+no_problem_total_games # good 
+insufficient_info_total_exits # good
+insufficient_info_total_games # good 
+```
+
+## Did the LLMs make playable games? How much human intervention was necessary in making the games playable?
+
+If the video games weren't playable, then participants would not be able to evaluate their creativity. We built a debugging process into the standardized game generation prompts for the LLMs; however, LLMs are imperfect coders, and thus human intervention beyond the standardized game generation prompts was necessary to bring some games to a playable state. 
+
+[describe debugging process]
+
+Despite my endeavoring to get all games up to a playable state, some participants still encountered games that weren't playable and left the games early via the emergency exit button. Across the `r total_num_clean_subjects_in_data*3` total gameplays (`r total_num_clean_subjects_in_data` subjects x 3 gameplays per subject), there were 41 emergency exits involving 14 of the 18 video games. `r genuine_bug_total_exits + alleged_bug_total_exits + difficulty_total_exits + gameplay_unclear_total_exits` of these exits cited playability issues. The most common issue was a game-breaking bug: two games (Chat-1 and Claude-4) each had a bug that caused five of each game's players to exit, accounting for `r genuine_bug_total_exits` of the total exits. Another common reason was due to reported bugs that I could not independently confirm (9 exits across 7 games). In more than half of these alleged bug cases, the reported issue appeared upon review to reflect an intentional game feature or a small bug that did not significantly obstruct gameplay, suggesting that the underlying problem may have been unclear gameplay rather than a game-breaking bug; in other cases, the reported issue may well have been a genuine but intermittent or hard-to-reproduce bug. 
+
+Beyond technical failures, exits were mostly attributable to the game being perceived as too difficult (8 exits across 4 games) or gameplay being unclear enough that participants could not determine how to progress or win (6 exits across 4 games). 
+
+In sum, games were playable for the majority of their plays, though some games intermittently possessed bugs, were too difficult for some players, or confused some players due to unclear instructions.
+
+
+## Did participants generally stick it out through even the less fun games, or does it seem like they may have used the emergency exit button as an easy escape? 
+
+Participants were only meant to exit a game if they faced a technical issue. We attempted to avoid unnecessary exits by instructing participants to use the report technical issue button if they faced a game-breaking technical issue, and not explicitly informing participants that reporting a technical issue would allow them to exit the game. Despite this, there was a possibility that participants would use the emergency exit button to avoid fully engaging with the games. 
+
+Indicators suggest that participants generally used the emergency exit in good faith rather than as an escape from less enjoyable games. No participant exited all three of their assigned games, and the large majority of exits (`r genuine_bug_total_exits + alleged_bug_total_exits + difficulty_total_exits + gameplay_unclear_total_exits` of 41) cited real playability issues of bugs, unclear gameplay, or extreme difficulty. Among the remaining exits, 6 indicated an inability to complete or exit the game but did not specify a reason (e.g., bug, difficulty, or unclear gameplay), making it impossible to determine whether these reflected genuine technical problems or other concerns. The other two exits seemed to indicate that the participant had successfully completed the game without error. Taken together, the exit data do not suggest systematic misuse of the emergency exit button.
+
 
 ```{r}
-#| label: attention and commitment check
+#| label: old emergency exit qual result report text
+#| echo: false
+#| eval: false
+
+
+# One of the top-exited games (Claude-1) was exited six times, half by AI-blind and half by AI-aware participants. Four exits cited the game being too difficult, one exit indicated an inability to complete and exit the game but did not explain why (e.g., bug, too difficult, gameplay unclear), and one (AI-aware) exit cited an alleged bug that, based on their description, was likely one of the intentional gameplay features.
+# 
+# The other equally top-exited game (Gemini-4) was exited mostly by AI-blind participants. Half (three) of the exits were due to unclear gameplay, two cited the game being too difficult, and one (AI-blind) suggested there may have been a bug because they "couldn't do anything".
+# 
+# Another game (Chat 2) was exited four times, half by AI-blind and half by AI-aware participants. Three cited game bugs. Two of these citations were for the same problem; I and the other participants who completed this game did not encounter this issue, but nonetheless it likely exits given that both subjects encountered this issue. The third bug citation was for a bug that indeed exists but does not prevent the game from being playable. The fourth exit indicated an inability to complete and exit the game but did not explain why (e.g., bug, too difficult, gameplay unclear).
+# 
+# Another game (Chat-3) was exited three times, mostly by aware participants. One cited high difficulty, one seemed to have completed the game properly with no issues, and one indicated an inability to complete and exit the game but did not explain why (e.g., bug, too difficult, gameplay unclear).
+# 
+# Another game (Chat-6) was exited three times, mostly by blind participants. One cited high difficulty, one cited unclear gameplay, and one cited an alleged bug that may have been an actual bug or may have been a misunderstanding of the game (I'm genuinely not sure).
+# 
+# Another game (Claude-5) was exited three times, all by AI-aware participants. One cited unclear gameplay, one indicated an inability to complete and exit the game but did not explain why (e.g., bug, too difficult, gameplay unclear), and one cited an alleged bug that almost certainly was actually caused by the participant not reading the instruction to click "Enter" after completing the game so that they can proceed with the study rather than playing the game again.
+# 
+# Two of the games (Gemini-5 & Claude-6), each had only one exit. The participants reported a gameplay issue (that, presumably per our instructions, they felt prevented them from completing the game); however, the issues that they faced were intentional and correctly functioning challenges in the game, suggesting the actual problem is that the game play was unclear to participants. Both participants were AI-aware, which is interesting---they may have been more quick to perceive the challenges in the games (especially if they were unclear) as bugs because they knew the games weren't designed by humans. This event is extra interesting for the Claude game since the issue that the participant faced was designed to be confusing in the moment but then make sense in an emotionally resonant way at the end of the game; so the participant didn't wait to 'hear out' the game. Also, if they had waited/paid attention for even just ten seconds, they would have noticed that the 'issue' was actually still progressing the game to completion, so it really seems like they didn't wait to see if things would pan out.
+# 
+# One of the games (Gemini-6) was exited once in total due to the participant finding the gameplay unclear.
+# 
+# One game (Gemini-2) was exited once in total due to the participant encountering some type of issue in completing and exiting the game, but they did not specify a reason (e.g., bug, too difficult, gameplay unclear).
+# 
+# Two games (Chat-4, Claude-2) were each exited once but the exit reasons provided insufficient information.
+```
+
+```{r}
+#| label: make dfs for qual analysis 
 #| echo: false 
 
-## attention check 
-# make df of people who failed 
-attention_check_flagged <- surveys_df %>%
-  filter(question == "attention-check") %>%
-  group_by(prolific_subject_id) %>%
-  mutate(n_pass = sum(answer == 3),
-    flag = case_when(
-      n_pass == 0 ~ "fail (triple)", # don't pay on prolific
-      n_pass == 1 ~ "fail (double)", # don't pay on prolific
-      n_pass == 2 ~ "fail (single)", # do pay on prolific
-      n_pass == 3 ~ "pass", # yay 
-      TRUE ~ NA_character_ )) %>%
-  ungroup() %>%
-  filter(flag != "pass")
+surveys_qualitative_df <- surveys_df %>%
+  filter(str_detect(question, "free-response|ai_blind_question|ai_aware_question")) %>%
+  select(prolific_subject_id, condition, phase, question, answer)
 
-#extract list of ids so we can remove their data
-failed_attention_check_ids <- attention_check_flagged %>%
-  distinct(prolific_subject_id) %>%
-  pull(prolific_subject_id)
+creativity_qual_df <- surveys_qualitative_df %>%
+  filter(question == "creativity-free-response") %>%
+  select(prolific_subject_id, question, answer)
 
-## commitment check
-# make df 
-fail_commitment_check <- surveys_df %>%
-  filter(question == "commitment-check") %>%
-  filter(answer != "yes")
+write.csv(creativity_qual_df, "creativity_qual_data.csv")
 
-#extract list of ids so we can remove their data
-failed_commitment_check_ids <- fail_commitment_check %>%
-  distinct(prolific_subject_id) %>%
-  pull(prolific_subject_id)
+originality_qual_df <- surveys_qualitative_df %>%
+  filter(question == "originality-free-response") %>%
+  select(prolific_subject_id, question, answer)
 
+write.csv(originality_qual_df, "originality_qual_data.csv")
 
-# now remove from df 
-surveys_df <- surveys_df %>%
-  filter(!prolific_subject_id %in% failed_attention_check_ids) %>%
-  filter(!prolific_subject_id %in% failed_commitment_check_ids)
+effectiveness_qual_df <- surveys_qualitative_df %>%
+  filter(question == "effectiveness-free-response") %>%
+  select(prolific_subject_id, question, answer)
+
+write.csv(effectiveness_qual_df, "effectiveness_qual_data.csv")
+
+intentionality_qual_df <- surveys_qualitative_df %>%
+  filter(question == "intentionality-free-response") %>%
+  select(prolific_subject_id, question, answer)
+
+write.csv(intentionality_qual_df, "intentionality_qual_data.csv")
+
+authenticity_intentionality_qual_df <- surveys_qualitative_df %>%
+  filter(question == "authenticity-intentionality-free-response") %>%
+  select(prolific_subject_id, question, answer)
+
+write.csv(authenticity_intentionality_qual_df, "authenticity_intentionality_qual_data.csv")
+
+ai_blind_qual_df <- surveys_qualitative_df %>%
+  filter(question == "ai_blind_question") %>%
+  select(prolific_subject_id, question, answer)
+
+write.csv(ai_blind_qual_df, "ai_blind_data.csv")
+
+ai_aware_qual_df <- surveys_qualitative_df %>%
+  filter(question == "ai_aware_question") %>%
+  select(prolific_subject_id, question, answer)
+
+write.csv(ai_aware_qual_df, "ai_aware_qual_data.csv")
+
 ```
 
 ```{r}
-#| label: count nums of subjects (before cleaning, failed checks, and after cleaning)
+#| label: make various dfs for quant analyses
 #| echo: false
 
-total_num_not_clean_subjects_in_data <- n_distinct(parsed_long_df$prolific_subject_id) 
+# convert answer to numeric for rating questions 
+surveys_numeric_df <- surveys_df %>%
+  filter(str_detect(question, "rating")) %>%
+  mutate(answer = as.numeric(answer))
 
-n_failed_commitment_check <- fail_commitment_check %>%
-  summarize(n_failed_commitment_check = n_distinct(prolific_subject_id)) %>%
-  pull(n_failed_commitment_check)
+# extract baseline ratings (one per participant)
+baseline_df <- surveys_numeric_df %>%
+  filter(phase == "baseline-questions-rating") %>%
+  select(prolific_subject_id, question, answer) %>%
+  pivot_wider(names_from = question, values_from = answer)
 
-n_failed_attention_checks <- attention_check_flagged %>%
-  summarize(n_failed_attention_checks = n_distinct(prolific_subject_id)) %>%
-  pull(n_failed_attention_checks)
+# extract game evaluation ratings 
+# (phase looks like "evaluation-chat-1-echo")
+evaluation_df <- surveys_numeric_df %>%
+  filter(str_detect(phase, "^evaluation-")) %>%
+  mutate(game_id = str_remove(phase, "^evaluation-")) %>%
+  select(prolific_subject_id, game_id, condition, question, answer) %>%
+  pivot_wider(names_from = question, values_from = answer)
 
-total_num_clean_subjects_in_data <- n_distinct(surveys_df$prolific_subject_id)
+# extract concept evaluation ratings
+# (phase looks like "concept-chat-1-echo")
+concept_df <- surveys_numeric_df %>%
+  filter(str_detect(phase, "^concept-")) %>%
+  mutate(game_id = str_remove(phase, "^concept-")) %>%
+  select(prolific_subject_id, game_id, question, answer) %>%
+  pivot_wider(names_from = question, values_from = answer)
+
+# join everything together into one analysis dataframe
+clean_analysis_df <- evaluation_df %>%
+  left_join(concept_df, by = c("prolific_subject_id", "game_id")) %>%
+  left_join(baseline_df, by = "prolific_subject_id") %>%
+  # Clean up column names for easier modeling
+  rename(
+    creativity = `creativity-rating`,
+    originality = `originality-rating`,
+    effectiveness = `effectiveness-rating`,
+    authenticity = `authenticity-rating`,
+    intentionality = `intentionality-rating`,
+    concept_creativity = `concept-creativity-rating`,
+    implementation_accuracy = `concept-implementation-rating`
+  )
+
+difference_ratings_df <- clean_analysis_df %>%
+  mutate(difference_originality = 
+           originality - baseline_originality_rating) %>%
+  mutate(difference_effectiveness = 
+           effectiveness - baseline_effectiveness_rating) %>%
+  mutate(difference_authenticity = 
+           authenticity - baseline_authenticity_rating) %>%
+  mutate(difference_intentionality = 
+           intentionality - baseline_intentionality_rating) 
+
+clean_analysis_df %>% filter(game_id == "claude-1-light")
+```
+
+```{r}
+#| label: basic summary stats on ratings (not sure if these are actually useful)
+#| echo: false 
+#| message: false
+#| warning: false 
+
+ratings_summary_stats <- surveys_numeric_df %>%
+  group_by(condition, question) %>%
+  summarize(
+    n = n(),
+    mean_rating = round(mean(answer, na.rm = TRUE), 2),
+    sd_rating = round(sd(answer, na.rm = TRUE), 2),
+    se_rating = round(sd(answer, na.rm = TRUE) / sqrt(n()), 2),
+    median_rating = median(answer, na.rm = TRUE),
+    q25 = quantile(answer, 0.25, na.rm = TRUE),
+    q75 = quantile(answer, 0.75, na.rm = TRUE),
+    min_rating = min(answer, na.rm = TRUE),
+    max_rating = max(answer, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_wider(
+    names_from = condition,
+    values_from = c(mean_rating, sd_rating, median_rating, n)
+  )
 
 ```
 
-Through Prolific, 83 participants completed the study. We received data from `r total_num_not_clean_subjects_in_data` of these participants. We excluded data from `r n_failed_attention_checks` subjects for failing one or more of our attention check questions and `r n_failed_commitment_check` subjects for not committing to providing thoughtful answers to the questions in the survey. This resulted in a total of `r total_num_clean_subjects_in_data` participants' data being analyzed.
+```{r}
+#| label: extract percent of participants giving each rating to each item 
+#| echo: false
+
+# compute percentage of responses at each level for each question
+pct_ratings_per_level_and_item <- surveys_numeric_df %>%
+  group_by(question, answer) %>%             # group by question and rating level
+  summarize(n = n(), .groups = "drop") %>%   # count how many responses at each level
+  group_by(question) %>%
+  mutate(pct = n / sum(n) * 100) %>%        # calculate percentage
+  ungroup() %>%
+  pivot_wider(
+    names_from = c(question, answer),        # e.g., creativity-rating_1, creativity-rating_2
+    values_from = pct,
+    names_sep = "_"
+  )
+
+library(dplyr)
+library(tidyr)
+
+# Compute percentage of responses at each level for each question
+pct_ratings_per_level_and_item <- surveys_numeric_df %>%
+  group_by(question, answer) %>%             # group by question and rating level
+  summarize(n = n(), .groups = "drop") %>%   # count how many responses at each level
+  group_by(question) %>%
+  mutate(pct = n / sum(n) * 100) %>%        # calculate percentage
+  ungroup() %>%
+  mutate(question = paste0(question, "_", answer))
+
+```
+
+```{r}
+#| label: labels for rating items and likert levels
+#| echo: false 
+
+rating_item_labels <- c(
+  "creativity-rating" = "Creativity",
+  "effectiveness-rating" = "Effectiveness",
+  "intentionality-rating" = "Intentionality",
+  "originality-rating" = "Originality",
+  "authenticity-rating" = "Authenticity", 
+                   "baseline_authenticity_rating" = "Baseline Authenticity",
+                   "baseline_effectiveness_rating" = "Baseline Effectiveness",
+                   "baseline_intentionality_rating" = "Baseline Intentionality",
+                   "baseline_originality_rating" = "Baseline Originality", 
+                   "concept-creativity-rating" = "Concept Creativity", 
+                   "concept-implementation-rating" = "Concept Implementation"
+                   )
+
+likert_levels <- c("Not at all", "Somewhat", "Moderately", "Very", "Extremely")
+
+```
+
+```{r}
+#| label: grab aware and blind sub ids 
+#| echo: false
+
+# useful later on for filtering purposes
+
+aware_ids <- surveys_df %>%
+  filter(condition == "aware") %>%
+  pull(prolific_subject_id)
+
+blind_ids <- surveys_df %>%
+  filter(condition == "blind") %>%
+  pull(prolific_subject_id)
+
+```
+
+# Inter-judge reliability (ICC)
+
+```{r}
+#| label: ICC reliability analysis (per game per creativity dimension)
+#| include: false
+
+### THIS ANALYSIS IS SINGULAR. NOT USING. 
+## i kept the code just for reference
+
+# moving forward, i did ICC over per game within each condition, but not per creativity dimension. 
+
+#another idea was to have a hierarchical term that is interaction between game and the kind of rating that it is (this moves away from agreement tho)
 
 
+# function to calculate ICC 
+calc_lmm_icc_obsolete <- function(df, outcome) {
+  formula <- as.formula(paste(outcome, "~ 1 + (1 | game_id) + (1 | prolific_subject_id)"))
+  model <- lmerTest::lmer(formula, data = df)
+  vc <- as.data.frame(VarCorr(model))
+  
+  vg <- vc$vcov[vc$grp == "game_id"]
+  vs <- vc$vcov[vc$grp == "prolific_subject_id"]
+  vr <- vc$vcov[vc$grp == "Residual"]
+  
+  # ICC(2,1): how much of a game's rating variance is due to the game itself
+  # vs. rater bias + noise — this answers "do raters agree on a given game?"
+  icc_single <- vg / (vg + vs + vr)
+  
+  # ICC(2,k): reliability of the *average* rating across your ~6-7 raters
+  # this is more relevant for your use case — how reliable is the mean score
+  # you'll actually use in analysis?
+  k <- df %>% group_by(game_id) %>% summarise(n = n()) %>% pull(n) %>% mean()
+  icc_average <- (k * vg) / (k * vg + vs + vr)
+  
+  list(icc_single = icc_single, icc_average = icc_average)
+}
+
+# ratings to evaluate
+ratings_to_check <- c("creativity", "originality", "effectiveness", "authenticity", "intentionality", "concept_creativity", "implementation_accuracy")
+
+# Calculate ICC for each condition
+icc_results <- expand_grid(
+  condition_val = c("aware", "blind"),
+  rating_val = ratings_to_check
+) %>%
+  mutate(
+    icc_out = map2(condition_val, rating_val, ~ {
+      df_subset <- clean_analysis_df %>% filter(condition == .x)
+      calc_lmm_icc_obsolete(df_subset, .y)
+    }),
+    icc_single  = map_dbl(icc_out, "icc_single"),
+    icc_average = map_dbl(icc_out, "icc_average")
+  ) %>%
+  select(-icc_out)
+
+```
+
+```{r}
+#| label: ICC (per game, all creativity items)
+#| echo: false 
+
+# pivot to long format so all rating items are stacked
+long_df <- clean_analysis_df %>%
+  pivot_longer(
+    cols = c(creativity, originality, effectiveness, authenticity, 
+             intentionality, concept_creativity, implementation_accuracy),
+    names_to  = "rating_item",
+    values_to = "rating"
+  )
+
+calc_lmm_icc_pooled <- function(df) {
+  # rating_item is now a fixed effect (we want item-specific intercepts)
+  # rater variance estimated across all items together — more data, stable estimates
+  model <- lmerTest::lmer(
+    rating ~ rating_item + (1 | prolific_subject_id),
+    data = df
+  )
+  
+  vc <- as.data.frame(VarCorr(model))
+  vs <- vc$vcov[vc$grp == "prolific_subject_id"]
+  vr <- vc$vcov[vc$grp == "Residual"]
+  
+  k <- df %>% 
+    group_by(prolific_subject_id) %>% 
+    summarise(n = n()) %>% 
+    pull(n) %>% 
+    mean()
+  
+  icc_single  <- vs / (vs + vr)
+  icc_average <- vs / (vs + vr/k)
+  
+  list(
+    icc_single      = icc_single,
+    icc_average     = icc_average,
+    k_avg           = k,
+    var_rater       = vs,
+    var_residual    = vr
+  )
+}
+
+# run one model per condition per game (grouping all rating dimensions together)
+icc_results <- expand_grid(
+  condition_val = c("aware", "blind"),
+  game_val      = unique(long_df$game_id)
+) %>%
+  mutate(
+    icc_out = map2(condition_val, game_val, ~ {
+      df_subset <- long_df %>% filter(condition == .x, game_id == .y)
+      calc_lmm_icc_pooled(df_subset)
+    }),
+    icc_single   = map_dbl(icc_out, "icc_single"),
+    icc_average  = map_dbl(icc_out, "icc_average"),
+    k_avg        = map_dbl(icc_out, "k_avg"),
+    var_rater    = map_dbl(icc_out, "var_rater"),
+    var_residual = map_dbl(icc_out, "var_residual")
+  ) %>%
+  select(-icc_out)
+
+# summary across games, by condition
+icc_summary <- icc_results %>%
+  group_by(condition_val) %>%
+  summarise(
+    mean_icc_single  = mean(icc_single),
+    sd_icc_single    = sd(icc_single),
+    mean_icc_average = mean(icc_average),
+    sd_icc_average   = sd(icc_average),
+    .groups = "drop"
+  )
+
+poor_icc_single_game <- icc_results %>% 
+  filter(icc_single < 0.50)
+
+poor_icc_single_game_summary <- poor_icc_single_game %>%
+  summarize(
+            min = min(icc_single),
+            max = max(icc_single)
+            )
+```
+
+```{r}
+#| label: old icc report text
+#| include: false
+#| echo: false
+
+# `r count(poor_icc_single_game)` games had poor single-rater ICC ratings (`r round(poor_icc_single_game_summary$min, 2)`-`r round(poor_icc_single_game_summary$max, 2)`), `r nrow(poor_icc_single_game[poor_icc_single_game$condition_val == "blind", ])` of which were from the blind condition. I'm not sure how to interpret this.
+# 
+# On average, single-rater ICC was acceptable in both the aware condition (ICC(2,1) = `r round(icc_summary$mean_icc_single[icc_summary$condition_val == "aware"], 2)`) and blind condition (ICC(2,1) = `r round(icc_summary$mean_icc_single[icc_summary$condition_val == "blind"], 2)`). 
+
+```
+
+## Did participants give reliable judgements?
+
+The gold standard for creative product assessment, the Consensual Assessment Technique, typically requires that each evaluator judge all of the creative products under question. My experiment did not comply with this requirement due to financial constraints and to prevent participant fatigue, so my substitute for this is to check the inter-rater reliability of game ratings, meaning I can see to what extent games generally received the same rating from all 6-8 of their raters within a condition (AI-aware vs. AI-blind). If games generally received the same rating anyway, then it is not quite as troubling that I did not have every participant evaluate all of the video games. 
+
+ 
+Towards this end, inter-rater reliability was assessed using ICC(2,k) estimated from linear mixed models fit separately for each game within each condition, with rating item as a fixed effect and rater as a random effect. Reliability of the mean rating across the approximately seven raters per game per condition was high in both conditions (aware: ICC(2,k) = `r round(icc_summary$mean_icc_average[icc_summary$condition_val == "aware"], 2)`; blind: ICC(2,k) = `r round(icc_summary$mean_icc_average[icc_summary$condition_val == "blind"], 2)`), supporting the use of mean ratings in subsequent analyses.
+ 
+
+# Likert
+```{r}
+#| label: fig-likert-absolute-ratings
+#| echo: false
+#| warning: false
+#| message: false
+ 
+
+# likert plot! 
+# put df into likert format 
+likert_data_absolute <- surveys_df %>%
+  select(phase, prolific_subject_id, question, answer) %>%
+  mutate(phase = gsub("concept", "evaluation", phase)) %>%
+  filter(str_detect(question, "rating")) %>%
+  filter(str_detect(question, "baseline", negate = TRUE)) %>%
+  mutate(answer = factor(answer, 
+                         levels = 1:5, 
+                         labels = likert_levels)) %>%
+  pivot_wider(
+    id_cols = c(phase, prolific_subject_id),
+    names_from = question, 
+    values_from = answer) %>% # keep only question columns %>%
+  select(-c(phase, prolific_subject_id)) %>%
+  mutate(across(everything(),
+                ~ factor(.x, levels = likert_levels)))
+
+#plot
+likert_plot_all <- plot(likert(as.data.frame(likert_data_absolute)), legend.position="right")
+```
+
+```{r}
+#| label: fig-likert-absolute-ratings-by-condition
+#| echo: false
+#just for ai aware 
+likert_data_absolute_aware <- surveys_df %>%
+  filter(condition == "aware") %>%
+  select(phase, prolific_subject_id, question, answer) %>%
+  mutate(phase = gsub("concept", "evaluation", phase)) %>%
+  filter(str_detect(question, "rating")) %>%
+  filter(str_detect(question, "baseline", negate = TRUE)) %>%
+  mutate(answer = factor(answer, 
+                         levels = 1:5, 
+                         labels = likert_levels)) %>%
+  pivot_wider(
+    id_cols = c(phase, prolific_subject_id),
+    names_from = question, 
+    values_from = answer) %>% # keep only question columns %>%
+  select(-c(phase, prolific_subject_id)) %>%
+    mutate(across(everything(),
+                ~ factor(.x, levels = likert_levels))) 
+
+#plot
+likert_plot_aware <- plot(likert(as.data.frame(likert_data_absolute_aware)), legend.position="right")
+
+#just for ai blind 
+likert_data_absolute_blind <- surveys_df %>%
+  filter(condition == "blind") %>%
+  select(phase, prolific_subject_id, question, answer) %>%
+  mutate(phase = gsub("concept", "evaluation", phase)) %>%
+  filter(str_detect(question, "rating")) %>%
+  filter(str_detect(question, "baseline", negate = TRUE)) %>%
+  mutate(answer = factor(answer, 
+                         levels = 1:5, 
+                         labels = likert_levels)) %>%
+  pivot_wider(
+    id_cols = c(phase, prolific_subject_id),
+    names_from = question, 
+    values_from = answer) %>% # keep only question columns %>%
+  select(-c(phase, prolific_subject_id)) %>%
+    mutate(across(everything(),
+                ~ factor(.x, levels = likert_levels))) 
+
+#plot
+
+likert_plot_blind <- plot(likert(as.data.frame(likert_data_absolute_blind)), legend.position="right")
+
+library(ggpubr)
+
+ggarrange(likert_plot_aware, likert_plot_blind, ncol = 1, labels = c("AI-Aware", "AI-Blind"))
+
+```
+
+@fig-likert-absolute-ratings-by-condition shows the distributions of creativity and creativity dimension ratings of all games and their concepts within the AI-aware group and the AI-blind group.
+
+We can see that the differences between conditions are very minimal. This suggests that, on average, participants' ratings were not influenced by the knowledge (or lack thereof) that these games were generated by AI. We see this later in the LMM results as well, which show no statistically significant differences between groups. 
+
+This is supported by inductive thematic analysis of participants' responses to the free-response question that we asked about the role of AI in participants' evaluations. To the AI-aware participants, we asked "Were your assessments of these games impacted by the knowledge that they were generated by AI? Please explain." To the AI-blind participants, we asked "The three games that you played were actually generated by AI with minimal human intervention. Knowing this now, would you have answered any of the previous questions differently? Please explain."
+
+AI 
+observations
+- when people in blind section said that it affected authenticity and itnentionality, they said it would only affect thsoe sections, not creativity rating. wonder if that's true reflection or not
+- most people in blind section didn't choose to directly grapple with their concept of creativity very much. just gave straightforward answers. one person did 60c13bce0d8616e48d044bd0, though, and they gave interesting response  - "No. I still think the same way. I wouldn't change the concept of what I understand of creativity. Although it's true that AI, at least as far as I know today, isn't capable of generating new ideas, but rather of compiling and grouping them."
+- interesting response: "697b7d329eb08e3eb1ec8e2b	i wouldn´t change any answers but it looks like the AI it´s sometimes capable of making work of arts and sometimes it creates effortless stuff"
+- example of drastic response: "698df8c121a05e20db810262	Yes, it's sad to know that it was AI. I feel like any meaning I gave to the games was fake because there was no actual feelings put into making them. The moth game felt like it had some real feelings behind it but there wasn't so it feels manipulative..."
+- ai blind participant: "677948fa843635fdb42a4351	"the developer obviously knows how to create tension in a video game and I don't think its possible to do that by accident or without a lot of effort." (this was just part of their response)
+- ai blind participant: "698efa571f78c2fb8bc759fc	It looks like the developer put his heart and time in it to make something that no one ever tried to make before"
+- ai aware: "6926452ca418f7b008a000a3	This is a bit hard to answer since it's been revealed that the games have been developed by AI. Assuming there was a significant amount of human input though I feel like the idea behind the game could be authentic, but, like I mentioned before, it felt hardly playable. So in short; good idea but not very playable."
+- ai blind 641359b5040c453203e2c088 "the upward progression and the pressure from darkness felt purposeful rather than random. The difficulty curve and atmosphere suggested planning and thought behind the experience." (not full response)
+```{r}
+#| label: fig-likert-plots-baseline-ratings
+#| echo: false
+#| message: false
+#| warning: false
+
+baseline_df_wide <- baseline_df %>%
+  pivot_longer(
+    cols = starts_with("baseline_"), # select columns to pivot
+    names_to = "Dimension",          # name of the new column for category names
+    values_to = "Rating"             # name of the new column for ratings
+  ) %>%
+  mutate("Dimension" = as.character(Dimension),
+         Rating = as.numeric(Rating))
+
+
+# likert plot! 
+# put df into likert format 
+likert_data_baseline <- baseline_df %>%
+  select( # putting in defined order and removing prolific_sub_id
+    baseline_originality_rating,
+    baseline_effectiveness_rating,
+    baseline_intentionality_rating,
+    baseline_authenticity_rating
+  ) %>%
+  mutate(across(everything(),
+                ~ factor(.x, levels = 1:5, labels = likert_levels)))
+
+#plot
+likert_plot_baseline <- plot(likert(as.data.frame(likert_data_baseline)), legend.position="right")
+
+#just for ai aware 
+likert_data_baseline_aware <- baseline_df %>%
+  filter(prolific_subject_id %in% aware_ids) %>%
+  select( # putting in defined order and removing prolific_sub_id
+    baseline_originality_rating,
+    baseline_effectiveness_rating,
+    baseline_intentionality_rating,
+    baseline_authenticity_rating
+  ) %>%
+  mutate(across(everything(),
+                ~ factor(.x, levels = 1:5, labels = likert_levels)))
+
+#plot
+likert_plot_baseline_aware <- plot(likert(as.data.frame(likert_data_baseline_aware)), legend.position="right", ordered = FALSE)
+
+likert_plot_baseline_aware$items <- factor(
+  likert_plot_baseline_aware$items,
+  levels = c(
+    "baseline_originality_rating",
+    "baseline_effectiveness_rating",
+    "baseline_intentionality_rating",
+    "baseline_authenticity_rating"
+  )
+)
+
+#just for ai blind 
+likert_data_baseline_blind <- baseline_df %>%
+  filter(prolific_subject_id %in% blind_ids) %>%
+  select( # putting in defined order and removing prolific_sub_id
+    baseline_originality_rating,
+    baseline_effectiveness_rating,
+    baseline_intentionality_rating,
+    baseline_authenticity_rating
+  ) %>%
+  mutate(across(everything(),
+                ~ factor(.x, levels = 1:5, labels = likert_levels)))
+
+#plot
+likert_plot_baseline_blind <- plot(likert(as.data.frame(likert_data_baseline_blind)), legend.position="right", ordered = FALSE)
+
+likert_plot_baseline_blind$items <- factor(
+  likert_plot_baseline_blind$items,
+  levels = c(
+    "baseline_originality_rating",
+    "baseline_effectiveness_rating",
+    "baseline_intentionality_rating",
+    "baseline_authenticity_rating"
+  )
+)
+
+ggarrange(likert_plot_baseline_aware, likert_plot_baseline_blind, ncol = 1, labels = c("AI-Aware", "AI-Blind"))
+
+```
+
+```{r fig.width = 6, fig.height = 7}
+#| label: ggplot version of likert plot (don't like this as much)
+#| include: false
+
+baseline_long <- baseline_df %>%
+  mutate(condition = case_when(
+    prolific_subject_id %in% aware_ids ~ "aware",
+    prolific_subject_id %in% blind_ids ~ "blind"
+  )) %>%
+  select(condition, starts_with("baseline_")) %>%
+  pivot_longer(
+    cols = starts_with("baseline_"),
+    names_to = "dimension",
+    values_to = "response"
+  )
+
+baseline_long$response <- factor(
+  baseline_long$response,
+  levels = 1:5,
+  labels = likert_levels
+)
+
+baseline_summary <- baseline_long %>%
+  group_by(condition, dimension, response) %>%
+  summarize(n = n(), .groups = "drop") %>%
+  group_by(condition, dimension) %>%
+  mutate(pct = n / sum(n))
+
+ggplot(baseline_summary,
+       aes(x = dimension, y = pct, fill = response)) +
+  geom_bar(stat = "identity", width = 0.7) +
+  coord_flip() +
+  facet_wrap(~condition, ncol = 1) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  labs(
+    x = NULL,
+    y = "Percent of responses",
+    fill = "Rating"
+  ) +
+#  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(face = "bold")
+  )
+
+```
+
+@fig-likert-plots-baseline-ratings shows the distributions of participants' ratings about the creativity dimensions of video games in general. Participants answered these questions before they were asked about the influence of AI in their evaluations, meaning the AI-blind participants did not yet know that the video games were AI-generated.
+
+Big takeaway: In general, participants seem to view video games as very to extremely original, fun (effective), intentional, and authentic. Effectiveness was rated most highly, which makes sense: avid video game players probably find video games extremely fun. Authenticity was rated least highly, suggesting avid video game players don't feel as strongly that video games reflect the authenticity of the developer(s). This is not a surprising result, especially given that we do not have data about the types of video games that our participants play/which types of video games they were considering when answering these questions; if participants were primarily considering AAA games, then it makes sense that they do not feel that the authenticity of developer(s) is reflected in a game developed by a massive production team and designed for market success. This interpretation is not to discount this result; participants very well could have been considering indie video games and still felt that authenticity is not reflected. We will find out more in qual analysis. (INSERT QUAL ANALYSIS RESULTS HERE)
+
+There seem to be differences in ratings between groups, although they are probably insignificant (SHOULD CHECK THIS). I don't see an immediate conceptual reason for there to be these differences.
+
+I could see the AI-aware individuals giving greater ratings if they are anti-AI and trying to demonstrate that they regard human-made games as being more original, fun, intentional, and authentic. This idea is consistent with the greater authenticity ratings from the AI-aware group, but inconsistent with the other three dimensions; at the same time, though, authenticity has the greatest difference in distributions (? it's a little hard to tell with the 'extremely' ratings--).
+
+I could also see the AI-aware individuals doing the opposite- giving lower ratings if they are pro-AI and trying to demonstrate that their evaluations of the video games in this study are not far off from their evaluations of video games in general.
+
+Could think about this longer, although it might be meaningless if the differences are insignificant.
+
+# baseline likert figures 
+```{r}
+#| label: fig-likert-differences-absolute-baseline-ungrouped
+#| echo: false 
+
+likert_difference_levels <- c("-5 (LLM Games < Baseline)", "-4", "-3", "-2", "-1", "0 (LLM Games = Baseline)", "1", "2", "3", "4", "5 (LLM Games > Baseline)")
+
+likert_difference_aware <- difference_ratings_df %>%
+  filter(condition == "aware") %>%
+  select(starts_with("difference")) %>%
+  mutate(across(everything(),
+                ~ factor(.x, levels = -5:5, labels = likert_difference_levels)))
+
+
+likert_plot_difference_aware <- plot(likert(as.data.frame(likert_difference_aware)), legend.position="right", ordered = FALSE)
+
+
+likert_difference_blind <- difference_ratings_df %>%
+  filter(condition == "blind") %>%
+  select(starts_with("difference")) %>%
+  mutate(across(everything(),
+                ~ factor(.x, levels = -5:5, labels = likert_difference_levels)))
+
+likert_plot_difference_blind <- plot(likert(as.data.frame(likert_difference_blind)), legend.position="right", ordered = FALSE)
+
+ggarrange(likert_plot_difference_aware, likert_plot_difference_blind, ncol = 1)
+
+```
+
+```{r}
+#| label: fig-likert-differences-absolute-baseline-grouped
+#| echo: false 
+
+likert_difference_levels_categorical <- c("-5 (LLM Games < Baseline)", "-4", "-3", "-2", "-1", "0 (LLM Games = Baseline)", "1", "2", "3", "4", "5 (LLM Games > Baseline)")
+
+likert_difference_grouped <- difference_ratings_df %>%
+  select(condition, prolific_subject_id, starts_with("difference")) %>%
+  group_by(prolific_subject_id) %>%
+  mutate(mean_difference_originality = mean(difference_originality),
+         mean_difference_effectiveness = mean(difference_effectiveness),
+         mean_difference_authenticity = mean(difference_authenticity),
+         mean_difference_intentionality = mean(difference_intentionality)
+         ) %>%
+  ungroup(prolific_subject_id) %>%
+  distinct(prolific_subject_id, .keep_all = TRUE) %>%
+  select(condition, starts_with("mean_difference")) %>%
+  pivot_longer(
+    cols = starts_with("mean_difference"),
+    names_to  = "rating_item",
+    values_to = "rating"
+ )
+
+likert_difference_ggplot <- ggplot(likert_difference_grouped, aes(x = rating_item, y = rating)) +
+  geom_boxplot() +
+  facet_wrap(~condition, ncol = 1) +
+  labs(title = "Dists of diff in LLM game rating vs general games rating", subtitle = "Means were grouped by subject so interpretations can be on the subject level", x = "Creativity dimension", y = "LLM Game Rating - Baseline Rating (-5 to 5)") +
+  coord_flip() +
+  geom_hline(yintercept = 0, color = "blue") 
+
+likert_difference_ggplot
+
+```
+
+@fig-likert-differences-absolute-baseline-ungrouped shows that across both conditions, about a quarter of ratings of this study's video games were the same as the raters' ratings of their general attitudes towards video games. About half of the ratings of this study's video games were lower than the raters' ratings of their general attitudes towards video games. This sentiment was most strong for ratings of how fun (effective) video games are to play.
+
+It is interesting that we see these differences, as the baseline-adjusted LLM finds no significant difference.
+
+@fig-likert-differences-absolute-baseline-grouped is my attempt to communicate the same information in @fig-likert-differences-absolute-baseline-ungrouped but after taking each participant's mean rating of the video games so my interpretations of the distributions can be about the participants and not the ratings.
+
+It's a little bit hard to compare boxplot distributions to the Likert distributions, but it seems like nothing really changed. If that's true, then around a quarter of participants felt that the LLM video games were on par with video games in general for authenticity, originality, effectiveness, and intentionality, and around half of the participants felt that the LLM video games were not as good on these four dimensions.
+
+```{r}
+#| label: big LMM for creativity analyses (RQ1 & RQ2)
+#| echo: false
+
+# function to run LMM and get marginal means for a specific dimension
+run_creativity_lmm <- function(outcome) {
+  # formula: outcome ~ condition + (1 | game_id) + (1 | prolific_subject_id)
+  formula <- as.formula(paste(outcome, "~ condition + (1 | game_id) + (1 | prolific_subject_id)"))
+  model <- lmer(formula, data = clean_analysis_df)
+  
+  # get marginal means
+  em <- emmeans(model, ~ condition)
+  
+  return(list(model = model, emmeans = em))
+}
+
+# run models for all dimensions
+outcomes <- c("creativity", "originality", "effectiveness", "authenticity", "intentionality")
+results <- map(outcomes, run_creativity_lmm) %>% set_names(outcomes)
+
+# extract marginal means for overall creativity (RQ1)
+overall_creativity_means <- results$creativity$emmeans %>% as.data.frame()
+
+#check statistical significance of overall creativity
+contrast_creativity <- pairs(results$creativity$emmeans) %>% as.data.frame()
+
+# repeat extracting marginal means for individual dimensions (RQ2)
+individual_dim_means <- map_dfr(outcomes[-1], ~ {
+  as.data.frame(results[[.x]]$emmeans) %>% mutate(dimension = .x)
+})
+
+contrast_individual_dims <- map_dfr(outcomes[-1], ~ {
+  as.data.frame(pairs(results[[.x]]$emmeans)) %>% mutate(dimension = .x)
+})
+
+```
+
+```{r}
+#| label: individual LMMs to test where singularity is coming from 
+#| echo: false 
+
+
+creativity_model <- lmer(creativity ~ condition + (1 | game_id) + (1 | prolific_subject_id), data = clean_analysis_df)
+originality_model <- lmer(originality ~ condition + (1 | game_id) + (1 | prolific_subject_id), data = clean_analysis_df)
+effectiveness_model <- lmer(effectiveness ~ condition + (1 | game_id) + (1 | prolific_subject_id), data = clean_analysis_df)
+authenticity_model <- lmer(authenticity ~ condition + (1 | game_id) + (1 | prolific_subject_id), data = clean_analysis_df)
+intentionality_model <- lmer(intentionality ~ condition + (1 | game_id) + (1 | prolific_subject_id), data = clean_analysis_df)
+
+
+creativity_emmeans <- emmeans(creativity_model, ~ condition)
+originality_emmeans <- emmeans(originality_model, ~ condition)
+effectiveness_emmeans <- emmeans(effectiveness_model, ~ condition)
+authenticity_emmeans <- emmeans(authenticity_model, ~ condition)
+intentionality_emmeans <- emmeans(intentionality_model, ~ condition)
+
+
+#VarCorr(creativity_model)
+
+#VarCorr(originality_model)
+
+#VarCorr(effectiveness_model)
+
+#VarCorr(authenticity_model)
+
+#VarCorr(intentionality_model)
+```
+
+```{r}
+#| label: calculating SD for each subject
+#| echo: false 
+
+subject_sd_df <- clean_analysis_df %>%
+  group_by(prolific_subject_id) %>%
+  summarize(
+    creativity_sd = sd(creativity, na.rm = TRUE),
+    originality_sd = sd(originality, na.rm = TRUE),
+    effectiveness_sd = sd(effectiveness, na.rm = TRUE),
+    intentionality_sd = sd(intentionality, na.rm = TRUE),
+    authenticity_sd = sd(authenticity, na.rm = TRUE),
+    n_ratings = n()
+  ) %>%
+  ungroup()
+
+ggplot(subject_sd_df, aes(x = creativity_sd)) +
+  geom_histogram(bins = 20) +
+  labs(
+    title = "Hist of Within-Participant SD of Creativity Ratings",
+    x = "Participant Standard Deviation",
+    y = "Number of Participants"
+  )
+
+ggplot(subject_sd_df, aes(x = originality_sd)) +
+  geom_histogram(bins = 20) +
+  labs(
+    title = "Hist of Within-Participant SD of Originality Ratings",
+    x = "Participant Standard Deviation",
+    y = "Number of Participants"
+  )
+
+
+ggplot(subject_sd_df, aes(x = effectiveness_sd)) +
+  geom_histogram(bins = 20) +
+  labs(
+    title = "Hist of Within-Participant SD of Effectiveness Ratings",
+    x = "Participant Standard Deviation",
+    y = "Number of Participants"
+  )
+
+
+ggplot(subject_sd_df, aes(x = intentionality_sd)) +
+  geom_histogram(bins = 20) +
+  labs(
+    title = "Hist of Within-Participant SD of Intentionality Ratings",
+    x = "Participant Standard Deviation",
+    y = "Number of Participants"
+  )
+
+
+ggplot(subject_sd_df, aes(x = authenticity_sd)) +
+  geom_histogram(bins = 20) +
+  labs(
+    title = "Hist of Within-Participant SD of Authenticity Ratings",
+    x = "Participant Standard Deviation",
+    y = "Number of Participants"
+  )
+
+```
+
+```{r}
+#| label: plotting stand devs across games for creativity and each creativity-relateed item
+#| echo: false 
+
+game_sd_df <- clean_analysis_df %>%
+  group_by(game_id) %>%
+  summarize(
+    creativity_sd = sd(creativity, na.rm = TRUE),
+    originality_sd = sd(originality, na.rm = TRUE),
+    effectiveness_sd = sd(effectiveness, na.rm = TRUE),
+    intentionality_sd = sd(intentionality, na.rm = TRUE),
+    authenticity_sd = sd(authenticity, na.rm = TRUE),
+    n_ratings = n()
+  ) %>%
+  ungroup()
+
+ggplot(game_sd_df, aes(x = creativity_sd)) +
+  geom_histogram(bins = 10) +
+  labs(
+    title = "Hist of Rating SDs Across Games (Creativity)",
+    x = "SD of ratings per game",
+    y = "Number of games"
+  )
+
+ggplot(game_sd_df, aes(x = originality_sd)) +
+  geom_histogram(bins = 10) +
+  labs(
+    title = "Hist of Rating SDs Across Games (Originality)",
+    x = "SD of ratings per game",
+    y = "Number of games"
+  )
+
+ggplot(game_sd_df, aes(x = effectiveness_sd)) +
+  geom_histogram(bins = 10) +
+  labs(
+    title = "Hist of Rating SDs Across Games (Effectiveness)",
+    x = "SD of ratings per game",
+    y = "Number of games"
+  )
+
+ggplot(game_sd_df, aes(x = intentionality_sd)) +
+  geom_histogram(bins = 10) +
+  labs(
+    title = "Hist of Rating SDs Across Games (Intentionality)",
+    x = "SD of ratings per game",
+    y = "Number of games"
+  )
+
+ggplot(game_sd_df, aes(x = authenticity_sd)) +
+  geom_histogram(bins = 10) +
+  labs(
+    title = "Hist of Rating SDs Across Games (Authenticity)",
+    x = "SD of ratings per game",
+    y = "Number of games"
+  )
+
+```
+
+```{r}
+#| label: plotting dists of each participant's mean ratings of creativity and creativity-related items 
+#| echo: false 
+
+participant_means <- clean_analysis_df %>%
+  pivot_longer(
+    cols = c(creativity, originality, effectiveness, authenticity, intentionality),
+    names_to = "dimension",
+    values_to = "rating"
+  ) %>%
+  group_by(prolific_subject_id, dimension) %>%
+  summarize(mean_rating = mean(rating, na.rm = TRUE), .groups = "drop")
+
+participant_sd_by_dimension <- participant_means %>%
+  group_by(dimension) %>%
+  summarize(sd_of_means = sd(mean_rating))
+
+ggplot(participant_means, aes(x = mean_rating)) +
+  geom_histogram(bins = 20) +
+  facet_wrap(~dimension) +
+  labs(
+    title = "Distribution of Participant Mean Ratings by Dimension",
+    x = "Participant Mean Rating",
+    y = "Number of Participants"
+  )
+
+
+```
+
+```{r}
+#| label: boxplot of rating dists (bad for likert data; don't use)
+#| echo: false 
+#| include: false 
+
+clean_analysis_df %>%
+  pivot_longer(
+    cols = c(creativity, originality, effectiveness, authenticity, intentionality),
+    names_to = "dimension",
+    values_to = "rating"
+  ) %>%
+  ggplot(aes(x = dimension, y = rating)) +
+  geom_boxplot() +
+  labs(
+    title = "Distribution of Ratings Across Dimensions",
+    x = "Dimension",
+    y = "Rating"
+  )
+```
+
+```{r}
+#| label: correlation plot of creativity and related items 
+#| echo: false 
+
+library(corrplot)
+
+rating_matrix <- clean_analysis_df %>%
+  select(creativity, originality, effectiveness, authenticity, intentionality)
+
+corrplot(cor(rating_matrix, use = "pairwise.complete.obs"),
+         method = "color",
+         type = "upper")
+```
+
+```{r}
+#| label: plotting each game's mean rating for each dimension 
+#| echo: false 
+
+game_means <- clean_analysis_df %>%
+  group_by(game_id) %>%
+  summarize(
+    creativity = mean(creativity),
+    originality = mean(originality),
+    effectiveness = mean(effectiveness),
+    authenticity = mean(authenticity),
+    intentionality = mean(intentionality)
+  ) %>%
+  pivot_longer(-game_id, names_to = "dimension", values_to = "mean_rating")
+
+ggplot(game_means, aes(x = game_id, y = mean_rating)) +
+  geom_point() +
+  facet_wrap(~dimension) +
+  coord_flip()
+```
+
+```{r}
+#| label: pca and biplot on dimensions 
+#| echo: false
+
+# note that i haven't considered whether pca is a good fit here at all, was just curious to see the biplot
+rating_matrix <- clean_analysis_df %>%
+  select(creativity, originality, effectiveness, authenticity, intentionality)
+
+pca <- prcomp(rating_matrix, scale. = TRUE)
+
+biplot(pca)
+```
+
+```{r}
+#| label: fig-spaghetti-plot-participant-ratings
+#| echo: false
+
+# this plot is super cool but i don't really know how it helps me 
+
+ggplot(clean_analysis_df,
+       aes(x = game_id,
+           y = creativity,
+           group = prolific_subject_id)) +
+  geom_line(alpha = .2) +
+  labs(
+    title = "Participant Rating Profiles Across Games",
+    x = "Game",
+    y = "Creativity Rating"
+  )
+```
+
+# Overall creativity (LMM, qual)
+
+## Are the video games creative? 
+
+As seen in Figure 1, ratings of creativity were ranged from 1 ("Not at all") to 5 ("Extremely creative"). To get a better look at creativity ratings, as pre-registered, I ran a linear mixed-effects models predicting creativity ratings with condition (aware vs. blind) as a fixed effect and random intercepts for game and rater. This model had a singular fit; inspection of the variance components showed that the participant-level random effect had an estimated variance of zero, indicating no detectable between-participant variability in ratings after accounting for game effects. Following standard practice, I therefore simplified the model by removing the participant random effect and retained only a random intercept for game (rating \~ condition + (1 \| game_id)).
+
+Ratings were made on a 1–5 scale (1 = "Not at all", 5 = "Extremely \[quality\]". Marginal means estimated via the Kenward–Roger approximation indicated that creativity ratings were similar across the aware (*M* = `r round(overall_creativity_means$emmean[overall_creativity_means$condition == "aware"], 2)`, 95% CI \[`r round(overall_creativity_means$lower.CL[overall_creativity_means$condition == "aware"], 2)`, `r round(overall_creativity_means$upper.CL[overall_creativity_means$condition == "aware"], 2)`\]) and blind (*M* = `r round(overall_creativity_means$emmean[overall_creativity_means$condition == "blind"], 2)`, 95% CI \[`r round(overall_creativity_means$lower.CL[overall_creativity_means$condition == "blind"], 2)`, `r round(overall_creativity_means$upper.CL[overall_creativity_means$condition == "blind"], 2)`\]) conditions, and this difference was not statistically significant (*t*(`r round(contrast_creativity$df, 2)`) = `r round(contrast_creativity$t.ratio, 2)`, *p* = `r round(contrast_creativity$p.value, 3)`).
+
+```{r}
+#| label: tbl-absolute-creativity-results
+#| echo: false
+
+
+results_table <- individual_dim_means %>%
+  select(dimension, condition, emmean, lower.CL, upper.CL) %>%
+  mutate(
+    mean_ci = paste0(
+      round(emmean, 2), " [",
+      round(lower.CL, 2), ", ",
+      round(upper.CL, 2), "]"
+    )
+  ) %>%
+  select(dimension, condition, mean_ci) %>%
+  pivot_wider(
+    names_from = condition,
+    values_from = mean_ci
+  ) %>%
+  left_join(
+    contrast_individual_dims %>%
+      mutate(
+        t_stat = round(t.ratio, 2),
+        df = round(df, 2),
+        p = round(p.value, 3),
+        test = paste0("t(", df, ") = ", t_stat)
+      ) %>%
+      select(dimension, test, p),
+    by = "dimension"
+  ) %>%
+  rename(
+    `Dimension` = dimension,
+    `Aware M [95% CI]` = aware,
+    `Blind M [95% CI]` = blind,
+    `t-test` = test,
+    `p` = p
+  )
+
+kable(results_table)
+```
+
+We fit the same linear mixed-effects model separately for originality, effectiveness, authenticity, and intentionality ratings, with condition (aware vs. blind) as a fixed effect and random intercepts for game and rater. Marginal means estimated via the Kenward–Roger approximation indicated that ratings were similar across the aware and blind conditions for all four dimensions (Table X). None of the aware–blind contrasts were statistically significant (all *ps* \> .05).
+
+"condition labeling provides an evaluative anchor" - idea from Claude that is very interesting to me and I hadn't previously considered.
+
+```{r}
+#| label: creativity qual analysis 
+#| echo: false
+
+
+# make sure to filter out / review the answers for games that were emergency exited. not sure whether i should include them. i probably shouldnt? although, interesting to see if people consider games creative despite them not working.... creativity without effectiveness... 
+
+```
+## qual
+Observations across all items: - This isn't surprising, but should be noted- some responses didn't actually explain what was(n't) creative/original/effective, so they didn't end up getting tagged as anything. this likely causes a sort of deflation of presence of themes since something had to have influenced these participants' evaluations (and these themes, ideally, are capturing most to all of peoples' reasons). It's not to a dramatic extent, but worth noting; it's probably the most prevalent in the effectiveness data. This was typically the case for the positive reviews; e.g., some people said "everything" was creative/original/enjoyable, and I didn't want to assume what they view as "everything", so I didn't tag them on anything.
+
+-   There are a few words that appear in positive and negative responses for more than one of the free responses questions. One of these words is "weird"- some people use this as a negative aspect, especially when saying that a game didn't make sense, was boring, etc; others, though, use it as a positive descriptor to indicate the game is different, interesting, unique, maybe a little bit confusing but in an interesting way,etc. Another one of these words is "simple" - I think most people use this in a negative way, especially in the creativity free response, but some people use it as a positive aspect because they liked that it was simple or they liked something else about the game enough that being simple didn't matter, etc; seems like when enjoyment is prioritized for creativity, depth doesn't matter as much (I should verify this is really the case). --- simple ex in originality FR: "6980c16f9985e39f6bcbbe3a The game is quiet simple and that's what make it enjoyable. You have to act fast securing a wat for the people to a city and try to save this city with the ink as the fog takes over the map that's quiet good. Nothing is of surprise as that is what was expected."
+
+-   Many!!!! participants noted that the games resembled flash games. This seemed to consistently be a negative aspect for creativity and originality.
+
+Overall observations while doing creativity qualitative analysis: - Notes on mechanics were often in combination with the game concept/theme since the game concept is sort of inextricable from the mechanics, and it is easiest or most convenient to describe the mechanics as they appeared in the game (aka the concept) rather than extracting the specific names of the mechanics. -- perhaps I should have divided mechanics theme into a specifically mechanics theme and then a gameplay theme - Similarly, many people said that the concept/idea was interesting, and then expanded on this statement by describing the primary game mechanic/gameplay. So they viewed the overall concept/idea as the concept for gameplay, not the emotionally resonant concept/theme that the LLMs often phrased the game descriptions as (I should double check that this really is what most of the LLMs did). This makes sense, of course, but I guess I just didn't really expect it since my previous interactions with the games and their concepts have been so influenced by the LLMs' descriptions and such. - Notable that some people describe the same primary mechanic as novel and others say it's basic, and this clearly influenced creativity evaluations because the people chose to mention this in their free response (some only mentioning this). This sort of speaks to the child tying shoes example of creativity being dependent on pre-existing knowledge; it's a little different because the tying shoes example is about the output being creative to the producer, whereas here it's about the output being creative to somebody who isn't the producer, but I think the sentiment is the same---a beholder's perceived creativity of an output is in the eye of said beholder. I suppose this speaks to the cultural psychology idea, especially because, were all of my evaluators able to discuss their evaluations, those who said a mechanic is novel would probably change their mind after learning from the opposing people that this mechanic is actually not original. Thus the group would come closer to having a collective perspective on whether the game is creative--- a cultural attribution. - Only a few free responses referenced the previous 1-2 video games in the experiment, so it seems like most people (hopefully) gave ratings of games not in relation to the previous video games. But if they did, then that's why we made every block within conditions different.
+
+Overall observations while doing originality qualitative analysis: - Many people don't seem to be speaking directly to the definition of originality/novelty. There are free responses that just state that x mechanic was cool, free responses that discuss the technical execution or lack of instructions, etc. There were \~17 responses that used "fun" in their response and \~10 responses that used "cool". It's not that this doesn't make sense-- if I imagine myself in their shoes, I can see why these things came to mind when rating the originality of the game. But at the same time, from a more scientific standpoint, it is interesting and almost 'incorrect' (not literally, of course) for these things to be included in peoples' responses. - presence of GCD talk things like adding unconventional mechanic to an already existing type of game- 641359b5040c453203e2c088 to originality FR said : "It felt different than other paper plane games since it uses wind to guide the plane instead of the player's flicks." and "669a65bbe45b41c3162d0d79 Very few game include the mechanic of letting the player freely change the world by using words and other games who do so are focus on other genres "
+
+-   presence of GCD talk thing about adding a new pressure (i can't remember the right word) like health or a timer -- "60c13bce0d8616e48d044bd0 It reminded me a little of a game called something like: Papers, Please. Although I think the fact that there is a time limit is a novel feature that makes it competitive and fun." and "66b93f99d7c07d8558f67c5c It was original because it was like a puzzle game, but you also had a time limit and it was very difficult ". and "69967d911d9f679e547767a2 "The game is highly unoriginal overall. The segments featuring moving lights that must be avoided and basic switches to activate are severely lacking in originality; it is a very cliché and overused formula. However, the specific mechanic where the player fails if they stay in the absolute darkness for too long is genuinely original. This is a rare concept in the stealth genre, where players can typically hide safely in the shadows indefinitely. Ultimately, the game offered very few surprises, with the sole exception being this specific threat of dying from the darkness itself." --- subcomment: many people specifically mentioned time mechanics / timer, which is interesting.
+
+-   There were just a couple mentions of how the game, esp mechanics and concept, could be developed further, whereas the creativity free response had a lot of mentions of this. Interesting that originality can't be found through further development as easily as creativity could be (makes sense, and yet originality is part of creativity); could also be that people just didn't want to say the same thing twice, but a lot of people's originality FRs included some of what they said in the creativity FR, so I don't think people were just avoiding repetition.
+
+-   many negative reviews of the game would say the game sucks and then say something like "at least \[x feature of the game (e.g., mechanic, concept)\] is well-done" or functions well or whatever. e.g.," 6581c0e7703c9d00a5d2e6da Not very original at all I bet I could find many games like it. The controls were well made thats about it". not sure whether well-made was actually influencing originality ratings or if people were just saying this for whatever reason (e.g., so that they weren't being totally negative). maybe they didn't want to give such a low rating because they felt like the low-ness of their originality rating (were they to genuinely purely rate how original the game is, independently of technical execution etc) would do the game dirty / not match up to their overall attitude towards the game, so they inflated it by taking execution into consideration? this ofc wouldn't have been so thought out- it would've probably been an almost subconcious action. idk.
+
+Observations while doing effectiveness qual analysis: - whether about mechanics, visuals, overall gameplay concept, etc., there's consistently a theme of poor technical execution which lends to another theme of underdevelopment. specifically poor technical execution in the ways that would be expected from LLMs---movements being too slow or too fast, expected reaction times being too fast, information overload, poor or too minimal instructions, etc; the kind of issues that need to be attuned to the capabilities and attention spans/expectations of the intended player, which LLMs can only accomplish through applying general recommendations or standards for things like human reaction time. and then they have to correctly implement them.
+
+-   the underdevelopment theme is not as explicitly stated, although many responses do directly suggest this. it makes sense. i should expand on this.
+
+-   good ex response: " 697d2057698dc9f0b71f0a43 I didn't find the game fun, I thought it was cool, interesting and genuine, but not fun. It lacked more information or details to make the game a little more enjoyable, like having more functions than just being able to change the "powers" with words."
+
+-   rare positive response - "677948fa843635fdb42a4351 The instructions were clear and easier to understand. Also I really liked the tense situations the gameplay created, I was constantly on the edge of my seat wondering if I was going to get caught."
+
+-   interesting response: "697a65fa2b4f2c04ad2f3bc2 "I like it, it was funny,also, the mechanics are funny, how the triangle move feel ""natural"" for an Ai. But its was a little frustrating because the triangle can not move backwards, for example, if you want to get back, you have to move the triangle in a strange way instead of just make the triangle go back. ""
+
+I should discuss how AI was rarely mentioned by participants.
+
+-   i tried to tag responses without checking which game the response was for and the associated rating, but i did check when i needed clarity for responses with ambiguous valences or ambiguity with things like whether a dislike for mechanics was due to bugs or dislike of design. in these cases, i noticed that many free responses indicated, to me, a valence that didn't align with their rating. e.g., "699b19eb2744be8e2c9e73ed Understanding what I'm supposed to do was the frustrating part. Once I saw the first ball moving, the game itself worked well. But I wouldn't call it enjoyable. Maybe if the game required to be completed in 1 wave only." this person gave rating of 3, though, which is midway between not enjoyable at all and extremely enjoyable. i would've expected a 2 max, maybe even 1. they rated the other games with 1s, which makes me wonder if those games were so bad that this game deserved a 3 relative to them? but still...
+
+-   so many people discussed potential, especially calling for more levels or steady ramping up of difficulty. "699f6b2ff9170ee287ce9161 I liked it a lot and enjoyed it, but the jumping mechanics felt clunky to me, though not impossible. If it were really polished, it could be very entertaining." "60c13bce0d8616e48d044bd0 It was short but enjoyable. I would have liked to try different levels and obstacles."
+
+-   a sub theme that came up here and there but i didn't track because it wasn't that dominant was not feeling motivated or rewarded in the game. not a sense of purpose
+
+-   a number of responses (both positive and negative) noted that everything worked perfectly. this isn't something that people would be thinking about with a game on the market; i wonder if this made people be a little too generous with their ratings, especially subconsciously. the people participating in this likely assumed / could tell given the context that these aren't published games, so they may have been a little more generous--- especially AI-aware folks. also, getting to actually fully play the second or third game after the first 1-2 failed-ish might make a person feel like the game is exciting when they wouldn't think as highly of the game in a different context; i tried to account for effects of game order via game block randomization and the structure of my ICC and LMM analyses, but that doesn't mean much for the free responses (i'd have to check whether this theme of noting functional execution only appears for 2nd and 3rd games). is this necessarily a bad thing, though? we're getting into more and more niche domains---- video games domain vs marketed video game industry vs indie amateur developer vs vs vs...
+
+# Baseline-adjusted LMM
+
+```{r}
+#| label: baseline-adjusted creativity analyses
+#| echo: false
+
+# function to run LMM with baseline covariate for a specific dimension
+run_baseline_adjusted_lmm <- function(outcome, baseline_covariate) {
+  # Formula: outcome ~ condition + baseline_covariate + (1 | game_id) + (1 | prolific_subject_id)
+  formula <- as.formula(paste(outcome, "~ condition +", baseline_covariate, "+ (1 | game_id) + (1 | prolific_subject_id)"))
+  model <- lmer(formula, data = clean_analysis_df)
+  
+  # Get marginal means for condition, averaged over the baseline covariate
+  em <- emmeans(model, ~ condition)
+  
+  return(list(model = model, emmeans = em))
+}
+
+# Define mapping between dimensions and their corresponding baseline covariates
+dim_baseline_pairs <- list(
+  originality = "baseline_originality_rating",
+  effectiveness = "baseline_effectiveness_rating",
+  authenticity = "baseline_authenticity_rating",
+  intentionality = "baseline_intentionality_rating"
+)
+
+# run baseline-adjusted models
+baseline_adjusted_results <- imap(dim_baseline_pairs, ~ run_baseline_adjusted_lmm(.y, .x))
+
+# extract results for all dimensions 
+baseline_adjusted_means <- imap_dfr(baseline_adjusted_results, ~ {
+  as.data.frame(.x$emmeans) %>% mutate(dimension = .y)
+})
+
+# extract significance for all dimensions 
+contrast_individual_baseline_adjusted_dims <- map_dfr(outcomes[-1], ~ {
+  as.data.frame(pairs(baseline_adjusted_results[[.x]]$emmeans)) %>% mutate(dimension = .x)
+})
+
+```
+
+```{r}
+#| label: tbl-baseline-adjusted 
+#| echo: false
+
+baseline_results_table <- baseline_adjusted_means %>%
+  select(dimension, condition, emmean, lower.CL, upper.CL) %>%
+  mutate(
+    mean_ci = paste0(
+      round(emmean, 2), " [",
+      round(lower.CL, 2), ", ",
+      round(upper.CL, 2), "]"
+    )
+  ) %>%
+  select(dimension, condition, mean_ci) %>%
+  pivot_wider(
+    names_from = condition,
+    values_from = mean_ci
+  ) %>%
+  left_join(
+    contrast_individual_baseline_adjusted_dims %>%
+      mutate(
+        t_stat = round(t.ratio, 2),
+        df = round(df, 2),
+        p = round(p.value, 3),
+        test = paste0("t(", df, ") = ", t_stat)
+      ) %>%
+      select(dimension, test, p),
+    by = "dimension"
+  ) %>%
+  rename(
+    Dimension = dimension,
+    `Aware M [95% CI]` = aware,
+    `Blind M [95% CI]` = blind,
+    `t-test` = test,
+    p = p
+  )
+
+kable(baseline_results_table)
+```
+
+## report 
+
+To account for potential differences in participants’ baseline evaluations, we fit an additional linear mixed-effects model predicting creativity ratings with condition (aware vs. blind) as a fixed effect, baseline rating as a covariate, and random intercepts for game and rater. Baseline-adjusted marginal means estimated via the Kenward–Roger approximation indicated that creativity ratings remained similar across the aware (*M* = `r round(baseline_adjusted_means$emmean[baseline_adjusted_means$condition=="aware"],2)`, 95% CI \[`r round(baseline_adjusted_means$lower.CL[baseline_adjusted_means$condition=="aware"],2)`, `r round(baseline_adjusted_means$upper.CL[baseline_adjusted_means$condition=="aware"],2)`\]) and blind (*M* = `r round(baseline_adjusted_means$emmean[baseline_adjusted_means$condition=="blind"],2)`, 95% CI \[`r round(baseline_adjusted_means$lower.CL[baseline_adjusted_means$condition=="blind"],2)`, `r round(baseline_adjusted_means$upper.CL[baseline_adjusted_means$condition=="blind"],2)`\]) conditions, and this difference was not statistically significant, *t*(`r round(contrast_individual_baseline_adjusted_dims$df,2)`) = `r round(contrast_individual_baseline_adjusted_dims$t.ratio,2)`, *p* = `r round(contrast_individual_baseline_adjusted_dims$p.value,3)`.
+
+# Game concept LMM
+
+```{r}
+#| label: game concept analyses (RQ3)
+#| echo: false
+
+# analyze concept creativity and implementation accuracy using the LMM framework
+concept_creativity_lmm <- lmer(concept_creativity ~ condition + (1 | game_id) + (1 | prolific_subject_id), data = clean_analysis_df)
+implementation_accuracy_lmm <- lmer(implementation_accuracy ~ condition + (1 | game_id) + (1 | prolific_subject_id), data = clean_analysis_df)
+
+# Marginal means for concept creativity and implementation accuracy
+concept_creativity_means <- emmeans(concept_creativity_lmm, ~ condition) %>% as.data.frame()
+implementation_accuracy_means <- emmeans(implementation_accuracy_lmm, ~ condition) %>% as.data.frame()
+
+# Comparison: Concept Creativity vs. Game Creativity (within-participant)
+# Pivot long for Rating Type (Concept vs. Game)
+long_comparison_df <- clean_analysis_df %>%
+  pivot_longer(
+    cols = c(creativity, concept_creativity),
+    names_to = "rating_type",
+    values_to = "creativity_rating"
+  ) %>%
+  mutate(rating_type = factor(rating_type, levels = c("concept_creativity", "creativity")))
+
+# Repeated-measures LMM with within-participant factor of Rating Type
+rating_type_comparison_lmm <- lmer(
+  creativity_rating ~ rating_type * condition + (1 | game_id) + (1 | prolific_subject_id),
+  data = long_comparison_df
+)
+
+# Interaction: Rating Type x Condition
+rating_type_means <- emmeans(rating_type_comparison_lmm, ~ rating_type * condition) %>% as.data.frame()
+
+# Exploratory moderation: Does implementation accuracy affect the relationship between concept creativity and game creativity?
+moderation_lmm <- lmer(
+  creativity ~ concept_creativity * implementation_accuracy + (1 | game_id) + (1 | prolific_subject_id),
+  data = clean_analysis_df
+)
+
+# Summary of moderation analysis
+# summary(moderation_lmm)
+```
+
+
+# Game concept vs. effectiveness
+
+Big takeaway from likert rating plot: Across both conditions, more than half of the participants felt that the concepts that inspired the video games were very to extremely creative and about half of the participants felt that the concepts were very to extremely accurately reflected in the video games. However, less than half of the participants rated the actual video games as very to extremely creative, original, authentic, or effective. Note that participants played and rated the video games before observing and rating the game concepts.
