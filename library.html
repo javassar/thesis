@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Library</title>
+    <style>
+        :root {
+            --primary-color: #2ecc71;
+            --accent-color: #27ae60;
+            --bg-color: #1a1a1a;
+            --card-bg: #2c3e50;
+            --text-color: #ecf0f1;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 20px;
+            display: inline-block;
+            width: 100%;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--primary-color);
+            opacity: 0.8;
+        }
+
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .game-thumb.chat { 
+            background: rgba(0,0,0,0.2) url('llm-symbols/openaisymbol.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .game-thumb.claude { 
+            background: rgba(0,0,0,0.2) url('llm-symbols/claudesymbol.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .game-thumb.gemini { 
+            background: rgba(0,0,0,0.2) url('llm-symbols/geminisymbol.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .game-thumb {
+            height: 160px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+            padding: 20px; /* Gives the logo some breathing room */
+        }
+
+
+        .game-info {
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        .game-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .game-description {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #bdc3c7;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Fullscreen Overlay */
+        #game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            display: none;
+            z-index: 1000;
+        }
+
+        #game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 1001;
+            transition: background 0.2s;
+        }
+
+        #back-button:hover {
+            background: white;
+        }
+
+        .author-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Game Library</h1>
+    <p>Select a game to play :D </p>
+</header>
+
+<div class="library-grid" id="library">
+    <!-- Games will be injected here -->
+</div>
+
+<div id="game-overlay">
+    <button id="back-button" onclick="closeGame()">← Back to Library</button>
+    <iframe id="game-frame" src="" allow="autoplay; fullscreen"></iframe>
+</div>
+
+<script>
+    const games = [
+        {
+            id: `chat_1_echo`,
+            title: `Echo Chambers: Frequency Heist`,
+            author: `ChatGPT`,
+            path: `chat_1_echo/index.html`,
+            desc: `A stealth puzzle where the player “sees” with sound, tuning pings to frequencies.`
+        },
+        {
+            id: `chat_2_murmuration`,
+            title: `Murmuration`,
+            author: `ChatGPT`,
+            path: `chat_2_murmuration/index.html`,
+            desc: `Conduct a living cloud of birds with indirect cues.`
+        },
+        {
+            id: `chat_3_orbit`,
+            title: `Orbit Oddity`,
+            author: `Chat/Orbit`,
+            path: `chat_3_orbit/index.html`,
+            desc: `Slingshot tiny probes through gravity wells to play a song, sculpting orbits.`
+        },
+        {
+            id: `chat_4_courier`,
+            title: `Shadow Courier: Dial the Night`,
+            author: `Chat/Courier`,
+            path: `chat_4_courier/index.html`,
+            desc: `Sprint letters across a lamplit city, rotating time to swing streetlight shadows.`
+        },
+        {
+            id: `chat_5_glider`,
+            title: `Gale Glider`,
+            author: `Chat/Glider`,
+            path: `chat_5_glider/index.html`,
+            desc: `Surf a paper plane through a living 2D diorama by sculpting.`
+        },
+        {
+            id: `chat_6_tidepainter`,
+            title: `Tidepainter: Songs of the Shore`,
+            author: `Chat/Tidepainter`,
+            path: `chat_6_tidepainter/index.html`,
+            desc: `Sculpt living sand and carve grooves that erode in a bittersweet temporary composition.`
+        },
+        {
+            id: `claude_1_light`,
+            title: `Last Light`,
+            author: `Claude/Light`,
+            path: `claude_1_light/index.html`,
+            desc: `You are a moth who IS the mirror. Perch on anchor points to redirect light.`
+        },
+        {
+            id: `claude_2_moth`,
+            title: `Moth & Flame (Moon)`,
+            author: `Claude/Moth`,
+            path: `claude_2_moth/index.html`,
+            desc: `Fly toward the moon, but every light you touch rewires your need for more.`
+        },
+        {
+            id: `claude_3_bureaucromancer`,
+            title: `Bureaucromancer`,
+            author: `Claude/Bureau`,
+            path: `claude_3_bureaucromancer/index.html`,
+            desc: `Stop monsters by correctly interpreting an ever-changing tangle of regulations.`
+        },
+        {
+            id: `claude_4_decibel`,
+            title: `Decibel Thief`,
+            author: `Claude/Decibel`,
+            path: `claude_4_decibel/index.html`,
+            desc: `A silence creature hunting living instruments. Sound is light.`
+        },
+        {
+            id: `claude_5_cartographer`,
+            title: `The Cartographer's Eraser`,
+            author: `Claude/Carto`,
+            path: `claude_5_cartographer/index.html`,
+            desc: `Erase a beautiful fantasy map to decide what survives the creeping fog.`
+        },
+        {
+            id: `claude_6_flame`,
+            title: `Moth & Flame (Candle)`,
+            author: `Claude/Flame`,
+            path: `claude_6_flame/index.html`,
+            desc: `Guide a moth with candlelight until it outgrows you. A bittersweet story.`
+        },
+        {
+            id: `gemini_1_static`,
+            title: `The Static Between Us`,
+            author: `Gemini/Static`,
+            path: `gemini_1_static/index.html`,
+            desc: `Act as the "Signal" between two people.`
+        },
+        {
+            id: `gemini_2_patch`,
+            title: `Patch Note #0`,
+            author: `Gemini/Patch`,
+            path: `gemini_2_patch/index.html`,
+            desc: `You are a sentient bug in a platformer. Manipulate physics.`
+        },
+        {
+            id: `gemini_3_suture`,
+            title: `Suture`,
+            author: `Gemini/Suture`,
+            path: `gemini_3_suture/index.html`,
+            desc: `Don't jump across the void. Cut it out of existence.`
+        },
+        {
+            id: `gemini_4_substratum`,
+            title: `Substratum`,
+            author: `Gemini/Sub`,
+            path: `gemini_4_substratum/index.html`,
+            desc: `The hero is a legendary idiot who only walks straight.`
+        },
+        {
+            id: `gemini_5_rename`,
+            title: `Rename.exe`,
+            author: `Gemini/Rename`,
+            path: `gemini_5_rename/index.html`,
+            desc: `A puzzle-platformer where you change what things ARE by editing their filenames.`
+        },
+        {
+            id: `gemini_6_redact`,
+            title: `The Redact`,
+            author: `Gemini/Redact`,
+            path: `gemini_6_redact/index.html`,
+            desc: `A sentient ink blot inside a classified document.`
+        }
+    ];
+
+    function createLibrary() {
+        const library = document.getElementById('library');
+        games.forEach(game => {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.onclick = () => openGame(game.path);
+            
+            const family = game.id.split('_')[0]; // 'chat', 'claude', or 'gemini'
+            
+            card.innerHTML = `
+                <div class="game-thumb ${family}"></div>
+                <div class="game-info">
+                    <div class="game-title">${game.title}</div>
+                    <div class="game-description">${game.desc}</div>
+                </div>
+            `;
+            library.appendChild(card);
+        });
+    }
+
+    function openGame(path) {
+        document.getElementById('game-frame').src = path;
+        document.getElementById('game-overlay').style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Prevent scroll
+    }
+
+    function closeGame() {
+        document.getElementById('game-overlay').style.display = 'none';
+        document.getElementById('game-frame').src = '';
+        document.body.style.overflow = 'auto';
+    }
+
+    // Initialize
+    createLibrary();
+</script>
+
+</body>
+</html>
