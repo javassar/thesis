@@ -1030,7 +1030,54 @@ abs_ratings_likert <- ggplot(combined_long_data, aes(x = percentage, y = questio
 
 print(abs_ratings_likert)
 
+
 ```
+```{r}
+#| label: abs likert for poster
+#| echo: false
+
+abs_rating_likert_for_poster <- ggplot(combined_long_data, aes(x = percentage, y = question, fill = answer)) +
+  
+  geom_col(position = position_stack(reverse = TRUE), width = 0.7) +
+  
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  facet_wrap(~ condition, ncol = 1) +
+  labs(x = "Percentage of Responses", y = NULL, fill = "Response Rating") +
+theme_minimal() +
+theme(
+  text = element_text(family = "serif", size = 30),
+
+  strip.text = element_text(color = "black", face = "bold", size = 24, hjust = 0),
+
+  axis.text.y = element_text(size = 24, color = "black"),
+  axis.text.x = element_text(size = 24, color = "black"),
+
+  axis.title.x = element_text(size = 24),
+
+  panel.grid.major.y = element_blank(), 
+  panel.grid.minor.x = element_blank(),
+
+  panel.spacing = unit(1, "lines"),  # tighten this a bit
+
+  legend.text = element_text(size = 22),
+  legend.key.size = unit(0.8, "cm"),
+
+  legend.position = "bottom",
+  legend.title = element_blank()
+)
+
+
+ggsave("abs_likert_2.png",
+       plot = abs_rating_likert_for_poster,
+       width = 11.71,
+       height = 7.33,
+       units = "in",
+       dpi = 600)
+
+abs_rating_likert_for_poster
+```
+
 
 # Linear mixed-models for creativity and related dimensions 
 ```{r}
@@ -2016,6 +2063,55 @@ baseline_final_plot <- ggplot(combined_baseline_long, aes(x = percentage, y = qu
 print(baseline_final_plot)
 
 ```
+
+```{r}
+#| label: baseline for poster
+#| echo: false
+
+
+baseline_final_plot_for_poster <- ggplot(combined_baseline_long, aes(x = percentage, y = question, fill = answer)) +
+  
+  geom_col(position = position_stack(reverse = TRUE), width = 0.7) +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  facet_wrap(~ condition, ncol = 1) +
+  labs(x = "Percentage of Responses", y = NULL, fill = "Response Rating") +
+theme_minimal() +
+theme(
+  text = element_text(family = "serif", size = 30),
+
+  strip.text = element_text(color = "black", face = "bold", size = 24, hjust = 0),
+
+  axis.text.y = element_text(size = 24, color = "black"),
+  axis.text.x = element_text(size = 24, color = "black"),
+
+  axis.title.x = element_text(size = 24),
+
+  panel.grid.major.y = element_blank(), 
+  panel.grid.minor.x = element_blank(),
+
+  panel.spacing = unit(1, "lines"),  # tighten this a bit
+
+  legend.text = element_text(size = 22),
+  legend.key.size = unit(0.8, "cm"),
+
+  legend.position = "bottom",
+  legend.title = element_blank()
+)
+
+
+ggsave(
+  "baseline_likert_figure.png",
+  plot = baseline_final_plot_for_poster,
+  width = 11.71,
+  height = 7.33,
+  units = "in",
+  dpi = 600,
+  bg = "white"
+)
+
+```
+
 
 ```{r fig.width = 6, fig.height = 7}
 #| label: another version of likert plot
