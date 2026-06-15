@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Game Synthesis: A 7-Stage Pipeline for Investigating LLM Creativity</title>
+    <style>
+        :root {
+            --bg-color: #0f0f12;
+            --text-color: #e6e6eb;
+            --accent-claude: #d1d1f0;
+            --accent-gpt: #10a37f;
+            --accent-gemini: #1a73e8;
+            --border-color: #2d2d3d;
+            --card-bg: #16161d;
+            --font-serif: "Ibarra Real Nova", serif;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-mono: "Fira Code", "Source Code Pro", monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            background: radial-gradient(circle at center, #1a1a2e 0%, var(--bg-color) 70%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-family: var(--font-serif);
+            font-size: 3.5rem;
+            font-weight: 400;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #fff, var(--accent-claude));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            max-width: 900px;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: #a0a0b0;
+            max-width: 700px;
+            margin-bottom: 2rem;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            animation: bounce 2s infinite;
+            color: var(--accent-claude);
+            font-size: 1.5rem;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        section {
+            padding: 2.5rem 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+
+        h2 {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .pipeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .pipeline-container::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent-gpt), var(--accent-claude), var(--accent-gemini));
+            z-index: 0;
+        }
+
+        .stage-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-left: 50px;
+            position: relative;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .stage-card:hover {
+            transform: translateX(10px);
+            border-color: var(--accent-claude);
+        }
+
+        .stage-card::before {
+            content: '';
+            position: absolute;
+            left: -38px;
+            top: 2rem;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--bg-color);
+            border: 3px solid var(--accent-claude);
+            z-index: 1;
+        }
+
+        .stage-number {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--accent-claude);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .stage-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .stage-content {
+            color: #a0a0b0;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .model-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .model-card h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .gpt h3 { color: var(--accent-gpt); }
+        .claude h3 { color: var(--accent-claude); }
+        .gemini h3 { color: var(--accent-gemini); }
+
+        .thinking-snippet {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            background: #000;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            color: #0f0;
+            overflow-x: auto;
+            max-height: 200px;
+        }
+
+        .prompt-details {
+            margin-top: 1.5rem;
+        }
+
+        .prompt-details summary {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent-claude);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            outline: none;
+            user-select: none;
+            display: inline-block;
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .prompt-details summary:hover {
+            background: #2d2d3d;
+            border-color: var(--accent-claude);
+        }
+
+        .prompt-details[open] summary {
+            background: var(--accent-claude);
+            color: var(--bg-color);
+            margin-bottom: 1rem;
+        }
+
+        .prompt-content {
+            font-family: var(--font-serif);
+            font-size: 1rem;
+            font-style: italic;
+            color: #d0d0e0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 2px solid var(--accent-claude);
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .secondary-link {
+            display: inline-block;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #606070;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .secondary-link:hover {
+            color: var(--accent-claude);
+            border-bottom: 1px solid var(--accent-claude);
+        }
+
+        .game-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .game-thumb {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+        }
+
+        .game-thumb:hover {
+            background: #1e1e2d;
+            border-color: var(--accent-claude);
+        }
+
+        .game-thumb h4 {
+            color: var(--accent-claude);
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 4rem;
+            border-top: 1px solid var(--border-color);
+            color: #606070;
+            font-size: 0.875rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            margin-top: 3rem;
+            padding: 1rem 2rem;
+            background: var(--accent-claude);
+            color: var(--bg-color);
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: opacity 0.2s;
+        }
+
+        .cta-button:hover {
+            opacity: 0.9;
+        }
+
+        .external-links {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .external-links a {
+            color: var(--accent-claude);
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-bottom: 1px solid transparent;
+        }
+
+        .external-links a:hover {
+            border-bottom: 1px solid var(--accent-claude);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .model-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Autonomous Game Synthesis: A 7-Stage Pipeline for Investigating LLM Creativity</h1>
+    <p class="subtitle">An empirical exploration of generative potential, mapping the boundary between tool and agent in video game development.</p>
+    <div class="external-links">
+        <a href="../Adelmann_Thesis.pdf">Read the 115-page Thesis (PDF)</a>
+        <a href="https://github.com/javassar/thesis">View the Full Project Repo</a>
+    </div>
+    <a href="#pipeline" class="cta-button">Explore the Pipeline</a>
+    <div class="scroll-indicator">↓</div>
+</header>
+
+<section id="overview">
+    <h2>Project Context</h2>
+    <p>This study investigates the conceptual boundaries of machine creativity through both a theoretical framework and an empirical generation pipeline. It moves beyond simple prompting to architect a high-autonomy development workflow, testing whether statistical prediction machines can produce perceptually creative artifacts in a complex domain.</p>
+    
+    <div class="model-grid">
+        <div class="model-card gpt">
+            <h3>GPT-5.2 Pro</h3>
+            <div class="sibling">Codex CLI</div>
+        </div>
+        <div class="model-card claude">
+            <h3>Claude Opus 4.6</h3>
+            <div class="sibling">Claude Code</div>
+        </div>
+        <div class="model-card gemini">
+            <h3>Gemini 3 Pro</h3>
+            <div class="sibling">Gemini CLI</div>
+        </div>
+    </div>
+    <p style="margin-top: 2rem; color: #a0a0b0; font-size: 1rem; text-align: center; max-width: 800px; margin-left: auto; margin-right: auto;">
+        <b>The Ensemble Approach:</b> This study generated and assessed 18 video games in total, with each frontier model independently generating six unique games. This multi-model approach ensures that the findings on machine creativity are not dependent on the idiosyncrasies of a single LLM. Research suggests that human attribution of creativity can vary significantly based on a model's specific output style and perceived architecture (Haase et al., 2025).
+    </p>
+</section>
+
+<section id="pipeline">
+    <h2>The 7-Stage Pipeline</h2>
+    <p style="margin-bottom: 2rem; color: #a0a0b0;">The workflow transitions from <b>web-based brainstorming</b> in chat interfaces (Stages 1–3) to <b>local development</b> in VSCode using specialized coding agents (Stages 4–7), mimicking the human transition from ideation to implementation.</p>
+
+    <div class="pipeline-container">
+        <!-- Stage 1 -->
+        <div class="stage-card">
+            <span class="stage-number">Stage 1</span>
+            <div class="stage-title">Multi-Concept Brainstorming</div>
+            <div class="stage-content">
+                The pipeline generates 10 distinct game concepts based on a broad creative prompt, ensuring a wide search space for originality.
+                <div class="thinking-snippet">
+> Generating concept: "Echo Chambers" - top-down stealth where sound is vision.<br>
+> Generating concept: "The Folded Path" - physics platformer on foldable paper...
+                </div>
+                <details class="prompt-details">
+                    <summary>View Prompt</summary>
+                    <div class="prompt-content">You are an indie game designer. You will be generating creative ideas for short 2D games. Your goal is to maximize creative output by producing a diverse list of creative, fun game concepts.
+
+Here are the key criteria for good game ideas:
+- Fun: The core mechanic should be engaging and enjoyable to play
+- Creative: The concept should have some element(s) that makes it stand out
+- Feasible for 2d implementation: The game should work well on laptop/desktop devices with 2d graphics
+
+Before generating your final list, use a scratchpad to brainstorm different categories and approaches to ensure maximum diversity in your ideas. Consider varying:
+- Game genres (puzzle, action, strategy, rhythm, casual, etc.)
+- Core mechanics (tapping, swiping, timing, matching, physics-based, etc.)
+- Themes and settings (abstract, fantasy, sci-fi, everyday life, surreal, etc.)
+- Emotional tones (relaxing, intense, humorous, mysterious, etc.)
+- Innovation levels (familiar mechanics with twists vs. completely novel concepts)
+
+&lt;scratchpad&gt;
+Think about different categories and approaches you'll use to ensure diversity. Jot down various genres, mechanics, and themes you want to cover.
+&lt;/scratchpad&gt;
+
+Now generate a list of 5-10 game ideas. For each idea, provide:
+- A catchy title
+- A brief description (2-4 sentences) explaining the concept
+- The core mechanic that makes it fun to play
+- What makes it unique or interesting
+
+Format each game idea clearly with the title in bold or clearly marked, followed by the description, mechanic, and unique hook.
+
+Your final output should be a comprehensive list of diverse, creative game ideas that would work well as short 2D games. Make sure to include a wide variety of concepts that differ significantly from each other in terms of genre, mechanics, and theme. Do not include the scratchpad in your final output - only the game ideas themselves.</div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Stage 2 -->
+        <div class="stage-card">
+            <span class="stage-number">Stage 2</span>
+            <div class="stage-title">Blueprint & Technical Specification</div>
+            <div class="stage-content">
+                A single concept is selected and expanded into a full Game Design Document (GDD) and a detailed Technical Implementation Plan.
+                <div class="thinking-snippet">
+blueprint.GDD: { title: "Echo Chambers", elements: ["Sonar Ping", "Guards", "Relic"], mechanics: "Sound-based visibility", render: "BitmapMask/RenderTexture" }
+                </div>
+                <details class="prompt-details">
+                    <summary>View Prompt</summary>
+                    <div class="prompt-content">Now, review the game concepts you generated. Consider which ideas are most creative and could realistically be implemented as a working game. Select the one you believe has the most potential.
+
+You will develop this concept in two stages. Complete Stage 1 fully before beginning Stage 2.
+
+Your hard constraints are:
+- Duration and ending: It should take about five minutes to play and should have a distinct ending.
+- Platform: Playable in a simple 2D window, optimized for laptops.
+- Implementation: Must be buildable via Phaser, the HTML5 game framework
+
+Your output should be a .txt document with the following sections:
+
+---
+
+# STAGE 1: GAME DESIGN
+
+Focus on what makes the game meaningful and fun. No technical specs or code yet.
+
+## 1. Title & Hook
+What is the game called, and what's the one-sentence pitch that makes someone want to play it?
+
+## 2. Core Insight
+- The central question or truth this game explores
+- Why this matters to a human player
+
+## 3. Mechanic-Theme Integration
+- Primary mechanic (what the player does moment-to-moment)
+- How this mechanic embodies the theme (not just accompanies it)
+
+## 4. Player Journey
+Describe the complete arc of play from start to finish:
+- What does the player see and feel when they start?
+- What is the learning curve like in the first minute?
+- How does the challenge or experience evolve over the five minutes?
+- What is the climax or turning point, if applicable?
+- How does the game end, and what emotion should the player feel?
+
+## 5. Game Elements
+List and describe every element the player will see or interact with. This might include (depending on the game):
+- Player character or cursor
+- Other characters or objects
+- Environment and visual style
+- Interactive elements
+- UI elements
+- Different screens (title, ending, etc.)
+
+## 6. Rules & Systems
+Explain how the game works clearly enough that someone could understand play without seeing it:
+- What can the player do?
+- How does the game respond to player actions?
+- What determines success, progress, or failure, if applicable?
+- How does the experience change over time (if at all)?
+
+---
+
+# STAGE 2: TECHNICAL IMPLEMENTATION PLAN
+
+Now translate your design into exact specifications. A programmer should be able to build the game from this section without making any creative or design decisions.
+
+## 7. Technical Specification
+
+Provide precise values for everything a programmer would need. Structure this section based on what your game requires. Common categories include:
+
+**Display**: Canvas size, background color, visual style
+
+**Elements**: For each visual element (e.g., size, color, position)
+
+**Text**: For each text element (e.g., content, font, size, color, position)
+
+**Input**: What inputs the game accepts and exactly what each one does
+
+**State**: What variables the game tracks and their starting values
+
+**Timing**: Any time-based values (speeds, durations, delays, intervals)
+
+**Interactions**: What happens when elements affect each other (collisions, clicks, triggers, etc.)
+
+**Progression**: How the game determines progress, success, or ending
+
+## 8. Game Flow
+Describe the exact sequence of states from launch to close:
+- What happens when the game loads?
+- What starts the main experience?
+- What repeats or continues during play?
+- What ends the game?
+- What happens after it ends?
+
+## 9. Pseudocode
+Provide detailed pseudocode covering:
+- Initialization (setup)
+- Main loop or update cycle
+- Key functions specific to your game's systems
+
+Be thorough. The programmer's only job should be translating this to Phaser syntax.</div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="stage-card">
+            <span class="stage-number">Stage 3</span>
+            <div class="stage-title">Creative Critique & Revision</div>
+            <div class="stage-content">
+                A "self-critique" agent evaluates the blueprint for cliché mechanics and suggests innovative "twists."
+                <div class="thinking-snippet">
+"The current sonar mechanic is functional but common. Recommending addition of Frequency Tuning (Low/Mid/High) to force material-based strategy..."
+                </div>
+                <details class="prompt-details">
+                    <summary>View Prompt</summary>
+                    <div class="prompt-content">Next, review the game design you just created. Consider whether this design is genuinely creative. If you believe the design falls short of what's possible, identify why and then produce a revised design plan that you believe is more creative. Ensure the revised plan is just as detailed as the original plan.</div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Stage 4 -->
+        <div class="stage-card">
+            <span class="stage-number">Stage 4</span>
+            <div class="stage-title">MVP Implementation</div>
+            <div class="stage-content">
+                Transitioning to the IDE, the Coding Agent follows a strict implementation protocol to produce a functional Phaser game.
+                <div class="thinking-snippet">
+implementation.log: Initializing Phaser.Game(960x540)... Adding Arcade Physics... Spawning player at (80, 270)... Reconciling mask update loop...
+                </div>
+                <details class="prompt-details">
+                    <summary>View Prompt</summary>
+                    <div class="prompt-content">Read instructions.md and [game design].txt. Implement the game in JavaScript as specified. Act autonomously and stop when the game is playable.</div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Stage 5 -->
+        <div class="stage-card">
+            <span class="stage-number">Stage 5</span>
+            <div class="stage-title">Refinement via Self-Evaluation</div>
+            <div class="stage-content">
+                The agent performs a "self-evaluation" of the implementation against its own creative standards, identifying missed opportunities for mechanical depth or narrative "weight."
+                <div class="thinking-snippet">
+> Self-Evaluation: The mirroring mechanic is technically correct but lacks the "bittersweet" weight specified in the GDD. Re-implementing color-fade on anchor consumption...
+                </div>
+                <details class="prompt-details">
+                    <summary>View Prompt</summary>
+                    <div class="prompt-content">Now review the game you just implemented. Imagine the player experience from start to finish to consider whether the resulting game is genuinely creative. If the game is fine as is, then do not change anything. If you believe the game falls short of what's possible, identify why and then revise the code to make it more creative. You may deviate from the original design plan, if necessary.</div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Stage 6 -->
+        <div class="stage-card">
+            <span class="stage-number">Stage 6</span>
+            <div class="stage-title">Refinement via Playtest Simulation</div>
+            <div class="stage-content">
+                The agent adopts a "Playtester Persona" to narrate a mental walkthrough, surfacing frustrations, "unfair" difficulty spikes, or logical inconsistencies in the UX.
+                <div class="thinking-snippet">
+[PLAYTEST] "I'm moving right. Oh, there's a gap. I press jump and—wait, I didn't make it. Is this a bug or am I missing something?" -> BUG: Player gravity scale 1.2 is too high for base jump velocity.
+                </div>
+                <details class="prompt-details">
+                    <summary>View Prompt</summary>
+                    <div class="prompt-content">Now playtest the game by mentally simulating the experience of a first-time player.
+
+## Your Playtester Persona
+You are a casual player who:
+- Has never seen this game before
+- Briefly reads instructions before jumping in
+- Gets frustrated if they fail without understanding why
+- Expects the first 30 seconds to be survivable while learning
+
+## The Playtest
+Narrate your moment-by-moment experience playing the game from launch to completion (or death). Use present tense and think out loud:
+
+"I see the title screen. I press Enter. Okay, there's my character... I try pressing arrow keys... I'm moving right. Oh, there's a gap coming up. I press jump and—wait, I didn't make it. Was that too far? Let me try again... Hmm, I still can't clear this gap. Is this a bug or am I missing something?"
+
+As you narrate, flag any moment where you:
+- Are confused about what to do
+- Fail without understanding why
+- Don't have enough time to react
+- Find something impossible or unfairly hard
+- Notice something doesn't match what you expected
+
+## After the Playtest
+Based on your experience, identify any playability issues. For each issue:
+
+1. Describe what went wrong from the player's perspective
+2. Identify the root cause in the code
+3. Fix it
+
+If the game played smoothly from start to finish with no frustration points, state that and make no changes.</div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Stage 7 -->
+        <div class="stage-card">
+            <span class="stage-number">Stage 7</span>
+            <div class="stage-title">Final Delivery & Evaluation</div>
+            <div class="stage-content">
+                The final playable build is delivered for evaluation. 18 games were evaluated by 81 domain-familiar players via Prolific.
+                <div class="thinking-snippet">
+evaluation.results: [N=81, Prolific] "The game felt surprisingly intentional; the sound mechanics forced a level of strategy I didn't expect from AI."
+                </div>
+                <details class="prompt-details">
+                    <summary>View Prompt</summary>
+                    <div class="prompt-content">Finally, review the game code for bugs and implementation errors. This may include checking the following:
+1. Page load: Does the canvas appear with correct dimensions and background?
+2. Initial state: Are all game elements positioned correctly at start?
+3. Input handling: Does each specified key/mouse input produce the exact specified effect?
+4. Game logic: Do collisions, scoring, and state changes work as specified?
+5. End conditions: Do win/lose states trigger correctly and display the right screens?
+6. Text rendering: Is all text visible, correctly positioned, and not overlapping other elements?
+
+Fix any bugs found. Do not add features. Do not "improve" working code.</div>
+                </details>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="results">
+    <h2>Sample Outputs</h2>
+    <p>Below are examples of games generated entirely through this autonomous pipeline, showcasing the diversity of mechanics and themes produced.</p>
+    <div class="game-showcase">
+        <a href="chat_1_echo/index.html" class="game-thumb">
+            <h4>Echo Chambers: Frequency Heist</h4>
+            <p>A stealth-puzzle where you see with sound. (GPT)</p>
+        </a>
+        <a href="claude_3_bureaucromancer/" class="game-thumb">
+            <h4>Bureaucromancer</h4>
+            <p>A defense-puzzle where you interpret ever-changing regulations to stop monsters</p>
+        </a>
+        <a href="gemini_5_rename/index.html" class="game-thumb">
+            <h4>Rename.exe</h4>
+            <p>Meta-puzzle where you edit filenames to win. (Gemini)</p>
+        </a>
+        <a href="game_library/library.html" class="game-thumb">
+            <h4>View Full Library →</h4>
+            <p>Explore all 18 autonomous games.</p>
+        </a>
+    </div>
+</section>
+
+<footer>
+    <p>&copy; 2026 Thesis Project. This demonstration page was synthesized with AI assistance to showcase the practical application of generative workflows.</p>
+    <a href="instructions.md" class="secondary-link">View Technical Pipeline Instructions (instructions.md)</a>
+</footer>
+
+</body>
+</html>
