@@ -4,16 +4,16 @@ format: html
 editor: visual
 ---
 
-This document is the data analysis source code for my pre-registered study, Are Large Language Models Creative? 
+This document is the data analysis source code for my pre-registered study, Are Large Language Models Creative?
 
-Pre-registration can be found at https://osf.io/hw2en/overview. 
+Pre-registration can be found at https://osf.io/hw2en/overview.
 
-This code does not retrieve participant data directly from OSF. The data must be downloaded from the Github repository in which this analysis file is found. They are in the folder osfstorage-archive. 
+This code does not retrieve participant data directly from OSF. The data must be downloaded from the Github repository in which this analysis file is found. They are in the folder osfstorage-archive.
 
-Coded qualitative data files also must be downloaded from the Github repository in which this analysis file is found. These files are in the folder coded_qual_data. I coded the qualitative data for themes in Google Sheets and then analyzed the overarching trends in this document. 
-
+Some other files also must be downloaded from the Github repository in which this analysis file is found. These files are in the folder data. Included in these files are the coded qualitative data files. I coded for themes in Google Sheets and then analyzed the overarching trends in this document.
 
 # Data wrangling & basic sample stats
+
 ```{r}
 #| label: load in libraries and data 
 #| include: false
@@ -62,7 +62,7 @@ library(kableExtra) #for table
 
 ### manually downloaded osf files folder from the website and added it to this project  
 # folder containing all OSF csv files
-data_dir <- "osfstorage-archive"
+data_dir <- "data/osfstorage-archive"
 
 # get all csv paths (sorted for reproducibility)
 csv_paths <- list.files(
@@ -78,7 +78,6 @@ raw_df <- csv_paths %>%
   purrr::map_dfr(readr::read_csv, show_col_types = FALSE, .id = "csv_name")
 
 ```
-
 
 ```{r}
 #| label: turn response data into question and answer columns
@@ -137,7 +136,7 @@ parsed_long_df <- parsed_long_df %>%
      csv_name == "uqe14unhtx", "697a9cc58e44ed0a6d497a73", prolific_subject_id))
  )
 
-demo_df <- read_csv("prolific_demographic_export_6987c292780adf01bb926159.csv") %>%
+demo_df <- read_csv("data/prolific_demographic_export_6987c292780adf01bb926159.csv") %>%
   rename(prolific_subject_id = "Participant id") # match name to our df
 
 parsed_long_df <- right_join(parsed_long_df, demo_df, by = "prolific_subject_id") %>% # only keeping obvs in both
@@ -300,8 +299,8 @@ student_dist <- demo_df %>%
 #| label: write df csvs 
 #| echo: false
 
-write.csv(surveys_df, "cleaned_evaluation_survey_data.csv")
-write.csv(game_df, "cleaned_game_data.csv")
+write.csv(surveys_df, "generated_files/cleaned_evaluation_survey_data.csv")
+write.csv(game_df, "generated_files/cleaned_game_data.csv")
 
 ```
 
@@ -330,7 +329,7 @@ game_frequency_by_llm_df <- game_df %>%
 ```
 
 ```{r}
-#| label: (for conducting experiment) identify which game blocks have been played 
+#| label: (for conducting ame blocks have been played 
 #| include: false 
 
 ##prep dfs 
@@ -342,7 +341,7 @@ game_blocks_played_df <- game_df %>%
                 ~ str_replace_all(., "-", "_")))
 
 # read in the plan for the game blocks 
-game_blocks_plan_df <- read.csv("game_blocks.csv") %>%
+game_blocks_plan_df <- read.csv("data/game_blocks.csv") %>%
   rename("block" = "X")
 
 # duplicate the blocks so there's one per condition
@@ -449,10 +448,10 @@ n_emergency_exits_by_game_order <- emergency_exits %>%
 #| include: false 
 
 #write csv so i can do encoded analysis in excel
-write.csv(emergency_exits, "emergency_exits.csv")
+write.csv(emergency_exits, "generated_files/emergency_exits.csv")
 
 #load analysis back in. in this analysis, i tracked peoples' reported reasons for exiting the game
-emergency_exit_qual_raw <- read_csv("emergency_exits_qual_encoded.csv")
+emergency_exit_qual_raw <- read_csv("data/emergency_exits_qual_encoded.csv")
 
 # pull exit progress to put back in the qual df since i didn't include this when i first wrote the emergency exits df that i then added qual analysis to. i didn't put a lot of effort into making the exit progress tracking, so it might turn out to be pretty unhelpful
 exit_progress_for_merging <- game_df %>%
@@ -515,7 +514,6 @@ insufficient_info_total_games # good
 
 ```
 
-
 ```{r}
 #| label: old emergency exit qual result report text
 #| echo: false
@@ -544,6 +542,7 @@ insufficient_info_total_games # good
 ```
 
 # More data wrangling & basic quantitative stats
+
 ```{r}
 #| label: make dfs for qual analysis 
 #| echo: false 
@@ -556,43 +555,43 @@ creativity_qual_df <- surveys_qualitative_df %>%
   filter(question == "creativity-free-response") %>%
   select(prolific_subject_id, question, answer)
 
-write.csv(creativity_qual_df, "creativity_qual_data.csv")
+write.csv(creativity_qual_df, "generated_files/creativity_qual_data.csv")
 
 originality_qual_df <- surveys_qualitative_df %>%
   filter(question == "originality-free-response") %>%
   select(prolific_subject_id, question, answer)
 
-write.csv(originality_qual_df, "originality_qual_data.csv")
+write.csv(originality_qual_df, "generated_files/originality_qual_data.csv")
 
 effectiveness_qual_df <- surveys_qualitative_df %>%
   filter(question == "effectiveness-free-response") %>%
   select(prolific_subject_id, question, answer)
 
-write.csv(effectiveness_qual_df, "effectiveness_qual_data.csv")
+write.csv(effectiveness_qual_df, "generated_files/effectiveness_qual_data.csv")
 
 intentionality_qual_df <- surveys_qualitative_df %>%
   filter(question == "intentionality-free-response") %>%
   select(prolific_subject_id, question, answer)
 
-write.csv(intentionality_qual_df, "intentionality_qual_data.csv")
+write.csv(intentionality_qual_df, "generated_files/intentionality_qual_data.csv")
 
 authenticity_intentionality_qual_df <- surveys_qualitative_df %>%
   filter(question == "authenticity-intentionality-free-response") %>%
   select(prolific_subject_id, question, answer)
 
-write.csv(authenticity_intentionality_qual_df, "authenticity_intentionality_qual_data.csv")
+write.csv(authenticity_intentionality_qual_df, "generated_files/authenticity_intentionality_qual_data.csv")
 
 ai_blind_qual_df <- surveys_qualitative_df %>%
   filter(question == "ai_blind_question") %>%
   select(prolific_subject_id, question, answer)
 
-write.csv(ai_blind_qual_df, "ai_blind_data.csv")
+write.csv(ai_blind_qual_df, "generated_files/ai_blind_data.csv")
 
 ai_aware_qual_df <- surveys_qualitative_df %>%
   filter(question == "ai_aware_question") %>%
   select(prolific_subject_id, question, answer)
 
-write.csv(ai_aware_qual_df, "ai_aware_qual_data.csv")
+write.csv(ai_aware_qual_df, "generated_files/ai_aware_qual_data.csv")
 
 ```
 
@@ -708,7 +707,6 @@ pct_ratings_per_level_and_item <- surveys_numeric_df %>%
   mutate(question = paste0(question, "_", answer))
 
 ```
-
 
 ```{r}
 #| label: labels for rating items and likert levels
@@ -902,6 +900,7 @@ poor_icc_single_game_summary <- poor_icc_single_game %>%
 ```
 
 # Likert creativity and related dimensions
+
 ```{r}
 #| label: fig-likert-absolute-ratings
 #| include: false
@@ -1032,6 +1031,7 @@ print(abs_ratings_likert)
 
 
 ```
+
 ```{r}
 #| label: abs likert for poster
 #| echo: false
@@ -1068,7 +1068,7 @@ theme(
 )
 
 
-ggsave("abs_likert_2.png",
+ggsave("generated_files/abs_likert_2.png",
        plot = abs_rating_likert_for_poster,
        width = 11.71,
        height = 7.33,
@@ -1078,8 +1078,8 @@ ggsave("abs_likert_2.png",
 abs_rating_likert_for_poster
 ```
 
+# Linear mixed-models for creativity and related dimensions
 
-# Linear mixed-models for creativity and related dimensions 
 ```{r}
 #| label: big LMM for creativity analyses (RQ1 & RQ2)
 #| echo: false
@@ -1346,7 +1346,6 @@ ggplot(game_means, aes(x = game_id, y = mean_rating)) +
 
 ```
 
-
 ```{r}
 #| label: tbl-absolute-creativity-dimension-results
 #| include: false
@@ -1389,6 +1388,7 @@ kable(results_table)
 ```
 
 # PCA on creativity and related dimensions
+
 ```{r}
 #| label: pca and biplot on dimensions 
 #| include: false
@@ -1483,6 +1483,7 @@ print(final_pca_plot)
 ```
 
 # Spaghetti Plot
+
 ```{r}
 #| label: fig-spaghetti-plots-participant-ratings
 #| echo: false
@@ -1520,6 +1521,7 @@ ggplot(spaghetti_df, aes(x = game_id, y = creativity)) +
 ```
 
 # EDA correlations
+
 ```{r fig.width = 8, fig.height = 4}
 #| label: EDA correlations between dimensions (scatterplot and cor matrix)
 #| include: false
@@ -1592,7 +1594,8 @@ corrplot(cor(rating_matrix, use = "pairwise.complete.obs"),
          type = "upper")
 ```
 
-# Qual creativity 
+# Qual creativity
+
 ```{r}
 #| label: creativity qual analysis 
 #| echo: false
@@ -1600,7 +1603,7 @@ corrplot(cor(rating_matrix, use = "pairwise.complete.obs"),
 # should i filter out free responses for games that were emergency exited? i don't think so. it probably also doesn't matter a whole lot. 
 
 # read in data from coding it in google sheets 
-creativity_evaluated_qual_df <- read.csv("coded_qual_data/creativity_evaluated_data.csv") 
+creativity_evaluated_qual_df <- read.csv("data/creativity_evaluated_data.csv") 
 
 # count how many times each theme was present for each tag and the total number of times
 creativity_theme_counts <- creativity_evaluated_qual_df %>%
@@ -1746,6 +1749,7 @@ creativity_theme_counts_by_participant_repeats <- creativity_theme_counts_by_par
 ```
 
 # Baseline adjusted linear mixed-models
+
 ```{r}
 #| label: baseline-adjusted creativity analyses
 #| include: false
@@ -1837,6 +1841,7 @@ kable(baseline_results_table)
 ```
 
 # Table all LMM results
+
 ```{r}
 #| label: tbl-creativity-dimensions-absolute-and-adjusted
 #| include: false
@@ -1918,6 +1923,7 @@ kable(thesis_table_data,
 ```
 
 # Likert baseline
+
 ```{r}
 #| label: fig-likert-plots-baseline-ratings
 #| include: false
@@ -2101,7 +2107,7 @@ theme(
 
 
 ggsave(
-  "baseline_likert_figure.png",
+  "generated_files/baseline_likert_figure.png",
   plot = baseline_final_plot_for_poster,
   width = 11.71,
   height = 7.33,
@@ -2111,7 +2117,6 @@ ggsave(
 )
 
 ```
-
 
 ```{r fig.width = 6, fig.height = 7}
 #| label: another version of likert plot
@@ -2224,13 +2229,14 @@ likert_difference_ggplot
 ```
 
 # Qual originality
+
 ```{r}
 #| label: originality qual analysis
 #| echo: false 
 #| warning: false
 #| message: false
 
-originality_evaluated_qual_data <- read.csv("coded_qual_data/originality_evaluated_data.csv")
+originality_evaluated_qual_data <- read.csv("data/originality_evaluated_data.csv")
 
 # main qual df 
 originality_theme_counts <- originality_evaluated_qual_data %>%
@@ -2341,7 +2347,7 @@ originality_theme_counts_by_participant_repeats <- originality_theme_counts_by_p
 #| label: effectiveness qual analysis
 #| echo: false 
 
-effectiveness_evaluated_qual_data <- read.csv("coded_qual_data/effectiveness_evaluated_data.csv")
+effectiveness_evaluated_qual_data <- read.csv("data/effectiveness_evaluated_data.csv")
 
 effectiveness_theme_counts <- effectiveness_evaluated_qual_data %>%
   pivot_longer(
@@ -2461,7 +2467,7 @@ effectiveness_theme_counts_by_participant_repeats <- effectiveness_by_participan
 #| label: authenticity intentionality qual analysis
 #| echo: false 
 
-authint_evaluated_qual_df <- read.csv("coded_qual_data/authenticity_intentionality_evaluated_data.csv")
+authint_evaluated_qual_df <- read.csv("data/authenticity_intentionality_evaluated_data.csv")
 
 
 authint_theme_counts <- authint_evaluated_qual_df %>%
@@ -2532,7 +2538,7 @@ wide_originality_theme_by_condition <- originality_theme_by_condition %>%
 #| label: ai aware qual analysis
 #| echo: false
 
-ai_aware_evaluated_qual_data <- read.csv("coded_qual_data/ai_aware_evaluated_data.csv")
+ai_aware_evaluated_qual_data <- read.csv("data/ai_aware_evaluated_data.csv")
 
 ai_aware_theme_counts <- ai_aware_evaluated_qual_data %>%
   mutate(valence = case_when(
@@ -2574,7 +2580,7 @@ ai_aware_theme_counts <- ai_aware_evaluated_qual_data %>%
 #| echo: false
 
 
-ai_blind_evaluated_qual_data <- read.csv("coded_qual_data/ai_blind_evaluated_data.csv")
+ai_blind_evaluated_qual_data <- read.csv("data/ai_blind_evaluated_data.csv")
 
 ai_blind_theme_counts <- ai_blind_evaluated_qual_data %>%
   mutate(valence = case_when(
