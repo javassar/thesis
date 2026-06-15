@@ -8,6 +8,7 @@ prompt_development_games
 data
 testing.html
 .RData
+.Rhistory
 .Rproj
 .DS_Store
 
