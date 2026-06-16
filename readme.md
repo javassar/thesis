@@ -3,7 +3,6 @@
 This repository contains the text, code, LLM conversation transcripts, and evaluation data for my Cognitive Science senior thesis at Vassar College. The project investigates the conceptual boundaries of creativity in LLMs and, consequentially, humans. Empirically, it tests whether frontier LLMs can autonomously generate perceptually creative video games as judged by avid gamers.
 
 ### Live Project Outputs
-### Live Project Outputs
 * **[View the 7-Stage LLM Generation Pipeline](https://javassar.github.io/thesis/games/workflow_demo.html)**
 > A detailed walkthrough of the autonomous prompt architecture that directed Claude, ChatGPT, and Gemini to iteratively conceptualize, implement, and debug functional video games using the Phaser framework.
 * **[View the Game Evaluation Experiment](https://javassar.github.io/thesis/experiment/evaluation.html)**
